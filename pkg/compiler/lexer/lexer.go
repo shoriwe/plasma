@@ -3,12 +3,13 @@ package lexer
 import (
 	"errors"
 	"fmt"
+	"regexp"
 )
 
 type Lexer struct {
 	cursor           int
+	lastToken        *Token
 	line             int
-	column           int
 	sourceCode       string
 	sourceCodeLength int
 	complete         bool
@@ -19,10 +20,19 @@ func (lexer *Lexer) HasNext() bool {
 	return !lexer.complete
 }
 
-func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string, target rune) (string, rune, error) {
+func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, rune, error) {
 	content := stringOpener
+	var target rune
+	switch stringOpener {
+	case "'":
+		target = SingleQuoteString
+	case "\"":
+		target = DoubleQuoteString
+	case "`":
+		target = CommandOutput
+	}
 	var kind rune = Unknown
-	var errorMessage error
+	var tokenizingError error
 	escaped := false
 	finish := false
 	for ; (lexer.cursor < lexer.sourceCodeLength) && !finish; lexer.cursor++ {
@@ -32,14 +42,13 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string, target ru
 			case "\\", "'", "\"", "`", "a", "b", "e", "f", "n", "r", "t", "?", "u", "x":
 				escaped = false
 			default:
-				errorMessage = errors.New(fmt.Sprintf("wrong escape at index %d, could not completly define %s", lexer.cursor, content))
+				tokenizingError = errors.New(fmt.Sprintf("wrong escape at index %d, could not completly define %s", lexer.cursor, content))
 				finish = true
 			}
 		} else {
 			switch char {
 			case "\n":
 				lexer.line++
-				lexer.column = 1
 			case stringOpener:
 				kind = target
 				finish = true
@@ -48,104 +57,178 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string, target ru
 			}
 		}
 		content += char
-		lexer.column++
 	}
 	if kind != target {
-		errorMessage = errors.New(fmt.Sprintf("No closing at index: %d with value %s", lexer.cursor, content))
+		tokenizingError = errors.New(fmt.Sprintf("No closing at index: %d with value %s", lexer.cursor, content))
 	}
-	return content, kind, errorMessage
+	return content, kind, tokenizingError
 }
 
-func (lexer *Lexer) tokenizeSpecial(target rune) (string, rune, error) {
-	stringOpener := string(lexer.sourceCode[lexer.cursor])
-	var stringCloser string
-	switch stringOpener {
-	case "(":
-		stringCloser = ")"
-	case "[":
-		stringCloser = "]"
-	case "{":
-		stringCloser = "}"
-	default:
-		stringCloser = stringOpener
-	}
-	lexer.cursor++
-	content := stringOpener
-	var kind rune = Unknown
-	escaped := false
-	finish := false
-	var errorMessage error
-	for ; (lexer.cursor < lexer.sourceCodeLength) && !finish; lexer.cursor++ {
+func (lexer *Lexer) tokenizeNumeric(firstDigit string) (string, rune, error) {
+	content := firstDigit
+	var kind rune = Integer
+	var tokenizingError error
+tokenizingLoop:
+	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
 		char := string(lexer.sourceCode[lexer.cursor])
-		if escaped {
-			switch char {
-			case "\\", "'", "\"", "`", "a", "b", "e", "f", "n", "r", "t", "?", "u", "x", stringOpener:
-				escaped = false
-			default:
-				errorMessage = errors.New(fmt.Sprintf("wrong escape at index %d, could not completly define %s", lexer.cursor, content))
-				finish = true
-			}
-		} else {
-			switch char {
-			case "\n":
-				lexer.line++
-				lexer.column = 1
-				if stringCloser == "\n" {
-					kind = target
-					finish = true
+		switch char {
+		case "_", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "a", "A", "c", "C", "d", "D", "f", "F":
+			switch kind {
+			case Integer | Float | ScientificFloat:
+				switch char {
+				case "_", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
+					content += char
+				default:
+					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
+					break tokenizingLoop
 				}
-			case stringCloser:
-				kind = target
-				finish = true
-			case "\\":
-				escaped = true
+			case HexadecimalInteger:
+				content += char
+			case BinaryInteger:
+				switch char {
+				case "_", "1", "0":
+					content += char
+				default:
+					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
+					break tokenizingLoop
+				}
+			case OctalInteger:
+				switch char {
+				case "_", "1", "2", "3", "4", "5", "6", "7", "0":
+					content += char
+				default:
+					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
+					break tokenizingLoop
+				}
 			}
-		}
-		content += char
-		lexer.column++
-	}
-	if kind != target {
-		errorMessage = errors.New(fmt.Sprintf("No closing at index: %d with value %s", lexer.cursor, content))
-	}
-	return content, kind, errorMessage
-}
+		case ".":
+			if kind == Float || kind == ScientificFloat {
+				break tokenizingLoop
+			}
+			kind = Float
+			content += "."
+		case "x", "X":
+			if content != "0" {
+				tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
+				break tokenizingLoop
+			}
+			if lexer.cursor+1 < lexer.sourceCodeLength {
+				nextChar := string(lexer.sourceCode[lexer.cursor+1])
+				switch nextChar {
+				case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "a", "A", "b", "B", "c", "C", "d", "D", "e", "E", "f", "F":
+					kind = HexadecimalInteger
+					content += "x"
+					lexer.cursor++
+				default:
+					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
+					break tokenizingLoop
+				}
+			}
+		case "b", "B":
+			if kind == HexadecimalInteger {
+				content += "b"
+				continue
+			}
+			if content != "0" {
+				tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
+				break tokenizingLoop
+			}
+			if lexer.cursor+1 < lexer.sourceCodeLength {
+				nextChar := string(lexer.sourceCode[lexer.cursor+1])
+				switch nextChar {
+				case "1", "0":
+					kind = BinaryInteger
+					content += "b"
+					lexer.cursor++
+				default:
+					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
+					break tokenizingLoop
+				}
+			}
+		case "o", "O":
+			if content != "0" {
+				tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
+				break tokenizingLoop
+			}
+			if lexer.cursor+1 < lexer.sourceCodeLength {
+				nextChar := string(lexer.sourceCode[lexer.cursor+1])
+				switch nextChar {
+				case "1", "2", "3", "4", "5", "6", "7", "0":
+					kind = OctalInteger
+					content += "o"
+					lexer.cursor++
+				default:
+					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
+					break tokenizingLoop
+				}
+			}
+		case "e", "E":
+			if kind == HexadecimalInteger {
+				content += "e"
+				continue
+			}
+			if kind != Float && kind != Integer {
+				tokenizingError = errors.New(fmt.Sprintf("Multiple scientific syntax in the same number at index: %d", lexer.cursor))
+				break tokenizingLoop
+			}
+			if lexer.cursor+2 < lexer.sourceCodeLength {
+				nextChar := string(lexer.sourceCode[lexer.cursor+1])
+				nextNextChar := string(lexer.sourceCode[lexer.cursor+2])
+				if nextChar == "-" {
+					switch nextNextChar {
+					case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
+						content += "e-" + nextNextChar
+						kind = ScientificFloat
+						lexer.cursor += 2
+						continue
+					}
+				}
+				tokenizingError = errors.New(fmt.Sprintf("Invalid scientific number declaration at index: %d", lexer.cursor))
+				break tokenizingLoop
+			}
+			tokenizingError = errors.New(fmt.Sprintf("Incoplete Scientific number declaration at index: %d", lexer.cursor))
+			break tokenizingLoop
 
-func (lexer *Lexer) tokenizeModulusExpression() (string, rune, error) {
-	content := "%"
-	var computedContent string
-	var kind rune = Unknown
-	var errorMessage error
-	if lexer.cursor+2 >= lexer.sourceCodeLength {
-		errorMessage = errors.New(fmt.Sprintf("invalid modulus expression at index: %d", lexer.cursor))
-	} else {
-		typeOfModulusExpression := string(lexer.sourceCode[lexer.cursor])
-		lexer.cursor++
-		switch typeOfModulusExpression {
-		case "q", "Q": // String2
-			content += typeOfModulusExpression
-			computedContent, kind, errorMessage = lexer.tokenizeSpecial(String2)
-		case "x", "X": // CommandOutput2
-			content += typeOfModulusExpression
-			computedContent, kind, errorMessage = lexer.tokenizeSpecial(CommandOutput2)
-		case "r": // Regexp2
-			break
-		case "w": // Array 2
-			break
 		default:
-			if isPunctuationPattern.MatchString(typeOfModulusExpression) { // String2
-				lexer.cursor--
-				content += typeOfModulusExpression
-				computedContent, kind, errorMessage = lexer.tokenizeSpecial(String2)
-			} else {
-				errorMessage = errors.New(fmt.Sprintf("Unknown special pattern char at index %d", lexer.cursor))
-			}
+			break tokenizingLoop
 		}
 	}
-	content += computedContent
-	return content, kind, errorMessage
+	if kind == Float && content[len(content)-1] == '.' {
+		content = content[:len(content)-1]
+		kind = Integer
+		lexer.cursor--
+	}
+	return content, kind, tokenizingError
 }
 
-func (lexer *Lexer) Next() (*Token, error) {
+var isNameChar = regexp.MustCompile("[_a-zA-Z0-9]")
+var isConstant = regexp.MustCompile("[A-Z]+[_a-zA-Z0-9]*")
+
+func GuessKind(buffer string) rune {
+	switch buffer {
+	case Super, End, If, Else, Elif, While, For, Until, Switch, Case, Yield, Return, Retry, Break, Redo, Module, Def, Lambda, Struct, Interface, Go, Class, Try, Except, Finally, And, Or, Xor, In, IsInstanceOf, When, Async, Await, BEGIN, END, Enum:
+		return Keyboard
+	}
+	if isConstant.MatchString(buffer) {
+		return ConstantKind
+	}
+	return IdentifierKind
+}
+
+func (lexer *Lexer) tokenizeChars(startingChar string) (string, rune, error) {
+	content := startingChar
+	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
+		char := string(lexer.sourceCode[lexer.cursor])
+		if isNameChar.MatchString(char) {
+			content += char
+		} else {
+			break
+		}
+	}
+	return content, GuessKind(content), nil
+}
+
+func (lexer *Lexer) next() (*Token, error) {
 	if lexer.peekToken != nil {
 		result := lexer.peekToken
 		lexer.peekToken = nil
@@ -157,41 +240,145 @@ func (lexer *Lexer) Next() (*Token, error) {
 			String: "EOF",
 			Kind:   EOF,
 			Line:   lexer.line,
-			Column: lexer.column,
-			Index:  [2]int{lexer.cursor, -1},
+			Index:  lexer.cursor,
 		}, nil
 	}
 	var tokenizingError error
 	var kind rune
 	var content string
-	column := lexer.column
 	line := lexer.line
-	index := [2]int{lexer.cursor, -1}
+	index := lexer.cursor
 	char := string(lexer.sourceCode[lexer.cursor])
 	lexer.cursor++
 	switch char {
 	case "\n", ";":
 		lexer.line++
-		lexer.column = 1
 		content = char
 		kind = Separator
 	case "'", "\"": // String1
-		content, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(char, String1)
-	case "%": // String2 or CommandOutput2 or Regex2 or Array2-Open
-		content, kind, tokenizingError = lexer.tokenizeModulusExpression()
+		content, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
 	case "`":
-		content, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(char, CommandOutput1)
+		content, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
+	case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
+		content, kind, tokenizingError = lexer.tokenizeNumeric(char)
+	case ":", ",", "(", ")", "[", "]", "{", "}", "$", ".":
+		lexer.line++
+		content = char
+		kind = Punctuation
+	case "*", "/":
+		content = char
+		kind = Operator
+		if lexer.cursor < lexer.sourceCodeLength {
+			nextChar := string(lexer.sourceCode[lexer.cursor])
+			if nextChar == char {
+				content += nextChar
+				lexer.cursor++
+				if lexer.cursor < lexer.sourceCodeLength {
+					nextNextChar := string(lexer.sourceCode[lexer.cursor])
+					if nextNextChar == "=" {
+						content += nextNextChar
+						kind = Assignment
+						lexer.cursor++
+					}
+				}
+			} else if nextChar == "=" {
+				kind = Assignment
+				content += nextChar
+				lexer.cursor++
+			}
+		}
+	case "+", "-", "%", "^", "&", "|", "!", "~":
+		content = char
+		kind = Operator
+		if lexer.cursor < lexer.sourceCodeLength {
+			nextChar := string(lexer.sourceCode[lexer.cursor])
+			if nextChar == "=" {
+				kind = Assignment
+				content += nextChar
+				lexer.cursor++
+			}
+		}
+	case "<", ">":
+		content = char
+		kind = Comparator
+		if lexer.cursor < lexer.sourceCodeLength {
+			nextChar := string(lexer.sourceCode[lexer.cursor])
+			if nextChar == char {
+				content += nextChar
+				kind = Operator
+				lexer.cursor++
+				if lexer.cursor < lexer.sourceCodeLength {
+					nextNextChar := string(lexer.sourceCode[lexer.cursor])
+					if nextNextChar == "=" {
+						content += nextNextChar
+						kind = Assignment
+						lexer.cursor++
+					}
+				}
+			} else if nextChar == "=" {
+				content += nextChar
+				lexer.cursor++
+			}
+		}
+	case "=":
+		content += char
+		kind = Assignment
+		if lexer.cursor+1 < lexer.sourceCodeLength {
+			nextChar := string(lexer.sourceCode[lexer.cursor+1])
+			if nextChar == "=" {
+				kind = Comparator
+				content += nextChar
+				lexer.cursor++
+			}
+		}
+	case " ", "\t":
+		kind = Whitespace
+		content = char
 	default:
-		panic("Unknown Token char")
+		content, kind, tokenizingError = lexer.tokenizeChars(char)
 	}
-	index[1] = lexer.cursor
 	return &Token{
 		String: content,
 		Kind:   kind,
 		Line:   line,
-		Column: column,
 		Index:  index,
 	}, tokenizingError
+}
+
+/*
+	This function will yield just the necessary token, this means not repeated separators
+*/
+func (lexer *Lexer) Next() (*Token, error) {
+nextTokenLoop:
+	for ; lexer.HasNext(); {
+		token, tokenizationError := lexer.next()
+		if tokenizationError != nil {
+			return nil, tokenizationError
+		}
+		switch token.Kind {
+		case Whitespace:
+			continue
+		case Separator:
+			if lexer.lastToken == nil {
+				continue
+			}
+			switch lexer.lastToken.Kind {
+			case Operator:
+				continue
+			case Comparator:
+				continue
+			case Separator:
+				continue
+			default:
+				lexer.lastToken = token
+				break nextTokenLoop
+			}
+		default:
+			lexer.lastToken = token
+			break nextTokenLoop
+		}
+	}
+	return lexer.lastToken, nil
 }
 
 func (lexer *Lexer) Peek() (*Token, error) {
@@ -207,5 +394,5 @@ func (lexer *Lexer) Peek() (*Token, error) {
 }
 
 func NewLexer(sourceCode string) *Lexer {
-	return &Lexer{0, 1, 1, sourceCode, len(sourceCode), false, nil}
+	return &Lexer{0, nil, 1, sourceCode, len(sourceCode), false, nil}
 }

@@ -19,40 +19,42 @@ func test(t *testing.T, samples []string) {
 	}
 }
 
-var string1Samples = []string{
+var stringSamples = []string{
 	"\"this is a string expression\n\"",
 	"\"concat#{foobar}\"",
 	"'concat#{foobar}'",
 }
 
-func TestString1(t *testing.T) {
-	test(t, string1Samples)
+func TestString(t *testing.T) {
+	test(t, stringSamples)
 }
 
-var string2Samples = []string{
-	"%q!I said, \"You said, 'She said it.'\"!",
-	"%!I said, \"You said, 'She said it.'\"!",
-	"%Q('This is it.'\\n)",
-}
-
-func TestString2(t *testing.T) {
-	test(t, string2Samples)
-}
-
-var commandOutput1Samples = []string{
+var commandOutputSamples = []string{
 	"`date`",
 	"`whoami\ndate`",
 }
 
-func TestCommandOutput1(t *testing.T) {
-	test(t, commandOutput1Samples)
+func TestCommandOutput(t *testing.T) {
+	test(t, commandOutputSamples)
 }
 
-var commandOutput2Samples = []string{
-	"%x{Hello}",
-	"%x\nhello\n",
+var numericSamples = []string{
+	"1\n",                   // Integer
+	"0.1234\n",              // Float
+	"1e-234\n",              // Scientific Number
+	"0x34587_345798923",     // Hexadecimal Number
+	"0b0010100100101_1001",  //  Binary Number
+	"0x0004357_435345 << 1", // Octal Number
 }
 
-func TestCommandOutput2(t *testing.T) {
-	test(t, commandOutput2Samples)
+func TestNumeric(t *testing.T) {
+	test(t, numericSamples)
+}
+
+var complexSamples = []string{
+	"for a in range(1, 2)\n1-\n2*\n4\nend\n",
+}
+
+func TestComplex(t *testing.T) {
+	test(t, complexSamples)
 }
