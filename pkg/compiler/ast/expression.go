@@ -4,6 +4,26 @@ type Expression interface {
 	Node
 }
 
+type ArrayExpression struct {
+	Expression
+	Values []Expression
+}
+
+type TupleExpression struct {
+	Expression
+	Values []Expression
+}
+
+type KeyValue struct {
+	Key   Expression
+	Value Expression
+}
+
+type HashExpression struct {
+	Expression
+	Values []KeyValue
+}
+
 type Identifier struct {
 	Expression
 	String string
@@ -64,26 +84,6 @@ type IndexExpression struct {
 	Index  [3]Expression
 }
 
-type GoExpression struct {
-	Expression
-	FunctionInvocation Expression
-}
-
-type ReturnExpression struct {
-	Expression
-	Results []Expression
-}
-
-type YieldExpression struct {
-	Expression
-	Results []Expression
-}
-
-type SuperInvocationExpression struct {
-	Expression
-	Arguments []Expression
-}
-
 type AwaitExpression struct {
 	Expression
 	X Expression
@@ -101,23 +101,4 @@ type OneLineUnlessExpression struct {
 	Result     Expression
 	Condition  Expression
 	ElseResult Expression
-}
-
-type RetryExpression struct {
-	Expression
-	Target Identifier
-}
-
-type BreakExpression struct {
-	Expression
-	Target Identifier
-}
-
-type RedoExpression struct {
-	Expression
-	Target Identifier
-}
-
-type PassExpression struct {
-	Expression
 }

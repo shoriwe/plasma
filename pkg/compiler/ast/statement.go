@@ -4,6 +4,13 @@ type Statement interface {
 	Node
 }
 
+type AssignStatement struct {
+	Statement
+	LeftHandSide   []Expression
+	AssignOperator string
+	RightHandSide  []Expression
+}
+
 type WhileLoopStatement struct {
 	Statement
 	Name      Identifier
@@ -129,4 +136,43 @@ type BeginStatement struct {
 type EndStatement struct {
 	Statement
 	Body []Node
+}
+
+type GoExpression struct {
+	Statement
+	FunctionInvocation Expression
+}
+
+type ReturnExpression struct {
+	Statement
+	Results []Expression
+}
+
+type YieldExpression struct {
+	Statement
+	Results []Expression
+}
+
+type SuperInvocationExpression struct {
+	Statement
+	Arguments []Expression
+}
+
+type RetryExpression struct {
+	Statement
+	Target Identifier
+}
+
+type BreakExpression struct {
+	Statement
+	Target Identifier
+}
+
+type RedoExpression struct {
+	Statement
+	Target Identifier
+}
+
+type PassExpression struct {
+	Statement
 }

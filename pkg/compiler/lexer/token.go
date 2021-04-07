@@ -81,4 +81,5 @@ var (
 	BEGIN        = "BEGIN"
 	END          = "END"
 	Enum         = "enum"
+	Not          = "not"
 )

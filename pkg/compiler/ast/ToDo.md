@@ -1,5 +1,11 @@
 # Pending Expressions
 
+## Containers
+
+- [X] Array
+- [X] Tuple
+- [X] Hash
+
 ## Literals
 
 - [X] String
@@ -18,6 +24,7 @@
 
 - [X] !
 - [X] ~
+- [X] not
 
 ### Binary And Unary Operators
 
@@ -27,7 +34,8 @@
 ### Binary Operators
 
 - [X] \*
-- [X] \\
+- [X] /
+- [X] //
 - [X] \*\*
 - [X] %
 - [X] ^
@@ -36,6 +44,7 @@
 - [X] <<
 - [X] \>\>
 - [X] ==
+- [X] !=
 - [X] \>=
 - [X] <=
 - [X] And
@@ -52,15 +61,7 @@
 - [X] Selector
 - [X] Method Invocation
 - [X] Index
-- [X] Go
-- [X] Return
-- [X] Yield
-- [X] Super Invocation
 - [X] Await
-- [X] Retry
-- [X] Break
-- [X] Redo
-- [X] Pass
 
 ## One liner
 
@@ -68,6 +69,10 @@
 - [X] One line unless statement
 
 # Pending Statements
+
+## Basic
+
+- [X] Assign
 
 ## Loops
 
@@ -99,3 +104,14 @@
 
 - [X] BEGIN
 - [X] END
+
+## Other statements
+
+- [X] Go
+- [X] Super Invocation
+- [X] Retry
+- [X] Break
+- [X] Redo
+- [X] Return
+- [X] Yield
+- [X] Pass

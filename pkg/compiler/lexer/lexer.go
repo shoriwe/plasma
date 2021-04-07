@@ -204,9 +204,9 @@ tokenizingLoop:
 var isNameChar = regexp.MustCompile("[_a-zA-Z0-9]")
 var isConstant = regexp.MustCompile("[A-Z]+[_a-zA-Z0-9]*")
 
-func GuessKind(buffer string) rune {
+func guessKind(buffer string) rune {
 	switch buffer {
-	case Pass, Super, End, If, Else, Elif, While, For, Until, Switch, Case, Yield, Return, Retry, Break, Redo, Module, Def, Lambda, Struct, Interface, Go, Class, Try, Except, Finally, And, Or, Xor, In, IsInstanceOf, Async, Await, BEGIN, END, Enum:
+	case Pass, Super, End, If, Else, Elif, While, For, Until, Switch, Case, Yield, Return, Retry, Break, Redo, Module, Def, Lambda, Struct, Interface, Go, Class, Try, Except, Finally, And, Or, Xor, In, IsInstanceOf, Async, Await, BEGIN, END, Enum, Not:
 		return Keyboard
 	}
 	if isConstant.MatchString(buffer) {
@@ -225,7 +225,7 @@ func (lexer *Lexer) tokenizeChars(startingChar string) (string, rune, error) {
 			break
 		}
 	}
-	return content, GuessKind(content), nil
+	return content, guessKind(content), nil
 }
 
 func (lexer *Lexer) next() (*Token, error) {
@@ -293,7 +293,11 @@ func (lexer *Lexer) next() (*Token, error) {
 		if lexer.cursor < lexer.sourceCodeLength {
 			nextChar := string(lexer.sourceCode[lexer.cursor])
 			if nextChar == "=" {
-				kind = Assignment
+				if char == "!" {
+					kind = Comparator
+				} else {
+					kind = Assignment
+				}
 				content += nextChar
 				lexer.cursor++
 			}

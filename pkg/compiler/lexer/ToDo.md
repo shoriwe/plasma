@@ -64,6 +64,7 @@
 - [X] await
 - [X] BEGIN
 - [X] END
+- [X] Not
 
 ## Names
 
@@ -106,5 +107,6 @@
 ## Comparison
 
 - [X] ==
+- [X] !=
 - [X] \>=
 - [X] <=
