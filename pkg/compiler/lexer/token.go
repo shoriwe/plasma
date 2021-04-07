@@ -23,7 +23,7 @@ const (
 	Float
 	ScientificFloat
 	CommandOutput
-	RegularExpression
+	ByteString
 	Keyboard
 	EOF
 )
@@ -45,6 +45,7 @@ type Token struct {
 */
 
 var (
+	Pass         = "pass"
 	Super        = "super"
 	End          = "end"
 	If           = "if"

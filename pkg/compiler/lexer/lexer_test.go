@@ -23,6 +23,7 @@ var stringSamples = []string{
 	"\"this is a string expression\n\"",
 	"\"concat#{foobar}\"",
 	"'concat#{foobar}'",
+	"b\"Hello World\"",
 }
 
 func TestString(t *testing.T) {
@@ -52,7 +53,7 @@ func TestNumeric(t *testing.T) {
 }
 
 var complexSamples = []string{
-	"for a in range(1, 2)\n1-\n2*\n4\nend\n",
+	"for a in range(1, 2)\n1-\n2*\n4\npass\nend\n",
 }
 
 func TestComplex(t *testing.T) {

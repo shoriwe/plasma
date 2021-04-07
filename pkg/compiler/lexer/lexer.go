@@ -206,7 +206,7 @@ var isConstant = regexp.MustCompile("[A-Z]+[_a-zA-Z0-9]*")
 
 func GuessKind(buffer string) rune {
 	switch buffer {
-	case Super, End, If, Else, Elif, While, For, Until, Switch, Case, Yield, Return, Retry, Break, Redo, Module, Def, Lambda, Struct, Interface, Go, Class, Try, Except, Finally, And, Or, Xor, In, IsInstanceOf, When, Async, Await, BEGIN, END, Enum:
+	case Pass, Super, End, If, Else, Elif, While, For, Until, Switch, Case, Yield, Return, Retry, Break, Redo, Module, Def, Lambda, Struct, Interface, Go, Class, Try, Except, Finally, And, Or, Xor, In, IsInstanceOf, When, Async, Await, BEGIN, END, Enum:
 		return Keyboard
 	}
 	if isConstant.MatchString(buffer) {
@@ -335,6 +335,21 @@ func (lexer *Lexer) next() (*Token, error) {
 		kind = Whitespace
 		content = char
 	default:
+		if char == "b" {
+			if lexer.cursor < lexer.sourceCodeLength {
+				nextChar := string(lexer.sourceCode[lexer.cursor])
+				if nextChar == "'" || nextChar == "\"" {
+					var byteStringPart string
+					lexer.cursor++
+					byteStringPart, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(nextChar)
+					content = char + byteStringPart
+					if kind != Unknown {
+						kind = ByteString
+					}
+					break
+				}
+			}
+		}
 		content, kind, tokenizingError = lexer.tokenizeChars(char)
 	}
 	return &Token{

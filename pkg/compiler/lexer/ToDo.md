@@ -4,6 +4,7 @@
 
 - [X] Single Quote String
 - [X] Double Quote String
+- [X] Python Byte strings
 - [X] Command Output
 - [X] Integer
 - [X] Python like Hexadecimal Integer
@@ -27,6 +28,7 @@
 
 ## Keyboards
 
+- [X] Pass
 - [X] super
 - [X] End
 - [X] If
@@ -62,7 +64,7 @@
 - [X] await
 - [X] BEGIN
 - [X] END
-  
+
 ## Names
 
 - [X] Constants
