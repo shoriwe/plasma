@@ -206,7 +206,7 @@ var isConstant = regexp.MustCompile("[A-Z]+[_a-zA-Z0-9]*")
 
 func GuessKind(buffer string) rune {
 	switch buffer {
-	case Pass, Super, End, If, Else, Elif, While, For, Until, Switch, Case, Yield, Return, Retry, Break, Redo, Module, Def, Lambda, Struct, Interface, Go, Class, Try, Except, Finally, And, Or, Xor, In, IsInstanceOf, When, Async, Await, BEGIN, END, Enum:
+	case Pass, Super, End, If, Else, Elif, While, For, Until, Switch, Case, Yield, Return, Retry, Break, Redo, Module, Def, Lambda, Struct, Interface, Go, Class, Try, Except, Finally, And, Or, Xor, In, IsInstanceOf, Async, Await, BEGIN, END, Enum:
 		return Keyboard
 	}
 	if isConstant.MatchString(buffer) {

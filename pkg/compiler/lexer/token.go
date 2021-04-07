@@ -76,7 +76,6 @@ var (
 	Xor          = "xor"
 	In           = "in"
 	IsInstanceOf = "isinstanceof"
-	When         = "when"
 	Async        = "async"
 	Await        = "await"
 	BEGIN        = "BEGIN"
