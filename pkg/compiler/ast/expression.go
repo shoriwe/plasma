@@ -32,7 +32,7 @@ type Identifier struct {
 type BasicLiteralExpression struct {
 	Expression
 	String string
-	Kind   rune
+	Kind   int
 }
 
 type BinaryExpression struct {
