@@ -20,9 +20,9 @@ func (lexer *Lexer) HasNext() bool {
 	return !lexer.complete
 }
 
-func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, rune, error) {
+func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, int, error) {
 	content := stringOpener
-	var target rune
+	var target int
 	switch stringOpener {
 	case "'":
 		target = SingleQuoteString
@@ -31,7 +31,7 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, 
 	case "`":
 		target = CommandOutput
 	}
-	var kind rune = Unknown
+	var kind = Unknown
 	var tokenizingError error
 	escaped := false
 	finish := false
@@ -64,9 +64,9 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, 
 	return content, kind, tokenizingError
 }
 
-func (lexer *Lexer) tokenizeNumeric(firstDigit string) (string, rune, error) {
+func (lexer *Lexer) tokenizeNumeric(firstDigit string) (string, int, error) {
 	content := firstDigit
-	var kind rune = Integer
+	var kind = Integer
 	var tokenizingError error
 tokenizingLoop:
 	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
@@ -202,20 +202,88 @@ tokenizingLoop:
 }
 
 var isNameChar = regexp.MustCompile("[_a-zA-Z0-9]")
-var isConstant = regexp.MustCompile("[A-Z]+[_a-zA-Z0-9]*")
 
-func guessKind(buffer string) rune {
+func guessKind(buffer string) (int, int) {
 	switch buffer {
-	case Pass, Super, End, If, Else, Elif, While, For, Until, Switch, Case, Yield, Return, Retry, Break, Redo, Module, Def, Lambda, Struct, Interface, Go, Class, Try, Except, Finally, And, Or, Xor, In, IsInstanceOf, Async, Await, BEGIN, END, Enum, Not:
-		return Keyboard
+	case PassString:
+		return Keyboard, Pass
+	case SuperString:
+		return Keyboard, Super
+	case EndString:
+		return Keyboard, End
+	case IfString:
+		return Keyboard, If
+	case ElseString:
+		return Keyboard, Else
+	case ElifString:
+		return Keyboard, Elif
+	case WhileString:
+		return Keyboard, While
+	case ForString:
+		return Keyboard, For
+	case UntilString:
+		return Keyboard, Until
+	case SwitchString:
+		return Keyboard, Switch
+	case CaseString:
+		return Keyboard, Case
+	case YieldString:
+		return Keyboard, Yield
+	case ReturnString:
+		return Keyboard, Return
+	case RetryString:
+		return Keyboard, Retry
+	case BreakString:
+		return Keyboard, Break
+	case RedoString:
+		return Keyboard, Redo
+	case ModuleString:
+		return Keyboard, Module
+	case DefString:
+		return Keyboard, Def
+	case LambdaString:
+		return Keyboard, Lambda
+	case StructString:
+		return Keyboard, Struct
+	case InterfaceString:
+		return Keyboard, Interface
+	case GoString:
+		return Keyboard, Go
+	case ClassString:
+		return Keyboard, Class
+	case TryString:
+		return Keyboard, Try
+	case ExceptString:
+		return Keyboard, Except
+	case FinallyString:
+		return Keyboard, Finally
+	case AndString:
+		return Keyboard, And
+	case OrString:
+		return Keyboard, Or
+	case XorString:
+		return Keyboard, Xor
+	case InString:
+		return Keyboard, In
+	case IsInstanceOfString:
+		return Keyboard, IsInstanceOf
+	case AsyncString:
+		return Keyboard, Async
+	case AwaitString:
+		return Keyboard, Await
+	case BEGINString:
+		return Keyboard, BEGIN
+	case ENDString:
+		return Keyboard, END
+	case EnumString:
+		return Keyboard, Enum
+	case NotString:
+		return Keyboard, Not
 	}
-	if isConstant.MatchString(buffer) {
-		return ConstantKind
-	}
-	return IdentifierKind
+	return IdentifierKind, -1
 }
 
-func (lexer *Lexer) tokenizeChars(startingChar string) (string, rune, error) {
+func (lexer *Lexer) tokenizeChars(startingChar string) (string, int, int, error) {
 	content := startingChar
 	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
 		char := string(lexer.sourceCode[lexer.cursor])
@@ -225,9 +293,66 @@ func (lexer *Lexer) tokenizeChars(startingChar string) (string, rune, error) {
 			break
 		}
 	}
-	return content, guessKind(content), nil
+	kind, directValue := guessKind(content)
+	return content, kind, directValue, nil
 }
 
+func (lexer *Lexer) tokenizeComment() (string, int, error) {
+	content := ""
+	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
+		char := string(lexer.sourceCode[lexer.cursor])
+		if char == "\n" {
+			break
+		}
+		content += char
+	}
+	return content, Comment, nil
+}
+
+func (lexer *Lexer) tokenizeRepeatableOperator(char string, singleDirectValue int, doubleDirectValue int, assignSingleDirectValue int, assignDoubleDirectValue int) (string, int, int) {
+	content := char
+	kind := Operator
+	directValue := singleDirectValue
+	if lexer.cursor < lexer.sourceCodeLength {
+		nextChar := string(lexer.sourceCode[lexer.cursor])
+		if nextChar == char {
+			content += nextChar
+			lexer.cursor++
+			directValue = doubleDirectValue
+			if lexer.cursor < lexer.sourceCodeLength {
+				nextNextChar := string(lexer.sourceCode[lexer.cursor])
+				if nextNextChar == "=" {
+					content += nextNextChar
+					kind = Assignment
+					lexer.cursor++
+					directValue = assignDoubleDirectValue
+				}
+			}
+		} else if nextChar == "=" {
+			kind = Assignment
+			content += nextChar
+			lexer.cursor++
+			directValue = assignSingleDirectValue
+		}
+	}
+	return content, kind, directValue
+}
+
+func (lexer *Lexer) tokenizeNotRepeatableOperator(char string, single int, assign int) (string, int, int) {
+	content := char
+	kind := Operator
+	directValue := single
+	if lexer.cursor < lexer.sourceCodeLength {
+		nextChar := string(lexer.sourceCode[lexer.cursor])
+		if nextChar == "=" {
+			kind = Assignment
+			directValue = assign
+			content += nextChar
+			lexer.cursor++
+		}
+	}
+	return content, kind, directValue
+}
 func (lexer *Lexer) next() (*Token, error) {
 	if lexer.peekToken != nil {
 		result := lexer.peekToken
@@ -244,100 +369,117 @@ func (lexer *Lexer) next() (*Token, error) {
 		}, nil
 	}
 	var tokenizingError error
-	var kind rune
+	var kind int
+	var directValue int
 	var content string
 	line := lexer.line
 	index := lexer.cursor
 	char := string(lexer.sourceCode[lexer.cursor])
 	lexer.cursor++
 	switch char {
-	case "\n", ";":
+	case NewLineString:
 		lexer.line++
 		content = char
 		kind = Separator
+		directValue = NewLine
+	case SemiColonString:
+		content = char
+		kind = Separator
+		directValue = SemiColon
+	case ColonString:
+		content = char
+		directValue = Colon
+		kind = Punctuation
+	case CommaString:
+		content = char
+		directValue = Comma
+		kind = Punctuation
+	case OpenParenthesesString:
+		content = char
+		directValue = OpenParentheses
+		kind = Punctuation
+	case CloseParenthesesString:
+		content = char
+		directValue = CloseParentheses
+		kind = Punctuation
+	case OpenSquareBracketString:
+		content = char
+		directValue = OpenSquareBracket
+		kind = Punctuation
+	case CloseSquareBracketString:
+		content = char
+		directValue = CloseSquareBracket
+		kind = Punctuation
+	case OpenBraceString:
+		content = char
+		directValue = OpenBrace
+		kind = Punctuation
+	case CloseBraceString:
+		content = char
+		directValue = CloseBrace
+		kind = Punctuation
+	case DollarSignString:
+		content = char
+		directValue = DollarSign
+		kind = Punctuation
+	case DotString:
+		content = char
+		directValue = Dot
+		kind = Punctuation
+	case WhiteSpaceString:
+		directValue = Whitespace
+		kind = Whitespace
+		content = char
+	case TabString:
+		directValue = Tab
+		kind = Whitespace
+		content = char
+	case CommentString:
+		content, kind, tokenizingError = lexer.tokenizeComment()
+		content = "#" + content
 	case "'", "\"": // String1
 		content, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
 	case "`":
 		content, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
 	case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
 		content, kind, tokenizingError = lexer.tokenizeNumeric(char)
-	case ":", ",", "(", ")", "[", "]", "{", "}", "$", ".":
-		lexer.line++
+	case StarString:
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Star, PowerOf, StarAssign, PowerOfAssign)
+	case DivString:
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Div, FloorDiv, DivAssign, FloorDivAssign)
+	case LessThanString:
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, LessThan, BitwiseLeft, LessOrEqualThan, BitwiseLeftAssign)
+	case GreatThanString:
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, GreaterThan, BitwiseRight, GreaterOrEqualThan, BitwiseRightAssign)
+	case AddString:
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Add, AddAssign)
+	case SubString:
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Sub, SubAssign)
+	case ModulusString:
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Modulus, ModulusAssign)
+	case BitwiseXorString:
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, BitwiseXor, BitwiseXorAssign)
+	case BitWiseAndString:
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, BitWiseAnd, BitWiseAndAssign)
+	case BitwiseOrString:
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, BitwiseOr, BitwiseOrAssign)
+	case SignNotString:
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, SignNot, NotEqual)
+	case NegateBitsString:
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, NegateBits, NegateBitsAssign)
+	case EqualsString:
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Assign, Equals)
+	case "\\":
 		content = char
-		kind = Punctuation
-	case "*", "/":
-		content = char
-		kind = Operator
 		if lexer.cursor < lexer.sourceCodeLength {
 			nextChar := string(lexer.sourceCode[lexer.cursor])
-			if nextChar == char {
-				content += nextChar
-				lexer.cursor++
-				if lexer.cursor < lexer.sourceCodeLength {
-					nextNextChar := string(lexer.sourceCode[lexer.cursor])
-					if nextNextChar == "=" {
-						content += nextNextChar
-						kind = Assignment
-						lexer.cursor++
-					}
-				}
-			} else if nextChar == "=" {
-				kind = Assignment
-				content += nextChar
-				lexer.cursor++
+			if nextChar != "\n" {
+				return nil, errors.New("pending line escape not followed by a new line")
 			}
+			content += "\n"
+			lexer.cursor++
 		}
-	case "+", "-", "%", "^", "&", "|", "!", "~":
-		content = char
-		kind = Operator
-		if lexer.cursor < lexer.sourceCodeLength {
-			nextChar := string(lexer.sourceCode[lexer.cursor])
-			if nextChar == "=" {
-				if char == "!" {
-					kind = Comparator
-				} else {
-					kind = Assignment
-				}
-				content += nextChar
-				lexer.cursor++
-			}
-		}
-	case "<", ">":
-		content = char
-		kind = Comparator
-		if lexer.cursor < lexer.sourceCodeLength {
-			nextChar := string(lexer.sourceCode[lexer.cursor])
-			if nextChar == char {
-				content += nextChar
-				kind = Operator
-				lexer.cursor++
-				if lexer.cursor < lexer.sourceCodeLength {
-					nextNextChar := string(lexer.sourceCode[lexer.cursor])
-					if nextNextChar == "=" {
-						content += nextNextChar
-						kind = Assignment
-						lexer.cursor++
-					}
-				}
-			} else if nextChar == "=" {
-				content += nextChar
-				lexer.cursor++
-			}
-		}
-	case "=":
-		content += char
-		kind = Assignment
-		if lexer.cursor+1 < lexer.sourceCodeLength {
-			nextChar := string(lexer.sourceCode[lexer.cursor+1])
-			if nextChar == "=" {
-				kind = Comparator
-				content += nextChar
-				lexer.cursor++
-			}
-		}
-	case " ", "\t":
-		kind = Whitespace
-		content = char
+		kind = PendingEscape
 	default:
 		if char == "b" {
 			if lexer.cursor < lexer.sourceCodeLength {
@@ -354,13 +496,14 @@ func (lexer *Lexer) next() (*Token, error) {
 				}
 			}
 		}
-		content, kind, tokenizingError = lexer.tokenizeChars(char)
+		content, kind, directValue, tokenizingError = lexer.tokenizeChars(char)
 	}
 	return &Token{
-		String: content,
-		Kind:   kind,
-		Line:   line,
-		Index:  index,
+		DirectValue: directValue,
+		String:      content,
+		Kind:        kind,
+		Line:        line,
+		Index:       index,
 	}, tokenizingError
 }
 
