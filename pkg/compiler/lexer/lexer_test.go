@@ -45,7 +45,7 @@ var stringSamples = map[string][]*Token{
 		},
 		{
 			String:      "EOF",
-			DirectValue: 0,
+			DirectValue: EOF,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -167,7 +167,7 @@ var numericSamples = map[string][]*Token{
 		},
 		{
 			String:      "\n",
-			DirectValue: 0,
+			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
 			Column:      0,
@@ -175,7 +175,7 @@ var numericSamples = map[string][]*Token{
 		},
 		{
 			String:      "EOF",
-			DirectValue: 0,
+			DirectValue: EOF,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -193,7 +193,7 @@ var numericSamples = map[string][]*Token{
 		},
 		{
 			String:      "\n",
-			DirectValue: 0,
+			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
 			Column:      0,
@@ -201,7 +201,7 @@ var numericSamples = map[string][]*Token{
 		},
 		{
 			String:      "EOF",
-			DirectValue: 0,
+			DirectValue: EOF,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -219,7 +219,7 @@ var numericSamples = map[string][]*Token{
 		},
 		{
 			String:      "\n",
-			DirectValue: 0,
+			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
 			Column:      0,
@@ -227,7 +227,7 @@ var numericSamples = map[string][]*Token{
 		},
 		{
 			String:      "EOF",
-			DirectValue: 0,
+			DirectValue: EOF,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -281,7 +281,7 @@ var numericSamples = map[string][]*Token{
 		},
 		{
 			String:      "<<",
-			DirectValue: 0,
+			DirectValue: BitwiseLeft,
 			Kind:        Operator,
 			Line:        0,
 			Column:      0,
@@ -315,7 +315,7 @@ var numericSamples = map[string][]*Token{
 		},
 		{
 			String:      "//",
-			DirectValue: 0,
+			DirectValue: FloorDiv,
 			Kind:        Operator,
 			Line:        0,
 			Column:      0,
@@ -349,7 +349,7 @@ var numericSamples = map[string][]*Token{
 		},
 		{
 			String:      "**",
-			DirectValue: 0,
+			DirectValue: PowerOf,
 			Kind:        Operator,
 			Line:        0,
 			Column:      0,
@@ -398,7 +398,7 @@ var complexSamples = map[string][]*Token{
 		},
 		{
 			String:      "in",
-			DirectValue: 0,
+			DirectValue: In,
 			Kind:        Keyboard,
 			Line:        0,
 			Column:      0,
@@ -502,7 +502,7 @@ var complexSamples = map[string][]*Token{
 		},
 		{
 			String:      "\n",
-			DirectValue: 0,
+			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
 			Column:      0,
@@ -534,7 +534,7 @@ var complexSamples = map[string][]*Token{
 		},
 		{
 			String:      "\n",
-			DirectValue: 0,
+			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
 			Column:      0,
@@ -542,7 +542,7 @@ var complexSamples = map[string][]*Token{
 		},
 		{
 			String:      "EOF",
-			DirectValue: 0,
+			DirectValue: EOF,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,

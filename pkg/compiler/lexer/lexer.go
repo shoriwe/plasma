@@ -431,8 +431,8 @@ func (lexer *Lexer) next() (*Token, error) {
 	}
 	var tokenizingError error
 	var kind int
-	var directValue int
 	var content string
+	directValue := Unknown
 	line := lexer.line
 	index := lexer.cursor
 	char := string(lexer.sourceCode[lexer.cursor])
