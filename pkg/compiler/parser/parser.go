@@ -1,72 +1,75 @@
 package parser
 
 import (
-	"errors"
 	"github.com/shoriwe/gruby/pkg/compiler/ast"
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
 )
 
+var binaryPrecedence = []string{
+	"or",
+	"and",
+	"not",
+	"==", "!=", ">", ">=", "<", "<=", "isinstanceof", "in",
+	"|",
+	"^",
+	"&",
+	"<<", ">>",
+	"+", "-",
+	"*", "/", "//", "%",
+	"**",
+}
+
 type Parser struct {
-	lexer    *lexer.Lexer
-	complete bool
+	lexer        *lexer.Lexer
+	complete     bool
+	currentToken *lexer.Token
+	nextToken    *lexer.Token
 }
 
 func (parser *Parser) hasNext() bool {
 	return !parser.complete
 }
 
-func (parser *Parser) next() (ast.Node, error) {
-	if !parser.lexer.HasNext() {
+func (parser *Parser) next() error {
+	if parser.lexer.HasNext() {
+		token_, tokenizingError := parser.lexer.Next()
+		if tokenizingError != nil {
+			return tokenizingError
+		}
+		parser.currentToken = token_
+		if parser.lexer.HasNext() {
+			token_, tokenizingError = parser.lexer.Peek()
+			if tokenizingError != nil {
+				return tokenizingError
+			}
+			parser.nextToken = token_
+		}
+	} else {
 		parser.complete = true
-		return nil, nil
 	}
-	token, tokenizingError := parser.lexer.Next()
-	if tokenizingError != nil {
-		parser.complete = true
-		return nil, tokenizingError
-	}
-	var node ast.Node
-	var parsingError error
-	switch token.Kind {
-	case lexer.CommandOutput,
-		lexer.SingleQuoteString,
-		lexer.DoubleQuoteString,
-		lexer.ByteString,
-		lexer.Integer,
-		lexer.HexadecimalInteger,
-		lexer.BinaryInteger,
-		lexer.OctalInteger,
-		lexer.Float,
-		lexer.ScientificFloat:
-	}
-	return node, parsingError
+	return nil
+}
+
+func (parser *Parser) updateState() {
+	parser.complete = true
+}
+
+func (parser *Parser) parseKeyboardStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseLiteral() (ast.Expression, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseAssignStatementOrExpression() (ast.Node, error) {
+	return nil, nil
 }
 
 func (parser *Parser) Parse() (*ast.Program, error) {
-	program := &ast.Program{}
-	for ; parser.hasNext(); {
-		node, parsingError := parser.next()
-		if parsingError != nil {
-			return nil, parsingError
-		}
-		switch node.(type) {
-		case *ast.BeginStatement:
-			if program.Begin != nil {
-				return nil, errors.New("found multiples BEGIN statements in the code")
-			}
-			program.Begin = node.(*ast.BeginStatement)
-		case *ast.EndStatement:
-			if program.End != nil {
-				return nil, errors.New("found multiples END statements in the code")
-			}
-			program.End = node.(*ast.EndStatement)
-		default:
-			program.Body = append(program.Body, node)
-		}
-	}
-	return program, nil
+	return nil, nil
 }
 
 func NewParser(lexer_ *lexer.Lexer) *Parser {
-	return &Parser{lexer_, false}
+	return &Parser{lexer_, false, nil, nil}
 }

@@ -20,7 +20,7 @@ func test(t *testing.T, samples []string) {
 }
 
 var basicSamples = []string{
-	"hello = 1 + 2",
+	"a = 1",
 }
 
 func TestParseBasic(t *testing.T) {
