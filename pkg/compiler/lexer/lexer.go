@@ -6,6 +6,13 @@ import (
 	"regexp"
 )
 
+var (
+	hexDigitPattern    = regexp.MustCompile("[0-9a-fA-F]")
+	binaryDigitPattern = regexp.MustCompile("[01]")
+	octalDigitPattern  = regexp.MustCompile("[0-7]")
+	digitPattern       = regexp.MustCompile("[0-9]")
+)
+
 type Lexer struct {
 	cursor           int
 	lastToken        *Token
@@ -64,141 +71,195 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, 
 	return content, kind, tokenizingError
 }
 
-func (lexer *Lexer) tokenizeNumeric(firstDigit string) (string, int, error) {
-	content := firstDigit
-	var kind = Integer
-	var tokenizingError error
-tokenizingLoop:
+func (lexer *Lexer) tokenizeHexadecimal(letterX string) (string, int, error) {
+	result := "0" + letterX
+	if !(lexer.cursor < lexer.sourceCodeLength) {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	nextDigit := string(lexer.sourceCode[lexer.cursor])
+	if !hexDigitPattern.MatchString(nextDigit) {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	lexer.cursor++
+	result += nextDigit
 	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
-		char := string(lexer.sourceCode[lexer.cursor])
-		switch char {
-		case "_", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "a", "A", "c", "C", "d", "D", "f", "F":
-			switch kind {
-			case Integer | Float | ScientificFloat:
-				switch char {
-				case "_", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
-					content += char
-				default:
-					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
-					break tokenizingLoop
-				}
-			case HexadecimalInteger:
-				content += char
-			case BinaryInteger:
-				switch char {
-				case "_", "1", "0":
-					content += char
-				default:
-					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
-					break tokenizingLoop
-				}
-			case OctalInteger:
-				switch char {
-				case "_", "1", "2", "3", "4", "5", "6", "7", "0":
-					content += char
-				default:
-					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
-					break tokenizingLoop
-				}
-			}
-		case ".":
-			if kind == Float || kind == ScientificFloat {
-				break tokenizingLoop
-			}
-			kind = Float
-			content += "."
-		case "x", "X":
-			if content != "0" {
-				tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
-				break tokenizingLoop
-			}
-			if lexer.cursor+1 < lexer.sourceCodeLength {
-				nextChar := string(lexer.sourceCode[lexer.cursor+1])
-				switch nextChar {
-				case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "a", "A", "b", "B", "c", "C", "d", "D", "e", "E", "f", "F":
-					kind = HexadecimalInteger
-					content += "x"
-					lexer.cursor++
-				default:
-					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
-					break tokenizingLoop
-				}
-			}
-		case "b", "B":
-			if kind == HexadecimalInteger {
-				content += "b"
-				continue
-			}
-			if content != "0" {
-				tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
-				break tokenizingLoop
-			}
-			if lexer.cursor+1 < lexer.sourceCodeLength {
-				nextChar := string(lexer.sourceCode[lexer.cursor+1])
-				switch nextChar {
-				case "1", "0":
-					kind = BinaryInteger
-					content += "b"
-					lexer.cursor++
-				default:
-					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
-					break tokenizingLoop
-				}
-			}
-		case "o", "O":
-			if content != "0" {
-				tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
-				break tokenizingLoop
-			}
-			if lexer.cursor+1 < lexer.sourceCodeLength {
-				nextChar := string(lexer.sourceCode[lexer.cursor+1])
-				switch nextChar {
-				case "1", "2", "3", "4", "5", "6", "7", "0":
-					kind = OctalInteger
-					content += "o"
-					lexer.cursor++
-				default:
-					tokenizingError = errors.New(fmt.Sprintf("invalid numeric declaration at index: %d", lexer.cursor))
-					break tokenizingLoop
-				}
-			}
-		case "e", "E":
-			if kind == HexadecimalInteger {
-				content += "e"
-				continue
-			}
-			if kind != Float && kind != Integer {
-				tokenizingError = errors.New(fmt.Sprintf("Multiple scientific syntax in the same number at index: %d", lexer.cursor))
-				break tokenizingLoop
-			}
-			if lexer.cursor+2 < lexer.sourceCodeLength {
-				nextChar := string(lexer.sourceCode[lexer.cursor+1])
-				nextNextChar := string(lexer.sourceCode[lexer.cursor+2])
-				if nextChar == "-" {
-					switch nextNextChar {
-					case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
-						content += "e-" + nextNextChar
-						kind = ScientificFloat
-						lexer.cursor += 2
-						continue
-					}
-				}
-				tokenizingError = errors.New(fmt.Sprintf("Invalid scientific number declaration at index: %d", lexer.cursor))
-				break tokenizingLoop
-			}
-			tokenizingError = errors.New(fmt.Sprintf("Incoplete Scientific number declaration at index: %d", lexer.cursor))
-			break tokenizingLoop
+		nextDigit = string(lexer.sourceCode[lexer.cursor])
+		if !hexDigitPattern.MatchString(nextDigit) && nextDigit != "_" {
+			return result, HexadecimalInteger, nil
+		}
+		result += nextDigit
+	}
+	return result, HexadecimalInteger, nil
+}
 
-		default:
-			break tokenizingLoop
+func (lexer *Lexer) tokenizeBinary(letterB string) (string, int, error) {
+	result := "0" + letterB
+	if !(lexer.cursor < lexer.sourceCodeLength) {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	nextDigit := string(lexer.sourceCode[lexer.cursor])
+	if !binaryDigitPattern.MatchString(nextDigit) {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	lexer.cursor++
+	result += nextDigit
+	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
+		nextDigit = string(lexer.sourceCode[lexer.cursor])
+		if !binaryDigitPattern.MatchString(nextDigit) && nextDigit != "_" {
+			return result, BinaryInteger, nil
+		}
+		result += nextDigit
+	}
+	return result, BinaryInteger, nil
+}
+
+func (lexer *Lexer) tokenizeOctal(letterO string) (string, int, error) {
+	result := "0" + letterO
+	if !(lexer.cursor < lexer.sourceCodeLength) {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	nextDigit := string(lexer.sourceCode[lexer.cursor])
+	if !octalDigitPattern.MatchString(nextDigit) {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	lexer.cursor++
+	result += nextDigit
+	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
+		nextDigit = string(lexer.sourceCode[lexer.cursor])
+		if !octalDigitPattern.MatchString(nextDigit) && nextDigit != "_" {
+			return result, OctalInteger, nil
+		}
+		result += nextDigit
+	}
+	return result, OctalInteger, nil
+}
+
+func (lexer *Lexer) tokenizeScientificFloat(base string) (string, int, error) {
+	result := base
+	if !(lexer.cursor < lexer.sourceCodeLength) {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	direction := string(lexer.sourceCode[lexer.cursor])
+	if direction != "-" && direction != "+" {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	lexer.cursor++
+	// Ensure next is a number
+	if !(lexer.cursor < lexer.sourceCodeLength) {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	result += direction
+	nextDigit := string(lexer.sourceCode[lexer.cursor])
+	if !digitPattern.MatchString(nextDigit) {
+		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+	}
+	result += nextDigit
+	lexer.cursor++
+	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
+		nextDigit = string(lexer.sourceCode[lexer.cursor])
+		if !digitPattern.MatchString(nextDigit) && nextDigit != "_" {
+			return result, ScientificFloat, nil
+		}
+		result += nextDigit
+	}
+	return result, ScientificFloat, nil
+}
+
+func (lexer *Lexer) tokenizeFloat(base string) (string, int, error) {
+	if !(lexer.cursor < lexer.sourceCodeLength) {
+		lexer.cursor--
+		return base[:len(base)-1], Integer, nil
+	}
+	nextDigit := string(lexer.sourceCode[lexer.cursor])
+	if !digitPattern.MatchString(nextDigit) {
+		lexer.cursor--
+		return base[:len(base)-1], Integer, nil
+	}
+	lexer.cursor++
+	result := base + nextDigit
+	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
+		nextDigit = string(lexer.sourceCode[lexer.cursor])
+		if digitPattern.MatchString(nextDigit) || nextDigit == "_" {
+			result += nextDigit
+		} else if (nextDigit == "e") || (nextDigit == "E") {
+			return lexer.tokenizeScientificFloat(result + nextDigit)
+		} else {
+			break
 		}
 	}
-	if kind == Float && content[len(content)-1] == '.' {
-		content = content[:len(content)-1]
-		kind = Integer
-		lexer.cursor--
+	return result, Float, nil
+}
+
+func (lexer *Lexer) tokenizeInteger(base string) (string, int, error) {
+	if !(lexer.cursor < lexer.sourceCodeLength) {
+		return base, Integer, nil
 	}
-	return content, kind, tokenizingError
+	nextDigit := string(lexer.sourceCode[lexer.cursor])
+	if nextDigit == "." {
+		lexer.cursor++
+		return lexer.tokenizeFloat(base + nextDigit)
+	} else if nextDigit == "e" || nextDigit == "E" {
+		lexer.cursor++
+		return lexer.tokenizeScientificFloat(base + nextDigit)
+	} else if !digitPattern.MatchString(nextDigit) {
+		lexer.cursor--
+		return base, Integer, nil
+	}
+	lexer.cursor++
+	result := base
+	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
+		nextDigit = string(lexer.sourceCode[lexer.cursor])
+		if nextDigit == "e" || nextDigit == "E" {
+			return lexer.tokenizeScientificFloat(result + nextDigit)
+		} else if nextDigit == "." {
+			return lexer.tokenizeFloat(result + nextDigit)
+		} else if digitPattern.MatchString(nextDigit) || nextDigit == "_" {
+			result += nextDigit
+		} else {
+			break
+		}
+	}
+	return result, Integer, nil
+}
+
+func (lexer *Lexer) tokenizeNumeric(firstDigit string) (string, int, error) {
+	if !(lexer.cursor < lexer.sourceCodeLength) {
+		return firstDigit, Integer, nil
+	}
+	nextChar := string(lexer.sourceCode[lexer.cursor])
+	lexer.cursor++
+	switch firstDigit {
+	case "0": // In this scenario it can be a float,  scientific float, integer, hex integer, octal integer or binary integer
+		switch nextChar {
+		case "x", "X": // Hexadecimal
+			return lexer.tokenizeHexadecimal(nextChar)
+		case "b", "B": // Binary
+			return lexer.tokenizeBinary(nextChar)
+		case "o", "O": // Octal
+			return lexer.tokenizeOctal(nextChar)
+		case "e", "E": // Scientific float
+			return lexer.tokenizeScientificFloat(firstDigit + nextChar)
+		case ".": // Maybe a float
+			return lexer.tokenizeFloat(firstDigit + nextChar) // Integer, Float Or Scientific Float
+		default:
+			if digitPattern.MatchString(nextChar) || nextChar == "_" {
+				return lexer.tokenizeInteger(firstDigit + nextChar) // Integer, Float or Scientific Float
+			}
+		}
+	default:
+		switch nextChar {
+		case "e", "E": // Scientific float
+			return lexer.tokenizeScientificFloat(firstDigit + nextChar)
+		case ".": // Maybe a float
+			return lexer.tokenizeFloat(firstDigit + nextChar) // Integer, Float Or Scientific Float
+		default:
+			if digitPattern.MatchString(nextChar) || nextChar == "_" {
+				return lexer.tokenizeInteger(firstDigit + nextChar) // Integer, Float or Scientific Float
+			}
+		}
+	}
+	lexer.cursor--
+	return firstDigit, Integer, nil
 }
 
 var isNameChar = regexp.MustCompile("[_a-zA-Z0-9]")
