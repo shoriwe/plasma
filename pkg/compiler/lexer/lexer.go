@@ -429,10 +429,11 @@ func (lexer *Lexer) next() (*Token, error) {
 	if lexer.cursor == lexer.sourceCodeLength {
 		lexer.complete = true
 		return &Token{
-			String: "EOF",
-			Kind:   EOF,
-			Line:   lexer.line,
-			Index:  lexer.cursor,
+			String:      "EOF",
+			DirectValue: EOF,
+			Kind:        EOF,
+			Line:        lexer.line,
+			Index:       lexer.cursor,
 		}, nil
 	}
 	var tokenizingError error
