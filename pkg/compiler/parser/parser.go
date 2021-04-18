@@ -56,18 +56,25 @@ func (parser *Parser) peek() *lexer.Token {
 	return parser.nextToken
 }
 
-func (parser *Parser) checkKind(kind int) bool {
+func (parser *Parser) check(kind int) bool {
 	if parser.nextToken == nil {
 		return false
 	}
 	return parser.nextToken.Kind == kind
 }
 
-func (parser *Parser) checkDirectValue(directValue int) bool {
+func (parser *Parser) matchDirect(directValue int) bool {
 	if parser.nextToken == nil {
 		return false
 	}
 	return parser.nextToken.DirectValue == directValue
+}
+
+func (parser *Parser) matchString(value string) bool {
+	if parser.nextToken == nil {
+		return false
+	}
+	return parser.nextToken.String == value
 }
 
 func (parser *Parser) updateState() {
@@ -79,7 +86,10 @@ func (parser *Parser) parseKeyboardStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseLiteral() (ast.Expression, error) {
-	switch parser.currentToken.Kind {
+	if parser.currentToken.Kind != lexer.Literal {
+		return nil, errors.New(fmt.Sprintf("invalid kind of token %s at line %d", parser.currentToken.String, parser.currentToken.Line))
+	}
+	switch parser.currentToken.DirectValue {
 	case lexer.SingleQuoteString, lexer.DoubleQuoteString, lexer.ByteString:
 		return ast.BasicLiteralExpression{
 			String: parser.currentToken.String,
@@ -101,15 +111,43 @@ func (parser *Parser) parseLiteral() (ast.Expression, error) {
 			Kind:   parser.currentToken.Kind,
 		}, nil
 	}
-	return nil, errors.New(fmt.Sprintf("could not determine the kind of token %s at line %d", parser.currentToken.String, parser.currentToken.Line))
+	return nil, errors.New(fmt.Sprintf("could not determine the directValue of token %s at line %d", parser.currentToken.String, parser.currentToken.Line))
 }
 
 func (parser *Parser) parseAssignStatementOrExpression() (ast.Node, error) {
 	return nil, nil
 }
 
-func (parser *Parser) Parse() (*ast.Program, error) {
+func (parser *Parser) parseBinaryExpression() (ast.Node, error) {
 	return nil, nil
+}
+
+func (parser *Parser) Parse() (*ast.Program, error) {
+	result := &ast.Program{
+		Begin: nil,
+		End:   nil,
+		Body:  nil,
+	}
+	switch parser.currentToken.Kind {
+	case lexer.Keyboard: // Lambda and all statements
+		switch parser.currentToken.DirectValue {
+		case lexer.Lambda:
+			break
+		case lexer.BEGIN:
+			break
+		case lexer.END:
+			break
+		default:
+			break
+		}
+	default: // Here it will be an assign statement or any expression
+		parsedExpression, parsingError := parser.parseBinaryExpression()
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		result.Body = append(result.Body, parsedExpression)
+	}
+	return result, nil
 }
 
 func NewParser(lexer_ *lexer.Lexer) (*Parser, error) {

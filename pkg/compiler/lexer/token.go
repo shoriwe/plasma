@@ -9,6 +9,7 @@ const (
 	PendingEscape
 	Comment
 	Whitespace
+	Literal
 	Tab
 	IdentifierKind
 	Separator

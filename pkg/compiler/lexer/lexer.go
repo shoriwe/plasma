@@ -27,7 +27,7 @@ func (lexer *Lexer) HasNext() bool {
 	return !lexer.complete
 }
 
-func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, int, error) {
+func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, int, int, error) {
 	content := stringOpener
 	var target int
 	switch stringOpener {
@@ -38,7 +38,7 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, 
 	case "`":
 		target = CommandOutput
 	}
-	var kind = Unknown
+	var directValue = Unknown
 	var tokenizingError error
 	escaped := false
 	finish := false
@@ -57,7 +57,7 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, 
 			case "\n":
 				lexer.line++
 			case stringOpener:
-				kind = target
+				directValue = target
 				finish = true
 			case "\\":
 				escaped = true
@@ -65,115 +65,115 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener string) (string, 
 		}
 		content += char
 	}
-	if kind != target {
+	if directValue != target {
 		tokenizingError = errors.New(fmt.Sprintf("No closing at index: %d with value %s", lexer.cursor, content))
 	}
-	return content, kind, tokenizingError
+	return content, Literal, directValue, tokenizingError
 }
 
-func (lexer *Lexer) tokenizeHexadecimal(letterX string) (string, int, error) {
+func (lexer *Lexer) tokenizeHexadecimal(letterX string) (string, int, int, error) {
 	result := "0" + letterX
 	if !(lexer.cursor < lexer.sourceCodeLength) {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	nextDigit := string(lexer.sourceCode[lexer.cursor])
 	if !hexDigitPattern.MatchString(nextDigit) {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	lexer.cursor++
 	result += nextDigit
 	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
 		nextDigit = string(lexer.sourceCode[lexer.cursor])
 		if !hexDigitPattern.MatchString(nextDigit) && nextDigit != "_" {
-			return result, HexadecimalInteger, nil
+			return result, Literal, HexadecimalInteger, nil
 		}
 		result += nextDigit
 	}
-	return result, HexadecimalInteger, nil
+	return result, Literal, HexadecimalInteger, nil
 }
 
-func (lexer *Lexer) tokenizeBinary(letterB string) (string, int, error) {
+func (lexer *Lexer) tokenizeBinary(letterB string) (string, int, int, error) {
 	result := "0" + letterB
 	if !(lexer.cursor < lexer.sourceCodeLength) {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	nextDigit := string(lexer.sourceCode[lexer.cursor])
 	if !binaryDigitPattern.MatchString(nextDigit) {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	lexer.cursor++
 	result += nextDigit
 	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
 		nextDigit = string(lexer.sourceCode[lexer.cursor])
 		if !binaryDigitPattern.MatchString(nextDigit) && nextDigit != "_" {
-			return result, BinaryInteger, nil
+			return result, Literal, BinaryInteger, nil
 		}
 		result += nextDigit
 	}
-	return result, BinaryInteger, nil
+	return result, Literal, BinaryInteger, nil
 }
 
-func (lexer *Lexer) tokenizeOctal(letterO string) (string, int, error) {
+func (lexer *Lexer) tokenizeOctal(letterO string) (string, int, int, error) {
 	result := "0" + letterO
 	if !(lexer.cursor < lexer.sourceCodeLength) {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	nextDigit := string(lexer.sourceCode[lexer.cursor])
 	if !octalDigitPattern.MatchString(nextDigit) {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	lexer.cursor++
 	result += nextDigit
 	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
 		nextDigit = string(lexer.sourceCode[lexer.cursor])
 		if !octalDigitPattern.MatchString(nextDigit) && nextDigit != "_" {
-			return result, OctalInteger, nil
+			return result, Literal, OctalInteger, nil
 		}
 		result += nextDigit
 	}
-	return result, OctalInteger, nil
+	return result, Literal, OctalInteger, nil
 }
 
-func (lexer *Lexer) tokenizeScientificFloat(base string) (string, int, error) {
+func (lexer *Lexer) tokenizeScientificFloat(base string) (string, int, int, error) {
 	result := base
 	if !(lexer.cursor < lexer.sourceCodeLength) {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	direction := string(lexer.sourceCode[lexer.cursor])
 	if direction != "-" && direction != "+" {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	lexer.cursor++
 	// Ensure next is a number
 	if !(lexer.cursor < lexer.sourceCodeLength) {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	result += direction
 	nextDigit := string(lexer.sourceCode[lexer.cursor])
 	if !digitPattern.MatchString(nextDigit) {
-		return result, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
+		return result, Literal, Unknown, errors.New(fmt.Sprintf("could not determine the kind of the token %s at line %d", result, lexer.line))
 	}
 	result += nextDigit
 	lexer.cursor++
 	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
 		nextDigit = string(lexer.sourceCode[lexer.cursor])
 		if !digitPattern.MatchString(nextDigit) && nextDigit != "_" {
-			return result, ScientificFloat, nil
+			return result, Literal, ScientificFloat, nil
 		}
 		result += nextDigit
 	}
-	return result, ScientificFloat, nil
+	return result, Literal, ScientificFloat, nil
 }
 
-func (lexer *Lexer) tokenizeFloat(base string) (string, int, error) {
+func (lexer *Lexer) tokenizeFloat(base string) (string, int, int, error) {
 	if !(lexer.cursor < lexer.sourceCodeLength) {
 		lexer.cursor--
-		return base[:len(base)-1], Integer, nil
+		return base[:len(base)-1], Literal, Integer, nil
 	}
 	nextDigit := string(lexer.sourceCode[lexer.cursor])
 	if !digitPattern.MatchString(nextDigit) {
 		lexer.cursor--
-		return base[:len(base)-1], Integer, nil
+		return base[:len(base)-1], Literal, Integer, nil
 	}
 	lexer.cursor++
 	result := base + nextDigit
@@ -187,12 +187,12 @@ func (lexer *Lexer) tokenizeFloat(base string) (string, int, error) {
 			break
 		}
 	}
-	return result, Float, nil
+	return result, Literal, Float, nil
 }
 
-func (lexer *Lexer) tokenizeInteger(base string) (string, int, error) {
+func (lexer *Lexer) tokenizeInteger(base string) (string, int, int, error) {
 	if !(lexer.cursor < lexer.sourceCodeLength) {
-		return base, Integer, nil
+		return base, Literal, Integer, nil
 	}
 	nextDigit := string(lexer.sourceCode[lexer.cursor])
 	if nextDigit == "." {
@@ -203,7 +203,7 @@ func (lexer *Lexer) tokenizeInteger(base string) (string, int, error) {
 		return lexer.tokenizeScientificFloat(base + nextDigit)
 	} else if !digitPattern.MatchString(nextDigit) {
 		lexer.cursor--
-		return base, Integer, nil
+		return base, Literal, Integer, nil
 	}
 	lexer.cursor++
 	result := base
@@ -219,12 +219,12 @@ func (lexer *Lexer) tokenizeInteger(base string) (string, int, error) {
 			break
 		}
 	}
-	return result, Integer, nil
+	return result, Literal, Integer, nil
 }
 
-func (lexer *Lexer) tokenizeNumeric(firstDigit string) (string, int, error) {
+func (lexer *Lexer) tokenizeNumeric(firstDigit string) (string, int, int, error) {
 	if !(lexer.cursor < lexer.sourceCodeLength) {
-		return firstDigit, Integer, nil
+		return firstDigit, Literal, Integer, nil
 	}
 	nextChar := string(lexer.sourceCode[lexer.cursor])
 	lexer.cursor++
@@ -259,7 +259,7 @@ func (lexer *Lexer) tokenizeNumeric(firstDigit string) (string, int, error) {
 		}
 	}
 	lexer.cursor--
-	return firstDigit, Integer, nil
+	return firstDigit, Literal, Integer, nil
 }
 
 var isNameChar = regexp.MustCompile("[_a-zA-Z0-9]")
@@ -505,11 +505,11 @@ func (lexer *Lexer) next() (*Token, error) {
 		content, kind, tokenizingError = lexer.tokenizeComment()
 		content = "#" + content
 	case "'", "\"": // String1
-		content, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
+		content, kind, directValue, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
 	case "`":
-		content, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
+		content, kind, directValue, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
 	case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
-		content, kind, tokenizingError = lexer.tokenizeNumeric(char)
+		content, kind, directValue, tokenizingError = lexer.tokenizeNumeric(char)
 	case StarString:
 		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Star, PowerOf, StarAssign, PowerOfAssign)
 	case DivString:
@@ -554,10 +554,10 @@ func (lexer *Lexer) next() (*Token, error) {
 				if nextChar == "'" || nextChar == "\"" {
 					var byteStringPart string
 					lexer.cursor++
-					byteStringPart, kind, tokenizingError = lexer.tokenizeStringLikeExpressions(nextChar)
+					byteStringPart, kind, directValue, tokenizingError = lexer.tokenizeStringLikeExpressions(nextChar)
 					content = char + byteStringPart
-					if kind != Unknown {
-						kind = ByteString
+					if directValue != Unknown {
+						directValue = ByteString
 					}
 					break
 				}
