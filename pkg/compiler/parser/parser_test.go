@@ -9,7 +9,11 @@ import (
 func test(t *testing.T, samples []string) {
 	for _, sample := range samples {
 		lexer := lexer2.NewLexer(sample)
-		parser := NewParser(lexer)
+		parser, parserCretionError := NewParser(lexer)
+		if parserCretionError != nil {
+			t.Error(parserCretionError)
+			return
+		}
 		program, parsingError := parser.Parse()
 		if parsingError != nil {
 			t.Error(parsingError)

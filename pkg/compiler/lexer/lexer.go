@@ -340,6 +340,12 @@ func guessKind(buffer string) (int, int) {
 		return Keyboard, Enum
 	case NotString:
 		return Keyboard, Not
+	case TrueString:
+		return Boolean, True
+	case FalseString:
+		return Boolean, False
+	case NoneString:
+		return NoneType, None
 	}
 	return IdentifierKind, -1
 }

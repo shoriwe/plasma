@@ -106,6 +106,9 @@ literal:
     | octal_integer
     | float
     | scientific_float
+    | 'True'
+    | 'False'
+    | 'None'
 
 string: single_quote_string | double_quote_string
 single_quote_string: '\'' any_char* '\''

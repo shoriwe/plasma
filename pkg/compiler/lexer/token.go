@@ -27,6 +27,8 @@ const (
 	CommandOutput
 	ByteString
 	Keyboard
+	Boolean
+	NoneType
 	EOF
 
 	Comma
@@ -92,6 +94,9 @@ const (
 	FloorDiv
 	Modulus
 	PowerOf
+	True
+	False
+	None
 
 	OpenParentheses
 	CloseParentheses
@@ -175,6 +180,9 @@ var (
 	ENDString                = "END"
 	EnumString               = "enum"
 	NotString                = "not"
+	TrueString               = "True"
+	FalseString              = "False"
+	NoneString               = "None"
 	OpenParenthesesString    = "("
 	CloseParenthesesString   = ")"
 	OpenSquareBracketString  = "["

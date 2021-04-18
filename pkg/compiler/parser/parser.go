@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"errors"
+	"fmt"
 	"github.com/shoriwe/gruby/pkg/compiler/ast"
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
 )
@@ -50,6 +52,24 @@ func (parser *Parser) next() error {
 	return nil
 }
 
+func (parser *Parser) peek() *lexer.Token {
+	return parser.nextToken
+}
+
+func (parser *Parser) checkKind(kind int) bool {
+	if parser.nextToken == nil {
+		return false
+	}
+	return parser.nextToken.Kind == kind
+}
+
+func (parser *Parser) checkDirectValue(directValue int) bool {
+	if parser.nextToken == nil {
+		return false
+	}
+	return parser.nextToken.DirectValue == directValue
+}
+
 func (parser *Parser) updateState() {
 	parser.complete = true
 }
@@ -59,7 +79,29 @@ func (parser *Parser) parseKeyboardStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseLiteral() (ast.Expression, error) {
-	return nil, nil
+	switch parser.currentToken.Kind {
+	case lexer.SingleQuoteString, lexer.DoubleQuoteString, lexer.ByteString:
+		return ast.BasicLiteralExpression{
+			String: parser.currentToken.String,
+			Kind:   parser.currentToken.Kind,
+		}, nil
+	case lexer.Integer, lexer.HexadecimalInteger, lexer.BinaryInteger, lexer.OctalInteger:
+		return ast.BasicLiteralExpression{
+			String: parser.currentToken.String,
+			Kind:   parser.currentToken.Kind,
+		}, nil
+	case lexer.Float, lexer.ScientificFloat:
+		return ast.BasicLiteralExpression{
+			String: parser.currentToken.String,
+			Kind:   parser.currentToken.Kind,
+		}, nil
+	case lexer.Boolean, lexer.NoneType:
+		return ast.BasicLiteralExpression{
+			String: parser.currentToken.String,
+			Kind:   parser.currentToken.Kind,
+		}, nil
+	}
+	return nil, errors.New(fmt.Sprintf("could not determine the kind of token %s at line %d", parser.currentToken.String, parser.currentToken.Line))
 }
 
 func (parser *Parser) parseAssignStatementOrExpression() (ast.Node, error) {
@@ -70,6 +112,15 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 	return nil, nil
 }
 
-func NewParser(lexer_ *lexer.Lexer) *Parser {
-	return &Parser{lexer_, false, nil, nil}
+func NewParser(lexer_ *lexer.Lexer) (*Parser, error) {
+	parser := &Parser{lexer_, false, nil, nil}
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return parser, nil
 }
