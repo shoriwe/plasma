@@ -2,16 +2,41 @@ package parser
 
 import (
 	"fmt"
-	lexer2 "github.com/shoriwe/gruby/pkg/compiler/lexer"
+	"github.com/shoriwe/gruby/pkg/compiler/ast"
+	"github.com/shoriwe/gruby/pkg/compiler/lexer"
+	"strings"
 	"testing"
 )
 
+func printer(deep int, value interface{}) {
+	fmt.Println(strings.Repeat("\t", deep), value)
+}
+
+func walker(node ast.Node, deep int) {
+	switch node.(type) {
+	case *ast.Program:
+		printer(deep, "Program:")
+		for _, child := range node.(*ast.Program).Body {
+			walker(child, deep+1)
+		}
+	case *ast.BinaryExpression:
+		printer(deep, node.(*ast.BinaryExpression).Operator)
+		walker(node.(*ast.BinaryExpression).LeftHandSide, deep+1)
+		walker(node.(*ast.BinaryExpression).RightHandSide, deep+1)
+	case *ast.BasicLiteralExpression:
+		printer(deep, node.(*ast.BasicLiteralExpression).String)
+	}
+}
+
+func walk(node ast.Node) {
+	walker(node, 0)
+}
 func test(t *testing.T, samples []string) {
 	for _, sample := range samples {
-		lexer := lexer2.NewLexer(sample)
-		parser, parserCretionError := NewParser(lexer)
-		if parserCretionError != nil {
-			t.Error(parserCretionError)
+		lex := lexer.NewLexer(sample)
+		parser, parserCreationError := NewParser(lex)
+		if parserCreationError != nil {
+			t.Error(parserCreationError)
 			return
 		}
 		program, parsingError := parser.Parse()
@@ -19,12 +44,14 @@ func test(t *testing.T, samples []string) {
 			t.Error(parsingError)
 			return
 		}
-		fmt.Println(program)
+		walk(program)
 	}
 }
 
 var basicSamples = []string{
-	"a = 1",
+	"1 + 2 * 3",
+	"1 * 2 + 3",
+	"1 * 2 * 3 - 4 + 5 - 6 / 7 / 8 ** 5",
 }
 
 func TestParseBasic(t *testing.T) {
