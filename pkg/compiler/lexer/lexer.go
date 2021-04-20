@@ -376,27 +376,28 @@ func (lexer *Lexer) tokenizeComment() (string, int, error) {
 	return content, Comment, nil
 }
 
-func (lexer *Lexer) tokenizeRepeatableOperator(char string, singleDirectValue int, doubleDirectValue int, assignSingleDirectValue int, assignDoubleDirectValue int) (string, int, int) {
+func (lexer *Lexer) tokenizeRepeatableOperator(char string, singleDirectValue int, singleKind int, doubleDirectValue int, doubleKind int, assignSingleDirectValue int, assignDoubleDirectValue int, assignSingleKind int, assignDoubleKind int) (string, int, int) {
 	content := char
-	kind := Operator
+	kind := singleKind
 	directValue := singleDirectValue
 	if lexer.cursor < lexer.sourceCodeLength {
 		nextChar := string(lexer.sourceCode[lexer.cursor])
 		if nextChar == char {
 			content += nextChar
 			lexer.cursor++
+			kind = doubleKind
 			directValue = doubleDirectValue
 			if lexer.cursor < lexer.sourceCodeLength {
 				nextNextChar := string(lexer.sourceCode[lexer.cursor])
 				if nextNextChar == "=" {
 					content += nextNextChar
-					kind = Assignment
+					kind = assignDoubleKind
 					lexer.cursor++
 					directValue = assignDoubleDirectValue
 				}
 			}
 		} else if nextChar == "=" {
-			kind = Assignment
+			kind = assignSingleKind
 			content += nextChar
 			lexer.cursor++
 			directValue = assignSingleDirectValue
@@ -405,14 +406,14 @@ func (lexer *Lexer) tokenizeRepeatableOperator(char string, singleDirectValue in
 	return content, kind, directValue
 }
 
-func (lexer *Lexer) tokenizeNotRepeatableOperator(char string, single int, assign int) (string, int, int) {
+func (lexer *Lexer) tokenizeNotRepeatableOperator(char string, single int, singleKind int, assign int, assignKind int) (string, int, int) {
 	content := char
-	kind := Operator
+	kind := singleKind
 	directValue := single
 	if lexer.cursor < lexer.sourceCodeLength {
 		nextChar := string(lexer.sourceCode[lexer.cursor])
 		if nextChar == "=" {
-			kind = Assignment
+			kind = assignKind
 			directValue = assign
 			content += nextChar
 			lexer.cursor++
@@ -512,31 +513,31 @@ func (lexer *Lexer) next() (*Token, error) {
 	case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
 		content, kind, directValue, tokenizingError = lexer.tokenizeNumeric(char)
 	case StarString:
-		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Star, PowerOf, StarAssign, PowerOfAssign)
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Star, Operator, PowerOf, Operator, StarAssign, PowerOfAssign, Assignment, Assignment)
 	case DivString:
-		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Div, FloorDiv, DivAssign, FloorDivAssign)
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Div, Operator, FloorDiv, Operator, DivAssign, FloorDivAssign, Assignment, Assignment)
 	case LessThanString:
-		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, LessThan, BitwiseLeft, LessOrEqualThan, BitwiseLeftAssign)
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, LessThan, Comparator, BitwiseLeft, Operator, LessOrEqualThan, BitwiseLeftAssign, Comparator, Assignment)
 	case GreatThanString:
-		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, GreaterThan, BitwiseRight, GreaterOrEqualThan, BitwiseRightAssign)
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, GreaterThan, Comparator, BitwiseRight, Operator, GreaterOrEqualThan, BitwiseRightAssign, Comparator, Assignment)
 	case AddString:
-		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Add, AddAssign)
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Add, Operator, AddAssign, Assignment)
 	case SubString:
-		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Sub, SubAssign)
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Sub, Operator, SubAssign, Assignment)
 	case ModulusString:
-		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Modulus, ModulusAssign)
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Modulus, Operator, ModulusAssign, Assignment)
 	case BitwiseXorString:
-		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, BitwiseXor, BitwiseXorAssign)
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, BitwiseXor, Operator, BitwiseXorAssign, Assignment)
 	case BitWiseAndString:
-		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, BitWiseAnd, BitWiseAndAssign)
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, BitWiseAnd, Operator, BitWiseAndAssign, Assignment)
 	case BitwiseOrString:
-		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, BitwiseOr, BitwiseOrAssign)
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, BitwiseOr, Operator, BitwiseOrAssign, Assignment)
 	case SignNotString:
-		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, SignNot, NotEqual)
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, SignNot, Operator, NotEqual, Comparator)
 	case NegateBitsString:
-		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, NegateBits, NegateBitsAssign)
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, NegateBits, Operator, NegateBitsAssign, Assignment)
 	case EqualsString:
-		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Assign, Equals)
+		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Assign, Assignment, Equals, Comparator)
 	case "\\":
 		content = char
 		if lexer.cursor < lexer.sourceCodeLength {

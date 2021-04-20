@@ -7,29 +7,6 @@ import (
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
 )
 
-var binaryPrecedence = []string{
-	"or",
-	"and",
-	"not",
-	"==", "!=", ">", ">=", "<", "<=", "isinstanceof", "in",
-	"|",
-	"^",
-	"&",
-	"<<", ">>",
-	"+", "-",
-	"*", "/", "//", "%",
-	"**",
-}
-
-func getPrecedenceWeight(operator string) int {
-	for index, otherOperator := range binaryPrecedence {
-		if otherOperator == operator {
-			return index
-		}
-	}
-	panic("invalid operator received")
-}
-
 type Parser struct {
 	lexer        *lexer.Lexer
 	complete     bool
@@ -104,93 +81,57 @@ func (parser *Parser) parseLiteral() (ast.Expression, error) {
 		lexer.Float, lexer.ScientificFloat,
 		lexer.Boolean, lexer.NoneType:
 
-		result := &ast.BasicLiteralExpression{
+		return &ast.BasicLiteralExpression{
 			String: parser.currentToken.String,
 			Kind:   parser.currentToken.Kind,
-		}
-		tokenizingError := parser.next()
-		if parser.check(lexer.Operator) {
-			return parser.parseBinaryExpression(result)
-		} else if parser.matchDirect(lexer.Dot) {
-			return nil, nil // parser.parseSelectorExpression(result)
-		}
-		if tokenizingError != nil {
-			return nil, tokenizingError
-		}
-		return result, nil
+		}, nil
 	}
 	return nil, errors.New(fmt.Sprintf("could not determine the directValue of token %s at line %d", parser.currentToken.String, parser.currentToken.Line))
 }
 
-func (parser *Parser) parseAssignStatementOrExpression() (ast.Node, error) {
-	return nil, nil
-}
-
-func (parser *Parser) parseBinaryExpression(leftHandSide ast.Node) (ast.Node, error) {
-	operator := parser.currentToken.String
-	result := &ast.BinaryExpression{
-		LeftHandSide:  leftHandSide,
-		Operator:      operator,
-		RightHandSide: nil,
-	}
-	switch leftHandSide.(type) {
-	case *ast.BinaryExpression:
-		leftWeight := getPrecedenceWeight(leftHandSide.(*ast.BinaryExpression).Operator)
-		currentWeight := getPrecedenceWeight(operator)
-		if leftWeight < currentWeight {
-			result.LeftHandSide = leftHandSide.(*ast.BinaryExpression).RightHandSide
-			leftHandSide.(*ast.BinaryExpression).RightHandSide = result
-			result = leftHandSide.(*ast.BinaryExpression)
-		}
-	default:
-		break
-	}
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	rightHandSide, parsingError := parser.parseExpression()
+func (parser *Parser) parseBinaryExpression(precedence int) (ast.Node, error) {
+	var leftHandSide ast.Node
+	var rightHandSide ast.Node
+	var parsingError error
+	leftHandSide, parsingError = parser.parseUnaryExpression()
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	switch rightHandSide.(type) {
-	case *ast.BinaryExpression:
-		rightWeight := getPrecedenceWeight(rightHandSide.(*ast.BinaryExpression).Operator)
-		currentWeight := getPrecedenceWeight(operator)
-		if rightWeight < currentWeight {
-			mustLeftParent := rightHandSide.(*ast.BinaryExpression)
-			mustLeft := mustLeftParent.LeftHandSide
-		mustLeftLoop:
-			for ; ; {
-				switch mustLeft.(type) {
-				case (*ast.BinaryExpression):
-					mustLeftParent = mustLeft.(*ast.BinaryExpression)
-					mustLeft = mustLeft.(*ast.BinaryExpression).LeftHandSide
-				default:
-					break mustLeftLoop
-				}
-			}
-			result.RightHandSide = mustLeft
-			mustLeftParent.LeftHandSide = result
-			result = rightHandSide.(*ast.BinaryExpression)
-		} else {
-			result.RightHandSide = rightHandSide
+	for ; parser.currentToken.Kind == lexer.Operator ||
+		parser.currentToken.Kind == lexer.Comparator; {
+		operator := parser.currentToken
+		operatorPrecedence := parser.currentToken.DirectValue
+		if operatorPrecedence < precedence {
+			return leftHandSide, nil
 		}
-	default:
-		result.RightHandSide = rightHandSide
+		tokenizingError := parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+		rightHandSide, parsingError = parser.parseBinaryExpression(operatorPrecedence + 1)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		leftHandSide = &ast.BinaryExpression{
+			LeftHandSide:  leftHandSide,
+			Operator:      operator.String,
+			RightHandSide: rightHandSide,
+		}
 	}
-	return result, nil
+	return leftHandSide, nil
 }
 
 func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
-	return nil, nil
+	// Do something to parse Unary
+	// Do something to parse Lambda
+	return parser.parsePrimaryExpression()
 }
 
-func (parser *Parser) parseExpression() (ast.Node, error) {
+func (parser *Parser) parsePrimaryExpression() (ast.Node, error) {
 	var expression ast.Node
 	var parsingError error
 	switch parser.currentToken.Kind {
-	case lexer.Literal:
+	case lexer.Literal: // The parent expressions can be selector or binary expression
 		expression, parsingError = parser.parseLiteral()
 	case lexer.IdentifierKind: // Only here assign can happen
 		break
@@ -200,11 +141,13 @@ func (parser *Parser) parseExpression() (ast.Node, error) {
 		break
 	case lexer.OpenBrace:
 		break
-	case lexer.Operator: // Unary
-		expression, parsingError = parser.parseUnaryExpression()
 	}
 	if parsingError != nil {
 		return nil, parsingError
+	}
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
 	}
 	return expression, nil
 }
@@ -229,7 +172,7 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 				break
 			}
 		default: // Here it will be an assign statement or any expression
-			parsedExpression, parsingError := parser.parseExpression()
+			parsedExpression, parsingError := parser.parseBinaryExpression(0)
 			if parsingError != nil {
 				return nil, parsingError
 			}
