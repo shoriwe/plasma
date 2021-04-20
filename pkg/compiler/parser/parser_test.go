@@ -14,11 +14,14 @@ func walker(node ast.Node, deep int) {
 			walker(child, deep+1)
 		}
 	case *ast.BinaryExpression:
-		fmt.Print(" ", node.(*ast.BinaryExpression).Operator, " ")
+		fmt.Print(node.(*ast.BinaryExpression).Operator)
 		walker(node.(*ast.BinaryExpression).LeftHandSide, deep+1)
 		walker(node.(*ast.BinaryExpression).RightHandSide, deep+1)
 	case *ast.BasicLiteralExpression:
-		fmt.Print(" ", node.(*ast.BasicLiteralExpression).String, " ")
+		fmt.Print(node.(*ast.BasicLiteralExpression).String)
+	case *ast.UnaryExpression:
+		fmt.Print(node.(*ast.UnaryExpression).Operator)
+		walker(node.(*ast.UnaryExpression).X, deep+1)
 	}
 }
 
@@ -48,7 +51,7 @@ var basicSamples = []string{
 	"1 + 2 * 3",
 	"1 * 2 + 3",
 	"1 >= 2 == 3 - 4 + 5 - 6 / 7 / 8 ** 9 - 10",
-	"",
+	"5--5",
 }
 
 func TestParseBasic(t *testing.T) {
