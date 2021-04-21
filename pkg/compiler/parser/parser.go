@@ -180,7 +180,46 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 }
 
 func (parser *Parser) parseSelectorExpression(expression ast.Node) (ast.Node, error) {
-	return nil, nil
+	var selector ast.Node
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	identifier := parser.currentToken
+	if identifier.Kind != lexer.IdentifierKind {
+		return nil, errors.New(fmt.Sprintf("invalid selector at token in line %d", identifier.Line))
+	}
+	selector = &ast.SelectorExpression{
+		X: expression,
+		Identifier: &ast.Identifier{
+			String: identifier.String,
+		},
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	for ; parser.currentToken.DirectValue == lexer.Dot; {
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+		identifier = parser.currentToken
+		if identifier.Kind != lexer.IdentifierKind {
+			return nil, errors.New(fmt.Sprintf("invalid selector at token in line %d", identifier.Line))
+		}
+		selector = &ast.SelectorExpression{
+			X: selector,
+			Identifier: &ast.Identifier{
+				String: identifier.String,
+			},
+		}
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+	}
+	return selector, nil
 }
 
 func (parser *Parser) parseCallExpression(expression ast.Node) (ast.Node, error) {

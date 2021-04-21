@@ -69,7 +69,7 @@ type GeneratorExpression struct {
 type SelectorExpression struct {
 	Expression
 	X          Expression
-	Identifier Identifier
+	Identifier *Identifier
 }
 
 type MethodInvocationExpression struct {

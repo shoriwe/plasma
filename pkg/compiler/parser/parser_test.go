@@ -22,6 +22,11 @@ func walker(node ast.Node, deep int) {
 	case *ast.UnaryExpression:
 		fmt.Print(node.(*ast.UnaryExpression).Operator)
 		walker(node.(*ast.UnaryExpression).X, deep+1)
+	case *ast.SelectorExpression:
+		walker(node.(*ast.SelectorExpression).X, deep+1)
+		fmt.Print("." + node.(*ast.SelectorExpression).Identifier.String)
+	case *ast.Identifier:
+		fmt.Print(node.(*ast.Identifier).String)
 	}
 }
 
@@ -52,6 +57,7 @@ var basicSamples = []string{
 	"1 * 2 + 3",
 	"1 >= 2 == 3 - 4 + 5 - 6 / 7 / 8 ** 9 - 10",
 	"5--5",
+	"hello.world.carro",
 }
 
 func TestParseBasic(t *testing.T) {
