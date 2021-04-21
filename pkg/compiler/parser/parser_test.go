@@ -27,6 +27,13 @@ func walker(node ast.Node, deep int) {
 		fmt.Print("." + node.(*ast.SelectorExpression).Identifier.String)
 	case *ast.Identifier:
 		fmt.Print(node.(*ast.Identifier).String)
+	case *ast.MethodInvocationExpression:
+		walker(node.(*ast.MethodInvocationExpression).Function, deep+1)
+		fmt.Print("(")
+		for _, child := range node.(*ast.MethodInvocationExpression).Arguments {
+			walker(child, deep+1)
+		}
+		fmt.Print(")")
 	}
 }
 
@@ -58,6 +65,8 @@ var basicSamples = []string{
 	"1 >= 2 == 3 - 4 + 5 - 6 / 7 / 8 ** 9 - 10",
 	"5--5",
 	"hello.world.carro",
+	"1.4.hello.world()",
+	"hello(1)",
 }
 
 func TestParseBasic(t *testing.T) {

@@ -205,7 +205,32 @@ func (parser *Parser) parseSelectorExpression(expression ast.Node) (ast.Node, er
 }
 
 func (parser *Parser) parseCallExpression(expression ast.Node) (ast.Node, error) {
-	return nil, nil
+	var arguments []ast.Expression
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	for ; parser.currentToken.DirectValue != lexer.CloseParentheses; {
+		argument, parsingError := parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		arguments = append(arguments, argument)
+		if parser.nextToken.DirectValue == lexer.Comma {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+		}
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.MethodInvocationExpression{
+		Function:   expression,
+		Arguments:  arguments,
+	}, nil
 }
 
 func (parser *Parser) parseIndexExpression(expression ast.Node) (ast.Node, error) {
