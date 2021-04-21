@@ -180,31 +180,13 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 }
 
 func (parser *Parser) parseSelectorExpression(expression ast.Node) (ast.Node, error) {
-	var selector ast.Node
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	identifier := parser.currentToken
-	if identifier.Kind != lexer.IdentifierKind {
-		return nil, errors.New(fmt.Sprintf("invalid selector at token in line %d", identifier.Line))
-	}
-	selector = &ast.SelectorExpression{
-		X: expression,
-		Identifier: &ast.Identifier{
-			String: identifier.String,
-		},
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
+	selector := expression
 	for ; parser.currentToken.DirectValue == lexer.Dot; {
-		tokenizingError = parser.next()
+		tokenizingError := parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
-		identifier = parser.currentToken
+		identifier := parser.currentToken
 		if identifier.Kind != lexer.IdentifierKind {
 			return nil, errors.New(fmt.Sprintf("invalid selector at token in line %d", identifier.Line))
 		}
