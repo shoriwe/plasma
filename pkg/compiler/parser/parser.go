@@ -150,6 +150,46 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 	return parser.parsePrimaryExpression()
 }
 
+func (parser *Parser) parseLambdaExpression() (ast.Node, error) {
+	var arguments []*ast.Identifier
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	for ; parser.currentToken.Kind == lexer.IdentifierKind; {
+		arguments = append(arguments, &ast.Identifier{
+			String: parser.currentToken.String,
+		})
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+		if parser.currentToken.DirectValue == lexer.Comma {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+		} else if parser.currentToken.DirectValue != lexer.Colon {
+			return nil, errors.New(fmt.Sprintf("invalid lambda definition at line %d", parser.currentToken.Line))
+		}
+	}
+	if parser.currentToken.DirectValue != lexer.Colon {
+		return nil, errors.New(fmt.Sprintf("invalid lambda definition at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	code, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	return &ast.LambdaExpression{
+		Arguments: arguments,
+		Code:      code,
+	}, nil
+}
+
 func (parser *Parser) parseOperand() (ast.Node, error) {
 	switch parser.currentToken.Kind {
 	case lexer.Literal:
@@ -166,8 +206,7 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 	case lexer.Keyboard:
 		switch parser.currentToken.DirectValue {
 		case lexer.Lambda:
-			break
-			// return parser.parseLambda()
+			return parser.parseLambdaExpression()
 		}
 	case lexer.Punctuation:
 		switch parser.currentToken.DirectValue {
@@ -176,6 +215,7 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			// return parser.parseOpenParentheses()
 		}
 	}
+	fmt.Println(parser.currentToken)
 	return nil, errors.New(fmt.Sprintf("unknown expression with token at line %d", parser.currentToken.Line))
 }
 
@@ -204,8 +244,9 @@ func (parser *Parser) parseSelectorExpression(expression ast.Node) (ast.Node, er
 	return selector, nil
 }
 
-func (parser *Parser) parseCallExpression(expression ast.Node) (ast.Node, error) {
+func (parser *Parser) parseMethodInvocationExpression(expression ast.Node) (ast.Node, error) {
 	var arguments []ast.Expression
+	// The first token is open parentheses
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -216,7 +257,7 @@ func (parser *Parser) parseCallExpression(expression ast.Node) (ast.Node, error)
 			return nil, parsingError
 		}
 		arguments = append(arguments, argument)
-		if parser.nextToken.DirectValue == lexer.Comma {
+		if parser.currentToken.DirectValue == lexer.Comma {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
@@ -279,7 +320,7 @@ expressionPendingLoop:
 		case lexer.Dot: // Is selector
 			expression, parsingError = parser.parseSelectorExpression(expression)
 		case lexer.OpenParentheses: // Is function Call
-			expression, parsingError = parser.parseCallExpression(expression)
+			expression, parsingError = parser.parseMethodInvocationExpression(expression)
 		case lexer.OpenSquareBracket: // Is indexing
 			expression, parsingError = parser.parseIndexExpression(expression)
 		default:
@@ -300,7 +341,11 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 		case lexer.Keyboard: // Lambda and all statements
 			switch parser.currentToken.DirectValue {
 			case lexer.Lambda:
-				break
+				parsedLambdaExpression, parsingError := parser.parseLambdaExpression()
+				if parsingError != nil {
+					return nil, parsingError
+				}
+				result.Body = append(result.Body, parsedLambdaExpression)
 			case lexer.BEGIN:
 				break
 			case lexer.END:

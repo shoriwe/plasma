@@ -55,7 +55,7 @@ type ParenthesesExpression struct {
 
 type LambdaExpression struct {
 	Expression
-	Arguments []Identifier
+	Arguments []*Identifier
 	Code      Expression
 }
 
