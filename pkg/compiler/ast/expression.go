@@ -81,7 +81,7 @@ type MethodInvocationExpression struct {
 type IndexExpression struct {
 	Expression
 	Source Expression
-	Index  [3]Expression
+	Index  [2]Expression
 }
 
 type AwaitExpression struct {

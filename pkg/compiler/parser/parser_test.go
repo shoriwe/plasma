@@ -34,6 +34,16 @@ func walker(node ast.Node, deep int) {
 			walker(child, deep+1)
 		}
 		fmt.Print(")")
+	case *ast.IndexExpression:
+		walker(node.(*ast.IndexExpression).Source, deep+1)
+		fmt.Print("[")
+
+		walker(node.(*ast.IndexExpression).Index[0], deep+1)
+		if node.(*ast.IndexExpression).Index[1] != nil {
+			fmt.Print(":")
+			walker(node.(*ast.IndexExpression).Index[1], deep+1)
+		}
+		fmt.Print("]")
 	}
 }
 
@@ -67,6 +77,7 @@ var basicSamples = []string{
 	"hello.world.carro",
 	"1.4.hello.world()",
 	"hello(1)",
+	"'Hello world'.index(str(12345)[0])",
 }
 
 func TestParseBasic(t *testing.T) {

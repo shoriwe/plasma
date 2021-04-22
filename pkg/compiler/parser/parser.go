@@ -228,13 +228,42 @@ func (parser *Parser) parseCallExpression(expression ast.Node) (ast.Node, error)
 		return nil, tokenizingError
 	}
 	return &ast.MethodInvocationExpression{
-		Function:   expression,
-		Arguments:  arguments,
+		Function:  expression,
+		Arguments: arguments,
 	}, nil
 }
 
 func (parser *Parser) parseIndexExpression(expression ast.Node) (ast.Node, error) {
-	return nil, nil
+	tokenizationError := parser.next()
+	if tokenizationError != nil {
+		return nil, tokenizationError
+	}
+	var rightIndex ast.Expression
+	leftIndex, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	if parser.currentToken.DirectValue == lexer.Colon {
+		tokenizationError = parser.next()
+		if tokenizationError != nil {
+			return nil, tokenizationError
+		}
+		rightIndex, parsingError = parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+	}
+	tokenizationError = parser.next()
+	if tokenizationError != nil {
+		return nil, tokenizationError
+	}
+	return &ast.IndexExpression{
+		Source: expression,
+		Index: [2]ast.Expression{
+			leftIndex,
+			rightIndex,
+		},
+	}, nil
 }
 
 func (parser *Parser) parsePrimaryExpression() (ast.Node, error) {
