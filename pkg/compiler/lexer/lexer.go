@@ -206,7 +206,7 @@ func (lexer *Lexer) tokenizeInteger(base string) (string, int, int, error) {
 		return base, Literal, Integer, nil
 	}
 	lexer.cursor++
-	result := base
+	result := base + nextDigit
 	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
 		nextDigit = string(lexer.sourceCode[lexer.cursor])
 		if nextDigit == "e" || nextDigit == "E" {
