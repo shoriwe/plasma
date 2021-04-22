@@ -14,8 +14,8 @@ func walker(node ast.Node, deep int) {
 			walker(child, deep+1)
 		}
 	case *ast.BinaryExpression:
-		fmt.Print(node.(*ast.BinaryExpression).Operator)
 		walker(node.(*ast.BinaryExpression).LeftHandSide, deep+1)
+		fmt.Print(node.(*ast.BinaryExpression).Operator)
 		walker(node.(*ast.BinaryExpression).RightHandSide, deep+1)
 	case *ast.BasicLiteralExpression:
 		fmt.Print(node.(*ast.BasicLiteralExpression).String)
@@ -30,7 +30,13 @@ func walker(node ast.Node, deep int) {
 	case *ast.MethodInvocationExpression:
 		walker(node.(*ast.MethodInvocationExpression).Function, deep+1)
 		fmt.Print("(")
+		isFirst := true
 		for _, child := range node.(*ast.MethodInvocationExpression).Arguments {
+			if isFirst {
+				isFirst = false
+			} else {
+				fmt.Print(", ")
+			}
 			walker(child, deep+1)
 		}
 		fmt.Print(")")
@@ -44,6 +50,20 @@ func walker(node ast.Node, deep int) {
 			walker(node.(*ast.IndexExpression).Index[1], deep+1)
 		}
 		fmt.Print("]")
+	case *ast.LambdaExpression:
+		fmt.Print("lambda")
+		isFirst := true
+		for _, argument := range node.(*ast.LambdaExpression).Arguments {
+			if isFirst {
+				fmt.Print(" ")
+				isFirst = false
+			} else {
+				fmt.Print(", ")
+			}
+			walker(argument, deep+1)
+		}
+		fmt.Print(": ")
+		walker(node.(*ast.LambdaExpression).Code, deep+1)
 	}
 }
 
@@ -78,6 +98,7 @@ var basicSamples = []string{
 	"1.4.hello.world()",
 	"hello(1)",
 	"'Hello world'.index(str(12345)[0])",
+	"lambda x, y, z: print(x, y - z)",
 }
 
 func TestParseBasic(t *testing.T) {
