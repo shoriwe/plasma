@@ -8,7 +8,7 @@
 - [X] Selector
 - [X] Index
 - [X] Method call
-- [ ] Lambda
+- [X] Lambda
 - [ ] Array
 - [ ] Tuple
 - [ ] Dict
