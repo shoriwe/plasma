@@ -9,11 +9,11 @@
 - [X] Index
 - [X] Method call
 - [X] Lambda
-- [ ] Array
+- [X] Array
 - [X] Tuple
-- [ ] Dict
+- [X] Hash
 - [ ] Generator
-- [ ] One line If
+- [X] One line If
 - [ ] One line unless
 
 # Pending Statements
