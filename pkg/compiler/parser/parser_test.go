@@ -75,7 +75,31 @@ func walker(node ast.Node, deep int) {
 			fmt.Print(", ")
 		}
 		fmt.Print(")")
+	case *ast.ArrayExpression:
+		fmt.Print("[")
+		for _, value := range node.(*ast.ArrayExpression).Values {
+			walker(value, deep+1)
+			fmt.Print(", ")
+		}
+		fmt.Print("]")
+	case *ast.HashExpression:
+		fmt.Print("{")
+		for _, value := range node.(*ast.HashExpression).Values {
+			walker(value.Key, deep+1)
+			fmt.Print(":")
+			walker(value.Value, deep+1)
+		}
+		fmt.Print("}")
+	case *ast.OneLineIfExpression:
+		walker(node.(*ast.OneLineIfExpression).Result, deep+1)
+		fmt.Print(" if ")
+		walker(node.(*ast.OneLineIfExpression).Condition, deep+1)
+		if node.(*ast.OneLineIfExpression).ElseResult != nil {
+			fmt.Print(" else ")
+			walker(node.(*ast.OneLineIfExpression).ElseResult, deep+1)
+		}
 	}
+
 }
 
 func walk(node ast.Node) {
@@ -112,6 +136,11 @@ var basicSamples = []string{
 	"lambda x, y, z: print(x, y - z)",
 	"lambda x: print((1+2) * 3)",
 	"(1, 2, (3, (4, (((4+1))))))",
+	"[1]",
+	"{1: (1*2)/4}",
+	"(1 if x < 4 else 2)",
+	"True",
+	"1 if True",
 }
 
 func TestParseBasic(t *testing.T) {
