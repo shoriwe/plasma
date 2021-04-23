@@ -31,8 +31,9 @@ type Identifier struct {
 
 type BasicLiteralExpression struct {
 	Expression
-	String string
-	Kind   int
+	String      string
+	Kind        int
+	DirectValue int
 }
 
 type BinaryExpression struct {
