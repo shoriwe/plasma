@@ -12,6 +12,9 @@
 - [X] Python like Octal Integer
 - [X] Float
 - [X] Python like Scientific Float
+- [X] True
+- [X] False
+- [X] None
 
 ## Punctuation
 
