@@ -63,7 +63,7 @@ type LambdaExpression struct {
 type GeneratorExpression struct {
 	Expression
 	Operation Expression
-	Variables []Identifier
+	Variables []*Identifier
 	Source    Expression
 }
 

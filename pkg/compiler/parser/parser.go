@@ -504,6 +504,44 @@ func (parser *Parser) parseUnlessOneLiner(result ast.Expression) (ast.Node, erro
 	}, nil
 }
 
+func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (ast.Node, error) {
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var variables []*ast.Identifier
+	numberOfVariables := 0
+	for ; parser.currentToken.DirectValue != lexer.In; {
+		variables = append(variables, &ast.Identifier{
+			String: parser.currentToken.String,
+		})
+		numberOfVariables++
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+	}
+	if numberOfVariables == 0 {
+		return nil, errors.New(fmt.Sprintf("syntax error: no receivers in generator defined at line %d", parser.currentToken.Line))
+	}
+	if parser.currentToken.DirectValue != lexer.In {
+		return nil, errors.New(fmt.Sprintf("syntax error: invalid generator syntax at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	source, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	return &ast.GeneratorExpression{
+		Operation:  operation,
+		Variables:  variables,
+		Source:     source,
+	}, nil
+}
+
 func (parser *Parser) parsePrimaryExpression() (ast.Node, error) {
 	var expression ast.Node
 	var parsingError error
@@ -521,7 +559,7 @@ expressionPendingLoop:
 		case lexer.OpenSquareBracket: // Is indexing
 			expression, parsingError = parser.parseIndexExpression(expression)
 		case lexer.For: // Generators
-			break
+			expression, parsingError = parser.parseGeneratorExpression(expression)
 		case lexer.If: // One line If
 			expression, parsingError = parser.parseIfOneLiner(expression)
 		case lexer.Unless: // One line Unless

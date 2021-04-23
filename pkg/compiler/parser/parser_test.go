@@ -107,6 +107,14 @@ func walker(node ast.Node, deep int) {
 			fmt.Print(" else ")
 			walker(node.(*ast.OneLineUnlessExpression).ElseResult, deep+1)
 		}
+	case *ast.GeneratorExpression:
+		walker(node.(*ast.GeneratorExpression).Operation, deep+1)
+		fmt.Print(" for ")
+		for _, variable := range node.(*ast.GeneratorExpression).Variables {
+			walker(variable, deep+1)
+		}
+		fmt.Print(" in ")
+		walker(node.(*ast.GeneratorExpression).Source, deep+1)
 	}
 
 }
@@ -152,6 +160,7 @@ var basicSamples = []string{
 	"True",
 	"1 if True",
 	"1 unless False",
+	"(1 for 2 in (3, 4))",
 }
 
 func TestParseBasic(t *testing.T) {
