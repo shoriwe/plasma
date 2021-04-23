@@ -88,6 +88,7 @@ func walker(node ast.Node, deep int) {
 			walker(value.Key, deep+1)
 			fmt.Print(":")
 			walker(value.Value, deep+1)
+			fmt.Print(", ")
 		}
 		fmt.Print("}")
 	case *ast.OneLineIfExpression:
@@ -140,12 +141,13 @@ var basicSamples = []string{
 	"hello.world.carro",
 	"1.4.hello.world()",
 	"hello(1)",
-	"'Hello world'.index(str(12345)[0])",
+	"'Hello world'.index(str(12345)[010])",
+	"'Hello world'.index(str(12345)[0:10])",
 	"lambda x, y, z: print(x, y - z)",
 	"lambda x: print((1+2) * 3)",
 	"(1, 2, (3, (4, (((4+1))))))",
 	"[1]",
-	"{1: (1*2)/4}",
+	"{1: (1*2)/4, 2: 282}",
 	"(1 if x < 4 else 2)",
 	"True",
 	"1 if True",

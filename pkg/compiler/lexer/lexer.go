@@ -202,7 +202,6 @@ func (lexer *Lexer) tokenizeInteger(base string) (string, int, int, error) {
 		lexer.cursor++
 		return lexer.tokenizeScientificFloat(base + nextDigit)
 	} else if !digitPattern.MatchString(nextDigit) {
-		lexer.cursor--
 		return base, Literal, Integer, nil
 	}
 	lexer.cursor++
