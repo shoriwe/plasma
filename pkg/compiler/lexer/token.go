@@ -40,6 +40,7 @@ const (
 	Super
 	End
 	If
+	Unless
 	Else
 	Elif
 	While
@@ -148,6 +149,7 @@ var (
 	SuperString              = "super"
 	EndString                = "end"
 	IfString                 = "if"
+	UnlessString             = "unless"
 	ElseString               = "else"
 	ElifString               = "elif"
 	WhileString              = "while"

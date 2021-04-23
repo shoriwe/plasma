@@ -274,6 +274,8 @@ func guessKind(buffer string) (int, int) {
 		return Keyboard, End
 	case IfString:
 		return Keyboard, If
+	case UnlessString:
+		return Keyboard, Unless
 	case ElseString:
 		return Keyboard, Else
 	case ElifString:
