@@ -86,8 +86,9 @@ func (parser *Parser) parseLiteral() (ast.Expression, error) {
 			return nil, tokenizingError
 		}
 		return &ast.BasicLiteralExpression{
-			String: currentToken.String,
-			Kind:   currentToken.Kind,
+			String:      currentToken.String,
+			Kind:        currentToken.Kind,
+			DirectValue: currentToken.DirectValue,
 		}, nil
 	}
 	return nil, errors.New(fmt.Sprintf("could not determine the directValue of token %s at line %d", parser.currentToken.String, parser.currentToken.Line))
@@ -472,7 +473,35 @@ func (parser *Parser) parseIfOneLiner(result ast.Expression) (ast.Node, error) {
 }
 
 func (parser *Parser) parseUnlessOneLiner(result ast.Expression) (ast.Node, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	condition, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	if parser.currentToken.DirectValue != lexer.Else {
+		return &ast.OneLineUnlessExpression{
+			Result:     result,
+			Condition:  condition,
+			ElseResult: nil,
+		}, nil
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var elseResult ast.Expression
+	elseResult, parsingError = parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	return &ast.OneLineUnlessExpression{
+		Result:     result,
+		Condition:  condition,
+		ElseResult: elseResult,
+	}, nil
 }
 
 func (parser *Parser) parsePrimaryExpression() (ast.Node, error) {

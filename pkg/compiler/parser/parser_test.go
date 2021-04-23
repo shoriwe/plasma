@@ -98,6 +98,14 @@ func walker(node ast.Node, deep int) {
 			fmt.Print(" else ")
 			walker(node.(*ast.OneLineIfExpression).ElseResult, deep+1)
 		}
+	case *ast.OneLineUnlessExpression:
+		walker(node.(*ast.OneLineUnlessExpression).Result, deep+1)
+		fmt.Print(" unless ")
+		walker(node.(*ast.OneLineUnlessExpression).Condition, deep+1)
+		if node.(*ast.OneLineUnlessExpression).ElseResult != nil {
+			fmt.Print(" else ")
+			walker(node.(*ast.OneLineUnlessExpression).ElseResult, deep+1)
+		}
 	}
 
 }
@@ -141,6 +149,7 @@ var basicSamples = []string{
 	"(1 if x < 4 else 2)",
 	"True",
 	"1 if True",
+	"1 unless False",
 }
 
 func TestParseBasic(t *testing.T) {
