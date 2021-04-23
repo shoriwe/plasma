@@ -2,7 +2,7 @@
 
 - [X] Binary
 - [X] Unary
-- [ ] Parentheses expression
+- [X] Parentheses expression
 - [X] Literal expression
 - [X] Identifier
 - [X] Selector
@@ -10,7 +10,7 @@
 - [X] Method call
 - [X] Lambda
 - [ ] Array
-- [ ] Tuple
+- [X] Tuple
 - [ ] Dict
 - [ ] Generator
 - [ ] One line If

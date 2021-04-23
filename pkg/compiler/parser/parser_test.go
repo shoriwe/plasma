@@ -64,6 +64,17 @@ func walker(node ast.Node, deep int) {
 		}
 		fmt.Print(": ")
 		walker(node.(*ast.LambdaExpression).Code, deep+1)
+	case *ast.ParenthesesExpression:
+		fmt.Print("(")
+		walker(node.(*ast.ParenthesesExpression).X, deep+1)
+		fmt.Print(")")
+	case *ast.TupleExpression:
+		fmt.Print("(")
+		for _, value := range node.(*ast.TupleExpression).Values {
+			walker(value, deep+1)
+			fmt.Print(", ")
+		}
+		fmt.Print(")")
 	}
 }
 
@@ -99,6 +110,8 @@ var basicSamples = []string{
 	"hello(1)",
 	"'Hello world'.index(str(12345)[0])",
 	"lambda x, y, z: print(x, y - z)",
+	"lambda x: print((1+2) * 3)",
+	"(1, 2, (3, (4, (((4+1))))))",
 }
 
 func TestParseBasic(t *testing.T) {

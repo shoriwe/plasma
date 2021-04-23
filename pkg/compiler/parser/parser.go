@@ -190,6 +190,58 @@ func (parser *Parser) parseLambdaExpression() (ast.Node, error) {
 	}, nil
 }
 
+func (parser *Parser) parseParentheses() (ast.Node, error) {
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	if parser.currentToken.DirectValue == lexer.CloseParentheses {
+		return nil, errors.New(fmt.Sprintf("syntax error: empty parentheses expression at line %d", parser.currentToken.Line))
+	}
+	firstExpression, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	if parser.currentToken.DirectValue == lexer.CloseParentheses {
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+		return &ast.ParenthesesExpression{
+			X: firstExpression,
+		}, nil
+	}
+	if parser.currentToken.DirectValue != lexer.Comma {
+		return nil, errors.New(fmt.Sprintf("syntax error: empty parentheses expression at line %d", parser.currentToken.Line))
+	}
+	var values []ast.Expression
+	values = append(values, firstExpression)
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var nextValue ast.Node
+	for ; parser.currentToken.DirectValue != lexer.CloseParentheses; {
+		nextValue, parsingError = parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		values = append(values, nextValue)
+		if parser.currentToken.DirectValue == lexer.Comma {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+		}
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.TupleExpression{
+		Values: values,
+	}, nil
+}
 func (parser *Parser) parseOperand() (ast.Node, error) {
 	switch parser.currentToken.Kind {
 	case lexer.Literal:
@@ -211,8 +263,7 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 	case lexer.Punctuation:
 		switch parser.currentToken.DirectValue {
 		case lexer.OpenParentheses:
-			break
-			// return parser.parseOpenParentheses()
+			return parser.parseParentheses()
 		}
 	}
 	fmt.Println(parser.currentToken)
@@ -323,6 +374,12 @@ expressionPendingLoop:
 			expression, parsingError = parser.parseMethodInvocationExpression(expression)
 		case lexer.OpenSquareBracket: // Is indexing
 			expression, parsingError = parser.parseIndexExpression(expression)
+		case lexer.For: // Generators
+			break
+		case lexer.If: // One line If
+			break
+		case lexer.Unless: // One line Unless
+			break
 		default:
 			break expressionPendingLoop
 		}
