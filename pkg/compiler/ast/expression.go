@@ -21,7 +21,7 @@ type KeyValue struct {
 
 type HashExpression struct {
 	Expression
-	Values []KeyValue
+	Values []*KeyValue
 }
 
 type Identifier struct {
