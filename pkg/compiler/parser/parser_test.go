@@ -140,6 +140,17 @@ func walker(node ast.Node, deep int) string {
 			result += walker(output, deep+1)
 		}
 		return result
+	case *ast.GoStatement:
+		return "go " + walker(node.(*ast.GoStatement).X, deep+1)
+	case *ast.SuperInvocationStatement:
+		result := "super("
+		for index, argument := range node.(*ast.SuperInvocationStatement).Arguments {
+			if index != 0 {
+				result += ", "
+			}
+			result += walker(argument, deep+1)
+		}
+		return result + ")"
 	}
 	panic("unknown node type")
 }
@@ -195,6 +206,10 @@ var basicSamples = []string{
 	"yield 1, 2 + 4, lambda x: x + 2, (1, 2 , 3, 4)",
 	"return 1",
 	"return 1, 2 + 4, lambda x: x + 2, (1, 2 , 3, 4)",
+	"go super_duper()",
+	"super(1)",
+	"super(1, 2)",
+	"super(1, 2, call((1, 2, 3, 4, 2 * (5 - 3))))",
 }
 
 func TestParseBasic(t *testing.T) {

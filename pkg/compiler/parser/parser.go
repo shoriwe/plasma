@@ -369,7 +369,22 @@ func (parser *Parser) parseEndStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseGoStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	methodInvocation, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	switch methodInvocation.(type) {
+	case *ast.MethodInvocationExpression:
+		return &ast.GoStatement{
+			X: methodInvocation.(*ast.MethodInvocationExpression),
+		}, nil
+	default:
+		return nil, errors.New(fmt.Sprintf("no function call passed to go statement at line %d", parser.currentToken.Line))
+	}
 }
 
 func (parser *Parser) parseReturnStatement() (ast.Statement, error) {
@@ -423,7 +438,39 @@ func (parser *Parser) parseYieldStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseSuperStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	if parser.currentToken.DirectValue != lexer.OpenParentheses {
+		return nil, errors.New(fmt.Sprintf("invalid super call at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var arguments []ast.Expression
+	for ; parser.currentToken.DirectValue != lexer.CloseParentheses; {
+		argument, parsingError := parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		arguments = append(arguments, argument)
+		if parser.currentToken.DirectValue != lexer.Comma {
+			break
+		}
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.SuperInvocationStatement{
+		Arguments: arguments,
+	}, nil
 }
 
 func (parser *Parser) parseRetryStatement() (ast.Statement, error) {
