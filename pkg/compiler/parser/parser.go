@@ -122,7 +122,7 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 	// Do something to parse Unary
 	if parser.check(lexer.Operator) {
 		switch parser.currentToken.DirectValue {
-		case lexer.Sub, lexer.Add, lexer.NegateBits, lexer.SignNot:
+		case lexer.Sub, lexer.Add, lexer.NegateBits, lexer.SignNot, lexer.Not:
 			operator := parser.currentToken.String
 			tokenizingError := parser.next()
 			if tokenizingError != nil {
@@ -769,6 +769,10 @@ func (parser *Parser) parsePassStatement() (ast.Statement, error) {
 	return &ast.PassStatement{}, nil
 }
 
+func (parser *Parser) parseEnumStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
 func (parser *Parser) parseOperand() (ast.Node, error) {
 	switch parser.currentToken.Kind {
 	case lexer.Literal, lexer.Boolean, lexer.NoneType:
@@ -832,6 +836,8 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseRedoStatement()
 		case lexer.Pass:
 			return parser.parsePassStatement()
+		case lexer.Enum:
+			return parser.parseEnumStatement()
 		}
 	case lexer.Punctuation:
 		switch parser.currentToken.DirectValue {
@@ -1118,7 +1124,11 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 					return nil, tokenizingError
 				}
 			}
+			if parser.currentToken.Kind == lexer.EOF {
+				break
+			}
 		}
+
 		parsedExpression, parsingError := parser.parseBinaryExpression(0)
 		if parsingError != nil {
 			return nil, parsingError
