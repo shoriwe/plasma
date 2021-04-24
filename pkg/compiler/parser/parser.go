@@ -536,9 +536,9 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (ast.No
 		return nil, parsingError
 	}
 	return &ast.GeneratorExpression{
-		Operation:  operation,
-		Variables:  variables,
-		Source:     source,
+		Operation: operation,
+		Variables: variables,
+		Source:    source,
 	}, nil
 }
 
@@ -581,29 +581,18 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 		Body:  nil,
 	}
 	for ; !parser.complete; {
-		switch parser.currentToken.Kind {
-		case lexer.Keyboard: // Lambda and all statements
-			switch parser.currentToken.DirectValue {
-			case lexer.Lambda:
-				parsedLambdaExpression, parsingError := parser.parseLambdaExpression()
-				if parsingError != nil {
-					return nil, parsingError
-				}
-				result.Body = append(result.Body, parsedLambdaExpression)
-			case lexer.BEGIN:
-				break
-			case lexer.END:
-				break
-			default:
-				break
+		if parser.currentToken.Kind == lexer.Separator {
+			tokenizingError := parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
 			}
-		default: // Here it will be an assign statement or any expression
-			parsedExpression, parsingError := parser.parseBinaryExpression(0)
-			if parsingError != nil {
-				return nil, parsingError
-			}
-			result.Body = append(result.Body, parsedExpression)
+			continue
 		}
+		parsedExpression, parsingError := parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		result.Body = append(result.Body, parsedExpression)
 	}
 	return result, nil
 }
