@@ -18,7 +18,7 @@
 
 # Pending Statements
 
-- [ ] Assign
+- [X] Assign
 - [ ] While
 - [ ] For
 - [ ] Until
