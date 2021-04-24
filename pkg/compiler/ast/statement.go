@@ -6,9 +6,9 @@ type Statement interface {
 
 type AssignStatement struct {
 	Statement
-	LeftHandSide   []Expression // Identifiers or Selectors
+	LeftHandSide   Expression // Identifiers or Selectors
 	AssignOperator string
-	RightHandSide  []Expression
+	RightHandSide  Expression
 }
 
 type DeferStatement struct {

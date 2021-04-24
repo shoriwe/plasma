@@ -116,6 +116,10 @@ func walker(node ast.Node, deep int) {
 		}
 		fmt.Print(" in ")
 		walker(node.(*ast.GeneratorExpression).Source, deep+1)
+	case *ast.AssignStatement:
+		walker(node.(*ast.AssignStatement).LeftHandSide, deep+1)
+		fmt.Print(node.(*ast.AssignStatement).AssignOperator)
+		walker(node.(*ast.AssignStatement).RightHandSide, deep+1)
 	}
 
 }
@@ -162,6 +166,9 @@ var basicSamples = []string{
 	"1 unless False",
 	"(1 for 2 in (3, 4))",
 	"\n\n\n\n\n\n\n1\n2\n3\n\n\n\n\n\n\n\n[4,\n\n\n5+\n6!=\n11]",
+	"a = 234",
+	"a[1] ~= 234",
+	"2.a += [1]",
 }
 
 func TestParseBasic(t *testing.T) {

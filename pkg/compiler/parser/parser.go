@@ -526,6 +526,23 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (ast.No
 	}, nil
 }
 
+func (parser *Parser) parseAssignmentStatement(leftHandSide ast.Expression) (ast.Node, error) {
+	assignmentToken := parser.currentToken
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	rightHandSide, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	return &ast.AssignStatement{
+		LeftHandSide:   leftHandSide,
+		AssignOperator: assignmentToken.String,
+		RightHandSide:  rightHandSide,
+	}, nil
+}
+
 func (parser *Parser) parsePrimaryExpression() (ast.Node, error) {
 	var expression ast.Node
 	var parsingError error
@@ -549,6 +566,9 @@ expressionPendingLoop:
 		case lexer.Unless: // One line Unless
 			expression, parsingError = parser.parseUnlessOneLiner(expression)
 		default:
+			if parser.currentToken.Kind == lexer.Assignment {
+				expression, parsingError = parser.parseAssignmentStatement(expression)
+			}
 			break expressionPendingLoop
 		}
 	}
