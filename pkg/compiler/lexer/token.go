@@ -32,10 +32,12 @@ const (
 	NoneType
 	EOF
 
+	// Punctuation
 	Comma
 	Colon
 	SemiColon
 	NewLine
+	// Reserved Keyboards
 	Pass
 	Super
 	End
@@ -64,52 +66,16 @@ const (
 	Try
 	Except
 	Finally
-	And
-	Or
-	Xor
-	In
-	IsInstanceOf
+	IsInstanceOf // This maybe can be a regular identifier
 	Async
 	Await
 	BEGIN
 	END
 	Enum
-	Not
+
+	// Assigns
 	Assign
-	Equals
-	SignNot
-	NotEqual
-	NegateBits
 	NegateBitsAssign
-	GreaterThan
-	GreaterOrEqualThan
-	LessThan
-	LessOrEqualThan
-	BitwiseOr
-	BitwiseXor
-	BitWiseAnd
-	BitwiseLeft
-	BitwiseRight
-	Add
-	Sub
-	Star
-	Div
-	FloorDiv
-	Modulus
-	PowerOf
-	True
-	False
-	None
-
-	OpenParentheses
-	CloseParentheses
-	OpenSquareBracket
-	CloseSquareBracket
-	OpenBrace
-	CloseBrace
-	DollarSign
-	Dot
-
 	BitwiseOrAssign
 	BitwiseXorAssign
 	BitWiseAndAssign
@@ -122,6 +88,50 @@ const (
 	FloorDivAssign
 	ModulusAssign
 	PowerOfAssign
+	// Unary Operators
+	Not
+	SignNot
+	NegateBits
+	// Binary Operators
+	//// Logical operators
+	And
+	Or
+	Xor
+	In
+	////
+	Equals
+	NotEqual
+	GreaterThan
+	GreaterOrEqualThan
+	LessThan
+	LessOrEqualThan
+	//// Bitwise Operations
+	BitwiseOr
+	BitwiseXor
+	BitWiseAnd
+	BitwiseLeft
+	BitwiseRight
+	//// Basic Binary expressions
+	Add // This is also an unary operator
+	Sub // This is also an unary operator
+	Star
+	Div
+	FloorDiv
+	Modulus
+	PowerOf
+	// Reserved Literals
+	True
+	False
+	None
+
+	OpenParentheses
+	CloseParentheses
+	OpenSquareBracket
+	CloseSquareBracket
+	OpenBrace
+	CloseBrace
+	DollarSign
+	Dot
 )
 
 /*
