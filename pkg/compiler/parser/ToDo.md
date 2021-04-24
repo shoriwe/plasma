@@ -12,7 +12,7 @@
 - [X] Array
 - [X] Tuple
 - [X] Hash
-- [ ] Generator
+- [X] Generator
 - [X] One line If
 - [X] One line unless
 
@@ -29,6 +29,7 @@
 - [ ] Function Definition
 - [ ] Struct
 - [ ] Interface
+- [ ] Defer
 - [ ] Class
 - [ ] Try
 - [ ] BEGIN
