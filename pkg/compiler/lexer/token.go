@@ -53,6 +53,7 @@ const (
 	Retry
 	Break
 	Redo
+	Defer
 	Module
 	Def
 	Lambda
@@ -162,6 +163,7 @@ var (
 	RetryString              = "retry"
 	BreakString              = "break"
 	RedoString               = "redo"
+	DeferString              = "defer"
 	ModuleString             = "module"
 	DefString                = "def"
 	LambdaString             = "lambda"
