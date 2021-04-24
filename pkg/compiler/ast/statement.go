@@ -143,41 +143,38 @@ type EndStatement struct {
 	Body []Node
 }
 
-type GoExpression struct {
+type GoStatement struct {
 	Statement
 	FunctionInvocation Expression
 }
 
-type ReturnExpression struct {
+type ReturnStatement struct {
 	Statement
 	Results []Expression
 }
 
-type YieldExpression struct {
+type YieldStatement struct {
 	Statement
 	Results []Expression
 }
 
-type SuperInvocationExpression struct {
+type SuperInvocationStatement struct {
 	Statement
 	Arguments []Expression
 }
 
-type RetryExpression struct {
+type RetryStatement struct {
 	Statement
-	Target *Identifier
 }
 
-type BreakExpression struct {
+type BreakStatement struct {
 	Statement
-	Target *Identifier
 }
 
-type RedoExpression struct {
+type RedoStatement struct {
 	Statement
-	Target *Identifier
 }
 
-type PassExpression struct {
+type PassStatement struct {
 	Statement
 }

@@ -305,6 +305,117 @@ func (parser *Parser) parseHashExpression() (ast.Node, error) {
 		Values: values,
 	}, nil
 }
+
+func (parser *Parser) parseWhileLoop() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseForLoop() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseUntilLoop() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseIfStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseUnlessStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseSwitchStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseModuleStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseFunctionDefinitionStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+//
+
+func (parser *Parser) parseStructStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseInterfaceStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseDeferStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseClassStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseTryStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseBeginStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseEndStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseGoStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseReturnStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseYieldStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseSuperStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseRetryStatement() (ast.Statement, error) {
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.RetryStatement{}, nil
+}
+
+func (parser *Parser) parseBreakStatement() (ast.Statement, error) {
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.BreakStatement{}, nil
+}
+
+func (parser *Parser) parseRedoStatement() (ast.Statement, error) {
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.RedoStatement{}, nil
+}
+
+func (parser *Parser) parsePassStatement() (ast.Statement, error) {
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.PassStatement{}, nil
+}
+
 func (parser *Parser) parseOperand() (ast.Node, error) {
 	switch parser.currentToken.Kind {
 	case lexer.Literal, lexer.Boolean:
@@ -322,6 +433,52 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 		switch parser.currentToken.DirectValue {
 		case lexer.Lambda:
 			return parser.parseLambdaExpression()
+		case lexer.While:
+			return parser.parseWhileLoop()
+		case lexer.For:
+			return parser.parseForLoop()
+		case lexer.Until:
+			return parser.parseUntilLoop()
+		case lexer.If:
+			return parser.parseIfStatement()
+		case lexer.Unless:
+			return parser.parseUnlessStatement()
+		case lexer.Switch:
+			return parser.parseSwitchStatement()
+		case lexer.Module:
+			return parser.parseModuleStatement()
+		case lexer.Def:
+			return parser.parseFunctionDefinitionStatement()
+		case lexer.Struct:
+			return parser.parseStructStatement()
+		case lexer.Interface:
+			return parser.parseInterfaceStatement()
+		case lexer.Defer:
+			return parser.parseDeferStatement()
+		case lexer.Class:
+			return parser.parseClassStatement()
+		case lexer.Try:
+			return parser.parseTryStatement()
+		case lexer.BEGIN:
+			return parser.parseBeginStatement()
+		case lexer.END:
+			return parser.parseEndStatement()
+		case lexer.Go:
+			return parser.parseGoStatement()
+		case lexer.Return:
+			return parser.parseReturnStatement()
+		case lexer.Yield:
+			return parser.parseYieldStatement()
+		case lexer.Super:
+			return parser.parseSuperStatement()
+		case lexer.Retry:
+			return parser.parseRetryStatement()
+		case lexer.Break:
+			return parser.parseBreakStatement()
+		case lexer.Redo:
+			return parser.parseRedoStatement()
+		case lexer.Pass:
+			return parser.parsePassStatement()
 		}
 	case lexer.Punctuation:
 		switch parser.currentToken.DirectValue {
