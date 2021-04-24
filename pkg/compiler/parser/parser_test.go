@@ -24,6 +24,9 @@ func walker(node ast.Node) string {
 	case *ast.BasicLiteralExpression:
 		return node.(*ast.BasicLiteralExpression).String
 	case *ast.UnaryExpression:
+		if node.(*ast.UnaryExpression).Operator == lexer.NotString {
+			return node.(*ast.UnaryExpression).Operator + " " + walker(node.(*ast.UnaryExpression).X)
+		}
 		return node.(*ast.UnaryExpression).Operator + walker(node.(*ast.UnaryExpression).X)
 	case *ast.SelectorExpression:
 		return walker(node.(*ast.SelectorExpression).X) + "." + node.(*ast.SelectorExpression).Identifier.String
@@ -245,13 +248,19 @@ var basicSamples = []string{
 	"{1: (1*2)/4, 2: 282}",
 	"(1 if x < 4 else 2)",
 	"True",
+	"not True",
 	"1 if True",
-	"1 unless False",
+	"!True",
+	"1 unless False\n",
+	"1 in (1, 2, 3)\n",
 	"(1 for 2 in (3, 4))",
 	"\n\n\n\n\n\n\n1\n2\n3\n\n\n\n\n\n\n\n[4,\n\n\n5+\n6!=\n11]",
 	"a = 234",
 	"a[1] ~= 234",
 	"2.a += [1]",
+	"a and b",
+	"a xor b",
+	"a or not b",
 	"redo",
 	"yield 1",
 	"yield 1, 2 + 4, lambda x: x + 2, (1, 2 , 3, 4)",
