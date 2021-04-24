@@ -7,129 +7,150 @@ import (
 	"testing"
 )
 
-func walker(node ast.Node, deep int) {
+func walker(node ast.Node, deep int) string {
 	switch node.(type) {
 	case *ast.Program:
+		result := ""
 		for _, child := range node.(*ast.Program).Body {
-			walker(child, deep+1)
-			fmt.Println("")
+			result += walker(child, deep+1)
+			result += "\n"
 		}
+		return result
 	case *ast.BinaryExpression:
-		walker(node.(*ast.BinaryExpression).LeftHandSide, deep+1)
-		fmt.Print(node.(*ast.BinaryExpression).Operator)
-		walker(node.(*ast.BinaryExpression).RightHandSide, deep+1)
+		return walker(node.(*ast.BinaryExpression).LeftHandSide, deep+1) + node.(*ast.BinaryExpression).Operator + walker(node.(*ast.BinaryExpression).RightHandSide, deep+1)
 	case *ast.BasicLiteralExpression:
-		fmt.Print(node.(*ast.BasicLiteralExpression).String)
+		return node.(*ast.BasicLiteralExpression).String
 	case *ast.UnaryExpression:
-		fmt.Print(node.(*ast.UnaryExpression).Operator)
-		walker(node.(*ast.UnaryExpression).X, deep+1)
+		return node.(*ast.UnaryExpression).Operator + walker(node.(*ast.UnaryExpression).X, deep+1)
 	case *ast.SelectorExpression:
-		walker(node.(*ast.SelectorExpression).X, deep+1)
-		fmt.Print("." + node.(*ast.SelectorExpression).Identifier.String)
+		return walker(node.(*ast.SelectorExpression).X, deep+1) + "." + node.(*ast.SelectorExpression).Identifier.String
 	case *ast.Identifier:
-		fmt.Print(node.(*ast.Identifier).String)
+		return node.(*ast.Identifier).String
 	case *ast.MethodInvocationExpression:
-		walker(node.(*ast.MethodInvocationExpression).Function, deep+1)
-		fmt.Print("(")
+		result := walker(node.(*ast.MethodInvocationExpression).Function, deep+1) + "("
 		isFirst := true
 		for _, child := range node.(*ast.MethodInvocationExpression).Arguments {
 			if isFirst {
 				isFirst = false
 			} else {
-				fmt.Print(", ")
+				result += ", "
 			}
-			walker(child, deep+1)
+			result += walker(child, deep+1)
 		}
-		fmt.Print(")")
+		return result + ")"
 	case *ast.IndexExpression:
-		walker(node.(*ast.IndexExpression).Source, deep+1)
-		fmt.Print("[")
+		result := walker(node.(*ast.IndexExpression).Source, deep+1) + "["
 
-		walker(node.(*ast.IndexExpression).Index[0], deep+1)
+		result += walker(node.(*ast.IndexExpression).Index[0], deep+1)
 		if node.(*ast.IndexExpression).Index[1] != nil {
-			fmt.Print(":")
-			walker(node.(*ast.IndexExpression).Index[1], deep+1)
+			result += ":" + walker(node.(*ast.IndexExpression).Index[1], deep+1)
 		}
-		fmt.Print("]")
+		return result + "]"
 	case *ast.LambdaExpression:
-		fmt.Print("lambda")
+		result := "lambda"
 		isFirst := true
 		for _, argument := range node.(*ast.LambdaExpression).Arguments {
 			if isFirst {
-				fmt.Print(" ")
+				result += " "
 				isFirst = false
 			} else {
-				fmt.Print(", ")
+				result += ", "
 			}
-			walker(argument, deep+1)
+			result += walker(argument, deep+1)
 		}
-		fmt.Print(": ")
-		walker(node.(*ast.LambdaExpression).Code, deep+1)
+		result += ": "
+		return result + walker(node.(*ast.LambdaExpression).Code, deep+1)
 	case *ast.ParenthesesExpression:
-		fmt.Print("(")
-		walker(node.(*ast.ParenthesesExpression).X, deep+1)
-		fmt.Print(")")
+		return "(" + walker(node.(*ast.ParenthesesExpression).X, deep+1) + ")"
 	case *ast.TupleExpression:
-		fmt.Print("(")
+		result := "("
+		isFirst := true
 		for _, value := range node.(*ast.TupleExpression).Values {
-			walker(value, deep+1)
-			fmt.Print(", ")
+			if isFirst {
+				isFirst = false
+			} else {
+				result += ", "
+			}
+			result += walker(value, deep+1)
 		}
-		fmt.Print(")")
+		return result + ")"
 	case *ast.ArrayExpression:
-		fmt.Print("[")
+		result := "["
+		isFirst := true
 		for _, value := range node.(*ast.ArrayExpression).Values {
-			walker(value, deep+1)
-			fmt.Print(", ")
+			if isFirst {
+				isFirst = false
+			} else {
+				result += ", "
+			}
+			result += walker(value, deep+1)
 		}
-		fmt.Print("]")
+		return result + "]"
 	case *ast.HashExpression:
-		fmt.Print("{")
+		result := "{"
+		isFirst := false
 		for _, value := range node.(*ast.HashExpression).Values {
-			walker(value.Key, deep+1)
-			fmt.Print(":")
-			walker(value.Value, deep+1)
-			fmt.Print(", ")
+			if isFirst {
+				isFirst = false
+			} else {
+				result += ", "
+			}
+			result += walker(value.Key, deep+1)
+			result += ":" + walker(value.Value, deep+1)
 		}
-		fmt.Print("}")
+		return result + "}"
 	case *ast.OneLineIfExpression:
-		walker(node.(*ast.OneLineIfExpression).Result, deep+1)
-		fmt.Print(" if ")
-		walker(node.(*ast.OneLineIfExpression).Condition, deep+1)
+		result := walker(node.(*ast.OneLineIfExpression).Result, deep+1)
+		result += " if " + walker(node.(*ast.OneLineIfExpression).Condition, deep+1)
 		if node.(*ast.OneLineIfExpression).ElseResult != nil {
-			fmt.Print(" else ")
-			walker(node.(*ast.OneLineIfExpression).ElseResult, deep+1)
+			result += " else " + walker(node.(*ast.OneLineIfExpression).ElseResult, deep+1)
 		}
+		return result
 	case *ast.OneLineUnlessExpression:
-		walker(node.(*ast.OneLineUnlessExpression).Result, deep+1)
-		fmt.Print(" unless ")
-		walker(node.(*ast.OneLineUnlessExpression).Condition, deep+1)
+		result := walker(node.(*ast.OneLineUnlessExpression).Result, deep+1)
+		result += " unless "
+		result += walker(node.(*ast.OneLineUnlessExpression).Condition, deep+1)
 		if node.(*ast.OneLineUnlessExpression).ElseResult != nil {
-			fmt.Print(" else ")
-			walker(node.(*ast.OneLineUnlessExpression).ElseResult, deep+1)
+			result += " else " + walker(node.(*ast.OneLineUnlessExpression).ElseResult, deep+1)
 		}
+		return result
 	case *ast.GeneratorExpression:
-		walker(node.(*ast.GeneratorExpression).Operation, deep+1)
-		fmt.Print(" for ")
+		result := walker(node.(*ast.GeneratorExpression).Operation, deep+1)
+		result += " for "
+		isFirst := true
 		for _, variable := range node.(*ast.GeneratorExpression).Variables {
-			walker(variable, deep+1)
+			if isFirst {
+				isFirst = false
+			} else {
+				result += ", "
+			}
+			result += walker(variable, deep+1)
 		}
-		fmt.Print(" in ")
-		walker(node.(*ast.GeneratorExpression).Source, deep+1)
+		result += " in "
+		return result + walker(node.(*ast.GeneratorExpression).Source, deep+1)
 	case *ast.AssignStatement:
-		walker(node.(*ast.AssignStatement).LeftHandSide, deep+1)
-		fmt.Print(node.(*ast.AssignStatement).AssignOperator)
-		walker(node.(*ast.AssignStatement).RightHandSide, deep+1)
+		result := walker(node.(*ast.AssignStatement).LeftHandSide, deep+1)
+		result += " " + node.(*ast.AssignStatement).AssignOperator + " "
+		return result + walker(node.(*ast.AssignStatement).RightHandSide, deep+1)
+	case *ast.RetryStatement:
+		return "retry"
+	case *ast.BreakStatement:
+		return "break"
+	case *ast.RedoStatement:
+		return "redo"
+	case *ast.PassStatement:
+		return "pass"
 	}
-
+	panic("unknown node type")
 }
 
-func walk(node ast.Node) {
-	walker(node, 0)
+func walk(sample int, node ast.Node) {
+	fmt.Printf("\nSample: %d\n", sample)
+	fmt.Print(walker(node, 0))
 }
 
 func test(t *testing.T, samples []string) {
-	for _, sample := range samples {
+	for sampleIndex, sample := range samples {
 		lex := lexer.NewLexer(sample)
 		parser, parserCreationError := NewParser(lex)
 		if parserCreationError != nil {
@@ -141,7 +162,7 @@ func test(t *testing.T, samples []string) {
 			t.Error(parsingError)
 			return
 		}
-		walk(program)
+		walk(sampleIndex+1, program)
 	}
 }
 
@@ -169,6 +190,7 @@ var basicSamples = []string{
 	"a = 234",
 	"a[1] ~= 234",
 	"2.a += [1]",
+	"redo",
 }
 
 func TestParseBasic(t *testing.T) {
