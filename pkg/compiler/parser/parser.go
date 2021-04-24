@@ -349,7 +349,22 @@ func (parser *Parser) parseInterfaceStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseDeferStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	methodInvocation, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	switch methodInvocation.(type) {
+	case *ast.MethodInvocationExpression:
+		return &ast.DeferStatement{
+			X: methodInvocation.(*ast.MethodInvocationExpression),
+		}, nil
+	default:
+		return nil, errors.New(fmt.Sprintf("no function call passed to go statement at line %d", parser.currentToken.Line))
+	}
 }
 
 func (parser *Parser) parseClassStatement() (ast.Statement, error) {

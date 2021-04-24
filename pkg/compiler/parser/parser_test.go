@@ -140,6 +140,8 @@ func walker(node ast.Node, deep int) string {
 			result += walker(output, deep+1)
 		}
 		return result
+	case *ast.DeferStatement:
+		return "defer " + walker(node.(*ast.DeferStatement).X, deep+1)
 	case *ast.GoStatement:
 		return "go " + walker(node.(*ast.GoStatement).X, deep+1)
 	case *ast.SuperInvocationStatement:
@@ -207,6 +209,7 @@ var basicSamples = []string{
 	"return 1",
 	"return 1, 2 + 4, lambda x: x + 2, (1, 2 , 3, 4)",
 	"go super_duper()",
+	"defer a()",
 	"super(1)",
 	"super(1, 2)",
 	"super(1, 2, call((1, 2, 3, 4, 2 * (5 - 3))))",

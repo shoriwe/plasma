@@ -29,15 +29,15 @@
 - [ ] Function Definition
 - [ ] Struct
 - [ ] Interface
-- [ ] Defer
+- [X] Defer
 - [ ] Class
 - [ ] Try
 - [ ] BEGIN
 - [ ] END
-- [ ] Go
-- [ ] Return
-- [ ] Yield
-- [ ] Super
+- [X] Go
+- [X] Return
+- [X] Yield
+- [X] Super
 - [X] Retry
 - [X] Break
 - [X] Redo
