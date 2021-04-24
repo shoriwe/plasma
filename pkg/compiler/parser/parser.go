@@ -59,7 +59,9 @@ func (parser *Parser) parseKeyboardStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseLiteral() (ast.Expression, error) {
-	if parser.currentToken.Kind != lexer.Literal && parser.currentToken.Kind != lexer.Boolean {
+	if parser.currentToken.Kind != lexer.Literal &&
+		parser.currentToken.Kind != lexer.Boolean &&
+		parser.currentToken.Kind != lexer.NoneType {
 		return nil, errors.New(fmt.Sprintf("invalid kind of token %s at line %d", parser.currentToken.String, parser.currentToken.Line))
 	}
 	switch parser.currentToken.DirectValue {
@@ -769,7 +771,7 @@ func (parser *Parser) parsePassStatement() (ast.Statement, error) {
 
 func (parser *Parser) parseOperand() (ast.Node, error) {
 	switch parser.currentToken.Kind {
-	case lexer.Literal, lexer.Boolean:
+	case lexer.Literal, lexer.Boolean, lexer.NoneType:
 		return parser.parseLiteral()
 	case lexer.IdentifierKind:
 		identifier := parser.currentToken.String

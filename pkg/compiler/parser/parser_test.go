@@ -274,7 +274,7 @@ var basicSamples = []string{
 	"unless a > 2\n" +
 		"call()\n" +
 		"elif a < 2\n" +
-		"if a == 0\n" +
+		"if 1 if a < 2 else None\n" +
 		"print(\"\\\"a\\\" is zero\")\n" +
 		"else\n" +
 		"print(\"\\\"a\\\" is non zero\")" +
