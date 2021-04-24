@@ -22,7 +22,7 @@ func test(t *testing.T, samples map[string][]*Token) {
 		}
 		for index, computedToken := range computedTokens {
 			if computedToken.String != result[index].String {
-				t.Errorf("Expecting String: '%s' but Received String: %s in sample %s", result[index].String, computedToken.String, sample)
+				t.Errorf("Expecting Token: '%s' but Received Token: %s in sample %s", result[index].String, computedToken.String, sample)
 				return
 			}
 			if computedToken.Kind != result[index].Kind {

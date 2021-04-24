@@ -1,5 +1,7 @@
 package ast
 
+import "github.com/shoriwe/gruby/pkg/compiler/lexer"
+
 type Expression interface {
 	Node
 }
@@ -26,12 +28,12 @@ type HashExpression struct {
 
 type Identifier struct {
 	Expression
-	String string
+	Token *lexer.Token
 }
 
 type BasicLiteralExpression struct {
 	Expression
-	String      string
+	Token       *lexer.Token
 	Kind        int
 	DirectValue int
 }
@@ -39,13 +41,13 @@ type BasicLiteralExpression struct {
 type BinaryExpression struct {
 	Expression
 	LeftHandSide  Expression
-	Operator      string
+	Operator      *lexer.Token
 	RightHandSide Expression
 }
 
 type UnaryExpression struct {
 	Expression
-	Operator string
+	Operator *lexer.Token
 	X        Expression
 }
 

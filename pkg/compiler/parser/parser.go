@@ -75,7 +75,7 @@ func (parser *Parser) parseLiteral() (ast.Expression, error) {
 			return nil, tokenizingError
 		}
 		return &ast.BasicLiteralExpression{
-			String:      currentToken.String,
+			Token:       currentToken,
 			Kind:        currentToken.Kind,
 			DirectValue: currentToken.DirectValue,
 		}, nil
@@ -111,7 +111,7 @@ func (parser *Parser) parseBinaryExpression(precedence int) (ast.Node, error) {
 		}
 		leftHandSide = &ast.BinaryExpression{
 			LeftHandSide:  leftHandSide,
-			Operator:      operator.String,
+			Operator:      operator,
 			RightHandSide: rightHandSide,
 		}
 	}
@@ -123,7 +123,7 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 	if parser.check(lexer.Operator) {
 		switch parser.currentToken.DirectValue {
 		case lexer.Sub, lexer.Add, lexer.NegateBits, lexer.SignNot, lexer.Not:
-			operator := parser.currentToken.String
+			operator := parser.currentToken
 			tokenizingError := parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
@@ -154,7 +154,7 @@ func (parser *Parser) parseLambdaExpression() (ast.Node, error) {
 			break
 		}
 		arguments = append(arguments, &ast.Identifier{
-			String: parser.currentToken.String,
+			Token: parser.currentToken,
 		})
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
@@ -778,13 +778,13 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 	case lexer.Literal, lexer.Boolean, lexer.NoneType:
 		return parser.parseLiteral()
 	case lexer.IdentifierKind:
-		identifier := parser.currentToken.String
+		identifier := parser.currentToken
 		tokenizingError := parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
 		return &ast.Identifier{
-			String: identifier,
+			Token: identifier,
 		}, nil
 	case lexer.Keyboard:
 		switch parser.currentToken.DirectValue {
@@ -869,7 +869,7 @@ func (parser *Parser) parseSelectorExpression(expression ast.Node) (ast.Node, er
 		selector = &ast.SelectorExpression{
 			X: selector,
 			Identifier: &ast.Identifier{
-				String: identifier.String,
+				Token: identifier,
 			},
 		}
 		tokenizingError = parser.next()
@@ -1022,7 +1022,7 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (ast.No
 			break
 		}
 		variables = append(variables, &ast.Identifier{
-			String: parser.currentToken.String,
+			Token: parser.currentToken,
 		})
 		numberOfVariables++
 		tokenizingError = parser.next()
@@ -1063,7 +1063,7 @@ func (parser *Parser) parseAssignmentStatement(leftHandSide ast.Expression) (ast
 	}
 	return &ast.AssignStatement{
 		LeftHandSide:   leftHandSide,
-		AssignOperator: assignmentToken.String,
+		AssignOperator: assignmentToken,
 		RightHandSide:  rightHandSide,
 	}, nil
 }

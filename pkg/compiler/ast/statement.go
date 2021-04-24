@@ -1,5 +1,7 @@
 package ast
 
+import "github.com/shoriwe/gruby/pkg/compiler/lexer"
+
 type Statement interface {
 	Node
 }
@@ -7,7 +9,7 @@ type Statement interface {
 type AssignStatement struct {
 	Statement
 	LeftHandSide   Expression // Identifiers or Selectors
-	AssignOperator string
+	AssignOperator *lexer.Token
 	RightHandSide  Expression
 }
 
