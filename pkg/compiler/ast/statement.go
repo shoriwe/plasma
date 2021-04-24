@@ -145,7 +145,7 @@ type EndStatement struct {
 
 type GoStatement struct {
 	Statement
-	FunctionInvocation Expression
+	X *MethodInvocationExpression
 }
 
 type ReturnStatement struct {
