@@ -107,6 +107,7 @@
 
 ## Other statements
 
+- [X] Defer
 - [X] Go
 - [X] Super Invocation
 - [X] Retry

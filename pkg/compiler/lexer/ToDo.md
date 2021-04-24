@@ -48,6 +48,7 @@
 - [X] Break
 - [X] Redo
 - [X] Module
+- [X] Defer
 - [X] Def
 - [X] Lambda
 - [X] Struct
