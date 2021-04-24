@@ -373,11 +373,53 @@ func (parser *Parser) parseGoStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseReturnStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var results []ast.Expression
+	for ; !parser.complete; {
+		result, parsingError := parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		results = append(results, result)
+		if parser.currentToken.DirectValue != lexer.Comma {
+			break
+		}
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+	}
+	return &ast.ReturnStatement{
+		Results: results,
+	}, nil
 }
 
 func (parser *Parser) parseYieldStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var results []ast.Expression
+	for ; !parser.complete; {
+		result, parsingError := parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		results = append(results, result)
+		if parser.currentToken.DirectValue != lexer.Comma {
+			break
+		}
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+	}
+	return &ast.YieldStatement{
+		Results: results,
+	}, nil
 }
 
 func (parser *Parser) parseSuperStatement() (ast.Statement, error) {
