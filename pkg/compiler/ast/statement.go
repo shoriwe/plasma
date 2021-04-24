@@ -6,29 +6,34 @@ type Statement interface {
 
 type AssignStatement struct {
 	Statement
-	LeftHandSide   []Expression
+	LeftHandSide   []Expression // Identifiers or Selectors
 	AssignOperator string
 	RightHandSide  []Expression
 }
 
+type DeferStatement struct {
+	Statement
+	X *MethodInvocationExpression
+}
+
 type WhileLoopStatement struct {
 	Statement
-	Name      Identifier
+	Name      *Identifier
 	Condition Expression
 	Body      []Node
 }
 
 type UntilLoopStatement struct {
 	Statement
-	Name      Identifier
+	Name      *Identifier
 	Condition Expression
 	Body      []Node
 }
 
 type ForLoopStatement struct {
 	Statement
-	Name      Identifier
-	Receivers []Identifier
+	Name      *Identifier
+	Receivers []*Identifier
 	Source    Expression
 	Body      []Node
 }
@@ -42,7 +47,7 @@ type IfStatement struct {
 	Statement
 	Condition  Expression
 	Body       []Node
-	ElifBlocks []ElifBlock
+	ElifBlocks []*ElifBlock
 	Else       []Node
 }
 
@@ -50,7 +55,7 @@ type UnlessStatement struct {
 	Statement
 	Condition  Expression
 	Body       []Node
-	ElifBlocks []ElifBlock
+	ElifBlocks []*ElifBlock
 	Else       []Node
 }
 
@@ -61,69 +66,69 @@ type CaseBlock struct {
 
 type SwitchStatement struct {
 	Statement
-	Name       Identifier
+	Name       *Identifier
 	Target     Expression
-	CaseBlocks []CaseBlock
+	CaseBlocks []*CaseBlock
 	Else       []Node
 }
 
 type ModuleStatement struct {
 	Statement
-	Name Identifier
+	Name *Identifier
 	Body []Node
 }
 
 type FunctionDefinitionStatement struct {
 	Statement
-	Name      Identifier
+	Name      *Identifier
 	Arguments []Expression
 	Body      []Node
 }
 
 type AsyncFunctionDefinitionStatement struct {
 	Statement
-	Name      Identifier
+	Name      *Identifier
 	Arguments []Expression
 	Body      []Node
 }
 
 type StructStatement struct {
 	Statement
-	Name   Identifier
+	Name   *Identifier
 	Fields []Identifier
 }
 
 type InterfaceStatement struct {
 	Statement
-	Name                   Identifier
-	Bases                  []Identifier
-	MethodDefinitions      []FunctionDefinitionStatement
-	AsyncMethodDefinitions []AsyncFunctionDefinitionStatement
+	Name                   *Identifier
+	Bases                  []*Identifier
+	MethodDefinitions      []*FunctionDefinitionStatement
+	AsyncMethodDefinitions []*AsyncFunctionDefinitionStatement
 }
 
 type ClassStatement struct {
 	Statement
-	Name  Identifier
-	Bases []Identifier
+	Name  *Identifier
+	Bases []*Identifier
 	Body  []Node
 }
 
 type EnumStatement struct {
 	Statement
-	Name            Identifier
+	Name            *Identifier
 	EnumIdentifiers []Expression
 }
 
 type ExceptBlock struct {
-	Targets     []Identifier
-	CaptureName Identifier
+	Targets     []*Identifier
+	CaptureName *Identifier
 	Body        []Node
 }
 
 type TryStatement struct {
 	Statement
 	Body         []Node
-	ExceptBlocks []ExceptBlock
+	ExceptBlocks []*ExceptBlock
 	Else         []Node
 	Finally      []Node
 }
@@ -160,17 +165,17 @@ type SuperInvocationExpression struct {
 
 type RetryExpression struct {
 	Statement
-	Target Identifier
+	Target *Identifier
 }
 
 type BreakExpression struct {
 	Statement
-	Target Identifier
+	Target *Identifier
 }
 
 type RedoExpression struct {
 	Statement
-	Target Identifier
+	Target *Identifier
 }
 
 type PassExpression struct {
