@@ -22,6 +22,9 @@ func (parser *Parser) next() error {
 	if tokenizingError != nil {
 		return tokenizingError
 	}
+	if token.Kind == lexer.EOF {
+		parser.complete = true
+	}
 	parser.currentToken = token
 	return nil
 }
@@ -86,8 +89,11 @@ func (parser *Parser) parseBinaryExpression(precedence int) (ast.Node, error) {
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	for ; parser.currentToken.Kind == lexer.Operator ||
-		parser.currentToken.Kind == lexer.Comparator; {
+	for ; !parser.complete; {
+		if parser.currentToken.Kind != lexer.Operator &&
+			parser.currentToken.Kind != lexer.Comparator {
+			break
+		}
 		operator := parser.currentToken
 		operatorPrecedence := parser.currentToken.DirectValue
 		if operatorPrecedence < precedence {
@@ -141,7 +147,10 @@ func (parser *Parser) parseLambdaExpression() (ast.Node, error) {
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	for ; parser.currentToken.Kind == lexer.IdentifierKind; {
+	for ; !parser.complete; {
+		if parser.currentToken.Kind != lexer.IdentifierKind {
+			break
+		}
 		arguments = append(arguments, &ast.Identifier{
 			String: parser.currentToken.String,
 		})
@@ -206,7 +215,10 @@ func (parser *Parser) parseParentheses() (ast.Node, error) {
 		return nil, tokenizingError
 	}
 	var nextValue ast.Node
-	for ; parser.currentToken.DirectValue != lexer.CloseParentheses; {
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue == lexer.CloseParentheses {
+			break
+		}
 		nextValue, parsingError = parser.parseBinaryExpression(0)
 		if parsingError != nil {
 			return nil, parsingError
@@ -319,11 +331,243 @@ func (parser *Parser) parseUntilLoop() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseIfStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	condition, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	if parser.currentToken.DirectValue != lexer.NewLine {
+		return nil, errors.New(fmt.Sprintf("invalid if statement declaration at line %d", parser.currentToken.Line))
+	}
+	var body []ast.Node
+	var elifBlocks []*ast.ElifBlock
+	var elseBody []ast.Node
+	var node ast.Node
+	var elifCondition ast.Node
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue == lexer.End {
+			break
+		}
+		if parser.currentToken.DirectValue == lexer.NewLine {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			continue
+		}
+		switch parser.currentToken.DirectValue {
+		case lexer.Elif:
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			elifCondition, parsingError = parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			if parser.currentToken.DirectValue != lexer.NewLine {
+				return nil, errors.New(fmt.Sprintf("invalid if statement declaration at line %d", parser.currentToken.Line))
+			}
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			var elifBody []ast.Node
+			for ; !parser.complete; {
+				if parser.currentToken.DirectValue == lexer.Else ||
+					parser.currentToken.DirectValue == lexer.Elif ||
+					parser.currentToken.DirectValue == lexer.End {
+					break
+				}
+				if parser.currentToken.DirectValue == lexer.NewLine {
+					tokenizingError = parser.next()
+					if tokenizingError != nil {
+						return nil, tokenizingError
+					}
+					continue
+				}
+				node, parsingError = parser.parseBinaryExpression(0)
+				if parsingError != nil {
+					return nil, parsingError
+				}
+				elifBody = append(elifBody, node)
+			}
+			elifBlocks = append(elifBlocks, &ast.ElifBlock{
+				Condition: elifCondition,
+				Body:      elifBody,
+			})
+		case lexer.Else:
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			if parser.currentToken.DirectValue != lexer.NewLine {
+				return nil, errors.New(fmt.Sprintf("invalid else statement declaration in if statement at line %d", parser.currentToken.Line))
+			}
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			var elseNode ast.Node
+			for ; !parser.complete; {
+				if parser.currentToken.DirectValue == lexer.End {
+					break
+				}
+				if parser.currentToken.DirectValue == lexer.NewLine {
+					tokenizingError = parser.next()
+					if tokenizingError != nil {
+						return nil, tokenizingError
+					}
+					continue
+				}
+				elseNode, parsingError = parser.parseBinaryExpression(0)
+				if parsingError != nil {
+					return nil, parsingError
+				}
+				elseBody = append(elseBody, elseNode)
+			}
+			break
+		default:
+			node, parsingError = parser.parseBinaryExpression(0)
+			body = append(body, node)
+		}
+	}
+	if parser.currentToken.DirectValue != lexer.End {
+		return nil, errors.New(fmt.Sprintf("never closed if statement at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.IfStatement{
+		Condition:  condition,
+		Body:       body,
+		ElifBlocks: elifBlocks,
+		Else:       elseBody,
+	}, nil
 }
 
 func (parser *Parser) parseUnlessStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	condition, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	if parser.currentToken.DirectValue != lexer.NewLine {
+		return nil, errors.New(fmt.Sprintf("invalid if statement declaration at line %d", parser.currentToken.Line))
+	}
+	var body []ast.Node
+	var elifBlocks []*ast.ElifBlock
+	var elseBody []ast.Node
+	var node ast.Node
+	var elifCondition ast.Node
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue == lexer.End {
+			break
+		}
+		if parser.currentToken.DirectValue == lexer.NewLine {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			continue
+		}
+		switch parser.currentToken.DirectValue {
+		case lexer.Elif:
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			elifCondition, parsingError = parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			if parser.currentToken.DirectValue != lexer.NewLine {
+				return nil, errors.New(fmt.Sprintf("invalid if statement declaration at line %d", parser.currentToken.Line))
+			}
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			var elifBody []ast.Node
+			for ; !parser.complete; {
+				if parser.currentToken.DirectValue == lexer.Else ||
+					parser.currentToken.DirectValue == lexer.Elif ||
+					parser.currentToken.DirectValue == lexer.End {
+					break
+				}
+				if parser.currentToken.DirectValue == lexer.NewLine {
+					tokenizingError = parser.next()
+					if tokenizingError != nil {
+						return nil, tokenizingError
+					}
+					continue
+				}
+				node, parsingError = parser.parseBinaryExpression(0)
+				if parsingError != nil {
+					return nil, parsingError
+				}
+				elifBody = append(elifBody, node)
+			}
+			elifBlocks = append(elifBlocks, &ast.ElifBlock{
+				Condition: elifCondition,
+				Body:      elifBody,
+			})
+		case lexer.Else:
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			if parser.currentToken.DirectValue != lexer.NewLine {
+				return nil, errors.New(fmt.Sprintf("invalid else statement declaration in if statement at line %d", parser.currentToken.Line))
+			}
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			var elseNode ast.Node
+			for ; !parser.complete; {
+				if parser.currentToken.DirectValue == lexer.End {
+					break
+				}
+				if parser.currentToken.DirectValue == lexer.NewLine {
+					tokenizingError = parser.next()
+					if tokenizingError != nil {
+						return nil, tokenizingError
+					}
+					continue
+				}
+				elseNode, parsingError = parser.parseBinaryExpression(0)
+				if parsingError != nil {
+					return nil, parsingError
+				}
+				elseBody = append(elseBody, elseNode)
+			}
+			break
+		default:
+			node, parsingError = parser.parseBinaryExpression(0)
+			body = append(body, node)
+		}
+	}
+	if parser.currentToken.DirectValue != lexer.End {
+		return nil, errors.New(fmt.Sprintf("never closed if statement at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.UnlessStatement{
+		Condition:  condition,
+		Body:       body,
+		ElifBlocks: elifBlocks,
+		Else:       elseBody,
+	}, nil
 }
 
 func (parser *Parser) parseSwitchStatement() (ast.Statement, error) {
@@ -465,7 +709,10 @@ func (parser *Parser) parseSuperStatement() (ast.Statement, error) {
 		return nil, tokenizingError
 	}
 	var arguments []ast.Expression
-	for ; parser.currentToken.DirectValue != lexer.CloseParentheses; {
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue == lexer.CloseParentheses {
+			break
+		}
 		argument, parsingError := parser.parseBinaryExpression(0)
 		if parsingError != nil {
 			return nil, parsingError
@@ -599,7 +846,10 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 
 func (parser *Parser) parseSelectorExpression(expression ast.Node) (ast.Node, error) {
 	selector := expression
-	for ; parser.currentToken.DirectValue == lexer.Dot; {
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue != lexer.Dot {
+			break
+		}
 		tokenizingError := parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
@@ -629,7 +879,10 @@ func (parser *Parser) parseMethodInvocationExpression(expression ast.Node) (ast.
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	for ; parser.currentToken.DirectValue != lexer.CloseParentheses; {
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue == lexer.CloseParentheses {
+			break
+		}
 		argument, parsingError := parser.parseBinaryExpression(0)
 		if parsingError != nil {
 			return nil, parsingError
@@ -756,7 +1009,10 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (ast.No
 	}
 	var variables []*ast.Identifier
 	numberOfVariables := 0
-	for ; parser.currentToken.DirectValue != lexer.In; {
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue == lexer.In {
+			break
+		}
 		variables = append(variables, &ast.Identifier{
 			String: parser.currentToken.String,
 		})
@@ -849,11 +1105,16 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	for ; parser.currentToken.Kind != lexer.EOF; {
-		for ; parser.currentToken.Kind == lexer.Separator; {
-			tokenizingError = parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
+	for ; !parser.complete; {
+		if parser.currentToken.Kind == lexer.Separator {
+			for ; !parser.complete; {
+				if parser.currentToken.Kind != lexer.Separator {
+					break
+				}
+				tokenizingError = parser.next()
+				if tokenizingError != nil {
+					return nil, tokenizingError
+				}
 			}
 		}
 		parsedExpression, parsingError := parser.parseBinaryExpression(0)
