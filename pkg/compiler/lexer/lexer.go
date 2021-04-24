@@ -347,6 +347,8 @@ func guessKind(buffer string) (int, int) {
 		return Boolean, False
 	case NoneString:
 		return NoneType, None
+	case DeferString:
+		return Keyboard, Defer
 	}
 	return IdentifierKind, -1
 }
@@ -581,36 +583,40 @@ func (lexer *Lexer) next() (*Token, error) {
 	This function will yield just the necessary token, this means not repeated separators
 */
 func (lexer *Lexer) Next() (*Token, error) {
-nextTokenLoop:
-	for ; lexer.HasNext(); {
-		token, tokenizationError := lexer.next()
-		if tokenizationError != nil {
-			return nil, tokenizationError
-		}
-		switch token.Kind {
-		case Whitespace:
-			continue
-		case Separator:
-			if lexer.lastToken == nil {
-				continue
-			}
-			switch lexer.lastToken.Kind {
-			case Operator:
-				continue
-			case Comparator:
-				continue
-			case Separator:
-				continue
-			default:
-				lexer.lastToken = token
-				break nextTokenLoop
-			}
-		default:
-			lexer.lastToken = token
-			break nextTokenLoop
+	if lexer.peekToken != nil {
+		result := lexer.peekToken
+		lexer.peekToken = nil
+		return result, nil
+	}
+	token, tokenizingError := lexer.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	for ; token.Kind == Whitespace; {
+		token, tokenizingError = lexer.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
 		}
 	}
-	return lexer.lastToken, nil
+	if lexer.lastToken != nil {
+		if lexer.lastToken.Kind == Separator && token.Kind == Separator {
+			for ; token.Kind == Separator; {
+				token, tokenizingError = lexer.next()
+				if tokenizingError != nil {
+					return nil, tokenizingError
+				}
+			}
+		}
+	} else {
+		for ; token.Kind == Separator; {
+			token, tokenizingError = lexer.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+		}
+	}
+	lexer.lastToken = token
+	return token, nil
 }
 
 func (lexer *Lexer) Peek() (*Token, error) {
