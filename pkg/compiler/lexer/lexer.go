@@ -583,36 +583,30 @@ func (lexer *Lexer) next() (*Token, error) {
 	This function will yield just the necessary token, this means not repeated separators
 */
 func (lexer *Lexer) Next() (*Token, error) {
-	if lexer.peekToken != nil {
-		result := lexer.peekToken
-		lexer.peekToken = nil
-		return result, nil
-	}
 	token, tokenizingError := lexer.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	for ; token.Kind == Whitespace; {
-		token, tokenizingError = lexer.next()
-		if tokenizingError != nil {
-			return nil, tokenizingError
-		}
+	if token.Kind == Whitespace {
+		return lexer.Next()
 	}
-	if lexer.lastToken != nil {
-		if lexer.lastToken.Kind == Separator && token.Kind == Separator {
-			for ; token.Kind == Separator; {
-				token, tokenizingError = lexer.next()
-				if tokenizingError != nil {
-					return nil, tokenizingError
-				}
-			}
+	if token.Kind == Separator {
+		if lexer.lastToken == nil {
+			return lexer.Next()
 		}
-	} else {
-		for ; token.Kind == Separator; {
-			token, tokenizingError = lexer.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
+		switch lexer.lastToken.Kind {
+		case Separator:
+			return lexer.Next()
+		case Operator, Comparator:
+			return lexer.Next()
+		default:
+			break
+		}
+		switch lexer.lastToken.DirectValue {
+		case Comma, OpenParentheses, OpenSquareBracket, OpenBrace:
+			return lexer.Next()
+		default:
+			break
 		}
 	}
 	lexer.lastToken = token

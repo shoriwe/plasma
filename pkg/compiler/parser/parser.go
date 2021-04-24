@@ -11,7 +11,6 @@ type Parser struct {
 	lexer        *lexer.Lexer
 	complete     bool
 	currentToken *lexer.Token
-	nextToken    *lexer.Token
 }
 
 func (parser *Parser) hasNext() bool {
@@ -19,27 +18,12 @@ func (parser *Parser) hasNext() bool {
 }
 
 func (parser *Parser) next() error {
-	if parser.lexer.HasNext() {
-		token_, tokenizingError := parser.lexer.Next()
-		if tokenizingError != nil {
-			return tokenizingError
-		}
-		parser.currentToken = token_
-		if parser.lexer.HasNext() {
-			token_, tokenizingError = parser.lexer.Peek()
-			if tokenizingError != nil {
-				return tokenizingError
-			}
-			parser.nextToken = token_
-		}
-	} else {
-		parser.complete = true
+	token, tokenizingError := parser.lexer.Next()
+	if tokenizingError != nil {
+		return tokenizingError
 	}
+	parser.currentToken = token
 	return nil
-}
-
-func (parser *Parser) peek() *lexer.Token {
-	return parser.nextToken
 }
 
 func (parser *Parser) check(kind int) bool {
@@ -580,13 +564,16 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 		End:   nil,
 		Body:  nil,
 	}
-	for ; !parser.complete; {
-		if parser.currentToken.Kind == lexer.Separator {
-			tokenizingError := parser.next()
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	for ; parser.currentToken.Kind != lexer.EOF; {
+		for ; parser.currentToken.Kind == lexer.Separator; {
+			tokenizingError = parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
 			}
-			continue
 		}
 		parsedExpression, parsingError := parser.parseBinaryExpression(0)
 		if parsingError != nil {
@@ -594,14 +581,15 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 		}
 		result.Body = append(result.Body, parsedExpression)
 	}
+	parser.complete = true
 	return result, nil
 }
 
 func NewParser(lexer_ *lexer.Lexer) (*Parser, error) {
-	parser := &Parser{lexer_, false, nil, nil}
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
+	parser := &Parser{
+		lexer:        lexer_,
+		complete:     false,
+		currentToken: nil,
 	}
 	return parser, nil
 }

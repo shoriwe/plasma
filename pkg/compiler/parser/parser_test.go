@@ -12,6 +12,7 @@ func walker(node ast.Node, deep int) {
 	case *ast.Program:
 		for _, child := range node.(*ast.Program).Body {
 			walker(child, deep+1)
+			fmt.Println("")
 		}
 	case *ast.BinaryExpression:
 		walker(node.(*ast.BinaryExpression).LeftHandSide, deep+1)
@@ -121,7 +122,6 @@ func walker(node ast.Node, deep int) {
 
 func walk(node ast.Node) {
 	walker(node, 0)
-	fmt.Println("")
 }
 
 func test(t *testing.T, samples []string) {
@@ -161,6 +161,7 @@ var basicSamples = []string{
 	"1 if True",
 	"1 unless False",
 	"(1 for 2 in (3, 4))",
+	"\n\n\n\n\n\n\n1\n2\n3\n\n\n\n\n\n\n\n[4,\n\n\n5+\n6!=\n11]",
 }
 
 func TestParseBasic(t *testing.T) {
