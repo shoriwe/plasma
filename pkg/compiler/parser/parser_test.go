@@ -17,7 +17,9 @@ func walker(node ast.Node, deep int) string {
 		}
 		return result
 	case *ast.BinaryExpression:
-		return walker(node.(*ast.BinaryExpression).LeftHandSide, deep+1) + node.(*ast.BinaryExpression).Operator + walker(node.(*ast.BinaryExpression).RightHandSide, deep+1)
+		return walker(node.(*ast.BinaryExpression).LeftHandSide, deep+1) +
+			" " + node.(*ast.BinaryExpression).Operator +
+			" " + walker(node.(*ast.BinaryExpression).RightHandSide, deep+1)
 	case *ast.BasicLiteralExpression:
 		return node.(*ast.BasicLiteralExpression).String
 	case *ast.UnaryExpression:
@@ -28,11 +30,8 @@ func walker(node ast.Node, deep int) string {
 		return node.(*ast.Identifier).String
 	case *ast.MethodInvocationExpression:
 		result := walker(node.(*ast.MethodInvocationExpression).Function, deep+1) + "("
-		isFirst := true
-		for _, child := range node.(*ast.MethodInvocationExpression).Arguments {
-			if isFirst {
-				isFirst = false
-			} else {
+		for index, child := range node.(*ast.MethodInvocationExpression).Arguments {
+			if index != 0 {
 				result += ", "
 			}
 			result += walker(child, deep+1)
@@ -40,20 +39,15 @@ func walker(node ast.Node, deep int) string {
 		return result + ")"
 	case *ast.IndexExpression:
 		result := walker(node.(*ast.IndexExpression).Source, deep+1) + "["
-
 		result += walker(node.(*ast.IndexExpression).Index[0], deep+1)
 		if node.(*ast.IndexExpression).Index[1] != nil {
 			result += ":" + walker(node.(*ast.IndexExpression).Index[1], deep+1)
 		}
 		return result + "]"
 	case *ast.LambdaExpression:
-		result := "lambda"
-		isFirst := true
-		for _, argument := range node.(*ast.LambdaExpression).Arguments {
-			if isFirst {
-				result += " "
-				isFirst = false
-			} else {
+		result := "lambda "
+		for index, argument := range node.(*ast.LambdaExpression).Arguments {
+			if index != 0 {
 				result += ", "
 			}
 			result += walker(argument, deep+1)
@@ -64,11 +58,8 @@ func walker(node ast.Node, deep int) string {
 		return "(" + walker(node.(*ast.ParenthesesExpression).X, deep+1) + ")"
 	case *ast.TupleExpression:
 		result := "("
-		isFirst := true
-		for _, value := range node.(*ast.TupleExpression).Values {
-			if isFirst {
-				isFirst = false
-			} else {
+		for index, value := range node.(*ast.TupleExpression).Values {
+			if index != 0 {
 				result += ", "
 			}
 			result += walker(value, deep+1)
@@ -76,11 +67,8 @@ func walker(node ast.Node, deep int) string {
 		return result + ")"
 	case *ast.ArrayExpression:
 		result := "["
-		isFirst := true
-		for _, value := range node.(*ast.ArrayExpression).Values {
-			if isFirst {
-				isFirst = false
-			} else {
+		for index, value := range node.(*ast.ArrayExpression).Values {
+			if index != 0 {
 				result += ", "
 			}
 			result += walker(value, deep+1)
@@ -88,11 +76,8 @@ func walker(node ast.Node, deep int) string {
 		return result + "]"
 	case *ast.HashExpression:
 		result := "{"
-		isFirst := false
-		for _, value := range node.(*ast.HashExpression).Values {
-			if isFirst {
-				isFirst = false
-			} else {
+		for index, value := range node.(*ast.HashExpression).Values {
+			if index != 0 {
 				result += ", "
 			}
 			result += walker(value.Key, deep+1)
@@ -117,11 +102,8 @@ func walker(node ast.Node, deep int) string {
 	case *ast.GeneratorExpression:
 		result := walker(node.(*ast.GeneratorExpression).Operation, deep+1)
 		result += " for "
-		isFirst := true
-		for _, variable := range node.(*ast.GeneratorExpression).Variables {
-			if isFirst {
-				isFirst = false
-			} else {
+		for index, variable := range node.(*ast.GeneratorExpression).Variables {
+			if index != 0 {
 				result += ", "
 			}
 			result += walker(variable, deep+1)
@@ -140,6 +122,24 @@ func walker(node ast.Node, deep int) string {
 		return "redo"
 	case *ast.PassStatement:
 		return "pass"
+	case *ast.YieldStatement:
+		result := "yield "
+		for index, output := range node.(*ast.YieldStatement).Results {
+			if index != 0 {
+				result += ", "
+			}
+			result += walker(output, deep+1)
+		}
+		return result
+	case *ast.ReturnStatement:
+		result := "return "
+		for index, output := range node.(*ast.ReturnStatement).Results {
+			if index != 0 {
+				result += ", "
+			}
+			result += walker(output, deep+1)
+		}
+		return result
 	}
 	panic("unknown node type")
 }
@@ -191,6 +191,10 @@ var basicSamples = []string{
 	"a[1] ~= 234",
 	"2.a += [1]",
 	"redo",
+	"yield 1",
+	"yield 1, 2 + 4, lambda x: x + 2, (1, 2 , 3, 4)",
+	"return 1",
+	"return 1, 2 + 4, lambda x: x + 2, (1, 2 , 3, 4)",
 }
 
 func TestParseBasic(t *testing.T) {
