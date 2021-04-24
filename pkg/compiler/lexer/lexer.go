@@ -320,14 +320,14 @@ func guessKind(buffer string) (int, int) {
 	case FinallyString:
 		return Keyboard, Finally
 	case AndString:
-		return Keyboard, And
+		return Comparator, And
 	case OrString:
-		return Keyboard, Or
+		return Comparator, Or
 	case XorString:
-		return Keyboard, Xor
+		return Comparator, Xor
 	case InString:
-		return Keyboard, In
-	case IsInstanceOfString:
+		return Comparator, In
+	case IsInstanceOfString: // This is a method like super
 		return Keyboard, IsInstanceOf
 	case AsyncString:
 		return Keyboard, Async
@@ -339,8 +339,8 @@ func guessKind(buffer string) (int, int) {
 		return Keyboard, END
 	case EnumString:
 		return Keyboard, Enum
-	case NotString:
-		return Keyboard, Not
+	case NotString: // Unary operator
+		return Operator, Not
 	case TrueString:
 		return Boolean, True
 	case FalseString:
