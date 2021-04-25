@@ -211,6 +211,12 @@ func walker(node ast.Node) string {
 			result += "\n\t" + walker(identifier)
 		}
 		return result + "\nend"
+	case *ast.StructStatement:
+		result := "struct " + walker(node.(*ast.StructStatement).Name)
+		for _, identifier := range node.(*ast.StructStatement).Fields {
+			result += "\n\t" + walker(identifier)
+		}
+		return result + "\nend"
 	}
 	panic("unknown node type")
 }
@@ -299,6 +305,11 @@ var basicSamples = []string{
 	"enum Tokens\n" +
 		"\tString;Float\n" +
 		"\tInteger\n" +
+		"end",
+	"struct ListNode\n" +
+		"\tValue\n" +
+		"\tLeft;" +
+		"\tRight\n" +
 		"end",
 }
 

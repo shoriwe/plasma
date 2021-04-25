@@ -584,10 +584,60 @@ func (parser *Parser) parseFunctionDefinitionStatement() (ast.Statement, error) 
 	return nil, nil
 }
 
-//
-
 func (parser *Parser) parseStructStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	if parser.currentToken.Kind != lexer.IdentifierKind {
+		return nil, errors.New(fmt.Sprintf("invalid struct definition at line %d", parser.currentToken.Line))
+	}
+	name := &ast.Identifier{
+		Token: parser.currentToken,
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	if parser.currentToken.DirectValue != lexer.NewLine {
+		return nil, errors.New(fmt.Sprintf("invalid struct definition at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var fields []*ast.Identifier
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue == lexer.End {
+			break
+		} else if parser.currentToken.Kind == lexer.Separator {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			continue
+		} else if parser.currentToken.Kind != lexer.IdentifierKind {
+			return nil, errors.New(fmt.Sprintf("invalid struct definition at line %d", parser.currentToken.Line))
+		}
+		fields = append(fields, &ast.Identifier{
+			Token:      parser.currentToken,
+		})
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+	}
+	if parser.currentToken.DirectValue != lexer.End {
+		return nil, errors.New(fmt.Sprintf("invalid struct definition at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.StructStatement{
+		Name:   name,
+		Fields: fields,
+	}, nil
 }
 
 func (parser *Parser) parseInterfaceStatement() (ast.Statement, error) {
@@ -826,6 +876,10 @@ func (parser *Parser) parseEnumStatement() (ast.Statement, error) {
 	}, nil
 }
 
+func (parser *Parser) parseCommentStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
 func (parser *Parser) parseOperand() (ast.Node, error) {
 	switch parser.currentToken.Kind {
 	case lexer.Literal, lexer.Boolean, lexer.NoneType:
@@ -900,6 +954,8 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseArrayExpression()
 		case lexer.OpenBrace: // Parse Dictionaries
 			return parser.parseHashExpression()
+		case lexer.Comment:
+			return parser.parseCommentStatement()
 		}
 	}
 	return nil, errors.New(fmt.Sprintf("unknown expression with token at line %d", parser.currentToken.Line))

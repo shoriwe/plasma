@@ -97,7 +97,7 @@ type AsyncFunctionDefinitionStatement struct {
 type StructStatement struct {
 	Statement
 	Name   *Identifier
-	Fields []Identifier
+	Fields []*Identifier
 }
 
 type InterfaceStatement struct {
