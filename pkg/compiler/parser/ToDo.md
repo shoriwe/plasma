@@ -28,7 +28,7 @@
 - [ ] Switch
 - [ ] Module
 - [ ] Function Definition
-- [ ] Struct
+- [X] Struct
 - [ ] Interface
 - [X] Defer
 - [ ] Class
