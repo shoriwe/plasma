@@ -118,7 +118,7 @@ type ClassStatement struct {
 type EnumStatement struct {
 	Statement
 	Name            *Identifier
-	EnumIdentifiers []Expression
+	EnumIdentifiers []*Identifier
 }
 
 type ExceptBlock struct {
