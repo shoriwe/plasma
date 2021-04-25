@@ -205,6 +205,12 @@ func walker(node ast.Node) string {
 			}
 		}
 		return result + "\nend"
+	case *ast.EnumStatement:
+		result := "enum " + walker(node.(*ast.EnumStatement).Name)
+		for _, identifier := range node.(*ast.EnumStatement).EnumIdentifiers {
+			result += "\n\t" + walker(identifier)
+		}
+		return result + "\nend"
 	}
 	panic("unknown node type")
 }
@@ -287,7 +293,12 @@ var basicSamples = []string{
 		"print(\"\\\"a\\\" is zero\")\n" +
 		"else\n" +
 		"print(\"\\\"a\\\" is non zero\")" +
-		"end\n" +
+		"end;if 1 == 2\n" +
+		"print(2)\nend\n" +
+		"end",
+	"enum Tokens\n" +
+		"\tString;Float\n" +
+		"\tInteger\n" +
 		"end",
 }
 

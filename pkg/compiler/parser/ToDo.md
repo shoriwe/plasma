@@ -15,6 +15,7 @@
 - [X] Generator
 - [X] One line If
 - [X] One line unless
+- [ ] Comment
 
 # Pending Statements
 
@@ -42,4 +43,4 @@
 - [X] Break
 - [X] Redo
 - [X] Pass
-- [ ] Enum
+- [X] Enum

@@ -353,7 +353,7 @@ func (parser *Parser) parseIfStatement() (ast.Statement, error) {
 		if parser.currentToken.DirectValue == lexer.End {
 			break
 		}
-		if parser.currentToken.DirectValue == lexer.NewLine {
+		if parser.currentToken.Kind == lexer.Separator {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
@@ -384,7 +384,7 @@ func (parser *Parser) parseIfStatement() (ast.Statement, error) {
 					parser.currentToken.DirectValue == lexer.End {
 					break
 				}
-				if parser.currentToken.DirectValue == lexer.NewLine {
+				if parser.currentToken.Kind == lexer.Separator {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
 						return nil, tokenizingError
@@ -418,7 +418,7 @@ func (parser *Parser) parseIfStatement() (ast.Statement, error) {
 				if parser.currentToken.DirectValue == lexer.End {
 					break
 				}
-				if parser.currentToken.DirectValue == lexer.NewLine {
+				if parser.currentToken.Kind == lexer.Separator {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
 						return nil, tokenizingError
@@ -473,7 +473,7 @@ func (parser *Parser) parseUnlessStatement() (ast.Statement, error) {
 		if parser.currentToken.DirectValue == lexer.End {
 			break
 		}
-		if parser.currentToken.DirectValue == lexer.NewLine {
+		if parser.currentToken.Kind == lexer.Separator {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
@@ -504,7 +504,7 @@ func (parser *Parser) parseUnlessStatement() (ast.Statement, error) {
 					parser.currentToken.DirectValue == lexer.End {
 					break
 				}
-				if parser.currentToken.DirectValue == lexer.NewLine {
+				if parser.currentToken.Kind == lexer.Separator {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
 						return nil, tokenizingError
@@ -538,7 +538,7 @@ func (parser *Parser) parseUnlessStatement() (ast.Statement, error) {
 				if parser.currentToken.DirectValue == lexer.End {
 					break
 				}
-				if parser.currentToken.DirectValue == lexer.NewLine {
+				if parser.currentToken.Kind == lexer.Separator {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
 						return nil, tokenizingError
@@ -770,7 +770,60 @@ func (parser *Parser) parsePassStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseEnumStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	if parser.currentToken.Kind != lexer.IdentifierKind {
+		return nil, errors.New(fmt.Sprintf("invalid declaration of enum statement at line %d", parser.currentToken.Line))
+	}
+	namespace := &ast.Identifier{
+		Token: parser.currentToken,
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	if parser.currentToken.DirectValue != lexer.NewLine {
+		return nil, errors.New(fmt.Sprintf("invalid declaration of enum statement at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var identifiers []*ast.Identifier
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue == lexer.End {
+			break
+		} else if parser.currentToken.Kind == lexer.Separator {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			continue
+		} else if parser.currentToken.Kind != lexer.IdentifierKind {
+			fmt.Println(parser.currentToken)
+			return nil, errors.New(fmt.Sprintf("invalid declaration of enum statement at line %d", parser.currentToken.Line))
+		}
+		identifiers = append(identifiers, &ast.Identifier{
+			Token: parser.currentToken,
+		})
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+	}
+	if parser.currentToken.DirectValue != lexer.End {
+		return nil, errors.New(fmt.Sprintf("enum never ended at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.EnumStatement{
+		Name:            namespace,
+		EnumIdentifiers: identifiers,
+	}, nil
 }
 
 func (parser *Parser) parseOperand() (ast.Node, error) {
