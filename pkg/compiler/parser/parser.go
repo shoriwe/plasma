@@ -620,7 +620,7 @@ func (parser *Parser) parseStructStatement() (ast.Statement, error) {
 			return nil, errors.New(fmt.Sprintf("invalid struct definition at line %d", parser.currentToken.Line))
 		}
 		fields = append(fields, &ast.Identifier{
-			Token:      parser.currentToken,
+			Token: parser.currentToken,
 		})
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
@@ -877,7 +877,14 @@ func (parser *Parser) parseEnumStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseCommentStatement() (ast.Statement, error) {
-	return nil, nil
+	result := &ast.CommentStatement{
+		Token: parser.currentToken,
+	}
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return result, nil
 }
 
 func (parser *Parser) parseOperand() (ast.Node, error) {

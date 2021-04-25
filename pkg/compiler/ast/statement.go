@@ -1,6 +1,8 @@
 package ast
 
-import "github.com/shoriwe/gruby/pkg/compiler/lexer"
+import (
+	"github.com/shoriwe/gruby/pkg/compiler/lexer"
+)
 
 type Statement interface {
 	Node
@@ -98,6 +100,11 @@ type StructStatement struct {
 	Statement
 	Name   *Identifier
 	Fields []*Identifier
+}
+
+type CommentStatement struct {
+	Statement
+	Token *lexer.Token
 }
 
 type InterfaceStatement struct {
