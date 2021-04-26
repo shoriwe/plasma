@@ -381,7 +381,7 @@ var basicSamples = []string{
 	"*call(1, 2)",
 	"*&(c)",
 	"*(&c + 1)",
-	"await parser()",
+	"await parser().a()",
 }
 
 func TestParseBasic(t *testing.T) {
