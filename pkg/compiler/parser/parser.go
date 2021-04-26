@@ -146,7 +146,7 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 				return nil, parsingError
 			}
 			return &ast.PointerExpression{
-				X:        x,
+				X: x,
 			}, nil
 		case lexer.Star:
 			tokenizingError := parser.next()
@@ -158,7 +158,7 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 				return nil, parsingError
 			}
 			return &ast.StarExpression{
-				X:        x,
+				X: x,
 			}, nil
 		}
 	}
