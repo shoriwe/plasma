@@ -1437,25 +1437,30 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 	}
 	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
-			for ; !parser.complete; {
-				if !parser.matchKind(lexer.Separator) {
-					break
-				}
-				tokenizingError = parser.next()
-				if tokenizingError != nil {
-					return nil, tokenizingError
-				}
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
 			}
-			if parser.matchKind(lexer.EOF) {
-				break
-			}
+			continue
 		}
-
 		parsedExpression, parsingError := parser.parseBinaryExpression(0)
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		result.Body = append(result.Body, parsedExpression)
+		switch parsedExpression.(type) {
+		case *ast.BeginStatement:
+			if result.Begin != nil {
+				return nil, errors.New("multiple declarations of BEGIN statement at line")
+			}
+			result.Begin = parsedExpression.(*ast.BeginStatement)
+		case *ast.EndStatement:
+			if result.End != nil {
+				return nil, errors.New("multiple declarations of END statement at line")
+			}
+			result.End = parsedExpression.(*ast.EndStatement)
+		default:
+			result.Body = append(result.Body, parsedExpression)
+		}
 	}
 	parser.complete = true
 	return result, nil
