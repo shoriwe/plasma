@@ -13,29 +13,31 @@
 - [X] Tuple
 - [X] Hash
 - [X] Generator
+- [X] Await
 - [X] One line If
 - [X] One line unless
 
 # Pending Statements
 
-- [X] Assign
-- [X] While
-- [ ] For
-- [ ] Until
-- [X] If
-- [X] Unless
-- [X] Switch
 - [ ] Module
 - [ ] Function Definition
-- [X] Struct
+- [ ] Async function definition
+- [ ] For
+- [ ] Until
 - [ ] Interface
-- [X] Defer
-- [ ] Context
-- [ ] GoTo
 - [ ] Class
 - [ ] Try
 - [ ] BEGIN
 - [ ] END
+- [ ] Context
+- [ ] GoTo
+- [X] Assign
+- [X] While
+- [X] If
+- [X] Unless
+- [X] Switch
+- [X] Struct
+- [X] Defer
 - [X] Go
 - [X] Return
 - [X] Yield

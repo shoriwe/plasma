@@ -58,6 +58,50 @@ func (parser *Parser) parseKeyboardStatement() (ast.Statement, error) {
 	return nil, nil
 }
 
+func (parser *Parser) parseForLoop() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseUntilLoop() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseModuleStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseFunctionDefinitionStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseClassStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseTryStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseBeginStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseEndStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseInterfaceStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseGoToStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
+func (parser *Parser) parseContextStatement() (ast.Statement, error) {
+	return nil, nil
+}
+
 func (parser *Parser) parseLiteral() (ast.Expression, error) {
 	if !parser.matchKind(lexer.Literal) &&
 		!parser.matchKind(lexer.Boolean) &&
@@ -158,6 +202,21 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 				return nil, parsingError
 			}
 			return &ast.StarExpression{
+				X: x,
+			}, nil
+		case lexer.Await:
+			tokenizingError := parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			x, parsingError := parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			if _, ok := x.(*ast.MethodInvocationExpression); !ok {
+				return nil, errors.New(fmt.Sprintf("await must receive a method invocation at line %d", parser.currentToken.Line))
+			}
+			return &ast.AwaitExpression{
 				X: x,
 			}, nil
 		}
@@ -268,7 +327,7 @@ func (parser *Parser) parseParentheses() (ast.Node, error) {
 func (parser *Parser) parseArrayExpression() (ast.Node, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
-		return nil, nil
+		return nil, tokenizingError
 	}
 	var values []ast.Expression
 	for ; !parser.complete; {
@@ -283,13 +342,13 @@ func (parser *Parser) parseArrayExpression() (ast.Node, error) {
 		if parser.matchDirect(lexer.Comma) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
-				return nil, nil
+				return nil, tokenizingError
 			}
 		}
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
-		return nil, nil
+		return nil, tokenizingError
 	}
 	return &ast.ArrayExpression{
 		Values: values,
@@ -299,7 +358,7 @@ func (parser *Parser) parseArrayExpression() (ast.Node, error) {
 func (parser *Parser) parseHashExpression() (ast.Node, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
-		return nil, nil
+		return nil, tokenizingError
 	}
 	var values []*ast.KeyValue
 	var leftHandSide ast.Node
@@ -318,7 +377,7 @@ func (parser *Parser) parseHashExpression() (ast.Node, error) {
 		}
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
-			return nil, nil
+			return nil, tokenizingError
 		}
 		rightHandSide, parsingError = parser.parseBinaryExpression(0)
 		if parsingError != nil {
@@ -331,13 +390,13 @@ func (parser *Parser) parseHashExpression() (ast.Node, error) {
 		if parser.matchDirect(lexer.Comma) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
-				return nil, nil
+				return nil, tokenizingError
 			}
 		}
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
-		return nil, nil
+		return nil, tokenizingError
 	}
 	return &ast.HashExpression{
 		Values: values,
@@ -393,14 +452,6 @@ func (parser *Parser) parseWhileLoop() (ast.Statement, error) {
 		Condition: condition,
 		Body:      body,
 	}, nil
-}
-
-func (parser *Parser) parseForLoop() (ast.Statement, error) {
-	return nil, nil
-}
-
-func (parser *Parser) parseUntilLoop() (ast.Statement, error) {
-	return nil, nil
 }
 
 func (parser *Parser) parseIfStatement() (ast.Statement, error) {
@@ -771,14 +822,6 @@ func (parser *Parser) parseSwitchStatement() (ast.Statement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseModuleStatement() (ast.Statement, error) {
-	return nil, nil
-}
-
-func (parser *Parser) parseFunctionDefinitionStatement() (ast.Statement, error) {
-	return nil, nil
-}
-
 func (parser *Parser) parseStructStatement() (ast.Statement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -835,10 +878,6 @@ func (parser *Parser) parseStructStatement() (ast.Statement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseInterfaceStatement() (ast.Statement, error) {
-	return nil, nil
-}
-
 func (parser *Parser) parseDeferStatement() (ast.Statement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -856,22 +895,6 @@ func (parser *Parser) parseDeferStatement() (ast.Statement, error) {
 	default:
 		return nil, errors.New(fmt.Sprintf("no function call passed to go statement at line %d", parser.currentToken.Line))
 	}
-}
-
-func (parser *Parser) parseClassStatement() (ast.Statement, error) {
-	return nil, nil
-}
-
-func (parser *Parser) parseTryStatement() (ast.Statement, error) {
-	return nil, nil
-}
-
-func (parser *Parser) parseBeginStatement() (ast.Statement, error) {
-	return nil, nil
-}
-
-func (parser *Parser) parseEndStatement() (ast.Statement, error) {
-	return nil, nil
 }
 
 func (parser *Parser) parseGoStatement() (ast.Statement, error) {
@@ -1135,6 +1158,10 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parsePassStatement()
 		case lexer.Enum:
 			return parser.parseEnumStatement()
+		case lexer.GoTo:
+			return parser.parseGoToStatement()
+		case lexer.Context:
+			return parser.parseContextStatement()
 		}
 	case lexer.Punctuation:
 		switch parser.currentToken.DirectValue {
