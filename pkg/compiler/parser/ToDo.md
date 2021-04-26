@@ -30,7 +30,7 @@
 - [ ] BEGIN
 - [ ] END
 - [ ] Context
-- [ ] GoTo
+- [X] GoTo
 - [X] Assign
 - [X] While
 - [X] If
