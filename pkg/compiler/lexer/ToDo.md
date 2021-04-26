@@ -54,6 +54,8 @@
 - [X] Struct
 - [X] Interface
 - [X] Go
+- [ ] GoTo
+- [ ] Context
 - [X] class
 - [X] Try
 - [X] Except

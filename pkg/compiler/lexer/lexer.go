@@ -349,6 +349,10 @@ func guessKind(buffer string) (int, int) {
 		return NoneType, None
 	case DeferString:
 		return Keyboard, Defer
+	case GoToString:
+		return Keyboard, GoTo
+	case ContextString:
+		return Keyboard, Context
 	}
 	return IdentifierKind, -1
 }

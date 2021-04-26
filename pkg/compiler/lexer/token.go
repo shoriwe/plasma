@@ -72,6 +72,8 @@ const (
 	BEGIN
 	END
 	Enum
+	GoTo
+	Context
 
 	// Assigns
 	Assign
@@ -226,4 +228,6 @@ var (
 	WhiteSpaceString         = " "
 	TabString                = "\t"
 	CommentString            = "#"
+	GoToString               = "goto"
+	ContextString            = "context"
 )
