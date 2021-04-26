@@ -573,7 +573,131 @@ func (parser *Parser) parseUnlessStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseSwitchStatement() (ast.Statement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	target, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	if parser.currentToken.DirectValue != lexer.NewLine {
+		return nil, errors.New(fmt.Sprintf("invalid switch statement at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var caseBlocks []*ast.CaseBlock
+	var elseBody []ast.Node
+	var elseChild ast.Node
+	var caseChild ast.Node
+	var caseTarget ast.Expression
+	// Parse Body
+	for ; !parser.complete; {
+		if parser.currentToken.DirectValue == lexer.End {
+			break
+		} else if parser.currentToken.Kind == lexer.Separator {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			continue
+		}
+		if parser.currentToken.DirectValue == lexer.Case {
+			// Parse Case
+			var cases []ast.Expression
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			for ; !parser.complete; {
+				if parser.currentToken.DirectValue == lexer.NewLine {
+					break
+				}
+				caseTarget, parsingError = parser.parseBinaryExpression(0)
+				if parsingError != nil {
+					return nil, parsingError
+				}
+				cases = append(cases, caseTarget)
+				if parser.currentToken.DirectValue == lexer.Comma {
+					tokenizingError = parser.next()
+					if tokenizingError != nil {
+						return nil, tokenizingError
+					}
+				}
+			}
+			if parser.currentToken.DirectValue != lexer.NewLine {
+				return nil, errors.New(fmt.Sprintf("invalid struct statement at line %d", parser.currentToken.Line))
+			}
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			var caseBody []ast.Node
+			for ; !parser.complete; {
+				if parser.currentToken.DirectValue == lexer.End ||
+					parser.currentToken.DirectValue == lexer.Case {
+					break
+				} else if parser.currentToken.Kind == lexer.Separator {
+					tokenizingError = parser.next()
+					if tokenizingError != nil {
+						return nil, tokenizingError
+					}
+					continue
+				}
+				caseChild, parsingError = parser.parseBinaryExpression(0)
+				if parsingError != nil {
+					return nil, parsingError
+				}
+				caseBody = append(caseBody, caseChild)
+			}
+			caseBlocks = append(caseBlocks, &ast.CaseBlock{
+				Cases: cases,
+				Body:  caseBody,
+			})
+		} else if parser.currentToken.DirectValue == lexer.Else {
+			// Parse Else
+			if parser.currentToken.DirectValue != lexer.NewLine {
+				return nil, errors.New(fmt.Sprintf("invalid struct statement at line %d", parser.currentToken.Line))
+			}
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			for ; !parser.complete; {
+				if parser.currentToken.DirectValue == lexer.End {
+					break
+				} else if parser.currentToken.Kind == lexer.Separator {
+					tokenizingError = parser.next()
+					if tokenizingError != nil {
+						return nil, tokenizingError
+					}
+					continue
+				}
+				elseChild, parsingError = parser.parseBinaryExpression(0)
+				if parsingError != nil {
+					return nil, parsingError
+				}
+				elseBody = append(elseBody, elseChild)
+			}
+			break
+		} else {
+			return nil, errors.New(fmt.Sprintf("invalid declaration of switch statement at line %d", parser.currentToken.Line))
+		}
+	}
+	if parser.currentToken.DirectValue != lexer.End {
+		return nil, errors.New(fmt.Sprintf("Switch declaration never ended at line %d", parser.currentToken.Line))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.SwitchStatement{
+		Target:     target,
+		CaseBlocks: caseBlocks,
+		Else:       elseBody,
+	}, nil
 }
 
 func (parser *Parser) parseModuleStatement() (ast.Statement, error) {
@@ -819,7 +943,7 @@ func (parser *Parser) parsePassStatement() (ast.Statement, error) {
 	return &ast.PassStatement{}, nil
 }
 
-func (parser *Parser) parseEnumStatement() (ast.Statement, error) {
+func (parser *Parser) parseEnumStatement() (ast.Statement, error) { // What about initializing it's identifiers with an specific value?
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -874,17 +998,6 @@ func (parser *Parser) parseEnumStatement() (ast.Statement, error) {
 		Name:            namespace,
 		EnumIdentifiers: identifiers,
 	}, nil
-}
-
-func (parser *Parser) parseCommentStatement() (ast.Statement, error) {
-	result := &ast.CommentStatement{
-		Token: parser.currentToken,
-	}
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	return result, nil
 }
 
 func (parser *Parser) parseOperand() (ast.Node, error) {
@@ -961,8 +1074,6 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseArrayExpression()
 		case lexer.OpenBrace: // Parse Dictionaries
 			return parser.parseHashExpression()
-		case lexer.Comment:
-			return parser.parseCommentStatement()
 		}
 	}
 	return nil, errors.New(fmt.Sprintf("unknown expression with token at line %d", parser.currentToken.Line))

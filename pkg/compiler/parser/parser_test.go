@@ -217,6 +217,27 @@ func walker(node ast.Node) string {
 			result += "\n\t" + walker(identifier)
 		}
 		return result + "\nend"
+	case *ast.SwitchStatement:
+		result := "switch " + walker(node.(*ast.SwitchStatement).Target)
+		for _, caseBlock := range node.(*ast.SwitchStatement).CaseBlocks {
+			result += "\ncase "
+			for index, caseTarget := range caseBlock.Cases {
+				if index != 0 {
+					result += ", "
+				}
+				result += walker(caseTarget)
+			}
+			for _, caseChild := range caseBlock.Body {
+				result += "\n\t" + walker(caseChild)
+			}
+		}
+		if node.(*ast.SwitchStatement).Else != nil {
+			result += "\nelse"
+			for _, elseChild := range node.(*ast.SwitchStatement).Else {
+				result += "\n\t" + walker(elseChild)
+			}
+		}
+		return result + "\nend"
 	}
 	panic("unknown node type")
 }
@@ -308,8 +329,14 @@ var basicSamples = []string{
 		"end",
 	"struct ListNode\n" +
 		"\tValue\n" +
-		"\tLeft;" +
+		"\tLeft;# hello\n" +
 		"\tRight\n" +
+		"end",
+	"switch Token.Kind\n" +
+		"case Numeric\n" +
+		"break\n" +
+		"case String\n" +
+		"print(\"I am a String\")\n" +
 		"end",
 }
 

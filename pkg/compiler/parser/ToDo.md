@@ -18,14 +18,13 @@
 
 # Pending Statements
 
-- [X] Comment
 - [X] Assign
 - [ ] While
 - [ ] For
 - [ ] Until
 - [X] If
 - [X] Unless
-- [ ] Switch
+- [X] Switch
 - [ ] Module
 - [ ] Function Definition
 - [X] Struct
