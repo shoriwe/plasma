@@ -22,21 +22,18 @@ type DeferStatement struct {
 
 type WhileLoopStatement struct {
 	Statement
-	Name      *Identifier
 	Condition Expression
 	Body      []Node
 }
 
 type UntilLoopStatement struct {
 	Statement
-	Name      *Identifier
 	Condition Expression
 	Body      []Node
 }
 
 type ForLoopStatement struct {
 	Statement
-	Name      *Identifier
 	Receivers []*Identifier
 	Source    Expression
 	Body      []Node
