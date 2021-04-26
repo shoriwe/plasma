@@ -24,6 +24,7 @@ const (
 	BinaryInteger
 	OctalInteger
 	Float
+	AwaitKeyboard
 	ScientificFloat
 	CommandOutput
 	ByteString
