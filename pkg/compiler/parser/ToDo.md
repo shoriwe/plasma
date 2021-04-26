@@ -47,3 +47,50 @@
 - [X] Redo
 - [X] Pass
 - [X] Enum
+
+## Cleanup
+
+- [X] Binary
+- [X] Unary
+- [X] Parentheses expression
+- [ ] Literal expression
+- [ ] Identifier
+- [ ] Selector
+- [ ] Index
+- [ ] Method call
+- [X] Lambda
+- [ ] Array
+- [X] Tuple
+- [ ] Hash
+- [ ] Generator
+- [ ] Await
+- [ ] One line If
+- [ ] One line unless
+- [ ] Module
+- [ ] Function Definition
+- [ ] Async function definition
+- [ ] For
+- [ ] Until
+- [ ] Interface
+- [ ] Class
+- [ ] Try
+- [ ] BEGIN
+- [ ] END
+- [ ] Context
+- [ ] GoTo
+- [ ] Assign
+- [ ] While
+- [ ] If
+- [ ] Unless
+- [ ] Switch
+- [ ] Struct
+- [ ] Defer
+- [ ] Go
+- [ ] Return
+- [ ] Yield
+- [ ] Super
+- [ ] Retry
+- [ ] Break
+- [ ] Redo
+- [ ] Pass
+- [ ] Enum

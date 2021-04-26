@@ -5,6 +5,7 @@ import (
 )
 
 type Statement interface {
+	S()
 	Node
 }
 

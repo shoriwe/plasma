@@ -3,6 +3,7 @@ package ast
 import "github.com/shoriwe/gruby/pkg/compiler/lexer"
 
 type Expression interface {
+	E()
 	Node
 }
 
@@ -99,7 +100,7 @@ type IndexExpression struct {
 
 type AwaitExpression struct {
 	Expression
-	X Expression
+	X *MethodInvocationExpression
 }
 
 type OneLineIfExpression struct {
