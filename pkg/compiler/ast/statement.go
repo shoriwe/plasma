@@ -70,7 +70,6 @@ type CaseBlock struct {
 
 type SwitchStatement struct {
 	Statement
-	Name       *Identifier
 	Target     Expression
 	CaseBlocks []*CaseBlock
 	Else       []Node
@@ -100,11 +99,6 @@ type StructStatement struct {
 	Statement
 	Name   *Identifier
 	Fields []*Identifier
-}
-
-type CommentStatement struct {
-	Statement
-	Token *lexer.Token
 }
 
 type InterfaceStatement struct {
