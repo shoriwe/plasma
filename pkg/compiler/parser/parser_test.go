@@ -260,6 +260,8 @@ func walker(node ast.Node) string {
 		return "&" + walker(node.(*ast.PointerExpression).X)
 	case *ast.AwaitExpression:
 		return "await " + walker(node.(*ast.AwaitExpression).X)
+	case *ast.GoToStatement:
+		return "goto " + walker(node.(*ast.GoToStatement).Name)
 	}
 	panic("unknown node type")
 }
@@ -382,6 +384,7 @@ var basicSamples = []string{
 	"*&(c)",
 	"*(&c + 1)",
 	"await parser().a()",
+	"goto abc",
 }
 
 func TestParseBasic(t *testing.T) {

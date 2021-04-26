@@ -39,6 +39,10 @@ type ForLoopStatement struct {
 	Body      []Node
 }
 
+type GoToStatement struct {
+	Statement
+	Name *Identifier
+}
 type ElifBlock struct {
 	Condition Expression
 	Body      []Node

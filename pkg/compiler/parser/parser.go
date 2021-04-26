@@ -54,10 +54,6 @@ func (parser *Parser) updateState() {
 	parser.complete = true
 }
 
-func (parser *Parser) parseKeyboardStatement() (ast.Statement, error) {
-	return nil, nil
-}
-
 func (parser *Parser) parseForLoop() (ast.Statement, error) {
 	return nil, nil
 }
@@ -95,7 +91,21 @@ func (parser *Parser) parseInterfaceStatement() (ast.Statement, error) {
 }
 
 func (parser *Parser) parseGoToStatement() (ast.Statement, error) {
-	return nil, nil
+	line := parser.currentToken.Line
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	identifier, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	if _, ok := identifier.(*ast.Identifier); !ok {
+		return nil, errors.New(fmt.Sprintf("goto statement must receive an identifier at line %d", line))
+	}
+	return &ast.GoToStatement{
+		Name: identifier.(*ast.Identifier),
+	}, nil
 }
 
 func (parser *Parser) parseContextStatement() (ast.Statement, error) {
