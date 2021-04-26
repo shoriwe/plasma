@@ -85,7 +85,7 @@ func walker(node ast.Node) string {
 				result += ", "
 			}
 			result += walker(value.Key)
-			result += ":" + walker(value.Value)
+			result += ": " + walker(value.Value)
 		}
 		return result + "}"
 	case *ast.OneLineIfExpression:
@@ -177,7 +177,9 @@ func walker(node ast.Node) string {
 		if node.(*ast.IfStatement).Else != nil {
 			result += "\nelse"
 			for _, elseNode := range node.(*ast.IfStatement).Else {
-				result += "\n\t" + walker(elseNode)
+				nodeString := walker(elseNode)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
 			}
 		}
 		return result + "\nend"
@@ -201,7 +203,9 @@ func walker(node ast.Node) string {
 		if node.(*ast.UnlessStatement).Else != nil {
 			result += "\nelse"
 			for _, elseNode := range node.(*ast.UnlessStatement).Else {
-				result += "\n\t" + walker(elseNode)
+				nodeString := walker(elseNode)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
 			}
 		}
 		return result + "\nend"
@@ -228,23 +232,34 @@ func walker(node ast.Node) string {
 				result += walker(caseTarget)
 			}
 			for _, caseChild := range caseBlock.Body {
-				result += "\n\t" + walker(caseChild)
+				nodeString := walker(caseChild)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
 			}
 		}
 		if node.(*ast.SwitchStatement).Else != nil {
 			result += "\nelse"
 			for _, elseChild := range node.(*ast.SwitchStatement).Else {
-				result += "\n\t" + walker(elseChild)
+				nodeString := walker(elseChild)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
 			}
+		}
+		return result + "\nend"
+	case *ast.WhileLoopStatement:
+		result := "while " + walker(node.(*ast.WhileLoopStatement).Condition)
+		for _, child := range node.(*ast.WhileLoopStatement).Body {
+			nodeString := walker(child)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
 	}
 	panic("unknown node type")
 }
 
-func walk(sample int, node ast.Node) {
-	fmt.Printf("\nSample: %d\n", sample)
-	fmt.Print(walker(node))
+func walk(node ast.Node) string {
+	return walker(node)
 }
 
 func test(t *testing.T, samples []string) {
@@ -260,7 +275,15 @@ func test(t *testing.T, samples []string) {
 			t.Error(parsingError)
 			return
 		}
-		walk(sampleIndex+1, program)
+		result := walk(program)
+		result = result[:len(result)-1]
+		if result == sample {
+			t.Logf("\nSample: %d -> SUCCESS", sampleIndex+1)
+		} else {
+			t.Errorf("\nSample: %d -> FAIL", sampleIndex+1)
+			fmt.Println(sample)
+			fmt.Println(result)
+		}
 	}
 }
 
@@ -268,26 +291,26 @@ var basicSamples = []string{
 	"1 + 2 * 3",
 	"1 * 2 + 3",
 	"1 >= 2 == 3 - 4 + 5 - 6 / 7 / 8 ** 9 - 10",
-	"5--5",
+	"5 - -5",
 	"hello.world.carro",
 	"1.4.hello.world()",
 	"hello(1)",
 	"'Hello world'.index(str(12345)[010])",
 	"'Hello world'.index(str(12345)[0:10])",
 	"lambda x, y, z: print(x, y - z)",
-	"lambda x: print((1+2) * 3)",
-	"(1, 2, (3, (4, (((4+1))))))",
+	"lambda x: print((1 + 2) * 3)",
+	"(1, 2, (3, (4, (((4 + 1))))))",
 	"[1]",
-	"{1: (1*2)/4, 2: 282}",
+	"{1: (1 * 2) / 4, 2: 282}",
 	"(1 if x < 4 else 2)",
 	"True",
 	"not True",
 	"1 if True",
 	"!True",
-	"1 unless False\n",
-	"1 in (1, 2, 3)\n",
+	"1 unless False",
+	"1 in (1, 2, 3)",
 	"(1 for 2 in (3, 4))",
-	"\n\n\n\n\n\n\n1\n2\n3\n\n\n\n\n\n\n\n[4,\n\n\n5+\n6!=\n11]",
+	"1\n2\n3\n[4, 5 + 6 != 11]",
 	"a = 234",
 	"a[1] ~= 234",
 	"2.a += [1]",
@@ -296,47 +319,57 @@ var basicSamples = []string{
 	"a or not b",
 	"redo",
 	"yield 1",
-	"yield 1, 2 + 4, lambda x: x + 2, (1, 2 , 3, 4)",
+	"yield 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
 	"return 1",
-	"return 1, 2 + 4, lambda x: x + 2, (1, 2 , 3, 4)",
+	"return 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
 	"go super_duper()",
 	"defer a()",
 	"super(1)",
 	"super(1, 2)",
 	"super(1, 2, call((1, 2, 3, 4, 2 * (5 - 3))))",
 	"if a > 2\n" +
-		"call()\n" +
+		"\tcall()\n" +
 		"elif a < 2\n" +
-		"if a == 0\n" +
-		"print(\"\\\"a\\\" is zero\")\n" +
-		"else\n" +
-		"print(\"\\\"a\\\" is non zero\")" +
-		"end\n" +
+		"\tif a == 0\n" +
+		"\t\tprint(\"\\\"a\\\" is zero\")\n" +
+		"\telse\n" +
+		"\t\tprint(\"\\\"a\\\" is non zero\")" +
+		"\n\tend\n" +
 		"end",
 	"unless a > 2\n" +
-		"call()\n" +
+		"\tcall()\n" +
 		"elif a < 2\n" +
-		"if 1 if a < 2 else None\n" +
-		"print(\"\\\"a\\\" is zero\")\n" +
-		"else\n" +
-		"print(\"\\\"a\\\" is non zero\")" +
-		"end;if 1 == 2\n" +
-		"print(2)\nend\n" +
+		"\tif 1 if a < 2 else None\n" +
+		"\t\tprint(\"\\\"a\\\" is zero\")\n" +
+		"\telse\n" +
+		"\t\tprint(\"\\\"a\\\" is non zero\")\n" +
+		"\tend\n" +
+		"\tif 1 == 2\n" +
+		"\t\tprint(2)\n" +
+		"\tend\n" +
 		"end",
 	"enum Tokens\n" +
-		"\tString;Float\n" +
+		"\tString\n" +
+		"\tFloat\n" +
 		"\tInteger\n" +
 		"end",
 	"struct ListNode\n" +
 		"\tValue\n" +
-		"\tLeft;# hello\n" +
+		"\tLeft\n" +
 		"\tRight\n" +
 		"end",
 	"switch Token.Kind\n" +
 		"case Numeric\n" +
-		"break\n" +
+		"\tbreak\n" +
 		"case String\n" +
-		"print(\"I am a String\")\n" +
+		"\tprint(\"I am a String\")\n" +
+		"end",
+	"while True\n" +
+		"\tif a > b\n" +
+		"\t\tbreak\n" +
+		"\tend\n" +
+		"\ta += 1\n" +
+		"\tb -= 1\n" +
 		"end",
 }
 
