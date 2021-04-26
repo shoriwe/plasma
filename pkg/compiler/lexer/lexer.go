@@ -587,6 +587,9 @@ func (lexer *Lexer) Next() (*Token, error) {
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
+	if token.Kind == Comment {
+		return lexer.Next()
+	}
 	if token.Kind == Whitespace {
 		return lexer.Next()
 	}
