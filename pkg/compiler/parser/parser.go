@@ -204,22 +204,22 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 			return &ast.StarExpression{
 				X: x,
 			}, nil
-		case lexer.Await:
-			tokenizingError := parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
-			x, parsingError := parser.parseBinaryExpression(0)
-			if parsingError != nil {
-				return nil, parsingError
-			}
-			if _, ok := x.(*ast.MethodInvocationExpression); !ok {
-				return nil, errors.New(fmt.Sprintf("await must receive a method invocation at line %d", parser.currentToken.Line))
-			}
-			return &ast.AwaitExpression{
-				X: x,
-			}, nil
 		}
+	} else if parser.matchKind(lexer.AwaitKeyboard) {
+		tokenizingError := parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+		x, parsingError := parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		if _, ok := x.(*ast.MethodInvocationExpression); !ok {
+			return nil, errors.New(fmt.Sprintf("await must receive a method invocation at line %d", parser.currentToken.Line))
+		}
+		return &ast.AwaitExpression{
+			X: x,
+		}, nil
 	}
 	// Do something to parse Lambda
 	// What about selectors?
