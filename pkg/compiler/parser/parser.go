@@ -221,8 +221,6 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 			X: x,
 		}, nil
 	}
-	// Do something to parse Lambda
-	// What about selectors?
 	return parser.parsePrimaryExpression()
 }
 
