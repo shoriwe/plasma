@@ -136,6 +136,30 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 				Operator: operator,
 				X:        x,
 			}, nil
+		case lexer.BitWiseAnd:
+			tokenizingError := parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			x, parsingError := parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			return &ast.PointerExpression{
+				X:        x,
+			}, nil
+		case lexer.Star:
+			tokenizingError := parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			x, parsingError := parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			return &ast.StarExpression{
+				X:        x,
+			}, nil
 		}
 	}
 	// Do something to parse Lambda

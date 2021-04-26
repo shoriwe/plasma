@@ -19,7 +19,7 @@
 # Pending Statements
 
 - [X] Assign
-- [ ] While
+- [X] While
 - [ ] For
 - [ ] Until
 - [X] If
@@ -30,6 +30,8 @@
 - [X] Struct
 - [ ] Interface
 - [X] Defer
+- [ ] Context
+- [ ] GoTo
 - [ ] Class
 - [ ] Try
 - [ ] BEGIN
