@@ -1243,7 +1243,7 @@ func (parser *Parser) parseWhileLoop() (*ast.WhileLoopStatement, error) {
 }
 
 /*
-Totally nasty, need to handle it like the implementation of the try statement
+ToDo: Totally nasty, need to handle it like the implementation of the try statement
  */
 func (parser *Parser) parseIfStatement() (*ast.IfStatement, error) {
 	tokenizingError := parser.next()
@@ -1374,7 +1374,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, error) {
 }
 
 /*
-Totally nasty, need to handle it like the implementation of the try statement
+ToDo: Totally nasty, need to handle it like the implementation of the try statement
 */
 func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 	tokenizingError := parser.next()
@@ -1505,7 +1505,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 }
 
 /*
-Totally nasty, need to handle it like the implementation of the try statement
+ToDo: Totally nasty, need to handle it like the implementation of the try statement
 */
 func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
 	tokenizingError := parser.next()
