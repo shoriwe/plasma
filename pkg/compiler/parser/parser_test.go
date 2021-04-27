@@ -88,19 +88,19 @@ func walker(node ast.Node) string {
 			result += ": " + walker(value.Value)
 		}
 		return result + "}"
-	case *ast.OneLineIfExpression:
-		result := walker(node.(*ast.OneLineIfExpression).Result)
-		result += " if " + walker(node.(*ast.OneLineIfExpression).Condition)
-		if node.(*ast.OneLineIfExpression).ElseResult != nil {
-			result += " else " + walker(node.(*ast.OneLineIfExpression).ElseResult)
+	case *ast.IfOneLineExpression:
+		result := walker(node.(*ast.IfOneLineExpression).Result)
+		result += " if " + walker(node.(*ast.IfOneLineExpression).Condition)
+		if node.(*ast.IfOneLineExpression).ElseResult != nil {
+			result += " else " + walker(node.(*ast.IfOneLineExpression).ElseResult)
 		}
 		return result
-	case *ast.OneLineUnlessExpression:
-		result := walker(node.(*ast.OneLineUnlessExpression).Result)
+	case *ast.UnlessOneLinerExpression:
+		result := walker(node.(*ast.UnlessOneLinerExpression).Result)
 		result += " unless "
-		result += walker(node.(*ast.OneLineUnlessExpression).Condition)
-		if node.(*ast.OneLineUnlessExpression).ElseResult != nil {
-			result += " else " + walker(node.(*ast.OneLineUnlessExpression).ElseResult)
+		result += walker(node.(*ast.UnlessOneLinerExpression).Condition)
+		if node.(*ast.UnlessOneLinerExpression).ElseResult != nil {
+			result += " else " + walker(node.(*ast.UnlessOneLinerExpression).ElseResult)
 		}
 		return result
 	case *ast.GeneratorExpression:
@@ -254,6 +254,14 @@ func walker(node ast.Node) string {
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
+	case *ast.UntilLoopStatement:
+		result := "until " + walker(node.(*ast.UntilLoopStatement).Condition)
+		for _, child := range node.(*ast.UntilLoopStatement).Body {
+			nodeString := walker(child)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
 	case *ast.StarExpression:
 		return "*" + walker(node.(*ast.StarExpression).X)
 	case *ast.PointerExpression:
@@ -262,6 +270,102 @@ func walker(node ast.Node) string {
 		return "await " + walker(node.(*ast.AwaitExpression).X)
 	case *ast.GoToStatement:
 		return "goto " + walker(node.(*ast.GoToStatement).Name)
+	case *ast.ForLoopStatement:
+		result := "for "
+		for index, receiver := range node.(*ast.ForLoopStatement).Receivers {
+			if index != 0 {
+				result += ", "
+			}
+			result += walker(receiver)
+		}
+		result += " in " + walker(node.(*ast.ForLoopStatement).Source)
+		for _, bodyNode := range node.(*ast.ForLoopStatement).Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
+	case *ast.ModuleStatement:
+		result := "module " + walker(node.(*ast.ModuleStatement).Name)
+		for _, bodyNode := range node.(*ast.ModuleStatement).Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
+	case *ast.ClassStatement:
+		result := "class " + walker(node.(*ast.ClassStatement).Name)
+		if node.(*ast.ClassStatement).Bases != nil {
+			result += "("
+			for index, base := range node.(*ast.ClassStatement).Bases {
+				if index != 0 {
+					result += ", "
+				}
+				result += walker(base)
+			}
+			result += ")"
+		}
+		for _, bodyNode := range node.(*ast.ClassStatement).Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
+	case *ast.InterfaceStatement:
+		result := "interface " + walker(node.(*ast.InterfaceStatement).Name)
+		if node.(*ast.InterfaceStatement).Bases != nil {
+			result += "("
+			for index, base := range node.(*ast.InterfaceStatement).Bases {
+				if index != 0 {
+					result += ", "
+				}
+				result += walker(base)
+			}
+			result += ")"
+		}
+		for _, bodyNode := range node.(*ast.InterfaceStatement).MethodDefinitions {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		for _, bodyNode := range node.(*ast.InterfaceStatement).AsyncMethodDefinitions {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
+	case *ast.FunctionDefinitionStatement:
+		result := "def " + walker(node.(*ast.FunctionDefinitionStatement).Name)
+		result += "("
+		for index, argument := range node.(*ast.FunctionDefinitionStatement).Arguments {
+			if index != 0 {
+				result += ", "
+			}
+			result += walker(argument)
+		}
+		result += ")"
+		for _, bodyNode := range node.(*ast.FunctionDefinitionStatement).Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
+	case *ast.AsyncFunctionDefinitionStatement:
+		result := "async def " + walker(node.(*ast.AsyncFunctionDefinitionStatement).Name)
+		result += "("
+		for index, argument := range node.(*ast.AsyncFunctionDefinitionStatement).Arguments {
+			if index != 0 {
+				result += ", "
+			}
+			result += walker(argument)
+		}
+		result += ")"
+		for _, bodyNode := range node.(*ast.AsyncFunctionDefinitionStatement).Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
 	}
 	panic("unknown node type")
 }
@@ -386,6 +490,30 @@ var basicSamples = []string{
 	"await parser().a()",
 	"goto abc",
 	"[]",
+	"for a, b, c in range(10)\n" +
+		"\tprint(\"hello world!\")\n" +
+		"end",
+	"until (1 + 2 * 3 / a) > 5\n" +
+		"\tif a > b\n" +
+		"\t\tbreak\n" +
+		"\tend\n" +
+		"\ta += 1\n" +
+		"\tb -= 1\n" +
+		"end",
+	"module something\n" +
+		"\tclass Hello(a.b, a, c, Hello2)\n" +
+		"\tend\n" +
+		"\tclass Hello2(IHello)\n" +
+		"\tend\n" +
+		"\tinterface IHello\n" +
+		"\t\tdef SayHello()\n" +
+		"\t\t\tprint(\"Hello\")\n" +
+		"\t\tend\n" +
+		"\t\tasync def SayHello()\n" +
+		"\t\t\tprint(\"Hello\")\n" +
+		"\t\tend\n" +
+		"\tend\n" +
+		"end",
 }
 
 func TestParseBasic(t *testing.T) {

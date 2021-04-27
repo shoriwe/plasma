@@ -19,17 +19,16 @@
 
 # Pending Statements
 
-- [ ] Module
-- [ ] Function Definition
-- [ ] Async function definition
-- [ ] For
-- [ ] Until
-- [ ] Interface
-- [ ] Class
+- [X] Module
+- [X] Function Definition
+- [X] Async function definition
+- [X] For
+- [X] Until
+- [X] Interface
+- [X] Class
 - [ ] Try
 - [ ] BEGIN
 - [ ] END
-- [ ] Context
 - [X] GoTo
 - [X] Assign
 - [X] While
