@@ -103,14 +103,14 @@ type AwaitExpression struct {
 	X *MethodInvocationExpression
 }
 
-type OneLineIfExpression struct {
+type IfOneLineExpression struct {
 	Expression
 	Result     Expression
 	Condition  Expression
 	ElseResult Expression
 }
 
-type OneLineUnlessExpression struct {
+type UnlessOneLinerExpression struct {
 	Expression
 	Result     Expression
 	Condition  Expression
