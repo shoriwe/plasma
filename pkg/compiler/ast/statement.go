@@ -86,14 +86,14 @@ type ModuleStatement struct {
 type FunctionDefinitionStatement struct {
 	Statement
 	Name      *Identifier
-	Arguments []Expression
+	Arguments []*Identifier
 	Body      []Node
 }
 
 type AsyncFunctionDefinitionStatement struct {
 	Statement
 	Name      *Identifier
-	Arguments []Expression
+	Arguments []*Identifier
 	Body      []Node
 }
 
@@ -106,7 +106,7 @@ type StructStatement struct {
 type InterfaceStatement struct {
 	Statement
 	Name                   *Identifier
-	Bases                  []*Identifier
+	Bases                  []Expression
 	MethodDefinitions      []*FunctionDefinitionStatement
 	AsyncMethodDefinitions []*AsyncFunctionDefinitionStatement
 }
@@ -114,7 +114,7 @@ type InterfaceStatement struct {
 type ClassStatement struct {
 	Statement
 	Name  *Identifier
-	Bases []*Identifier
+	Bases []Expression // Identifiers and selectors
 	Body  []Node
 }
 
