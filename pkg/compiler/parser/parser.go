@@ -450,11 +450,83 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
 }
 
 func (parser *Parser) parseBeginStatement() (*ast.BeginStatement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	if !parser.matchDirect(lexer.NewLine) {
+		return nil, errors.New(fmt.Sprintf("invalid definition of begin statement at line %d", parser.currentLine()))
+	}
+	var body []ast.Node
+	var bodyNode ast.Node
+	var parsingError error
+	for ; !parser.complete; {
+		if parser.matchKind(lexer.Separator) {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			if parser.matchDirect(lexer.End) {
+				break
+			}
+			continue
+		}
+		bodyNode, parsingError = parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		body = append(body, bodyNode)
+	}
+	if !parser.matchDirect(lexer.End) {
+		return nil, errors.New(fmt.Sprintf("invalid definition of begin statement at line %d", parser.currentLine()))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.BeginStatement{
+		Body: body,
+	}, nil
 }
 
 func (parser *Parser) parseEndStatement() (*ast.EndStatement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	if !parser.matchDirect(lexer.NewLine) {
+		return nil, errors.New(fmt.Sprintf("invalid definition of begin statement at line %d", parser.currentLine()))
+	}
+	var body []ast.Node
+	var bodyNode ast.Node
+	var parsingError error
+	for ; !parser.complete; {
+		if parser.matchKind(lexer.Separator) {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			if parser.matchDirect(lexer.End) {
+				break
+			}
+			continue
+		}
+		bodyNode, parsingError = parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		body = append(body, bodyNode)
+	}
+	if !parser.matchDirect(lexer.End) {
+		return nil, errors.New(fmt.Sprintf("invalid definition of begin statement at line %d", parser.currentLine()))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.EndStatement{
+		Body: body,
+	}, nil
 }
 
 func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, error) {
@@ -2057,13 +2129,13 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 			}
 			continue
 		}
-		if parser.matchDirect(lexer.END) {
+		if parser.matchDirect(lexer.BEGIN) {
 			beginStatement, parsingError = parser.parseBeginStatement()
 			if result.Begin != nil {
 				return nil, errors.New("multiple declarations of BEGIN statement at line")
 			}
 			result.Begin = beginStatement
-		} else if parser.matchDirect(lexer.BEGIN) {
+		} else if parser.matchDirect(lexer.END) {
 			endStatement, parsingError = parser.parseEndStatement()
 			if result.End != nil {
 				return nil, errors.New("multiple declarations of END statement at line")

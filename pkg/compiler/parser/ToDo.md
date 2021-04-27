@@ -19,6 +19,9 @@
 
 # Pending Statements
 
+- [ ] Try
+- [X] BEGIN
+- [X] END
 - [X] Module
 - [X] Function Definition
 - [X] Async function definition
@@ -26,9 +29,6 @@
 - [X] Until
 - [X] Interface
 - [X] Class
-- [ ] Try
-- [ ] BEGIN
-- [ ] END
 - [X] GoTo
 - [X] Assign
 - [X] While

@@ -12,9 +12,23 @@ func walker(node ast.Node) string {
 	switch node.(type) {
 	case *ast.Program:
 		result := ""
-		for _, child := range node.(*ast.Program).Body {
-			result += walker(child)
+		if node.(*ast.Program).Begin != nil {
+			result += walker(node.(*ast.Program).Begin)
+		}
+		if node.(*ast.Program).End != nil {
+			if node.(*ast.Program).End != nil {
+				result += "\n"
+			}
+			result += walker(node.(*ast.Program).End)
+		}
+		if node.(*ast.Program).Begin != nil || node.(*ast.Program).End != nil {
 			result += "\n"
+		}
+		if len(node.(*ast.Program).Body) > 0 {
+			for _, child := range node.(*ast.Program).Body {
+				result += walker(child)
+				result += "\n"
+			}
 		}
 		return result
 	case *ast.BinaryExpression:
@@ -366,6 +380,22 @@ func walker(node ast.Node) string {
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
+	case *ast.EndStatement:
+		result := "END"
+		for _, bodyNode := range node.(*ast.EndStatement).Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
+	case *ast.BeginStatement:
+		result := "BEGIN"
+		for _, bodyNode := range node.(*ast.BeginStatement).Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
 	}
 	panic("unknown node type")
 }
@@ -388,7 +418,9 @@ func test(t *testing.T, samples []string) {
 			return
 		}
 		result := walk(program)
-		result = result[:len(result)-1]
+		if len(result) != 0 {
+			result = result[:len(result)-1]
+		}
 		if result == sample {
 			t.Logf("\nSample: %d -> SUCCESS", sampleIndex+1)
 		} else {
@@ -513,6 +545,9 @@ var basicSamples = []string{
 		"\t\t\tprint(\"Hello\")\n" +
 		"\t\tend\n" +
 		"\tend\n" +
+		"end",
+	"BEGIN\n" +
+		"\tNode = (1, 2)\n" +
 		"end",
 }
 
