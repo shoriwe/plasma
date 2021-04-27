@@ -331,6 +331,10 @@ func guessKind(buffer string) (int, int) {
 		return Keyboard, IsInstanceOf
 	case AsyncString:
 		return Keyboard, Async
+	case AsString:
+		return Keyboard, As
+	case RaiseString:
+		return Keyboard, Raise
 	case AwaitString:
 		return AwaitKeyboard, Await
 	case BEGINString:

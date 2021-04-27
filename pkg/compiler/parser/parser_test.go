@@ -396,6 +396,49 @@ func walker(node ast.Node) string {
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
+	case *ast.RaiseStatement:
+		return "raise " + walker(node.(*ast.RaiseStatement).X)
+	case *ast.TryStatement:
+		result := "try"
+		for _, bodyNode := range node.(*ast.TryStatement).Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		for _, exceptBlock := range node.(*ast.TryStatement).ExceptBlocks {
+			result += "\nexcept "
+			for index, target := range exceptBlock.Targets {
+				if index != 0 {
+					result += ", "
+				}
+				result += walker(target)
+			}
+			if exceptBlock.CaptureName != nil {
+				result += " as " + walker(exceptBlock.CaptureName)
+			}
+			for _, bodyNode := range exceptBlock.Body {
+				nodeString := walker(bodyNode)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
+			}
+		}
+		if node.(*ast.TryStatement).Else != nil {
+			result += "\nelse"
+			for _, bodyNode := range node.(*ast.TryStatement).Else {
+				nodeString := walker(bodyNode)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
+			}
+		}
+		if node.(*ast.TryStatement).Finally != nil {
+			result += "\nfinally"
+			for _, bodyNode := range node.(*ast.TryStatement).Finally {
+				nodeString := walker(bodyNode)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
+			}
+		}
+		return result + "\nend"
 	}
 	panic("unknown node type")
 }
@@ -548,6 +591,18 @@ var basicSamples = []string{
 		"end",
 	"BEGIN\n" +
 		"\tNode = (1, 2)\n" +
+		"end",
+	"try\n" +
+		"\tprint(variable)\n" +
+		"except UndefinedIdentifier, AnyException as Error\n" +
+		"\tprint(Error)\n" +
+		"except NoToStringException as Error\n" +
+		"\tprint(Error)\n" +
+		"else\n" +
+		"\tprint(\"Unknown error\")\n" +
+		"\traise UnknownException()\n" +
+		"finally\n" +
+		"\tprint(\"Done\")\n" +
 		"end",
 }
 

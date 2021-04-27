@@ -445,8 +445,202 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, error) {
 	}, nil
 }
 
+func (parser *Parser) parseRaiseStatement() (*ast.RaiseStatement, error) {
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	x, parsingError := parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	if _, ok := x.(ast.Expression); !ok {
+		return nil, errors.New(fmt.Sprintf("raise statement must receive an expression not an statement at line %d", parser.currentLine()))
+	}
+	return &ast.RaiseStatement{
+		X: x.(ast.Expression),
+	}, nil
+}
 func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
-	return nil, nil
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	if !parser.matchDirect(lexer.NewLine) {
+		return nil, errors.New(fmt.Sprintf("invalid try statement definition at line %d", parser.currentLine()))
+	}
+	var body []ast.Node
+	var bodyNode ast.Node
+	var parsingError error
+	for ; !parser.complete; {
+		if parser.matchKind(lexer.Separator) {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			if parser.matchDirect(lexer.End) ||
+				parser.matchDirect(lexer.Except) ||
+				parser.matchDirect(lexer.Else) ||
+				parser.matchDirect(lexer.Finally) {
+				break
+			}
+			continue
+		}
+		bodyNode, parsingError = parser.parseBinaryExpression(0)
+		if parsingError != nil {
+			return nil, parsingError
+		}
+		body = append(body, bodyNode)
+	}
+	var exceptBlocks []*ast.ExceptBlock
+	for ; !parser.complete; {
+		if !parser.matchDirect(lexer.Except) {
+			break
+		}
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+		var targets []ast.Expression
+		var target ast.Node
+		for ; !parser.complete; {
+			if parser.matchDirect(lexer.NewLine) ||
+				parser.matchDirect(lexer.As) {
+				break
+			}
+			target, parsingError = parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			if _, ok := target.(ast.Expression); !ok {
+				return nil, errors.New(fmt.Sprintf("invalid definition of try statement exception at line %d", parser.currentLine()))
+			}
+			targets = append(targets, target.(ast.Expression))
+			if parser.matchDirect(lexer.Comma) {
+				tokenizingError = parser.next()
+				if tokenizingError != nil {
+					return nil, tokenizingError
+				}
+			}
+		}
+		var captureName *ast.Identifier
+		if parser.matchDirect(lexer.As) {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			if !parser.matchKind(lexer.IdentifierKind) {
+				return nil, errors.New(fmt.Sprintf("invalid declaratione of except block at line %d", parser.currentLine()))
+			}
+			captureName = &ast.Identifier{
+				Token: parser.currentToken,
+			}
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+		}
+		if !parser.matchDirect(lexer.NewLine) {
+			return nil, errors.New(fmt.Sprintf("invalid declaratione of except block at line %d", parser.currentLine()))
+		}
+		var exceptBody []ast.Node
+		var exceptBodyNode ast.Node
+		for ; !parser.complete; {
+			if parser.matchKind(lexer.Separator) {
+				tokenizingError = parser.next()
+				if tokenizingError != nil {
+					return nil, tokenizingError
+				}
+				if parser.matchDirect(lexer.End) ||
+					parser.matchDirect(lexer.Except) ||
+					parser.matchDirect(lexer.Else) ||
+					parser.matchDirect(lexer.Finally) {
+					break
+				}
+				continue
+			}
+			exceptBodyNode, parsingError = parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			exceptBody = append(exceptBody, exceptBodyNode)
+		}
+		exceptBlocks = append(exceptBlocks, &ast.ExceptBlock{
+			Targets:     targets,
+			CaptureName: captureName,
+			Body:        exceptBody,
+		})
+	}
+	var elseBody []ast.Node
+	var elseBodyNode ast.Node
+	if parser.matchDirect(lexer.Else) {
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+		if !parser.matchDirect(lexer.NewLine) {
+			return nil, errors.New(fmt.Sprintf("invalid definition of else block in try statement at line %d", parser.currentLine()))
+		}
+		for ; !parser.complete; {
+			if parser.matchKind(lexer.Separator) {
+				tokenizingError = parser.next()
+				if tokenizingError != nil {
+					return nil, tokenizingError
+				}
+				if parser.matchDirect(lexer.End) ||
+					parser.matchDirect(lexer.Finally) {
+					break
+				}
+				continue
+			}
+			elseBodyNode, parsingError = parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			elseBody = append(elseBody, elseBodyNode)
+		}
+	}
+	var finallyBody []ast.Node
+	var finallyBodyNode ast.Node
+	if parser.matchDirect(lexer.Finally) {
+		tokenizingError = parser.next()
+		if tokenizingError != nil {
+			return nil, tokenizingError
+		}
+		if !parser.matchDirect(lexer.NewLine) {
+			return nil, errors.New(fmt.Sprintf("invalid definition of finally block in try statement at line %d", parser.currentLine()))
+		}
+		for ; !parser.complete; {
+			if parser.matchKind(lexer.Separator) {
+				tokenizingError = parser.next()
+				if tokenizingError != nil {
+					return nil, tokenizingError
+				}
+				if parser.matchDirect(lexer.End) {
+					break
+				}
+				continue
+			}
+			finallyBodyNode, parsingError = parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			finallyBody = append(finallyBody, finallyBodyNode)
+		}
+	}
+	if !parser.matchDirect(lexer.End) {
+		return nil, errors.New(fmt.Sprintf("invalid declaratione of except block at line %d", parser.currentLine()))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	return &ast.TryStatement{
+		Body:         body,
+		ExceptBlocks: exceptBlocks,
+		Else:         elseBody,
+		Finally:      finallyBody,
+	}, nil
 }
 
 func (parser *Parser) parseBeginStatement() (*ast.BeginStatement, error) {
@@ -1776,6 +1970,8 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseDeferStatement()
 		case lexer.Class:
 			return parser.parseClassStatement()
+		case lexer.Raise:
+			return parser.parseRaiseStatement()
 		case lexer.Try:
 			return parser.parseTryStatement()
 		case lexer.Go:

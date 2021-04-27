@@ -44,6 +44,8 @@ const (
 	End
 	If
 	Unless
+	As
+	Raise
 	Else
 	Elif
 	While
@@ -231,4 +233,6 @@ var (
 	CommentString            = "#"
 	GoToString               = "goto"
 	ContextString            = "context"
+	RaiseString              = "raise"
+	AsString                 = "as"
 )

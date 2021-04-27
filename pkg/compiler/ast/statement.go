@@ -125,11 +125,15 @@ type EnumStatement struct {
 }
 
 type ExceptBlock struct {
-	Targets     []*Identifier
+	Targets     []Expression
 	CaptureName *Identifier
 	Body        []Node
 }
 
+type RaiseStatement struct {
+	Statement
+	X Expression
+}
 type TryStatement struct {
 	Statement
 	Body         []Node

@@ -19,7 +19,8 @@
 
 # Pending Statements
 
-- [ ] Try
+- [X] Raise
+- [X] Try
 - [X] BEGIN
 - [X] END
 - [X] Module
@@ -49,17 +50,17 @@
 
 ## Cleanup
 
-- [X] Binary
-- [X] Unary
-- [X] Parentheses expression
+- [ ] Binary
+- [ ] Unary
+- [ ] Parentheses expression
 - [ ] Literal expression
 - [ ] Identifier
 - [ ] Selector
 - [ ] Index
 - [ ] Method call
-- [X] Lambda
+- [ ] Lambda
 - [ ] Array
-- [X] Tuple
+- [ ] Tuple
 - [ ] Hash
 - [ ] Generator
 - [ ] Await
