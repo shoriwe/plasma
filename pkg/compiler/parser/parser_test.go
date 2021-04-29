@@ -251,9 +251,9 @@ func walker(node ast.Node) string {
 				result += "\n\t" + nodeString
 			}
 		}
-		if node.(*ast.SwitchStatement).Else != nil {
-			result += "\nelse"
-			for _, elseChild := range node.(*ast.SwitchStatement).Else {
+		if node.(*ast.SwitchStatement).Default != nil {
+			result += "\ndefault"
+			for _, elseChild := range node.(*ast.SwitchStatement).Default {
 				nodeString := walker(elseChild)
 				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 				result += "\n\t" + nodeString
@@ -546,10 +546,12 @@ var basicSamples = []string{
 		"\tRight\n" +
 		"end",
 	"switch Token.Kind\n" +
-		"case Numeric\n" +
+		"case Numeric, CommandOutput\n" +
 		"\tbreak\n" +
 		"case String\n" +
 		"\tprint(\"I am a String\")\n" +
+		"default\n" +
+		"\tprint(\"Error\")\n" +
 		"end",
 	"while True\n" +
 		"\tif a > b\n" +
