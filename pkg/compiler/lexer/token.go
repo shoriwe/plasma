@@ -53,6 +53,7 @@ const (
 	Until
 	Switch
 	Case
+	Default
 	Yield
 	Return
 	Retry
@@ -173,6 +174,7 @@ var (
 	UntilString              = "until"
 	SwitchString             = "switch"
 	CaseString               = "case"
+	DefaultString            = "default"
 	YieldString              = "yield"
 	ReturnString             = "return"
 	RetryString              = "retry"

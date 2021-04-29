@@ -289,6 +289,8 @@ func guessKind(buffer string) (int, int) {
 		return Keyboard, Switch
 	case CaseString:
 		return Keyboard, Case
+	case DefaultString:
+		return Keyboard, Default
 	case YieldString:
 		return Keyboard, Yield
 	case ReturnString:
