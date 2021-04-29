@@ -403,7 +403,7 @@ var complexSamples = map[string][]*Token{
 		{
 			String:      "in",
 			DirectValue: In,
-			Kind:        Keyboard,
+			Kind:        Comparator,
 			Line:        0,
 			Column:      0,
 			Index:       0,
