@@ -394,7 +394,7 @@ var complexSamples = map[string][]*Token{
 		},
 		{
 			String:      "a",
-			DirectValue: -1,
+			DirectValue: Unknown,
 			Kind:        IdentifierKind,
 			Line:        0,
 			Column:      0,
@@ -410,7 +410,7 @@ var complexSamples = map[string][]*Token{
 		},
 		{
 			String:      "range",
-			DirectValue: -1,
+			DirectValue: Unknown,
 			Kind:        IdentifierKind,
 			Line:        0,
 			Column:      0,

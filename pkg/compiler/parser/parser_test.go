@@ -616,7 +616,7 @@ var basicSamples = []string{
 		"end",
 	"do\n" +
 		"\tprint(\"Hello\")\n" +
-	"while a > b",
+		"while a > b",
 }
 
 func TestParseBasic(t *testing.T) {
