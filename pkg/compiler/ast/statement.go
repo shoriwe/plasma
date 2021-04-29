@@ -21,6 +21,11 @@ type DeferStatement struct {
 	X *MethodInvocationExpression
 }
 
+type DoWhileStatement struct {
+	Statement
+	Condition Expression
+	Body      []Node
+}
 type WhileLoopStatement struct {
 	Statement
 	Condition Expression

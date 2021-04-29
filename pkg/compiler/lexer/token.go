@@ -49,6 +49,7 @@ const (
 	Else
 	Elif
 	While
+	Do
 	For
 	Until
 	Switch
@@ -170,6 +171,7 @@ var (
 	ElseString               = "else"
 	ElifString               = "elif"
 	WhileString              = "while"
+	DoString                 = "do"
 	ForString                = "for"
 	UntilString              = "until"
 	SwitchString             = "switch"

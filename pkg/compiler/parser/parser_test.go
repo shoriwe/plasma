@@ -439,6 +439,14 @@ func walker(node ast.Node) string {
 			}
 		}
 		return result + "\nend"
+	case *ast.DoWhileStatement:
+		result := "do"
+		for _, bodyNode := range node.(*ast.DoWhileStatement).Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nwhile " + walker(node.(*ast.DoWhileStatement).Condition)
 	}
 	panic("unknown node type")
 }
@@ -606,6 +614,9 @@ var basicSamples = []string{
 		"finally\n" +
 		"\tprint(\"Done\")\n" +
 		"end",
+	"do\n" +
+		"\tprint(\"Hello\")\n" +
+	"while a > b",
 }
 
 func TestParseBasic(t *testing.T) {

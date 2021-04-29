@@ -61,7 +61,7 @@ func (parser *Parser) updateState() {
 	parser.complete = true
 }
 
-func (parser *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
+func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -145,7 +145,7 @@ func (parser *Parser) parseForLoop() (*ast.ForLoopStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseUntilLoop() (*ast.UntilLoopStatement, error) {
+func (parser *Parser) parseUntilStatement() (*ast.UntilLoopStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1191,7 +1191,7 @@ func (parser *Parser) parseHashExpression() (*ast.HashExpression, error) {
 	}, nil
 }
 
-func (parser *Parser) parseWhileLoop() (*ast.WhileLoopStatement, error) {
+func (parser *Parser) parseWhileStatement() (*ast.WhileLoopStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1237,6 +1237,58 @@ func (parser *Parser) parseWhileLoop() (*ast.WhileLoopStatement, error) {
 		return nil, tokenizingError
 	}
 	return &ast.WhileLoopStatement{
+		Condition: condition.(ast.Expression),
+		Body:      body,
+	}, nil
+}
+
+func (parser *Parser) parseDoWhileStatement() (*ast.DoWhileStatement, error) {
+	tokenizingError := parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	var body []ast.Node
+	var bodyNode ast.Node
+	var parsingError error
+	if !parser.matchDirect(lexer.NewLine) {
+		return nil, errors.New(fmt.Sprintf("invalid declaration of do-while statement at line  %d", parser.currentLine()))
+	}
+	// Parse Body
+	for ;!parser.complete; {
+		if parser.matchKind(lexer.Separator) {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+			if parser.matchDirect(lexer.While) {
+				break
+			}
+			continue
+		}
+		bodyNode, parsingError = parser.parseBinaryExpression(0)
+		if parsingError !=  nil {
+			return nil, parsingError
+		}
+		body = append(body, bodyNode)
+	}
+	// Parse Condition
+	if !parser.matchDirect(lexer.While) {
+		return nil, errors.New(fmt.Sprintf("invalid declaration of do-while statement at line %d", parser.currentLine()))
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
+	line := parser.currentLine()
+	var condition ast.Node
+	condition, parsingError = parser.parseBinaryExpression(0)
+	if parsingError != nil {
+		return nil, parsingError
+	}
+	if _, ok := condition.(ast.Expression); !ok {
+		return nil, errors.New(fmt.Sprintf("do-while condition must be a string at line %d", line))
+	}
+	return &ast.DoWhileStatement{
 		Condition: condition.(ast.Expression),
 		Body:      body,
 	}, nil
@@ -1534,9 +1586,6 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 	}, nil
 }
 
-/*
-ToDo: Totally nasty, need to handle it like the implementation of the try statement
-*/
 func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -1976,11 +2025,11 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 		case lexer.Lambda:
 			return parser.parseLambdaExpression()
 		case lexer.While:
-			return parser.parseWhileLoop()
+			return parser.parseWhileStatement()
 		case lexer.For:
-			return parser.parseForLoop()
+			return parser.parseForStatement()
 		case lexer.Until:
-			return parser.parseUntilLoop()
+			return parser.parseUntilStatement()
 		case lexer.If:
 			return parser.parseIfStatement()
 		case lexer.Unless:
@@ -2025,6 +2074,8 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseEnumStatement()
 		case lexer.GoTo:
 			return parser.parseGoToStatement()
+		case lexer.Do:
+			return parser.parseDoWhileStatement()
 		}
 	case lexer.Punctuation:
 		switch parser.currentToken.DirectValue {
