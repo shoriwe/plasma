@@ -74,7 +74,7 @@ type SwitchStatement struct {
 	Statement
 	Target     Expression
 	CaseBlocks []*CaseBlock
-	Else       []Node
+	Default    []Node
 }
 
 type ModuleStatement struct {
