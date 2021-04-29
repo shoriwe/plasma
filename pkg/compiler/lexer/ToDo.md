@@ -12,6 +12,9 @@
 - [X] Python like Octal Integer
 - [X] Float
 - [X] Python like Scientific Float
+- [X] True
+- [X] False
+- [X] None
 
 ## Punctuation
 
@@ -45,11 +48,14 @@
 - [X] Break
 - [X] Redo
 - [X] Module
+- [X] Defer
 - [X] Def
 - [X] Lambda
 - [X] Struct
 - [X] Interface
 - [X] Go
+- [ ] GoTo
+- [ ] Context
 - [X] class
 - [X] Try
 - [X] Except
@@ -64,6 +70,7 @@
 - [X] await
 - [X] BEGIN
 - [X] END
+- [X] Not
 
 ## Names
 
@@ -106,5 +113,6 @@
 ## Comparison
 
 - [X] ==
+- [X] !=
 - [X] \>=
 - [X] <=
