@@ -45,8 +45,8 @@ type Identifier struct {
 type BasicLiteralExpression struct {
 	Expression
 	Token       *lexer.Token
-	Kind        int
-	DirectValue int
+	Kind        uint8
+	DirectValue uint8
 }
 
 type BinaryExpression struct {
