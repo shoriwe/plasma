@@ -5,7 +5,7 @@ package lexer
 */
 
 const (
-	Unknown = iota
+	Unknown uint8 = iota
 	PendingEscape
 	Comment
 	Whitespace
@@ -147,8 +147,8 @@ const (
 
 type Token struct {
 	String      string
-	DirectValue int
-	Kind        int
+	DirectValue uint8
+	Kind        uint8
 	Line        int
 	Column      int
 	Index       int
@@ -159,84 +159,88 @@ type Token struct {
 */
 
 var (
-	CommaString              = ","
-	ColonString              = ":"
-	SemiColonString          = ";"
-	NewLineString            = "\n"
-	PassString               = "pass"
-	SuperString              = "super"
-	EndString                = "end"
-	IfString                 = "if"
-	UnlessString             = "unless"
-	ElseString               = "else"
-	ElifString               = "elif"
-	WhileString              = "while"
-	DoString                 = "do"
-	ForString                = "for"
-	UntilString              = "until"
-	SwitchString             = "switch"
-	CaseString               = "case"
-	DefaultString            = "default"
-	YieldString              = "yield"
-	ReturnString             = "return"
-	RetryString              = "retry"
-	BreakString              = "break"
-	RedoString               = "redo"
-	DeferString              = "defer"
-	ModuleString             = "module"
-	DefString                = "def"
-	LambdaString             = "lambda"
-	StructString             = "struct"
-	InterfaceString          = "interface"
-	GoString                 = "go"
-	ClassString              = "class"
-	TryString                = "try"
-	ExceptString             = "except"
-	FinallyString            = "finally"
-	AndString                = "and"
-	OrString                 = "or"
-	XorString                = "xor"
-	InString                 = "in"
-	IsInstanceOfString       = "isinstanceof"
-	AsyncString              = "async"
-	AwaitString              = "await"
-	BEGINString              = "BEGIN"
-	ENDString                = "END"
-	EnumString               = "enum"
-	NotString                = "not"
-	TrueString               = "True"
-	FalseString              = "False"
-	NoneString               = "None"
-	OpenParenthesesString    = "("
-	CloseParenthesesString   = ")"
-	OpenSquareBracketString  = "["
-	CloseSquareBracketString = "]"
-	OpenBraceString          = "{"
-	CloseBraceString         = "}"
-	DollarSignString         = "$"
-	DotString                = "."
-	BitwiseOrString          = "|"
-	BitwiseXorString         = "^"
-	BitWiseAndString         = "&"
-	BitwiseLeftString        = "<<"
-	BitwiseRightString       = ">>"
-	AddString                = "+"
-	SubString                = "-"
-	StarString               = "*"
-	DivString                = "/"
-	FloorDivString           = "//"
-	ModulusString            = "%"
-	PowerOfString            = "**"
-	LessThanString           = "<"
-	GreatThanString          = ">"
-	NegateBitsString         = "~"
-	SignNotString            = "!"
-	EqualsString             = "="
-	WhiteSpaceString         = " "
-	TabString                = "\t"
-	CommentString            = "#"
-	GoToString               = "goto"
-	ContextString            = "context"
-	RaiseString              = "raise"
-	AsString                 = "as"
+	// Chars
+	CommaChar              uint8 = ','
+	ColonChar              uint8 = ':'
+	SemiColonChar          uint8 = ';'
+	NewLineChar            uint8 = '\n'
+	OpenParenthesesChar    uint8 = '('
+	CloseParenthesesChar   uint8 = ')'
+	OpenSquareBracketChar  uint8 = '['
+	CloseSquareBracketChar uint8 = ']'
+	OpenBraceChar          uint8 = '{'
+	CloseBraceChar         uint8 = '}'
+	DollarSignChar         uint8 = '$'
+	DotChar                uint8 = '.'
+	BitwiseOrChar          uint8 = '|'
+	BitwiseXorChar         uint8 = '^'
+	BitWiseAndChar         uint8 = '&'
+	AddChar                uint8 = '+'
+	SubChar                uint8 = '-'
+	StarChar               uint8 = '*'
+	DivChar                uint8 = '/'
+	ModulusChar            uint8 = '%'
+	LessThanChar           uint8 = '<'
+	GreatThanChar          uint8 = '>'
+	NegateBitsChar         uint8 = '~'
+	SignNotChar            uint8 = '!'
+	EqualsChar             uint8 = '='
+	WhiteSpaceChar         uint8 = ' '
+	TabChar                uint8 = '\t'
+	CommentChar            uint8 = '#'
+	BackSlashChar          uint8 = '\\'
+
+	// Complex Patterns
+	BitwiseLeftString  = "<<"
+	BitwiseRightString = ">>"
+	PowerOfString      = "**"
+	FloorDivString     = "//"
+	PassString         = "pass"
+	SuperString        = "super"
+	EndString          = "end"
+	IfString           = "if"
+	UnlessString       = "unless"
+	ElseString         = "else"
+	ElifString         = "elif"
+	WhileString        = "while"
+	DoString           = "do"
+	ForString          = "for"
+	UntilString        = "until"
+	SwitchString       = "switch"
+	CaseString         = "case"
+	DefaultString      = "default"
+	YieldString        = "yield"
+	ReturnString       = "return"
+	RetryString        = "retry"
+	BreakString        = "break"
+	RedoString         = "redo"
+	DeferString        = "defer"
+	ModuleString       = "module"
+	DefString          = "def"
+	LambdaString       = "lambda"
+	StructString       = "struct"
+	InterfaceString    = "interface"
+	GoString           = "go"
+	ClassString        = "class"
+	TryString          = "try"
+	ExceptString       = "except"
+	FinallyString      = "finally"
+	AndString          = "and"
+	OrString           = "or"
+	XorString          = "xor"
+	InString           = "in"
+	IsInstanceOfString = "isinstanceof"
+	AsyncString        = "async"
+	AwaitString        = "await"
+	BEGINString        = "BEGIN"
+	ENDString          = "END"
+	EnumString         = "enum"
+	NotString          = "not"
+	TrueString         = "True"
+	FalseString        = "False"
+	NoneString         = "None"
+	GoToString         = "goto"
+	ContextString      = "context"
+	RaiseString        = "raise"
+	AsString           = "as"
 )

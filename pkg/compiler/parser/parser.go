@@ -29,14 +29,14 @@ func (parser *Parser) next() error {
 	return nil
 }
 
-func (parser *Parser) matchDirect(directValue int) bool {
+func (parser *Parser) matchDirect(directValue uint8) bool {
 	if parser.currentToken == nil {
 		return false
 	}
 	return parser.currentToken.DirectValue == directValue
 }
 
-func (parser *Parser) matchKind(kind int) bool {
+func (parser *Parser) matchKind(kind uint8) bool {
 	if parser.currentToken == nil {
 		return false
 	}
@@ -398,6 +398,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, error) {
 			} else if parser.matchDirect(lexer.CloseParentheses) {
 				break
 			} else {
+				fmt.Println(parser.currentToken)
 				return nil, errors.New(fmt.Sprintf("invalid definition of a class at line %d", parser.currentLine()))
 			}
 		}
@@ -864,7 +865,7 @@ func (parser *Parser) parseLiteral() (ast.Expression, error) {
 	return nil, errors.New(fmt.Sprintf("could not determine the directValue of token %s at line %d", parser.currentToken.String, parser.currentLine()))
 }
 
-func (parser *Parser) parseBinaryExpression(precedence int) (ast.Node, error) {
+func (parser *Parser) parseBinaryExpression(precedence uint8) (ast.Node, error) {
 	var leftHandSide ast.Node
 	var rightHandSide ast.Node
 	var parsingError error
@@ -1254,7 +1255,7 @@ func (parser *Parser) parseDoWhileStatement() (*ast.DoWhileStatement, error) {
 		return nil, errors.New(fmt.Sprintf("invalid declaration of do-while statement at line  %d", parser.currentLine()))
 	}
 	// Parse Body
-	for ;!parser.complete; {
+	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -1266,7 +1267,7 @@ func (parser *Parser) parseDoWhileStatement() (*ast.DoWhileStatement, error) {
 			continue
 		}
 		bodyNode, parsingError = parser.parseBinaryExpression(0)
-		if parsingError !=  nil {
+		if parsingError != nil {
 			return nil, parsingError
 		}
 		body = append(body, bodyNode)
