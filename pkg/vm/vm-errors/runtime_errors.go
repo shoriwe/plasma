@@ -10,6 +10,7 @@ const (
 	TypeError              = "TypeError"
 	AttributeNotFoundError = "AttributeNotFoundError"
 	NilObjectError         = "NilObjectError"
+	UnknownOP              = "UnknownOP"
 )
 
 const UnknownLine = -1

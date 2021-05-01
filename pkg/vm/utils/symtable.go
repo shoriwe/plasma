@@ -8,7 +8,7 @@ import (
 
 type SymbolTable struct {
 	ownerName string
-	symbols map[string]object.Object
+	symbols   map[string]object.Object
 }
 
 func (symbolTable *SymbolTable) Get(symbol string) (object.Object, *errors.Error) {
@@ -19,10 +19,17 @@ func (symbolTable *SymbolTable) Get(symbol string) (object.Object, *errors.Error
 	return value, nil
 }
 
-func (symbolTable *SymbolTable) Set(symbol string, obj object.Object) *errors.Error{
+func (symbolTable *SymbolTable) Set(symbol string, obj object.Object) *errors.Error {
 	if obj == nil {
 		return errors.New(vm_errors.UnknownLine, "received a nil pointer as Object", vm_errors.NilObjectError)
 	}
 	symbolTable.symbols[symbol] = obj
 	return nil
+}
+
+func NewSymbolTable() *SymbolTable {
+	return &SymbolTable{
+		ownerName: "",
+		symbols:   map[string]object.Object{},
+	}
 }

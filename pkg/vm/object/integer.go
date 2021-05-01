@@ -22,6 +22,10 @@ func (integer *Integer) Addition(other Object) (Object, *errors.Error) {
 	return nil, vmerrors.NewTypeError(IntegerTypeString, reflect.TypeOf(other).String())
 }
 
+func (integer *Integer) RawString() (string, *errors.Error) {
+	return integer.value.String(), nil
+}
+
 func NewInteger(number string, base int) *Integer {
 	n := big.NewInt(0)
 	n.SetString(number, base)

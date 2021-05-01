@@ -1,4 +1,4 @@
-package op
+package vm
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
@@ -8,7 +8,8 @@ import (
 type InstructionOP func(*utils.Stack) *errors.Error
 
 const (
-	AddOP uint16 = iota
+	// Binary Operations
+	AddOP uint = iota
 	SubOP
 	DivOP
 	MulOP
@@ -20,4 +21,7 @@ const (
 	BitXorOP
 	BitLeftOP
 	BitRightOP
+
+	// Memory Operations
+	PushOP
 )

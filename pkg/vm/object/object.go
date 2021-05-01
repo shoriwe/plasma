@@ -63,6 +63,7 @@ type Object interface {
 	Integer() (*Integer, *errors.Error)
 	Float() (*Float, *errors.Error)
 	String() (*String, *errors.Error)
+	RawString() (string, *errors.Error)
 	Boolean() (Boolean, *errors.Error)
 
 	New() (Object, *errors.Error)
@@ -91,6 +92,7 @@ type (
 
 	String struct {
 		Object
+		value string
 	}
 
 	Float struct {

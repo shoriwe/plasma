@@ -20,3 +20,10 @@ func (stack *Stack) Push(value interface{}) {
 func (stack *Stack) IsEmpty() bool {
 	return stack.contentLength == 0
 }
+
+func NewStack() *Stack {
+	return &Stack{
+		content:       make([]interface{}, 0),
+		contentLength: 0,
+	}
+}

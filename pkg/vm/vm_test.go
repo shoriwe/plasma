@@ -6,14 +6,14 @@ import (
 	"testing"
 )
 
-func test(t *testing.T, code []interface{}) *object.String {
-	vm := NewPlasmaVM()
+func test(t *testing.T, code []interface{}) string {
+	vm := NewPlasmaVM(nil)
 	result, executionError := vm.Execute(code)
 	if executionError != nil {
 		t.Error(executionError)
-		return nil
+		return "ERROR"
 	}
-	s, conversionError := result.String()
+	s, conversionError := result.RawString()
 	if conversionError != nil {
 		t.Error(conversionError.String())
 	}
@@ -21,13 +21,13 @@ func test(t *testing.T, code []interface{}) *object.String {
 }
 
 var binaryOperations = [][]interface{}{
-	{nil, nil},
+	{PushOP, object.NewInteger("1000", 10), PushOP, object.NewInteger("13455", 10), AddOP},
 }
 
 func TestBinaryOperations(t *testing.T) {
 	for _, sample := range binaryOperations {
 		output := test(t, sample)
-		if output == nil {
+		if output == "ERROR" {
 			return
 		}
 		fmt.Println(output)
