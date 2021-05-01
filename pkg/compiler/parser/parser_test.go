@@ -460,12 +460,12 @@ func test(t *testing.T, samples []string) {
 		lex := lexer.NewLexer(sample)
 		parser, parserCreationError := NewParser(lex)
 		if parserCreationError != nil {
-			t.Error(parserCreationError)
+			t.Error(parserCreationError.String())
 			return
 		}
 		program, parsingError := parser.Parse()
 		if parsingError != nil {
-			t.Error(parsingError)
+			t.Error(parsingError.String())
 			return
 		}
 		result := walk(program)
@@ -559,7 +559,7 @@ var basicSamples = []string{
 		"case String\n" +
 		"\tprint(\"I am a String\")\n" +
 		"default\n" +
-		"\tprint(\"Error\")\n" +
+		"\tprint(\"errors\")\n" +
 		"end",
 	"while True\n" +
 		"\tif a > b\n" +
@@ -604,12 +604,12 @@ var basicSamples = []string{
 		"end",
 	"try\n" +
 		"\tprint(variable)\n" +
-		"except UndefinedIdentifier, AnyException as Error\n" +
-		"\tprint(Error)\n" +
-		"except NoToStringException as Error\n" +
-		"\tprint(Error)\n" +
+		"except UndefinedIdentifier, AnyException as errors\n" +
+		"\tprint(errors)\n" +
+		"except NoToStringException as errors\n" +
+		"\tprint(errors)\n" +
 		"else\n" +
-		"\tprint(\"Unknown error\")\n" +
+		"\tprint(\"Unknown *errors\")\n" +
 		"\traise UnknownException()\n" +
 		"finally\n" +
 		"\tprint(\"Done\")\n" +
