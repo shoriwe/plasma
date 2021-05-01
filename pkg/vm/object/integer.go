@@ -2,7 +2,7 @@ package object
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
-	vm_errors "github.com/shoriwe/gruby/pkg/vm/vm-errors"
+	vmerrors "github.com/shoriwe/gruby/pkg/vm/vm-errors"
 	"math/big"
 	"reflect"
 )
@@ -19,7 +19,7 @@ func (integer *Integer) Addition(other Object) (Object, *errors.Error) {
 			value: result,
 		}, nil
 	}
-	return nil, vm_errors.NewTypeError(IntegerTypeString, reflect.TypeOf(other).String())
+	return nil, vmerrors.NewTypeError(IntegerTypeString, reflect.TypeOf(other).String())
 }
 
 func NewInteger(number string, base int) *Integer {
