@@ -2,7 +2,9 @@ package object
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
+	vm_errors "github.com/shoriwe/gruby/pkg/vm/vm-errors"
 	"math/big"
+	"reflect"
 )
 
 func (integer *Integer) Addition(other Object) (Object, *errors.Error) {
@@ -10,9 +12,14 @@ func (integer *Integer) Addition(other Object) (Object, *errors.Error) {
 	case *Float:
 		break
 	case *Integer:
-		break
+		result := big.NewInt(0)
+		result.Add(result, integer.value)
+		result.Add(result, other.(*Integer).value)
+		return &Integer{
+			value: result,
+		}, nil
 	}
-	return nil, nil
+	return nil, vm_errors.NewTypeError(IntegerTypeString, reflect.TypeOf(other).String())
 }
 
 func NewInteger(number string, base int) *Integer {

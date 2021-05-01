@@ -2,6 +2,7 @@ package errors
 
 import "fmt"
 
+// Compiling Errors
 const (
 	LexingError  = "LexingError"
 	ParsingError = "ParsingError"

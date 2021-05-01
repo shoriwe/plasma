@@ -60,10 +60,10 @@ type Object interface {
 	NotEqual(Object) (Object, *errors.Error)
 
 	// Type conversion
-	Integer() (*Integer,*errors.Error)
-	Float() (*Float,*errors.Error)
-	String() (*String,*errors.Error)
-	Boolean() (Boolean,*errors.Error)
+	Integer() (*Integer, *errors.Error)
+	Float() (*Float, *errors.Error)
+	String() (*String, *errors.Error)
+	Boolean() (Boolean, *errors.Error)
 
 	New() (Object, *errors.Error)
 	Dir() (*Hash, *errors.Error)
