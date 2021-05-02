@@ -1,13 +1,15 @@
-package vm
+package runtime
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
+	"math"
 	"math/big"
 	"reflect"
 )
 
 type Integer struct {
 	symbolTable *SymbolTable
+	accuracy    big.Accuracy
 	value       *big.Int
 }
 
@@ -146,20 +148,112 @@ func (integer *Integer) RightSubtraction(left Object) (Object, *errors.Error) {
 	}
 }
 
-func (integer *Integer) Modulus(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) Modulus(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Float:
+		rightFloat, accuracy := right.(*Float).value.Float64()
+		result := big.NewInt(int64(math.Mod(float64(integer.value.Int64()), rightFloat)))
+		return &Integer{
+			accuracy: accuracy,
+			value:    result,
+		}, nil
+
+	case *Integer:
+		result := big.NewInt(0)
+		result.Set(integer.value)
+		result.Mod(result, right.(*Integer).value)
+		return &Integer{
+			value: result,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightAddition, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (integer *Integer) RightModulus(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightModulus(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Float:
+		leftFloat, accuracy := left.(*Float).value.Float64()
+		result := big.NewFloat(math.Mod(leftFloat, float64(integer.value.Int64())))
+		return &Float{
+			accuracy: accuracy,
+			value:    result,
+		}, nil
+	case *Integer:
+		result := big.NewInt(0)
+		result.Set(integer.value)
+		result.Mod(left.(*Integer).value, result)
+		return &Integer{
+			value: result,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightAddition)
+	}
 }
 
-func (integer *Integer) Multiplication(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) Multiplication(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.SetInt(integer.value)
+		result.Mul(result, right.(*Float).value)
+		return &Float{
+			value: result,
+		}, nil
+	case *Integer:
+		result := big.NewInt(0)
+		result.Set(integer.value)
+		result.Mul(result, right.(*Integer).value)
+		return &Integer{
+			value: result,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightAddition, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (integer *Integer) RightMultiplication(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightMultiplication(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.Add(result, left.(*Float).value)
+		result.Mul(result, new(big.Float).SetInt(integer.value))
+		return &Float{
+			value: result,
+		}, nil
+
+	case *Integer:
+		result := big.NewInt(0)
+		result.Set(left.(*Integer).value)
+		result.Mul(result, integer.value)
+		return &Integer{
+			value: result,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightAddition)
+	}
 }
 
 func (integer *Integer) Division(right Object) (Object, *errors.Error) {

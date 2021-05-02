@@ -1,4 +1,4 @@
-package vm
+package runtime
 
 type Stack struct {
 	content       []interface{}

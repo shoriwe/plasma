@@ -2,13 +2,14 @@ package vm
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
+	"github.com/shoriwe/gruby/pkg/vm/runtime"
 	"reflect"
 )
 
 type Plasma struct {
-	symbolTable      *SymbolTable
-	symbolTableStack *Stack
-	objectStack      *Stack
+	symbolTable      *runtime.SymbolTable
+	symbolTableStack *runtime.Stack
+	objectStack      *runtime.Stack
 	code             []interface{}
 	codeLength       int
 	cursor           int
@@ -18,33 +19,33 @@ func (plasma *Plasma) basicBinaryOP(leftOP string, rightOP string) *errors.Error
 	plasma.cursor++
 	leftHandSide := plasma.objectStack.Pop()
 	rightHandSide := plasma.objectStack.Pop()
-	operation, getError := GetAttribute(leftHandSide.(Object), leftOP, false)
-	var result Object
+	operation, getError := runtime.GetAttribute(leftHandSide.(runtime.Object), leftOP, false)
+	var result runtime.Object
 	var opError *errors.Error
 	isRight := false
 	if getError != nil {
 		var getError2 *errors.Error
-		operation, getError2 = GetAttribute(rightHandSide.(Object), rightOP, false)
+		operation, getError2 = runtime.GetAttribute(rightHandSide.(runtime.Object), rightOP, false)
 		if getError2 != nil {
 			return getError
 		}
 		isRight = true
 	}
 	switch operation.(type) {
-	case func(Object) (Object, *errors.Error):
+	case func(runtime.Object) (runtime.Object, *errors.Error):
 		if isRight {
-			result, opError = operation.(func(Object) (Object, *errors.Error))(leftHandSide.(Object))
+			result, opError = operation.(func(runtime.Object) (runtime.Object, *errors.Error))(leftHandSide.(runtime.Object))
 		} else {
-			result, opError = operation.(func(Object) (Object, *errors.Error))(rightHandSide.(Object))
+			result, opError = operation.(func(runtime.Object) (runtime.Object, *errors.Error))(rightHandSide.(runtime.Object))
 		}
-	case *Function:
+	case *runtime.Function:
 		if isRight {
-			result, opError = operation.(*Function).Call(rightHandSide.(Object))
+			result, opError = operation.(*runtime.Function).Call(rightHandSide.(runtime.Object))
 		} else {
-			result, opError = operation.(*Function).Call(leftHandSide.(Object))
+			result, opError = operation.(*runtime.Function).Call(leftHandSide.(runtime.Object))
 		}
 	default:
-		return NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		return runtime.NewTypeError(runtime.FunctionTypeString, reflect.TypeOf(operation).String())
 	}
 	if opError != nil {
 		return opError
@@ -54,15 +55,23 @@ func (plasma *Plasma) basicBinaryOP(leftOP string, rightOP string) *errors.Error
 }
 
 func (plasma *Plasma) additionOP() *errors.Error {
-	return plasma.basicBinaryOP(Addition, RightAddition)
+	return plasma.basicBinaryOP(runtime.Addition, runtime.RightAddition)
 }
 
 func (plasma *Plasma) subtractionOP() *errors.Error {
-	return plasma.basicBinaryOP(Subtraction, RightSubtraction)
+	return plasma.basicBinaryOP(runtime.Subtraction, runtime.RightSubtraction)
 }
 
 func (plasma *Plasma) divisionOP() *errors.Error {
-	return plasma.basicBinaryOP(Division, RightDivision)
+	return plasma.basicBinaryOP(runtime.Division, runtime.RightDivision)
+}
+
+func (plasma *Plasma) modulusOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.Modulus, runtime.RightModulus)
+}
+
+func (plasma *Plasma) multiplicationOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.Multiplication, runtime.RightMultiplication)
 }
 
 func (plasma *Plasma) pushOP() *errors.Error {
@@ -77,45 +86,49 @@ func (plasma *Plasma) Initialize(code []interface{}) {
 	plasma.codeLength = len(code)
 }
 
-func (plasma *Plasma) Execute() (Object, *errors.Error) {
+func (plasma *Plasma) Execute() (runtime.Object, *errors.Error) {
 	for ; plasma.cursor < plasma.codeLength; {
 		if _, ok := plasma.code[plasma.cursor].(uint); !ok {
-			return nil, NewRuntimeError(UnknownOP, "Unknown instruction type")
+			return nil, runtime.NewRuntimeError(runtime.UnknownOP, "Unknown instruction type")
 		}
 		var instructionExecError *errors.Error
 		switch plasma.code[plasma.cursor].(uint) {
-		case AddOP:
+		case runtime.AddOP:
 			instructionExecError = plasma.additionOP()
-		case SubOP:
+		case runtime.SubOP:
 			instructionExecError = plasma.subtractionOP()
-		case DivOP:
+		case runtime.DivOP:
 			instructionExecError = plasma.divisionOP()
-		case PushOP:
+		case runtime.ModOP:
+			instructionExecError = plasma.modulusOP()
+		case runtime.MulOP:
+			instructionExecError = plasma.multiplicationOP()
+		case runtime.PushOP:
 			instructionExecError = plasma.pushOP()
-		case ReturnOP:
+		case runtime.ReturnOP:
 			plasma.cursor++
 			if plasma.objectStack.IsEmpty() {
-				return NewNone(), nil
+				return runtime.NewNone(), nil
 			}
-			return plasma.objectStack.Pop().(Object), nil
+			return plasma.objectStack.Pop().(runtime.Object), nil
 		default:
-			instructionExecError = errors.New(UnknownLine, "Unknown Operation", UnknownOP)
+			instructionExecError = errors.New(runtime.UnknownLine, "Unknown Operation", runtime.UnknownOP)
 		}
 		if instructionExecError != nil {
 			return nil, instructionExecError
 		}
 	}
-	return NewNone(), nil
+	return runtime.NewNone(), nil
 }
 
-func NewPlasmaVM(symbolTable *SymbolTable) *Plasma {
+func NewPlasmaVM(symbolTable *runtime.SymbolTable) *Plasma {
 	if symbolTable == nil {
-		symbolTable = NewSymbolTable(nil)
+		symbolTable = runtime.NewSymbolTable(nil)
 	}
 	return &Plasma{
 		symbolTable:      symbolTable,
-		symbolTableStack: NewStack(),
-		objectStack:      NewStack(),
+		symbolTableStack: runtime.NewStack(),
+		objectStack:      runtime.NewStack(),
 		cursor:           0,
 	}
 }

@@ -1,16 +1,20 @@
-package vm
+package runtime
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
 )
 
 const (
-	Addition         = "Addition"
-	RightAddition    = "RightAddition"
-	Subtraction      = "Subtraction"
-	RightSubtraction = "RightSubtraction"
-	Division         = "Division"
-	RightDivision    = "RightDivision"
+	Addition            = "Addition"
+	RightAddition       = "RightAddition"
+	Subtraction         = "Subtraction"
+	RightSubtraction    = "RightSubtraction"
+	Division            = "Division"
+	RightDivision       = "RightDivision"
+	Modulus             = "Modulus"
+	RightModulus        = "RightModulus"
+	Multiplication      = "Multiplication"
+	RightMultiplication = "RightMultiplication"
 )
 
 type Object interface {
@@ -103,6 +107,14 @@ func getObjectBuiltInMethod(object Object, symbolName string) interface{} {
 		return object.Division
 	case RightDivision:
 		return object.RightDivision
+	case Modulus:
+		return object.Modulus
+	case RightModulus:
+		return object.RightModulus
+	case Multiplication:
+		return object.Multiplication
+	case RightMultiplication:
+		return object.RightMultiplication
 	}
 	return nil
 }
