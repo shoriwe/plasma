@@ -47,12 +47,8 @@ const (
 	BitwiseAnd
 	BitwiseOr
 	BitwiseXor
+	
 	NegateBitsOP
-	BitAndOP
-	BitOrOP
-	BitXorOP
-	BitLeftOP
-	BitRightOP
 
 	// Memory Operations
 	PushOP
