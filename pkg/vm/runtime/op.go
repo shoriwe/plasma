@@ -47,7 +47,7 @@ const (
 	BitwiseAnd
 	BitwiseOr
 	BitwiseXor
-	
+
 	NegateBitsOP
 
 	// Memory Operations

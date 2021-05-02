@@ -102,7 +102,6 @@ func (plasma *Plasma) bitwiseXorOP() *errors.Error {
 	return plasma.basicBinaryOP(runtime.FloorDivisionName, runtime.RightFloorDivisionName)
 }
 
-
 func (plasma *Plasma) pushOP() *errors.Error {
 	plasma.cursor++
 	plasma.objectStack.Push(plasma.code[plasma.cursor])
