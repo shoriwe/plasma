@@ -1,16 +1,17 @@
 package runtime
 
 import (
+	"fmt"
 	"github.com/shoriwe/gruby/pkg/errors"
 	"math"
 	"math/big"
 	"reflect"
+	"strconv"
 )
 
 type Float struct {
 	symbolTable *SymbolTable
-	value       *big.Float
-	accuracy    big.Accuracy
+	value       float64
 }
 
 func (float *Float) Initialize() (Object, *errors.Error) {
@@ -40,19 +41,13 @@ func (float *Float) Negation(object Object) (Object, *errors.Error) {
 func (float *Float) Addition(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		result := big.NewFloat(0)
-		result.Add(result, float.value)
-		result.Add(result, right.(*Float).value)
 		return &Float{
-			value: result,
+			value: float.value + right.(*Float).value,
 		}, nil
 
 	case *Integer:
-		result := big.NewFloat(0)
-		result.SetInt(right.(*Integer).value)
-		result.Add(result, float.value)
 		return &Float{
-			value: result,
+			value: float.value + float64(right.(*Integer).value),
 		}, nil
 	default:
 		operation, getError := GetAttribute(right, RightAddition, false)
@@ -73,19 +68,13 @@ func (float *Float) Addition(right Object) (Object, *errors.Error) {
 func (float *Float) RightAddition(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		result := big.NewFloat(0)
-		result.Add(result, float.value)
-		result.Add(result, left.(*Float).value)
 		return &Float{
-			value: result,
+			value: left.(*Float).value + float.value,
 		}, nil
 
 	case *Integer:
-		result := big.NewFloat(0)
-		result.SetInt(left.(*Integer).value)
-		result.Add(result, float.value)
 		return &Float{
-			value: result,
+			value: float64(left.(*Integer).value) + float.value,
 		}, nil
 	default:
 		return nil, NewMethodNotImplemented(RightAddition)
@@ -95,19 +84,13 @@ func (float *Float) RightAddition(left Object) (Object, *errors.Error) {
 func (float *Float) Subtraction(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		result := big.NewFloat(0)
-		result.Set(float.value)
-		result.Sub(result, right.(*Float).value)
 		return &Float{
-			value: result,
+			value: float.value - right.(*Float).value,
 		}, nil
 
 	case *Integer:
-		result := big.NewFloat(0)
-		result.Add(result, float.value)
-		result.Sub(result, new(big.Float).SetInt(right.(*Integer).value))
 		return &Float{
-			value: result,
+			value: float.value - float64(right.(*Integer).value),
 		}, nil
 	default:
 		operation, getError := GetAttribute(right, RightAddition, false)
@@ -128,20 +111,13 @@ func (float *Float) Subtraction(right Object) (Object, *errors.Error) {
 func (float *Float) RightSubtraction(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		result := big.NewFloat(0)
-		result.Set(float.value)
-		result.Mul(result, big.NewFloat(-1))
-		result.Add(result, left.(*Float).value)
 		return &Float{
-			value: result,
+			value: left.(*Float).value - float.value,
 		}, nil
 
 	case *Integer:
-		result := big.NewFloat(0)
-		result.Add(result, new(big.Float).SetInt(left.(*Integer).value))
-		result.Sub(result, float.value)
 		return &Float{
-			value: result,
+			value: float64(left.(*Integer).value) - float.value,
 		}, nil
 	default:
 		return nil, NewMethodNotImplemented(RightAddition)
@@ -151,19 +127,12 @@ func (float *Float) RightSubtraction(left Object) (Object, *errors.Error) {
 func (float *Float) Modulus(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		leftFloat, accuracy := float.value.Float64()
-		rightFloat, _ := right.(*Float).value.Float64()
-		result := big.NewFloat(math.Mod(leftFloat, rightFloat))
 		return &Float{
-			accuracy: accuracy,
-			value:    result,
+			value: math.Mod(float.value, right.(*Float).value),
 		}, nil
 	case *Integer:
-		leftFloat, accuracy := float.value.Float64()
-		result := big.NewFloat(math.Mod(leftFloat, float64(right.(*Integer).value.Int64())))
 		return &Float{
-			accuracy: accuracy,
-			value:    result,
+			value: math.Mod(float.value, float64(right.(*Integer).value)),
 		}, nil
 	default:
 		operation, getError := GetAttribute(right, RightAddition, false)
@@ -184,19 +153,12 @@ func (float *Float) Modulus(right Object) (Object, *errors.Error) {
 func (float *Float) RightModulus(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		rightFloat, accuracy := float.value.Float64()
-		leftFloat, _ := left.(*Float).value.Float64()
-		result := big.NewFloat(math.Mod(leftFloat, rightFloat))
 		return &Float{
-			accuracy: accuracy,
-			value:    result,
+			value: math.Mod(left.(*Float).value, float.value),
 		}, nil
 	case *Integer:
-		rightFloat, accuracy := float.value.Float64()
-		result := big.NewFloat(math.Mod(float64(left.(*Integer).value.Int64()), rightFloat))
 		return &Float{
-			accuracy: accuracy,
-			value:    result,
+			value: math.Mod(float64(left.(*Integer).value), float.value),
 		}, nil
 	default:
 		return nil, NewMethodNotImplemented(RightAddition)
@@ -206,18 +168,12 @@ func (float *Float) RightModulus(left Object) (Object, *errors.Error) {
 func (float *Float) Multiplication(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		result := big.NewFloat(0)
-		result.Set(float.value)
-		result.Mul(result, right.(*Float).value)
 		return &Float{
-			value: result,
+			value: float.value * right.(*Float).value,
 		}, nil
 	case *Integer:
-		result := big.NewFloat(0)
-		result.Set(float.value)
-		result.Mul(result, new(big.Float).SetInt(right.(*Integer).value))
 		return &Float{
-			value: result,
+			value: float.value * float64(right.(*Integer).value),
 		}, nil
 	default:
 		operation, getError := GetAttribute(right, RightAddition, false)
@@ -238,19 +194,13 @@ func (float *Float) Multiplication(right Object) (Object, *errors.Error) {
 func (float *Float) RightMultiplication(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		result := big.NewFloat(0)
-		result.Add(result, left.(*Float).value)
-		result.Mul(result, float.value)
 		return &Float{
-			value: result,
+			value: left.(*Float).value * float.value,
 		}, nil
 
 	case *Integer:
-		result := big.NewFloat(0)
-		result.SetInt(left.(*Integer).value)
-		result.Mul(result, float.value)
 		return &Float{
-			value: result,
+			value: float64(left.(*Integer).value) * float.value,
 		}, nil
 	default:
 		return nil, NewMethodNotImplemented(RightAddition)
@@ -260,19 +210,13 @@ func (float *Float) RightMultiplication(left Object) (Object, *errors.Error) {
 func (float *Float) Division(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		result := big.NewFloat(0)
-		result.Set(float.value)
-		result.Quo(result, right.(*Float).value)
 		return &Float{
-			value: result,
+			value: float.value / right.(*Float).value,
 		}, nil
 
 	case *Integer:
-		result := big.NewFloat(0)
-		result.Set(float.value)
-		result.Quo(result, new(big.Float).SetInt(right.(*Integer).value))
 		return &Float{
-			value: result,
+			value: float.value / float64(right.(*Integer).value),
 		}, nil
 	default:
 		operation, getError := GetAttribute(right, RightAddition, false)
@@ -293,19 +237,13 @@ func (float *Float) Division(right Object) (Object, *errors.Error) {
 func (float *Float) RightDivision(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		result := big.NewFloat(0)
-		result.Add(result, left.(*Float).value)
-		result.Quo(result, float.value)
 		return &Float{
-			value: result,
+			value: left.(*Float).value / left.(*Float).value,
 		}, nil
 
 	case *Integer:
-		result := big.NewFloat(0)
-		result.SetInt(left.(*Integer).value)
-		result.Quo(result, float.value)
 		return &Float{
-			value: result,
+			value: float64(left.(*Integer).value) / float.value,
 		}, nil
 	default:
 		return nil, NewMethodNotImplemented(RightAddition)
@@ -315,19 +253,12 @@ func (float *Float) RightDivision(left Object) (Object, *errors.Error) {
 func (float *Float) PowerOf(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		leftFloat, accuracy := float.value.Float64()
-		rightFloat, _ := right.(*Float).value.Float64()
-		result := big.NewFloat(math.Pow(leftFloat, rightFloat))
 		return &Float{
-			accuracy: accuracy,
-			value:    result,
+			value: math.Pow(float.value, right.(*Float).value),
 		}, nil
 	case *Integer:
-		leftFloat, accuracy := float.value.Float64()
-		result := big.NewFloat(math.Pow(leftFloat, float64(right.(*Integer).value.Int64())))
 		return &Float{
-			accuracy: accuracy,
-			value:    result,
+			value: math.Pow(float.value, float64(right.(*Integer).value)),
 		}, nil
 	default:
 		operation, getError := GetAttribute(right, RightAddition, false)
@@ -348,31 +279,59 @@ func (float *Float) PowerOf(right Object) (Object, *errors.Error) {
 func (float *Float) RightPowerOf(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		leftFloat, accuracy := left.(*Float).value.Float64()
-		rightFloat, _ := float.value.Float64()
-		result := big.NewFloat(math.Pow(leftFloat, rightFloat))
 		return &Float{
-			accuracy: accuracy,
-			value:    result,
+			value: math.Pow(left.(*Float).value, float.value),
 		}, nil
 	case *Integer:
-		rightFloat, accuracy := float.value.Float64()
-		result := big.NewFloat(math.Pow(float64(left.(*Integer).value.Int64()), rightFloat))
 		return &Float{
-			accuracy: accuracy,
-			value:    result,
+			value: math.Pow(float64(left.(*Integer).value), float.value),
 		}, nil
 	default:
 		return nil, NewMethodNotImplemented(RightAddition)
 	}
 }
 
-func (float *Float) FloorDivision(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (float *Float) FloorDivision(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Float:
+		return &Integer{
+			value: int64(float.value / right.(*Float).value),
+		}, nil
+
+	case *Integer:
+		return &Integer{
+			value: int64(float.value / float64(right.(*Integer).value)),
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightAddition, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(float)
+		case *Function:
+			return operation.(*Function).Call(float)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (float *Float) RightFloorDivision(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (float *Float) RightFloorDivision(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Float:
+		return &Integer{
+			value: int64(left.(*Float).value / float.value),
+		}, nil
+
+	case *Integer:
+		return &Integer{
+			value: int64(float64(left.(*Integer).value) / float.value),
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightAddition)
+	}
 }
 
 func (float *Float) BitwiseRight(object Object) (Object, *errors.Error) {
@@ -484,7 +443,7 @@ func (float *Float) Float() (*Float, *errors.Error) {
 }
 
 func (float *Float) RawString() (string, *errors.Error) {
-	panic("implement me")
+	return fmt.Sprintf("%f", float.value), nil
 }
 
 func (float *Float) Boolean() (Boolean, *errors.Error) {
@@ -533,15 +492,16 @@ func (float *Float) SymbolTable() *SymbolTable {
 
 func (float *Float) String() (*String, *errors.Error) {
 	return &String{
-		value: float.value.String(),
+		value: fmt.Sprintf("%f", float.value),
 	}, nil
 }
 
 func NewFloat(parentSymbolTable *SymbolTable, number string) *Float {
 	value := big.NewFloat(0)
 	value.SetString(number)
+	float, _ := strconv.ParseFloat(number, 64)
 	return &Float{
 		symbolTable: NewSymbolTable(parentSymbolTable),
-		value:       value,
+		value:       float,
 	}
 }

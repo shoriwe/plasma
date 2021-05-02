@@ -78,6 +78,10 @@ func (plasma *Plasma) powerOfOP() *errors.Error {
 	return plasma.basicBinaryOP(runtime.PowerOf, runtime.RightPowerOf)
 }
 
+func (plasma *Plasma) floorDivisionOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.FloorDivision, runtime.RightFloorDivision)
+}
+
 func (plasma *Plasma) pushOP() *errors.Error {
 	plasma.cursor++
 	plasma.objectStack.Push(plasma.code[plasma.cursor])
@@ -109,6 +113,8 @@ func (plasma *Plasma) Execute() (runtime.Object, *errors.Error) {
 			instructionExecError = plasma.multiplicationOP()
 		case runtime.PowOP:
 			instructionExecError = plasma.powerOfOP()
+		case runtime.FloorDivOP:
+			instructionExecError = plasma.floorDivisionOP()
 		case runtime.PushOP:
 			instructionExecError = plasma.pushOP()
 		case runtime.ReturnOP:
