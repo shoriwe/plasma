@@ -23,4 +23,7 @@ const (
 
 	// Memory Operations
 	PushOP
+
+	// Behavior
+	ReturnOP
 )

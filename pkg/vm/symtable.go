@@ -9,14 +9,14 @@ type SymbolTable struct {
 	symbols map[string]Object
 }
 
-func (symbolTable *SymbolTable) Get(symbol string) (Object, *errors.Error) {
+func (symbolTable *SymbolTable) Get(symbol string, useParent bool) (Object, *errors.Error) {
 	value, ok := symbolTable.symbols[symbol]
 	if !ok {
-		if symbolTable.parent == nil {
+		if symbolTable.parent == nil || !useParent {
 			return nil, NewAttributeNotFound("", symbol)
 		}
 		var parentFoundError *errors.Error
-		value, parentFoundError = symbolTable.parent.Get(symbol)
+		value, parentFoundError = symbolTable.parent.Get(symbol, true)
 		if parentFoundError != nil {
 			return nil, parentFoundError
 		}

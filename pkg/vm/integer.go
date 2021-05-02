@@ -35,16 +35,115 @@ func (integer *Integer) Negation(object Object) (Object, *errors.Error) {
 	panic("implement me")
 }
 
-func (integer *Integer) RightAddition(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) Addition(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.SetInt(integer.value)
+		result.Add(result, right.(*Float).value)
+		return &Float{
+			value: result,
+		}, nil
+
+	case *Integer:
+		result := big.NewInt(0)
+		result.Add(result, integer.value)
+		result.Add(result, right.(*Integer).value)
+		return &Integer{
+			value: result,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightAddition, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (integer *Integer) Subtraction(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightAddition(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.SetInt(integer.value)
+		result.Add(result, left.(*Float).value)
+		return &Float{
+			value: result,
+		}, nil
+
+	case *Integer:
+		result := big.NewInt(0)
+		result.Add(result, integer.value)
+		result.Add(result, left.(*Integer).value)
+		return &Integer{
+			value: result,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightAddition)
+	}
 }
 
-func (integer *Integer) RightSubtraction(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) Subtraction(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.SetInt(integer.value)
+		result.Sub(result, right.(*Float).value)
+		return &Float{
+			value: result,
+		}, nil
+
+	case *Integer:
+		result := big.NewInt(0)
+		result.Add(result, integer.value)
+		result.Sub(result, right.(*Integer).value)
+		return &Integer{
+			value: result,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightAddition, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
+}
+
+func (integer *Integer) RightSubtraction(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.SetInt(integer.value)
+		result.Mul(result, big.NewFloat(-1))
+		result.Add(result, left.(*Float).value)
+		return &Float{
+			value: result,
+		}, nil
+
+	case *Integer:
+		result := big.NewInt(0)
+		result.Add(result, left.(*Integer).value)
+		result.Sub(result, integer.value)
+		return &Integer{
+			value: result,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightAddition)
+	}
 }
 
 func (integer *Integer) Modulus(object Object) (Object, *errors.Error) {
@@ -63,12 +162,59 @@ func (integer *Integer) RightMultiplication(object Object) (Object, *errors.Erro
 	panic("implement me")
 }
 
-func (integer *Integer) Division(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) Division(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.SetInt(integer.value)
+		result.Quo(result, right.(*Float).value)
+		return &Float{
+			value: result,
+		}, nil
+
+	case *Integer:
+		result := big.NewFloat(0)
+		result.SetInt(integer.value)
+		result.Quo(result, new(big.Float).SetInt(right.(*Integer).value))
+		return &Float{
+			value: result,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightAddition, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (integer *Integer) RightDivision(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightDivision(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.Add(result, left.(*Float).value)
+		result.Quo(result, new(big.Float).SetInt(integer.value))
+		return &Float{
+			value: result,
+		}, nil
+
+	case *Integer:
+		result := big.NewFloat(0)
+		result.SetInt(left.(*Integer).value)
+		result.Quo(result, new(big.Float).SetInt(integer.value))
+		return &Float{
+			value: result,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightAddition)
+	}
 }
 
 func (integer *Integer) PowerOf(object Object) (Object, *errors.Error) {
@@ -196,7 +342,9 @@ func (integer *Integer) Float() (*Float, *errors.Error) {
 }
 
 func (integer *Integer) String() (*String, *errors.Error) {
-	panic("implement me")
+	return &String{
+		value: integer.value.String(),
+	}, nil
 }
 
 func (integer *Integer) Boolean() (Boolean, *errors.Error) {
@@ -241,39 +389,6 @@ func (integer *Integer) Documentation() (*Hash, *errors.Error) {
 
 func (integer *Integer) SymbolTable() *SymbolTable {
 	return integer.symbolTable
-}
-
-func (integer *Integer) Addition(other Object) (Object, *errors.Error) {
-	switch other.(type) {
-	case *Float:
-		result := big.NewFloat(0)
-		result.SetInt(integer.value)
-		result.Add(result, other.(*Float).value)
-		return &Float{
-			value: result,
-		}, nil
-
-	case *Integer:
-		result := big.NewInt(0)
-		result.Add(result, integer.value)
-		result.Add(result, other.(*Integer).value)
-		return &Integer{
-			value: result,
-		}, nil
-	default:
-		operation, getError := GetAttribute(other, RightAddition)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
-	}
 }
 
 func (integer *Integer) RawString() (string, *errors.Error) {

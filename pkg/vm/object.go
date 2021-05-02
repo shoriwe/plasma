@@ -5,8 +5,12 @@ import (
 )
 
 const (
-	Addition      = "Addition"
-	RightAddition = "Addition"
+	Addition         = "Addition"
+	RightAddition    = "RightAddition"
+	Subtraction      = "Subtraction"
+	RightSubtraction = "RightSubtraction"
+	Division         = "Division"
+	RightDivision    = "RightDivision"
 )
 
 type Object interface {
@@ -89,14 +93,24 @@ func getObjectBuiltInMethod(object Object, symbolName string) interface{} {
 	switch symbolName {
 	case Addition:
 		return object.Addition
+	case RightAddition:
+		return object.RightAddition
+	case Subtraction:
+		return object.Subtraction
+	case RightSubtraction:
+		return object.RightSubtraction
+	case Division:
+		return object.Division
+	case RightDivision:
+		return object.RightDivision
 	}
 	return nil
 }
 
-func GetAttribute(object Object, symbolName string) (interface{}, *errors.Error) {
+func GetAttribute(object Object, symbolName string, useParent bool) (interface{}, *errors.Error) {
 	var attribute interface{}
 	var getError *errors.Error
-	attribute, getError = object.SymbolTable().Get(symbolName)
+	attribute, getError = object.SymbolTable().Get(symbolName, useParent)
 	if getError != nil {
 		attribute = getObjectBuiltInMethod(object, symbolName)
 		if attribute == nil {

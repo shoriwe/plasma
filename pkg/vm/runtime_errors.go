@@ -11,6 +11,7 @@ const (
 	AttributeNotFoundError = "AttributeNotFoundError"
 	NilObjectError         = "NilObjectError"
 	UnknownOP              = "UnknownOP"
+	MethodNotImplemented   = "MethodNotImplemented"
 )
 
 const UnknownLine = -1
@@ -25,4 +26,8 @@ func NewTypeError(expecting string, received string) *errors.Error {
 
 func NewAttributeNotFound(ownerName string, name string) *errors.Error {
 	return NewRuntimeError(AttributeNotFoundError, fmt.Sprintf("%s has no attribute with name %s", ownerName, name))
+}
+
+func NewMethodNotImplemented(methodName string) *errors.Error {
+	return NewRuntimeError(MethodNotImplemented, fmt.Sprintf("method %s not implemented", methodName))
 }

@@ -3,6 +3,7 @@ package vm
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
 	"math/big"
+	"reflect"
 )
 
 type Float struct {
@@ -34,12 +35,59 @@ func (float *Float) Negation(object Object) (Object, *errors.Error) {
 	panic("implement me")
 }
 
-func (float *Float) Addition(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (float *Float) Addition(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.Add(result, float.value)
+		result.Add(result, right.(*Float).value)
+		return &Float{
+			value: result,
+		}, nil
+
+	case *Integer:
+		result := big.NewFloat(0)
+		result.SetInt(right.(*Integer).value)
+		result.Add(result, float.value)
+		return &Float{
+			value: result,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightAddition, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(float)
+		case *Function:
+			return operation.(*Function).Call(float)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (float *Float) RightAddition(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (float *Float) RightAddition(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Float:
+		result := big.NewFloat(0)
+		result.Add(result, float.value)
+		result.Add(result, left.(*Float).value)
+		return &Float{
+			value: result,
+		}, nil
+
+	case *Integer:
+		result := big.NewFloat(0)
+		result.SetInt(left.(*Integer).value)
+		result.Add(result, float.value)
+		return &Float{
+			value: result,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightAddition)
+	}
 }
 
 func (float *Float) Subtraction(object Object) (Object, *errors.Error) {

@@ -1,6 +1,6 @@
 package vm
 
 const (
-	IntegerTypeString = "Integer"
+	IntegerTypeString  = "Integer"
 	FunctionTypeString = "Function"
 )

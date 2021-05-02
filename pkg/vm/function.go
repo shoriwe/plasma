@@ -3,7 +3,6 @@ package vm
 import "github.com/shoriwe/gruby/pkg/errors"
 
 type Function struct {
-
 }
 
 func (f Function) Initialize() (Object, *errors.Error) {
@@ -245,6 +244,3 @@ func (f Function) Documentation() (*Hash, *errors.Error) {
 func (f Function) SymbolTable() *SymbolTable {
 	panic("implement me")
 }
-
-
-
