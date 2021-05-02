@@ -312,12 +312,59 @@ func (float *Float) RightDivision(left Object) (Object, *errors.Error) {
 	}
 }
 
-func (float *Float) PowerOf(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (float *Float) PowerOf(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Float:
+		leftFloat, accuracy := float.value.Float64()
+		rightFloat, _ := right.(*Float).value.Float64()
+		result := big.NewFloat(math.Pow(leftFloat, rightFloat))
+		return &Float{
+			accuracy: accuracy,
+			value:    result,
+		}, nil
+	case *Integer:
+		leftFloat, accuracy := float.value.Float64()
+		result := big.NewFloat(math.Pow(leftFloat, float64(right.(*Integer).value.Int64())))
+		return &Float{
+			accuracy: accuracy,
+			value:    result,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightAddition, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(float)
+		case *Function:
+			return operation.(*Function).Call(float)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (float *Float) RightPowerOf(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (float *Float) RightPowerOf(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Float:
+		leftFloat, accuracy := left.(*Float).value.Float64()
+		rightFloat, _ := float.value.Float64()
+		result := big.NewFloat(math.Pow(leftFloat, rightFloat))
+		return &Float{
+			accuracy: accuracy,
+			value:    result,
+		}, nil
+	case *Integer:
+		rightFloat, accuracy := float.value.Float64()
+		result := big.NewFloat(math.Pow(float64(left.(*Integer).value.Int64()), rightFloat))
+		return &Float{
+			accuracy: accuracy,
+			value:    result,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightAddition)
+	}
 }
 
 func (float *Float) FloorDivision(object Object) (Object, *errors.Error) {

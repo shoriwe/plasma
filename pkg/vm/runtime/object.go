@@ -15,6 +15,8 @@ const (
 	RightModulus        = "RightModulus"
 	Multiplication      = "Multiplication"
 	RightMultiplication = "RightMultiplication"
+	PowerOf             = "PowerOf"
+	RightPowerOf        = "RightPowerOf"
 )
 
 type Object interface {
@@ -115,6 +117,10 @@ func getObjectBuiltInMethod(object Object, symbolName string) interface{} {
 		return object.Multiplication
 	case RightMultiplication:
 		return object.RightMultiplication
+	case PowerOf:
+		return object.PowerOf
+	case RightPowerOf:
+		return object.RightPowerOf
 	}
 	return nil
 }

@@ -36,7 +36,8 @@ var binaryOperations = map[string][]interface{}{
 	"0.2":   {runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "1", 10), runtime.DivOP, runtime.ReturnOP},
 	"5.6":   {runtime.PushOP, runtime.NewFloat(masterSymTable, "1"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5.6"), runtime.MulOP, runtime.ReturnOP},
 	"20":    {runtime.PushOP, runtime.NewFloat(masterSymTable, "2"), runtime.PushOP, runtime.NewInteger(masterSymTable, "10", 10), runtime.MulOP, runtime.ReturnOP},
-	"0.6":   {runtime.PushOP, runtime.NewFloat(masterSymTable, "2"), runtime.PushOP, runtime.NewFloat(masterSymTable, "0.3"), runtime.MulOP, runtime.ReturnOP},
+	"9":     {runtime.PushOP, runtime.NewFloat(masterSymTable, "2"), runtime.PushOP, runtime.NewFloat(masterSymTable, "3"), runtime.PowOP, runtime.ReturnOP},
+	"2":     {runtime.PushOP, runtime.NewFloat(masterSymTable, "0.5"), runtime.PushOP, runtime.NewFloat(masterSymTable, "4"), runtime.PowOP, runtime.ReturnOP},
 }
 
 func TestBinaryOperations(t *testing.T) {
