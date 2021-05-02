@@ -55,32 +55,53 @@ func (plasma *Plasma) basicBinaryOP(leftOP string, rightOP string) *errors.Error
 }
 
 func (plasma *Plasma) additionOP() *errors.Error {
-	return plasma.basicBinaryOP(runtime.Addition, runtime.RightAddition)
+	return plasma.basicBinaryOP(runtime.AdditionName, runtime.RightAdditionName)
 }
 
 func (plasma *Plasma) subtractionOP() *errors.Error {
-	return plasma.basicBinaryOP(runtime.Subtraction, runtime.RightSubtraction)
+	return plasma.basicBinaryOP(runtime.SubtractionName, runtime.RightSubtractionName)
 }
 
 func (plasma *Plasma) divisionOP() *errors.Error {
-	return plasma.basicBinaryOP(runtime.Division, runtime.RightDivision)
+	return plasma.basicBinaryOP(runtime.DivisionName, runtime.RightDivisionName)
 }
 
 func (plasma *Plasma) modulusOP() *errors.Error {
-	return plasma.basicBinaryOP(runtime.Modulus, runtime.RightModulus)
+	return plasma.basicBinaryOP(runtime.ModulusName, runtime.RightModulusName)
 }
 
 func (plasma *Plasma) multiplicationOP() *errors.Error {
-	return plasma.basicBinaryOP(runtime.Multiplication, runtime.RightMultiplication)
+	return plasma.basicBinaryOP(runtime.MultiplicationName, runtime.RightMultiplicationName)
 }
 
 func (plasma *Plasma) powerOfOP() *errors.Error {
-	return plasma.basicBinaryOP(runtime.PowerOf, runtime.RightPowerOf)
+	return plasma.basicBinaryOP(runtime.PowerOfName, runtime.RightPowerOfName)
 }
 
 func (plasma *Plasma) floorDivisionOP() *errors.Error {
-	return plasma.basicBinaryOP(runtime.FloorDivision, runtime.RightFloorDivision)
+	return plasma.basicBinaryOP(runtime.FloorDivisionName, runtime.RightFloorDivisionName)
 }
+
+func (plasma *Plasma) bitwiseLeftOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.FloorDivisionName, runtime.RightFloorDivisionName)
+}
+
+func (plasma *Plasma) bitwiseRightOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.FloorDivisionName, runtime.RightFloorDivisionName)
+}
+
+func (plasma *Plasma) bitwiseAndOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.FloorDivisionName, runtime.RightFloorDivisionName)
+}
+
+func (plasma *Plasma) bitwiseOrOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.FloorDivisionName, runtime.RightFloorDivisionName)
+}
+
+func (plasma *Plasma) bitwiseXorOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.FloorDivisionName, runtime.RightFloorDivisionName)
+}
+
 
 func (plasma *Plasma) pushOP() *errors.Error {
 	plasma.cursor++
@@ -117,6 +138,16 @@ func (plasma *Plasma) Execute() (runtime.Object, *errors.Error) {
 			instructionExecError = plasma.floorDivisionOP()
 		case runtime.PushOP:
 			instructionExecError = plasma.pushOP()
+		case runtime.BitwiseLeft:
+			instructionExecError = plasma.bitwiseLeftOP()
+		case runtime.BitwiseRight:
+			instructionExecError = plasma.bitwiseRightOP()
+		case runtime.BitwiseAnd:
+			instructionExecError = plasma.bitwiseAndOP()
+		case runtime.BitwiseOr:
+			instructionExecError = plasma.bitwiseAndOP()
+		case runtime.BitwiseXor:
+			instructionExecError = plasma.bitwiseXorOP()
 		case runtime.ReturnOP:
 			plasma.cursor++
 			if plasma.objectStack.IsEmpty() {

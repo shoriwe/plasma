@@ -50,7 +50,7 @@ func (float *Float) Addition(right Object) (Object, *errors.Error) {
 			value: float.value + float64(right.(*Integer).value),
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightAdditionName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -77,7 +77,7 @@ func (float *Float) RightAddition(left Object) (Object, *errors.Error) {
 			value: float64(left.(*Integer).value) + float.value,
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightAdditionName)
 	}
 }
 
@@ -93,7 +93,7 @@ func (float *Float) Subtraction(right Object) (Object, *errors.Error) {
 			value: float.value - float64(right.(*Integer).value),
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightSubtractionName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -120,7 +120,7 @@ func (float *Float) RightSubtraction(left Object) (Object, *errors.Error) {
 			value: float64(left.(*Integer).value) - float.value,
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightSubtractionName)
 	}
 }
 
@@ -135,7 +135,7 @@ func (float *Float) Modulus(right Object) (Object, *errors.Error) {
 			value: math.Mod(float.value, float64(right.(*Integer).value)),
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightModulusName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -161,7 +161,7 @@ func (float *Float) RightModulus(left Object) (Object, *errors.Error) {
 			value: math.Mod(float64(left.(*Integer).value), float.value),
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightModulusName)
 	}
 }
 
@@ -176,7 +176,7 @@ func (float *Float) Multiplication(right Object) (Object, *errors.Error) {
 			value: float.value * float64(right.(*Integer).value),
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightMultiplicationName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -203,7 +203,7 @@ func (float *Float) RightMultiplication(left Object) (Object, *errors.Error) {
 			value: float64(left.(*Integer).value) * float.value,
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightMultiplicationName)
 	}
 }
 
@@ -219,7 +219,7 @@ func (float *Float) Division(right Object) (Object, *errors.Error) {
 			value: float.value / float64(right.(*Integer).value),
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightDivisionName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -246,7 +246,7 @@ func (float *Float) RightDivision(left Object) (Object, *errors.Error) {
 			value: float64(left.(*Integer).value) / float.value,
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightDivisionName)
 	}
 }
 
@@ -261,7 +261,7 @@ func (float *Float) PowerOf(right Object) (Object, *errors.Error) {
 			value: math.Pow(float.value, float64(right.(*Integer).value)),
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightPowerOfName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -287,7 +287,7 @@ func (float *Float) RightPowerOf(left Object) (Object, *errors.Error) {
 			value: math.Pow(float64(left.(*Integer).value), float.value),
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightPowerOfName)
 	}
 }
 
@@ -303,7 +303,7 @@ func (float *Float) FloorDivision(right Object) (Object, *errors.Error) {
 			value: int64(float.value / float64(right.(*Integer).value)),
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightFloorDivisionName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -330,7 +330,7 @@ func (float *Float) RightFloorDivision(left Object) (Object, *errors.Error) {
 			value: int64(float64(left.(*Integer).value) / float.value),
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightFloorDivisionName)
 	}
 }
 

@@ -48,7 +48,7 @@ func (integer *Integer) Addition(right Object) (Object, *errors.Error) {
 			value: integer.value + right.(*Integer).value,
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightAdditionName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -74,7 +74,7 @@ func (integer *Integer) RightAddition(left Object) (Object, *errors.Error) {
 			value: left.(*Integer).value + integer.value,
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightAdditionName)
 	}
 }
 
@@ -90,7 +90,7 @@ func (integer *Integer) Subtraction(right Object) (Object, *errors.Error) {
 			value: integer.value - right.(*Integer).value,
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightSubtractionName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -117,7 +117,7 @@ func (integer *Integer) RightSubtraction(left Object) (Object, *errors.Error) {
 			value: left.(*Integer).value - integer.value,
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightSubtractionName)
 	}
 }
 
@@ -133,7 +133,7 @@ func (integer *Integer) Modulus(right Object) (Object, *errors.Error) {
 			value: integer.value % right.(*Integer).value,
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightModulusName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -159,7 +159,7 @@ func (integer *Integer) RightModulus(left Object) (Object, *errors.Error) {
 			value: left.(*Integer).value % integer.value,
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightModulusName)
 	}
 }
 
@@ -174,7 +174,7 @@ func (integer *Integer) Multiplication(right Object) (Object, *errors.Error) {
 			value: integer.value * right.(*Integer).value,
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightMultiplicationName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -201,7 +201,7 @@ func (integer *Integer) RightMultiplication(left Object) (Object, *errors.Error)
 			value: left.(*Integer).value * integer.value,
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightMultiplicationName)
 	}
 }
 
@@ -217,7 +217,7 @@ func (integer *Integer) Division(right Object) (Object, *errors.Error) {
 			value: float64(integer.value) / float64(right.(*Integer).value),
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightDivisionName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -244,7 +244,7 @@ func (integer *Integer) RightDivision(left Object) (Object, *errors.Error) {
 			value: left.(*Float).value / float64(integer.value),
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightDivisionName)
 	}
 }
 
@@ -259,7 +259,7 @@ func (integer *Integer) PowerOf(right Object) (Object, *errors.Error) {
 			value: int64(math.Pow(float64(integer.value), float64(right.(*Integer).value))),
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightPowerOfName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -285,7 +285,7 @@ func (integer *Integer) RightPowerOf(left Object) (Object, *errors.Error) {
 			value: int64(math.Pow(float64(left.(*Integer).value), float64(integer.value))),
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightPowerOfName)
 	}
 }
 
@@ -301,7 +301,7 @@ func (integer *Integer) FloorDivision(right Object) (Object, *errors.Error) {
 			value: integer.value / right.(*Integer).value,
 		}, nil
 	default:
-		operation, getError := GetAttribute(right, RightAddition, false)
+		operation, getError := GetAttribute(right, RightFloorDivisionName, false)
 		if getError != nil {
 			return nil, getError
 		}
@@ -327,48 +327,173 @@ func (integer *Integer) RightFloorDivision(left Object) (Object, *errors.Error) 
 			value: left.(*Integer).value / integer.value,
 		}, nil
 	default:
-		return nil, NewMethodNotImplemented(RightAddition)
+		return nil, NewMethodNotImplemented(RightFloorDivisionName)
 	}
 }
 
-func (integer *Integer) BitwiseRight(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) BitwiseRight(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Integer:
+		return &Integer{
+			value: integer.value >> right.(*Integer).value,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightBitwiseRightName, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (integer *Integer) RightBitwiseRight(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightBitwiseRight(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Integer:
+		return &Integer{
+			value: left.(*Integer).value >> integer.value,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightBitwiseRightName)
+	}
 }
 
-func (integer *Integer) BitwiseLeft(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) BitwiseLeft(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Integer:
+		return &Integer{
+			value: integer.value << right.(*Integer).value,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightBitwiseLeftName, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (integer *Integer) RightBitwiseLeft(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightBitwiseLeft(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Integer:
+		return &Integer{
+			value: left.(*Integer).value << integer.value,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightBitwiseLeftName)
+	}
 }
 
-func (integer *Integer) BitwiseAnd(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) BitwiseAnd(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Integer:
+		return &Integer{
+			value: integer.value & right.(*Integer).value,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightBitwiseAndName, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (integer *Integer) RightBitwiseAnd(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightBitwiseAnd(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Integer:
+		return &Integer{
+			value: left.(*Integer).value & integer.value,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightBitwiseAndName)
+	}
 }
 
-func (integer *Integer) BitwiseOr(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) BitwiseOr(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Integer:
+		return &Integer{
+			value: integer.value | right.(*Integer).value,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightBitwiseOrName, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (integer *Integer) RightBitwiseOr(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightBitwiseOr(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Integer:
+		return &Integer{
+			value: left.(*Integer).value | integer.value,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightBitwiseOrName)
+	}
 }
 
-func (integer *Integer) BitwiseXor(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) BitwiseXor(right Object) (Object, *errors.Error) {
+	switch right.(type) {
+	case *Integer:
+		return &Integer{
+			value: integer.value ^ right.(*Integer).value,
+		}, nil
+	default:
+		operation, getError := GetAttribute(right, RightBitwiseXorName, false)
+		if getError != nil {
+			return nil, getError
+		}
+		switch operation.(type) {
+		case func(Object) (Object, *errors.Error):
+			return operation.(func(Object) (Object, *errors.Error))(integer)
+		case *Function:
+			return operation.(*Function).Call(integer)
+		default:
+			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
+		}
+	}
 }
 
-func (integer *Integer) RightBitwiseXor(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightBitwiseXor(left Object) (Object, *errors.Error) {
+	switch left.(type) {
+	case *Integer:
+		return &Integer{
+			value: left.(*Integer).value ^ integer.value,
+		}, nil
+	default:
+		return nil, NewMethodNotImplemented(RightBitwiseXorName)
+	}
 }
 
 func (integer *Integer) And(object Object) (Object, *errors.Error) {

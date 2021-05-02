@@ -71,6 +71,21 @@ var floorDivOperations = map[string][]interface{}{
 	"15": {runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.PushOP, runtime.NewInteger(masterSymTable, "75", 10), runtime.FloorDivOP, runtime.ReturnOP},
 	"5":  {runtime.PushOP, runtime.NewInteger(masterSymTable, "1", 10), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
 }
+var bitwiseLeftOperations = map[string][]interface{}{
+	"0":  {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+}
+var bitwiseRightOperations = map[string][]interface{}{
+	"0":  {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+}
+var bitwiseAndOperations = map[string][]interface{}{
+	"0":  {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+}
+var bitwiseOrOperations = map[string][]interface{}{
+	"0":  {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+}
+var bitwiseXorOperations = map[string][]interface{}{
+	"0":  {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+}
 
 func TestDivOperations(t *testing.T) {
 	for expect, sample := range divOperations {
@@ -122,6 +137,46 @@ func TestModOperations(t *testing.T) {
 
 func TestFloorDivOperations(t *testing.T) {
 	for expect, sample := range floorDivOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestBitwiseLeftOperations(t *testing.T) {
+	for expect, sample := range bitwiseLeftOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestBitwiseRightOperations(t *testing.T) {
+	for expect, sample := range bitwiseRightOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestBitwiseAndOperations(t *testing.T) {
+	for expect, sample := range bitwiseAndOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestBitwiseOrOperations(t *testing.T) {
+	for expect, sample := range bitwiseOrOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestBitwiseXorOperations(t *testing.T) {
+	for expect, sample := range bitwiseXorOperations {
 		if !test(t, sample, expect) {
 			return
 		}

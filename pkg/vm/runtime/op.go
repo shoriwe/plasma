@@ -7,20 +7,30 @@ import (
 type InstructionOP func(*Stack) *errors.Error
 
 const (
-	Addition            = "Addition"
-	RightAddition       = "RightAddition"
-	Subtraction         = "Subtraction"
-	RightSubtraction    = "RightSubtraction"
-	Division            = "Division"
-	RightDivision       = "RightDivision"
-	Modulus             = "Modulus"
-	RightModulus        = "RightModulus"
-	Multiplication      = "Multiplication"
-	RightMultiplication = "RightMultiplication"
-	PowerOf             = "PowerOf"
-	RightPowerOf        = "RightPowerOf"
-	FloorDivision       = "FloorDivision"
-	RightFloorDivision  = "RightFloorDivision"
+	AdditionName            = "Addition"
+	RightAdditionName       = "RightAddition"
+	SubtractionName         = "Subtraction"
+	RightSubtractionName    = "RightSubtraction"
+	DivisionName            = "Division"
+	RightDivisionName       = "RightDivision"
+	ModulusName             = "Modulus"
+	RightModulusName        = "RightModulus"
+	MultiplicationName      = "Multiplication"
+	RightMultiplicationName = "RightMultiplication"
+	PowerOfName             = "PowerOf"
+	RightPowerOfName        = "RightPowerOf"
+	FloorDivisionName       = "FloorDivision"
+	RightFloorDivisionName  = "RightFloorDivision"
+	BitwiseLeftName         = "BitwiseLeft"
+	RightBitwiseLeftName    = "RightBitwiseLeft"
+	BitwiseRightName        = "BitwiseRight"
+	RightBitwiseRightName   = "RightBitwiseRight"
+	BitwiseAndName          = "BitwiseAnd"
+	RightBitwiseAndName     = "RightBitwiseAnd"
+	BitwiseOrName           = "BitwiseOr"
+	RightBitwiseOrName      = "RightBitwiseOr"
+	BitwiseXorName          = "BitwiseXor"
+	RightBitwiseXorName     = "RightBitwiseXor"
 )
 
 const (
@@ -32,6 +42,11 @@ const (
 	PowOP
 	ModOP
 	FloorDivOP
+	BitwiseLeft
+	BitwiseRight
+	BitwiseAnd
+	BitwiseOr
+	BitwiseXor
 	NegateBitsOP
 	BitAndOP
 	BitOrOP
@@ -48,34 +63,54 @@ const (
 
 func getObjectBuiltInMethod(object Object, symbolName string) interface{} {
 	switch symbolName {
-	case Addition:
+	case AdditionName:
 		return object.Addition
-	case RightAddition:
+	case RightAdditionName:
 		return object.RightAddition
-	case Subtraction:
+	case SubtractionName:
 		return object.Subtraction
-	case RightSubtraction:
+	case RightSubtractionName:
 		return object.RightSubtraction
-	case Division:
+	case DivisionName:
 		return object.Division
-	case RightDivision:
+	case RightDivisionName:
 		return object.RightDivision
-	case Modulus:
+	case ModulusName:
 		return object.Modulus
-	case RightModulus:
+	case RightModulusName:
 		return object.RightModulus
-	case Multiplication:
+	case MultiplicationName:
 		return object.Multiplication
-	case RightMultiplication:
+	case RightMultiplicationName:
 		return object.RightMultiplication
-	case PowerOf:
+	case PowerOfName:
 		return object.PowerOf
-	case RightPowerOf:
+	case RightPowerOfName:
 		return object.RightPowerOf
-	case FloorDivision:
+	case FloorDivisionName:
 		return object.FloorDivision
-	case RightFloorDivision:
+	case RightFloorDivisionName:
 		return object.RightFloorDivision
+	case BitwiseLeftName:
+		return object.BitwiseLeft
+	case RightBitwiseLeftName:
+		return object.RightBitwiseLeft
+	case BitwiseRightName:
+		return object.BitwiseRight
+	case RightBitwiseRightName:
+		return object.RightBitwiseRight
+	case BitwiseAndName:
+		return object.BitwiseAnd
+	case RightBitwiseAndName:
+		return object.RightBitwiseAnd
+	case BitwiseOrName:
+		return object.BitwiseOr
+	case RightBitwiseOrName:
+		return object.RightBitwiseOr
+	case BitwiseXorName:
+		return object.BitwiseXor
+	case RightBitwiseXorName:
+		return object.RightBitwiseXor
 	}
 	return nil
 }
