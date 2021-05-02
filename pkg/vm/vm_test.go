@@ -72,19 +72,19 @@ var floorDivOperations = map[string][]interface{}{
 	"5":  {runtime.PushOP, runtime.NewInteger(masterSymTable, "1", 10), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
 }
 var bitwiseLeftOperations = map[string][]interface{}{
-	"0": {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+	"163840": {runtime.PushOP, runtime.NewInteger(masterSymTable, "15", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.BitwiseLeft, runtime.ReturnOP},
 }
 var bitwiseRightOperations = map[string][]interface{}{
-	"0": {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+	"0": {runtime.PushOP, runtime.NewInteger(masterSymTable, "15", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.BitwiseRight, runtime.ReturnOP},
 }
 var bitwiseAndOperations = map[string][]interface{}{
-	"0": {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+	"5": {runtime.PushOP, runtime.NewInteger(masterSymTable, "15", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.BitwiseAnd, runtime.ReturnOP},
 }
 var bitwiseOrOperations = map[string][]interface{}{
-	"0": {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+	"0": {runtime.PushOP, runtime.NewInteger(masterSymTable, "15346", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.BitwiseOr, runtime.ReturnOP},
 }
 var bitwiseXorOperations = map[string][]interface{}{
-	"0": {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+	"5": {runtime.PushOP, runtime.NewInteger(masterSymTable, "4", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "1", 10), runtime.BitwiseXor, runtime.ReturnOP},
 }
 
 func TestDivOperations(t *testing.T) {

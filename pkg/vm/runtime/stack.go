@@ -2,7 +2,7 @@ package runtime
 
 type Stack struct {
 	content       []interface{}
-	contentLength int
+	contentLength uint
 }
 
 func (stack *Stack) Pop() interface{} {
