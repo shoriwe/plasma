@@ -1,8 +1,12 @@
-package object
+package vm
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
-	"math/big"
+)
+
+const (
+	Addition      = "Addition"
+	RightAddition = "Addition"
 )
 
 type Object interface {
@@ -48,7 +52,8 @@ type Object interface {
 	RightOr(Object) (Object, *errors.Error)
 	Xor(Object) (Object, *errors.Error)
 	RightXor(Object) (Object, *errors.Error)
-	// Attributes
+	// Special Behavior
+	Call(...Object) (Object, *errors.Error)
 	Index(Object) (Object, *errors.Error)
 	Delete(Object) *errors.Error
 	// Comparison Binary Operations
@@ -76,38 +81,27 @@ type Object interface {
 	Class() (Object, *errors.Error)
 	SubClass() (*Array, *errors.Error)
 	Documentation() (*Hash, *errors.Error)
+
+	SymbolTable() *SymbolTable
 }
 
-type Iterable interface {
-	Object
-	Next() (Object, *errors.Error)
-	HasNext() (*Boolean, *errors.Error)
+func getObjectBuiltInMethod(object Object, symbolName string) interface{} {
+	switch symbolName {
+	case Addition:
+		return object.Addition
+	}
+	return nil
 }
 
-type (
-	Integer struct {
-		Object
-		value *big.Int
+func GetAttribute(object Object, symbolName string) (interface{}, *errors.Error) {
+	var attribute interface{}
+	var getError *errors.Error
+	attribute, getError = object.SymbolTable().Get(symbolName)
+	if getError != nil {
+		attribute = getObjectBuiltInMethod(object, symbolName)
+		if attribute == nil {
+			return nil, getError
+		}
 	}
-
-	String struct {
-		Object
-		value string
-	}
-
-	Float struct {
-		Object
-	}
-
-	Boolean struct {
-		Object
-	}
-
-	Hash struct {
-		Object
-	}
-
-	Array struct {
-		Object
-	}
-)
+	return attribute, nil
+}

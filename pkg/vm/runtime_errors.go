@@ -1,4 +1,4 @@
-package vm_errors
+package vm
 
 import (
 	"fmt"

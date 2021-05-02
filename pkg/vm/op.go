@@ -2,10 +2,9 @@ package vm
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
-	"github.com/shoriwe/gruby/pkg/vm/utils"
 )
 
-type InstructionOP func(*utils.Stack) *errors.Error
+type InstructionOP func(*Stack) *errors.Error
 
 const (
 	// Binary Operations

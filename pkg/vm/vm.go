@@ -2,33 +2,43 @@ package vm
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
-	"github.com/shoriwe/gruby/pkg/vm/object"
-	"github.com/shoriwe/gruby/pkg/vm/utils"
-	vm_errors "github.com/shoriwe/gruby/pkg/vm/vm-errors"
 )
 
 type Plasma struct {
-	symbolTable *utils.SymbolTable
-	stack       *utils.Stack
-	code        []interface{}
-	cursor      int
+	symbolTable      *SymbolTable
+	symbolTableStack *Stack
+	objectStack      *Stack
+	code             []interface{}
+	cursor           int
 }
 
 func (plasma *Plasma) additionOP() *errors.Error {
 	plasma.cursor++
-	leftHandSide := plasma.stack.Pop()
-	rightHandSide := plasma.stack.Pop()
-	result, opError := leftHandSide.(object.Object).Addition(rightHandSide.(object.Object))
+	leftHandSide := plasma.objectStack.Pop()
+	rightHandSide := plasma.objectStack.Pop()
+	operation, getError := GetAttribute(leftHandSide.(Object), Addition)
+	var result Object
+	var opError *errors.Error
+	if getError != nil {
+		var getError2 *errors.Error
+		operation, getError2 = GetAttribute(rightHandSide.(Object), RightAddition)
+		if getError2 != nil {
+			return getError
+		}
+		result, opError = operation.(func(Object) (Object, *errors.Error))(leftHandSide.(Object))
+	} else {
+		result, opError = operation.(func(Object) (Object, *errors.Error))(rightHandSide.(Object))
+	}
 	if opError != nil {
 		return opError
 	}
-	plasma.stack.Push(result)
+	plasma.objectStack.Push(result)
 	return nil
 }
 
 func (plasma *Plasma) pushOP() *errors.Error {
 	plasma.cursor++
-	plasma.stack.Push(plasma.code[plasma.cursor])
+	plasma.objectStack.Push(plasma.code[plasma.cursor])
 	plasma.cursor++
 	return nil
 }
@@ -40,10 +50,10 @@ func (plasma *Plasma) executeOP() *errors.Error {
 	case PushOP:
 		return plasma.pushOP()
 	}
-	return errors.New(vm_errors.UnknownLine, "Unknown Operation", vm_errors.UnknownOP)
+	return errors.New(UnknownLine, "Unknown Operation", UnknownOP)
 }
 
-func (plasma *Plasma) Execute(code []interface{}) (object.Object, *errors.Error) {
+func (plasma *Plasma) Execute(code []interface{}) (Object, *errors.Error) {
 	plasma.code = code
 	codeLength := len(code)
 	for ; plasma.cursor < codeLength; {
@@ -54,22 +64,23 @@ func (plasma *Plasma) Execute(code []interface{}) (object.Object, *errors.Error)
 				return nil, opExecutionError
 			}
 		default:
-			return nil, vm_errors.NewRuntimeError(vm_errors.UnknownOP, "Unknown instruction type")
+			return nil, NewRuntimeError(UnknownOP, "Unknown instruction type")
 		}
 	}
-	if !plasma.stack.IsEmpty() {
-		return plasma.stack.Pop().(object.Object), nil
+	if !plasma.objectStack.IsEmpty() {
+		return plasma.objectStack.Pop().(Object), nil
 	}
 	return nil, nil
 }
 
-func NewPlasmaVM(symbolTable *utils.SymbolTable) *Plasma {
+func NewPlasmaVM(symbolTable *SymbolTable) *Plasma {
 	if symbolTable == nil {
-		symbolTable = utils.NewSymbolTable()
+		symbolTable = NewSymbolTable(nil)
 	}
 	return &Plasma{
-		symbolTable: symbolTable,
-		stack:       utils.NewStack(),
-		cursor:      0,
+		symbolTable:      symbolTable,
+		symbolTableStack: NewStack(),
+		objectStack:      NewStack(),
+		cursor:           0,
 	}
 }

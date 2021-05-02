@@ -1,4 +1,4 @@
-package utils
+package vm
 
 type Stack struct {
 	content       []interface{}

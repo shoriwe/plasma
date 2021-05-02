@@ -2,34 +2,35 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/vm/object"
 	"testing"
 )
 
-func test(t *testing.T, code []interface{}) string {
+func test(t *testing.T, code []interface{}) *String {
 	vm := NewPlasmaVM(nil)
 	result, executionError := vm.Execute(code)
 	if executionError != nil {
 		t.Error(executionError)
-		return "ERROR"
+		return nil
 	}
-	s, conversionError := result.RawString()
+	s, conversionError := result.String()
 	if conversionError != nil {
 		t.Error(conversionError.String())
 	}
 	return s
 }
 
+var masterSymTable = NewSymbolTable(nil)
+
 var binaryOperations = [][]interface{}{
-	{PushOP, object.NewInteger("1000", 10), PushOP, object.NewInteger("13455", 10), AddOP},
+	{PushOP, NewFloat(masterSymTable, "1000.6"), PushOP, NewInteger(masterSymTable, "13455", 10), AddOP},
 }
 
 func TestBinaryOperations(t *testing.T) {
 	for _, sample := range binaryOperations {
 		output := test(t, sample)
-		if output == "ERROR" {
+		if output == nil {
 			return
 		}
-		fmt.Println(output)
+		fmt.Println(output.RawString())
 	}
 }
