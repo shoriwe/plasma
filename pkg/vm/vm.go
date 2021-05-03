@@ -3,7 +3,6 @@ package vm
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
 	"github.com/shoriwe/gruby/pkg/vm/runtime"
-	"reflect"
 )
 
 type Plasma struct {
@@ -15,40 +14,13 @@ type Plasma struct {
 	cursor           int
 }
 
-func (plasma *Plasma) basicBinaryOP(leftOP string, rightOP string) *errors.Error {
+func (plasma *Plasma) basicBinaryOP(leftOPName string, rightOPName string) *errors.Error {
 	plasma.cursor++
 	leftHandSide := plasma.objectStack.Pop()
 	rightHandSide := plasma.objectStack.Pop()
-	operation, getError := runtime.GetAttribute(leftHandSide.(runtime.Object), leftOP, false)
-	var result runtime.Object
-	var opError *errors.Error
-	isRight := false
-	if getError != nil {
-		var getError2 *errors.Error
-		operation, getError2 = runtime.GetAttribute(rightHandSide.(runtime.Object), rightOP, false)
-		if getError2 != nil {
-			return getError
-		}
-		isRight = true
-	}
-	switch operation.(type) {
-	case func(runtime.Object) (runtime.Object, *errors.Error):
-		if isRight {
-			result, opError = operation.(func(runtime.Object) (runtime.Object, *errors.Error))(leftHandSide.(runtime.Object))
-		} else {
-			result, opError = operation.(func(runtime.Object) (runtime.Object, *errors.Error))(rightHandSide.(runtime.Object))
-		}
-	case *runtime.Function:
-		if isRight {
-			result, opError = operation.(*runtime.Function).Call(rightHandSide.(runtime.Object))
-		} else {
-			result, opError = operation.(*runtime.Function).Call(leftHandSide.(runtime.Object))
-		}
-	default:
-		return runtime.NewTypeError(runtime.FunctionTypeString, reflect.TypeOf(operation).String())
-	}
-	if opError != nil {
-		return opError
+	result, callError := runtime.BasicBinaryOP(leftOPName, rightOPName, leftHandSide.(runtime.Object), rightHandSide.(runtime.Object))
+	if callError != nil {
+		return callError
 	}
 	plasma.objectStack.Push(result)
 	return nil
@@ -102,6 +74,10 @@ func (plasma *Plasma) bitwiseXorOP() *errors.Error {
 	return plasma.basicBinaryOP(runtime.BitwiseXorName, runtime.RightBitwiseXorName)
 }
 
+func (plasma *Plasma) andOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.AndName, runtime.RightAndName)
+}
+
 func (plasma *Plasma) pushOP() *errors.Error {
 	plasma.cursor++
 	plasma.objectStack.Push(plasma.code[plasma.cursor])
@@ -137,16 +113,18 @@ func (plasma *Plasma) Execute() (runtime.Object, *errors.Error) {
 			instructionExecError = plasma.floorDivisionOP()
 		case runtime.PushOP:
 			instructionExecError = plasma.pushOP()
-		case runtime.BitwiseLeft:
+		case runtime.BitwiseLeftOP:
 			instructionExecError = plasma.bitwiseLeftOP()
-		case runtime.BitwiseRight:
+		case runtime.BitwiseRightOP:
 			instructionExecError = plasma.bitwiseRightOP()
-		case runtime.BitwiseAnd:
+		case runtime.BitwiseAndOP:
 			instructionExecError = plasma.bitwiseAndOP()
-		case runtime.BitwiseOr:
+		case runtime.BitwiseOrOP:
 			instructionExecError = plasma.bitwiseAndOP()
-		case runtime.BitwiseXor:
+		case runtime.BitwiseXorOP:
 			instructionExecError = plasma.bitwiseXorOP()
+		case runtime.AndOP:
+			instructionExecError = plasma.andOP()
 		case runtime.ReturnOP:
 			plasma.cursor++
 			if plasma.objectStack.IsEmpty() {

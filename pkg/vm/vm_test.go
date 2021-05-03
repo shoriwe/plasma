@@ -13,14 +13,14 @@ func test(t *testing.T, code []interface{}, expect string) bool {
 		t.Error(executionError)
 		return false
 	}
-	s, conversionError := result.String()
+	s, conversionError := result.RawString()
 	if conversionError != nil {
 		t.Error(conversionError.String())
 		return false
 	}
-	finalResult := s.RawString() == expect
+	finalResult := s == expect
 	if !finalResult {
-		t.Errorf("Recevied: %s but expecting: %s", s.RawString(), expect)
+		t.Errorf("Recevied: %s but expecting: %s", s, expect)
 	}
 	return finalResult
 }
@@ -28,63 +28,71 @@ func test(t *testing.T, code []interface{}, expect string) bool {
 var masterSymTable = runtime.NewSymbolTable(nil)
 
 var divOperations = map[string][]interface{}{
-	"5.000000": {runtime.PushOP, runtime.NewFloat(masterSymTable, "100"), runtime.PushOP, runtime.NewFloat(masterSymTable, "500"), runtime.DivOP, runtime.ReturnOP},
-	"7.000000": {runtime.PushOP, runtime.NewInteger(masterSymTable, "3", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "21", 10), runtime.DivOP, runtime.ReturnOP},
-	"0.000000": {runtime.PushOP, runtime.NewFloat(masterSymTable, "1"), runtime.PushOP, runtime.NewInteger(masterSymTable, "0", 10), runtime.DivOP, runtime.ReturnOP},
-	"2.500000": {runtime.PushOP, runtime.NewInteger(masterSymTable, "1", 10), runtime.PushOP, runtime.NewFloat(masterSymTable, "2.5"), runtime.DivOP, runtime.ReturnOP},
+	"5.000000": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "100"), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "500"), runtime.DivOP, runtime.ReturnOP},
+	"7.000000": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "3", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "21", 10), runtime.DivOP, runtime.ReturnOP},
+	"0.000000": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "1"), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "0", 10), runtime.DivOP, runtime.ReturnOP},
+	"2.500000": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "1", 10), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "2.5"), runtime.DivOP, runtime.ReturnOP},
 }
 
 var mulOperations = map[string][]interface{}{
-	"5.000000":  {runtime.PushOP, runtime.NewFloat(masterSymTable, "0.1"), runtime.PushOP, runtime.NewFloat(masterSymTable, "50"), runtime.MulOP, runtime.ReturnOP},
-	"0":         {runtime.PushOP, runtime.NewInteger(masterSymTable, "3", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "0", 10), runtime.MulOP, runtime.ReturnOP},
-	"-3.000000": {runtime.PushOP, runtime.NewFloat(masterSymTable, "-1"), runtime.PushOP, runtime.NewInteger(masterSymTable, "3", 10), runtime.MulOP, runtime.ReturnOP},
-	"9.000000":  {runtime.PushOP, runtime.NewInteger(masterSymTable, "3", 10), runtime.PushOP, runtime.NewFloat(masterSymTable, "3"), runtime.MulOP, runtime.ReturnOP},
+	"5.000000":  {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "0.1"), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "50"), runtime.MulOP, runtime.ReturnOP},
+	"0":         {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "3", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "0", 10), runtime.MulOP, runtime.ReturnOP},
+	"-3.000000": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "-1"), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "3", 10), runtime.MulOP, runtime.ReturnOP},
+	"9.000000":  {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "3", 10), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "3"), runtime.MulOP, runtime.ReturnOP},
 }
 
 var powOperations = map[string][]interface{}{
-	"4.000000":  {runtime.PushOP, runtime.NewFloat(masterSymTable, "2"), runtime.PushOP, runtime.NewFloat(masterSymTable, "2"), runtime.PowOP, runtime.ReturnOP},
-	"9":         {runtime.PushOP, runtime.NewInteger(masterSymTable, "2", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "3", 10), runtime.PowOP, runtime.ReturnOP},
-	"2.000000":  {runtime.PushOP, runtime.NewFloat(masterSymTable, "0.5"), runtime.PushOP, runtime.NewInteger(masterSymTable, "4", 10), runtime.PowOP, runtime.ReturnOP},
-	"27.000000": {runtime.PushOP, runtime.NewInteger(masterSymTable, "3", 10), runtime.PushOP, runtime.NewFloat(masterSymTable, "3"), runtime.PowOP, runtime.ReturnOP},
+	"4.000000":  {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "2"), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "2"), runtime.PowOP, runtime.ReturnOP},
+	"9":         {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "2", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "3", 10), runtime.PowOP, runtime.ReturnOP},
+	"2.000000":  {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "0.5"), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "4", 10), runtime.PowOP, runtime.ReturnOP},
+	"27.000000": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "3", 10), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "3"), runtime.PowOP, runtime.ReturnOP},
 }
 var subOperations = map[string][]interface{}{
-	"-11.000000": {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "4"), runtime.SubOP, runtime.ReturnOP},
-	"-10":        {runtime.PushOP, runtime.NewInteger(masterSymTable, "15", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.SubOP, runtime.ReturnOP},
-	"-30.000000": {runtime.PushOP, runtime.NewFloat(masterSymTable, "50"), runtime.PushOP, runtime.NewInteger(masterSymTable, "20", 10), runtime.SubOP, runtime.ReturnOP},
-	"-29.500000": {runtime.PushOP, runtime.NewInteger(masterSymTable, "50", 10), runtime.PushOP, runtime.NewFloat(masterSymTable, "20.5"), runtime.SubOP, runtime.ReturnOP},
+	"-11.000000": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "15"), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "4"), runtime.SubOP, runtime.ReturnOP},
+	"-10":        {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "15", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "5", 10), runtime.SubOP, runtime.ReturnOP},
+	"-30.000000": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "50"), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "20", 10), runtime.SubOP, runtime.ReturnOP},
+	"-29.500000": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "50", 10), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "20.5"), runtime.SubOP, runtime.ReturnOP},
 }
 var addOperations = map[string][]interface{}{
-	"19.000000": {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "4"), runtime.AddOP, runtime.ReturnOP},
-	"20":        {runtime.PushOP, runtime.NewInteger(masterSymTable, "15", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.AddOP, runtime.ReturnOP},
-	"18.000000": {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewInteger(masterSymTable, "3", 10), runtime.AddOP, runtime.ReturnOP},
-	"4.000000":  {runtime.PushOP, runtime.NewInteger(masterSymTable, "3", 10), runtime.PushOP, runtime.NewFloat(masterSymTable, "1"), runtime.AddOP, runtime.ReturnOP},
+	"19.000000": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "15"), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "4"), runtime.AddOP, runtime.ReturnOP},
+	"20":        {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "15", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "5", 10), runtime.AddOP, runtime.ReturnOP},
+	"18.000000": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "15"), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "3", 10), runtime.AddOP, runtime.ReturnOP},
+	"4.000000":  {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "3", 10), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "1"), runtime.AddOP, runtime.ReturnOP},
 }
 var modOperations = map[string][]interface{}{
-	"0.000000": {runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.ModOP, runtime.ReturnOP},
-	"1":        {runtime.PushOP, runtime.NewInteger(masterSymTable, "9", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "10", 10), runtime.ModOP, runtime.ReturnOP},
-	"5.000000": {runtime.PushOP, runtime.NewFloat(masterSymTable, "6"), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.ModOP, runtime.ReturnOP},
-	"5.900000": {runtime.PushOP, runtime.NewInteger(masterSymTable, "6", 10), runtime.PushOP, runtime.NewFloat(masterSymTable, "5.9"), runtime.ModOP, runtime.ReturnOP},
+	"0.000000": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "5"), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "15"), runtime.ModOP, runtime.ReturnOP},
+	"1":        {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "9", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "10", 10), runtime.ModOP, runtime.ReturnOP},
+	"5.000000": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "6"), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "5", 10), runtime.ModOP, runtime.ReturnOP},
+	"5.900000": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "6", 10), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "5.9"), runtime.ModOP, runtime.ReturnOP},
 }
 var floorDivOperations = map[string][]interface{}{
-	"0":  {runtime.PushOP, runtime.NewFloat(masterSymTable, "15"), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
-	"1":  {runtime.PushOP, runtime.NewInteger(masterSymTable, "9", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "10", 10), runtime.FloorDivOP, runtime.ReturnOP},
-	"15": {runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.PushOP, runtime.NewInteger(masterSymTable, "75", 10), runtime.FloorDivOP, runtime.ReturnOP},
-	"5":  {runtime.PushOP, runtime.NewInteger(masterSymTable, "1", 10), runtime.PushOP, runtime.NewFloat(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+	"0":  {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "15"), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
+	"1":  {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "9", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "10", 10), runtime.FloorDivOP, runtime.ReturnOP},
+	"15": {runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "5"), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "75", 10), runtime.FloorDivOP, runtime.ReturnOP},
+	"5":  {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "1", 10), runtime.PushOP, runtime.NewFloatFromString(masterSymTable, "5"), runtime.FloorDivOP, runtime.ReturnOP},
 }
 var bitwiseLeftOperations = map[string][]interface{}{
-	"163840": {runtime.PushOP, runtime.NewInteger(masterSymTable, "15", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.BitwiseLeft, runtime.ReturnOP},
+	"163840": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "15", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "5", 10), runtime.BitwiseLeftOP, runtime.ReturnOP},
 }
 var bitwiseRightOperations = map[string][]interface{}{
-	"0": {runtime.PushOP, runtime.NewInteger(masterSymTable, "15", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.BitwiseRight, runtime.ReturnOP},
+	"0": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "15", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "5", 10), runtime.BitwiseRightOP, runtime.ReturnOP},
 }
 var bitwiseAndOperations = map[string][]interface{}{
-	"5": {runtime.PushOP, runtime.NewInteger(masterSymTable, "15", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.BitwiseAnd, runtime.ReturnOP},
+	"5": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "15", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "5", 10), runtime.BitwiseAndOP, runtime.ReturnOP},
 }
 var bitwiseOrOperations = map[string][]interface{}{
-	"0": {runtime.PushOP, runtime.NewInteger(masterSymTable, "15346", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "5", 10), runtime.BitwiseOr, runtime.ReturnOP},
+	"0": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "15346", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "5", 10), runtime.BitwiseOrOP, runtime.ReturnOP},
 }
 var bitwiseXorOperations = map[string][]interface{}{
-	"5": {runtime.PushOP, runtime.NewInteger(masterSymTable, "4", 10), runtime.PushOP, runtime.NewInteger(masterSymTable, "1", 10), runtime.BitwiseXor, runtime.ReturnOP},
+	"5": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "4", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "1", 10), runtime.BitwiseXorOP, runtime.ReturnOP},
+}
+var andIntOnlyOperations = map[string][]interface{}{
+	"True":  {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "4", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "1", 10), runtime.AndOP, runtime.ReturnOP},
+	"False": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "4", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "0", 10), runtime.AndOP, runtime.ReturnOP},
+}
+var andBoolOnlyOperations = map[string][]interface{}{
+	"True":  {runtime.PushOP, runtime.NewTrue(masterSymTable), runtime.PushOP, runtime.NewTrue(masterSymTable), runtime.AndOP, runtime.ReturnOP},
+	"False": {runtime.PushOP, runtime.NewFalse(masterSymTable), runtime.PushOP, runtime.NewTrue(masterSymTable), runtime.AndOP, runtime.ReturnOP},
 }
 
 func TestDivOperations(t *testing.T) {
@@ -177,6 +185,22 @@ func TestBitwiseOrOperations(t *testing.T) {
 
 func TestBitwiseXorOperations(t *testing.T) {
 	for expect, sample := range bitwiseXorOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestAndIntOnlyOperations(t *testing.T) {
+	for expect, sample := range andIntOnlyOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestAndBoolOnlyOperations(t *testing.T) {
+	for expect, sample := range andBoolOnlyOperations {
 		if !test(t, sample, expect) {
 			return
 		}

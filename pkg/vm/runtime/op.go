@@ -21,16 +21,19 @@ const (
 	RightPowerOfName        = "RightPowerOf"
 	FloorDivisionName       = "FloorDivision"
 	RightFloorDivisionName  = "RightFloorDivision"
-	BitwiseLeftName         = "BitwiseLeft"
+	BitwiseLeftName         = "BitwiseLeftOP"
 	RightBitwiseLeftName    = "RightBitwiseLeft"
-	BitwiseRightName        = "BitwiseRight"
+	BitwiseRightName        = "BitwiseRightOP"
 	RightBitwiseRightName   = "RightBitwiseRight"
-	BitwiseAndName          = "BitwiseAnd"
+	BitwiseAndName          = "BitwiseAndOP"
 	RightBitwiseAndName     = "RightBitwiseAnd"
-	BitwiseOrName           = "BitwiseOr"
+	BitwiseOrName           = "BitwiseOrOP"
 	RightBitwiseOrName      = "RightBitwiseOr"
-	BitwiseXorName          = "BitwiseXor"
+	BitwiseXorName          = "BitwiseXorOP"
 	RightBitwiseXorName     = "RightBitwiseXor"
+	BooleanName             = "Boolean"
+	AndName                 = "And"
+	RightAndName            = "RightAnd"
 )
 
 const (
@@ -42,11 +45,14 @@ const (
 	PowOP
 	ModOP
 	FloorDivOP
-	BitwiseLeft
-	BitwiseRight
-	BitwiseAnd
-	BitwiseOr
-	BitwiseXor
+	BitwiseLeftOP
+	BitwiseRightOP
+	BitwiseAndOP
+	BitwiseOrOP
+	BitwiseXorOP
+	// Binary logical operations
+	AndOP
+	OrOP
 
 	NegateBitsOP
 
@@ -107,6 +113,10 @@ func getObjectBuiltInMethod(object Object, symbolName string) interface{} {
 		return object.BitwiseXor
 	case RightBitwiseXorName:
 		return object.RightBitwiseXor
+	case BooleanName:
+		return object.Boolean
+	case AndName:
+		return object.And
 	}
 	return nil
 }

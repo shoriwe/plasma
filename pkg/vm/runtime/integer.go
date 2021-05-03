@@ -40,476 +40,326 @@ func (integer *Integer) Negation(object Object) (Object, *errors.Error) {
 func (integer *Integer) Addition(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		return &Float{
-			value: float64(integer.value) + right.(*Float).value,
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, float64(integer.value)+right.(*Float).value)
 	case *Integer:
-		return &Integer{
-			value: integer.value + right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value+right.(*Integer).value)
 	default:
-		operation, getError := GetAttribute(right, RightAdditionName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) RightAddition(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		return &Float{
-			value: left.(*Float).value + float64(integer.value),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, left.(*Float).value+float64(integer.value))
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value + integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value+integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightAdditionName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) Subtraction(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		return &Float{
-			value: float64(integer.value) - right.(*Float).value,
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, float64(integer.value)-right.(*Float).value)
 
 	case *Integer:
-		return &Integer{
-			value: integer.value - right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value-right.(*Integer).value)
 	default:
-		operation, getError := GetAttribute(right, RightSubtractionName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) RightSubtraction(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		return &Float{
-			value: left.(*Float).value - float64(integer.value),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, left.(*Float).value-float64(integer.value))
 
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value - integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value-integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightSubtractionName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) Modulus(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		return &Float{
-			value: math.Mod(float64(integer.value), right.(*Float).value),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, math.Mod(float64(integer.value), right.(*Float).value))
 
 	case *Integer:
-		return &Integer{
-			value: integer.value % right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value%right.(*Integer).value)
 	default:
-		operation, getError := GetAttribute(right, RightModulusName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) RightModulus(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		return &Float{
-			value: math.Mod(left.(*Float).value, float64(integer.value)),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, math.Mod(left.(*Float).value, float64(integer.value)))
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value % integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value%integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightModulusName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) Multiplication(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		return &Float{
-			value: float64(integer.value) * right.(*Float).value,
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, float64(integer.value)*right.(*Float).value)
 	case *Integer:
-		return &Integer{
-			value: integer.value * right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value*right.(*Integer).value)
+	case *String:
+		panic("")
 	default:
-		operation, getError := GetAttribute(right, RightMultiplicationName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName, FloatName, StringName, TupleName)
 	}
 }
 
 func (integer *Integer) RightMultiplication(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		return &Float{
-			value: left.(*Float).value * float64(integer.value),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, left.(*Float).value*float64(integer.value))
 
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value * integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value*integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightMultiplicationName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName, FloatName, StringName, TupleName)
 	}
 }
 
 func (integer *Integer) Division(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		return &Float{
-			value: float64(integer.value) / right.(*Float).value,
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, float64(integer.value)/right.(*Float).value)
 
 	case *Integer:
-		return &Float{
-			value: float64(integer.value) / float64(right.(*Integer).value),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, float64(integer.value)/float64(right.(*Integer).value))
 	default:
-		operation, getError := GetAttribute(right, RightDivisionName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) RightDivision(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		return &Float{
-			value: left.(*Float).value / float64(integer.value),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, left.(*Float).value/float64(integer.value))
 
 	case *Integer:
-		return &Float{
-			value: left.(*Float).value / float64(integer.value),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, left.(*Float).value/float64(integer.value))
 	default:
-		return nil, NewMethodNotImplemented(RightDivisionName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) PowerOf(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		return &Float{
-			value: math.Pow(float64(integer.value), right.(*Float).value),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, math.Pow(float64(integer.value), right.(*Float).value))
 	case *Integer:
-		return &Integer{
-			value: int64(math.Pow(float64(integer.value), float64(right.(*Integer).value))),
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, int64(math.Pow(float64(integer.value), float64(right.(*Integer).value))))
 	default:
-		operation, getError := GetAttribute(right, RightPowerOfName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) RightPowerOf(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		return &Float{
-			value: math.Pow(left.(*Float).value, float64(integer.value)),
-		}, nil
+		return NewFloatFromNumber(integer.symbolTable.parent, math.Pow(left.(*Float).value, float64(integer.value)))
 	case *Integer:
-		return &Integer{
-			value: int64(math.Pow(float64(left.(*Integer).value), float64(integer.value))),
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, int64(math.Pow(float64(left.(*Integer).value), float64(integer.value))))
 	default:
-		return nil, NewMethodNotImplemented(RightPowerOfName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) FloorDivision(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Float:
-		return &Integer{
-			value: int64(float64(integer.value) / right.(*Float).value),
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, int64(float64(integer.value)/right.(*Float).value))
 
 	case *Integer:
-		return &Integer{
-			value: integer.value / right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value/right.(*Integer).value)
 	default:
-		operation, getError := GetAttribute(right, RightFloorDivisionName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) RightFloorDivision(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Float:
-		return &Integer{
-			value: int64(left.(*Float).value / float64(integer.value)),
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, int64(left.(*Float).value/float64(integer.value)))
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value / integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value/integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightFloorDivisionName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName, FloatName)
 	}
 }
 
 func (integer *Integer) BitwiseRight(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Integer:
-		return &Integer{
-			value: integer.value >> right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value>>right.(*Integer).value)
 	default:
-		operation, getError := GetAttribute(right, RightBitwiseRightName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName)
 	}
 }
 
 func (integer *Integer) RightBitwiseRight(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value >> integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value>>integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightBitwiseRightName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName)
 	}
 }
 
 func (integer *Integer) BitwiseLeft(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Integer:
-		return &Integer{
-			value: integer.value << right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value<<right.(*Integer).value)
 	default:
-		operation, getError := GetAttribute(right, RightBitwiseLeftName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName)
 	}
 }
 
 func (integer *Integer) RightBitwiseLeft(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value << integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value<<integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightBitwiseLeftName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName)
 	}
 }
 
 func (integer *Integer) BitwiseAnd(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Integer:
-		return &Integer{
-			value: integer.value & right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value&right.(*Integer).value)
 	default:
-		operation, getError := GetAttribute(right, RightBitwiseAndName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName)
 	}
 }
 
 func (integer *Integer) RightBitwiseAnd(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value & integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value&integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightBitwiseAndName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName)
 	}
 }
 
 func (integer *Integer) BitwiseOr(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Integer:
-		return &Integer{
-			value: integer.value | right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value|right.(*Integer).value)
 	default:
-		operation, getError := GetAttribute(right, RightBitwiseOrName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName)
 	}
 }
 
 func (integer *Integer) RightBitwiseOr(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value | integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value|integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightBitwiseOrName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName)
 	}
 }
 
 func (integer *Integer) BitwiseXor(right Object) (Object, *errors.Error) {
 	switch right.(type) {
 	case *Integer:
-		return &Integer{
-			value: integer.value ^ right.(*Integer).value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, integer.value^right.(*Integer).value)
 	default:
-		operation, getError := GetAttribute(right, RightBitwiseXorName, false)
-		if getError != nil {
-			return nil, getError
-		}
-		switch operation.(type) {
-		case func(Object) (Object, *errors.Error):
-			return operation.(func(Object) (Object, *errors.Error))(integer)
-		case *Function:
-			return operation.(*Function).Call(integer)
-		default:
-			return nil, NewTypeError(FunctionTypeString, reflect.TypeOf(operation).String())
-		}
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName)
 	}
 }
 
 func (integer *Integer) RightBitwiseXor(left Object) (Object, *errors.Error) {
 	switch left.(type) {
 	case *Integer:
-		return &Integer{
-			value: left.(*Integer).value ^ integer.value,
-		}, nil
+		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value^integer.value)
 	default:
-		return nil, NewMethodNotImplemented(RightBitwiseXorName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName)
 	}
 }
 
-func (integer *Integer) And(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) And(right Object) (Object, *errors.Error) {
+	rightBoolean, ok := right.(*Bool)
+	if !ok {
+		rawRightBoolean, callError := NoArgumentsMethodCall(BooleanName, right)
+		if callError != nil {
+			return nil, callError
+		}
+		if _, ok2 := rawRightBoolean.(*Bool); !ok2 {
+			return nil, NewTypeError(reflect.TypeOf(rawRightBoolean).String(), BoolName)
+		}
+		rightBoolean = rawRightBoolean.(*Bool)
+	} else {
+		rightBoolean = right.(*Bool)
+	}
+	leftBoolean, _ := integer.Boolean()
+	return NewBool(integer.symbolTable.parent, leftBoolean.value && rightBoolean.value), nil
 }
 
-func (integer *Integer) RightAnd(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightAnd(left Object) (Object, *errors.Error) {
+	leftBoolean, ok := left.(*Bool)
+	if !ok {
+		rawLeftBoolean, callError := NoArgumentsMethodCall(BooleanName, left)
+		if callError != nil {
+			return nil, callError
+		}
+		if _, ok2 := rawLeftBoolean.(*Bool); !ok2 {
+			return nil, NewTypeError(reflect.TypeOf(rawLeftBoolean).String(), BoolName)
+		}
+		leftBoolean = rawLeftBoolean.(*Bool)
+	} else {
+		leftBoolean = left.(*Bool)
+	}
+	rightBoolean, _ := integer.Boolean()
+	return NewBool(integer.symbolTable.parent, leftBoolean.value && rightBoolean.value), nil
 }
 
-func (integer *Integer) Or(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) Or(right Object) (Object, *errors.Error) {
+	rightBoolean, ok := right.(*Bool)
+	if !ok {
+		rawRightBoolean, callError := NoArgumentsMethodCall(BooleanName, right)
+		if callError != nil {
+			return nil, callError
+		}
+		if _, ok2 := rawRightBoolean.(*Bool); !ok2 {
+			return nil, NewTypeError(reflect.TypeOf(rawRightBoolean).String(), BoolName)
+		}
+		rightBoolean = rawRightBoolean.(*Bool)
+	} else {
+		rightBoolean = right.(*Bool)
+	}
+	leftBoolean, _ := integer.Boolean()
+	return NewBool(integer.symbolTable.parent, leftBoolean.value || rightBoolean.value), nil
 }
 
-func (integer *Integer) RightOr(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) RightOr(left Object) (Object, *errors.Error) {
+	leftBoolean, ok := left.(*Bool)
+	if !ok {
+		rawLeftBoolean, callError := NoArgumentsMethodCall(BooleanName, left)
+		if callError != nil {
+			return nil, callError
+		}
+		if _, ok2 := rawLeftBoolean.(*Bool); !ok2 {
+			return nil, NewTypeError(reflect.TypeOf(rawLeftBoolean).String(), BoolName)
+		}
+		leftBoolean = rawLeftBoolean.(*Bool)
+	} else {
+		leftBoolean = left.(*Bool)
+	}
+	rightBoolean, _ := integer.Boolean()
+	return NewBool(integer.symbolTable.parent, leftBoolean.value || rightBoolean.value), nil
 }
 
 func (integer *Integer) Xor(object Object) (Object, *errors.Error) {
@@ -565,13 +415,12 @@ func (integer *Integer) Float() (*Float, *errors.Error) {
 }
 
 func (integer *Integer) String() (*String, *errors.Error) {
-	return &String{
-		value: fmt.Sprintf("%d", integer.value),
-	}, nil
+	fmt.Println(integer.symbolTable)
+	return NewString(integer.symbolTable.parent, fmt.Sprintf("'%d'", integer.value)), nil
 }
 
-func (integer *Integer) Boolean() (Boolean, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) Boolean() (*Bool, *errors.Error) {
+	return NewBool(NewSymbolTable(integer.symbolTable.parent), integer.value != 0), nil
 }
 
 func (integer *Integer) New() (Object, *errors.Error) {
@@ -618,7 +467,22 @@ func (integer *Integer) RawString() (string, *errors.Error) {
 	return fmt.Sprintf("%d", integer.value), nil
 }
 
-func NewInteger(parentSymbolTable *SymbolTable, number string, base int) *Integer {
+func NewIntegerFromNumber(parentSymbolTable *SymbolTable, number interface{}) (*Integer, *errors.Error) {
+	if _, ok := number.(int64); ok {
+		return &Integer{
+			symbolTable: NewSymbolTable(parentSymbolTable),
+			value:       number.(int64),
+		}, nil
+	} else if _, ok2 := number.(float64); ok2 {
+		return &Integer{
+			symbolTable: NewSymbolTable(parentSymbolTable),
+			value:       int64(number.(float64)),
+		}, nil
+	}
+	return nil, NewTypeError(reflect.TypeOf(number).String(), "int64", "float64")
+}
+
+func NewIntegerFromString(parentSymbolTable *SymbolTable, number string, base int) *Integer {
 	value, _ := strconv.ParseInt(number, base, 64)
 	return &Integer{
 		symbolTable: NewSymbolTable(parentSymbolTable),

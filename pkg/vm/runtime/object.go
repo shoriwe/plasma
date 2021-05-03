@@ -4,6 +4,15 @@ import (
 	"github.com/shoriwe/gruby/pkg/errors"
 )
 
+const (
+	IntegerName = "Integer"
+	FloatName   = "Float"
+	StringName  = "String"
+	BoolName    = "Bool"
+	TupleName   = "Tuple"
+	ArrayName   = "Array"
+)
+
 type Object interface {
 	Initialize() (Object, *errors.Error)
 	InitializeSubClass() (Object, *errors.Error)
@@ -14,7 +23,7 @@ type Object interface {
 	// Unary
 	AbsoluteValue() (Object, *errors.Error)
 	NegateBits() (Object, *errors.Error)     // Negate Bits
-	Negation(Object) (Object, *errors.Error) // Boolean Negation
+	Negation(Object) (Object, *errors.Error) // Bool Negation
 	// Binary
 	Addition(Object) (Object, *errors.Error)
 	RightAddition(Object) (Object, *errors.Error)
@@ -64,7 +73,7 @@ type Object interface {
 	Float() (*Float, *errors.Error)
 	String() (*String, *errors.Error)
 	RawString() (string, *errors.Error)
-	Boolean() (Boolean, *errors.Error)
+	Boolean() (*Bool, *errors.Error)
 
 	New() (Object, *errors.Error)
 	Dir() (*Hash, *errors.Error)

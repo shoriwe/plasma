@@ -20,8 +20,11 @@ func NewRuntimeError(errorType string, message string) *errors.Error {
 	return errors.New(UnknownLine, message, errorType)
 }
 
-func NewTypeError(expecting string, received string) *errors.Error {
-	return NewRuntimeError(TypeError, fmt.Sprintf("Expecting object of type: %s but Recevied: %s", expecting, received))
+func NewTypeError(received string, expecting ...string) *errors.Error {
+	if len(expecting) == 1 {
+		return NewRuntimeError(TypeError, fmt.Sprintf("Expecting object of type: %s but recevied object of type: %s", expecting[0], received))
+	}
+	return NewRuntimeError(TypeError, fmt.Sprintf("Expecting object of types: %s but received object of type: %s", expecting, received))
 }
 
 func NewAttributeNotFound(ownerName string, name string) *errors.Error {

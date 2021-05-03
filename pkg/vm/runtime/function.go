@@ -201,7 +201,7 @@ func (f Function) RawString() (string, *errors.Error) {
 	panic("implement me")
 }
 
-func (f Function) Boolean() (Boolean, *errors.Error) {
+func (f Function) Boolean() (Bool, *errors.Error) {
 	panic("implement me")
 }
 

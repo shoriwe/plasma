@@ -5,7 +5,8 @@ import (
 )
 
 type String struct {
-	value string
+	symbolTable *SymbolTable
+	value       string
 }
 
 func (string_ *String) Initialize() (Object, *errors.Error) {
@@ -197,11 +198,17 @@ func (string_ *String) Float() (*Float, *errors.Error) {
 }
 
 func (string_ *String) String() (*String, *errors.Error) {
-	panic("implement me")
+	return &String{
+		symbolTable: NewSymbolTable(string_.symbolTable.parent),
+		value:       string_.value,
+	}, nil
 }
 
-func (string_ *String) Boolean() (Boolean, *errors.Error) {
-	panic("implement me")
+func (string_ *String) Boolean() (*Bool, *errors.Error) {
+	return &Bool{
+		symbolTable: NewSymbolTable(string_.symbolTable.parent),
+		value:       len(string_.value) != 0,
+	}, nil
 }
 
 func (string_ *String) New() (Object, *errors.Error) {
@@ -241,9 +248,16 @@ func (string_ *String) Documentation() (*Hash, *errors.Error) {
 }
 
 func (string_ *String) SymbolTable() *SymbolTable {
-	panic("implement me")
+	return string_.symbolTable
 }
 
-func (string_ *String) RawString() string {
-	return string_.value
+func (string_ *String) RawString() (string, *errors.Error) {
+	return string_.value, nil
+}
+
+func NewString(parentSymbolTable *SymbolTable, value string) *String {
+	return &String{
+		symbolTable: NewSymbolTable(parentSymbolTable),
+		value:       value,
+	}
 }
