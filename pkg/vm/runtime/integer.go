@@ -33,8 +33,16 @@ func (integer *Integer) NegateBits() (Object, *errors.Error) {
 	panic("implement me")
 }
 
-func (integer *Integer) Negation(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (integer *Integer) Negation() (Object, *errors.Error) {
+	rawIntegerAsBoolean, callError := NoArgumentsMethodCall(BooleanName, integer)
+	if callError != nil {
+		return nil, callError
+	}
+	if _, ok := rawIntegerAsBoolean.(*Bool); !ok {
+		return nil, NewTypeError(reflect.TypeOf(rawIntegerAsBoolean).String(), BoolName)
+	}
+	rawIntegerAsBoolean.(*Bool).value = !rawIntegerAsBoolean.(*Bool).value
+	return rawIntegerAsBoolean, nil
 }
 
 func (integer *Integer) Addition(right Object) (Object, *errors.Error) {
@@ -115,7 +123,7 @@ func (integer *Integer) Multiplication(right Object) (Object, *errors.Error) {
 	case *String:
 		panic("")
 	default:
-		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName, FloatName, StringName, TupleName)
+		return nil, NewTypeError(reflect.TypeOf(right).String(), IntegerName, FloatName, StringName, TupleName, ArrayName)
 	}
 }
 
@@ -127,7 +135,7 @@ func (integer *Integer) RightMultiplication(left Object) (Object, *errors.Error)
 	case *Integer:
 		return NewIntegerFromNumber(integer.symbolTable.parent, left.(*Integer).value*integer.value)
 	default:
-		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName, FloatName, StringName, TupleName)
+		return nil, NewTypeError(reflect.TypeOf(left).String(), IntegerName, FloatName, StringName, TupleName, ArrayName)
 	}
 }
 

@@ -29,8 +29,8 @@ func (b Bool) NegateBits() (Object, *errors.Error) {
 	panic("implement me")
 }
 
-func (b Bool) Negation(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (b Bool) Negation() (Object, *errors.Error) {
+	return NewBool(b.symbolTable.parent, !b.value), nil
 }
 
 func (b Bool) Addition(object Object) (Object, *errors.Error) {
@@ -161,12 +161,36 @@ func (b Bool) RightAnd(left Object) (Object, *errors.Error) {
 	}, nil
 }
 
-func (b Bool) Or(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (b Bool) Or(right Object) (Object, *errors.Error) {
+	rightBoolean, ok := right.(*Bool)
+	if !ok {
+		var transformationError *errors.Error
+		rightBoolean, transformationError = right.Boolean()
+		if transformationError != nil {
+			return nil, transformationError
+		}
+	} else {
+		rightBoolean = right.(*Bool)
+	}
+	return &Bool{
+		value: b.value || rightBoolean.value,
+	}, nil
 }
 
-func (b Bool) RightOr(object Object) (Object, *errors.Error) {
-	panic("implement me")
+func (b Bool) RightOr(left Object) (Object, *errors.Error) {
+	leftBoolean, ok := left.(*Bool)
+	if !ok {
+		var transformationError *errors.Error
+		leftBoolean, transformationError = left.Boolean()
+		if transformationError != nil {
+			return nil, transformationError
+		}
+	} else {
+		leftBoolean = left.(*Bool)
+	}
+	return &Bool{
+		value: leftBoolean.value || b.value,
+	}, nil
 }
 
 func (b Bool) Xor(object Object) (Object, *errors.Error) {

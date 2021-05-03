@@ -23,7 +23,7 @@ type Object interface {
 	// Unary
 	AbsoluteValue() (Object, *errors.Error)
 	NegateBits() (Object, *errors.Error)     // Negate Bits
-	Negation(Object) (Object, *errors.Error) // Bool Negation
+	Negation() (Object, *errors.Error) // Bool Negation
 	// Binary
 	Addition(Object) (Object, *errors.Error)
 	RightAddition(Object) (Object, *errors.Error)

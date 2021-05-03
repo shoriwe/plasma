@@ -25,7 +25,7 @@ func (n None) NegateBits() (Object, *errors.Error) {
 	panic("implement me")
 }
 
-func (n None) Negation(object Object) (Object, *errors.Error) {
+func (n None) Negation() (Object, *errors.Error) {
 	panic("implement me")
 }
 

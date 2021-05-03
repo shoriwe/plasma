@@ -34,7 +34,7 @@ func (float *Float) NegateBits() (Object, *errors.Error) {
 	panic("implement me")
 }
 
-func (float *Float) Negation(object Object) (Object, *errors.Error) {
+func (float *Float) Negation() (Object, *errors.Error) {
 	panic("implement me")
 }
 

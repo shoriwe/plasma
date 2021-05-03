@@ -11,6 +11,8 @@ func NoArgumentsMethodCall(methodName string, object Object) (Object, *errors.Er
 		return nil, getError
 	}
 	switch method.(type) {
+	case func() (Object, *errors.Error):
+		return method.(func() (Object, *errors.Error))()
 	case func() (*Bool, *errors.Error): // Boolean
 		return method.(func() (*Bool, *errors.Error))()
 	case func() (*String, *errors.Error): // String

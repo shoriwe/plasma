@@ -26,6 +26,17 @@ func (plasma *Plasma) basicBinaryOP(leftOPName string, rightOPName string) *erro
 	return nil
 }
 
+func (plasma *Plasma) basicNoArgsOP(opName string) *errors.Error {
+	plasma.cursor++
+	object := plasma.objectStack.Pop()
+	result, callError := runtime.NoArgumentsMethodCall(opName, object.(runtime.Object))
+	if callError != nil {
+		return callError
+	}
+	plasma.objectStack.Push(result)
+	return nil
+}
+
 func (plasma *Plasma) additionOP() *errors.Error {
 	return plasma.basicBinaryOP(runtime.AdditionName, runtime.RightAdditionName)
 }
@@ -78,6 +89,14 @@ func (plasma *Plasma) andOP() *errors.Error {
 	return plasma.basicBinaryOP(runtime.AndName, runtime.RightAndName)
 }
 
+func (plasma *Plasma) orOP() *errors.Error {
+	return plasma.basicBinaryOP(runtime.OrName, runtime.RightOrName)
+}
+
+func (plasma *Plasma) negateOP() *errors.Error {
+	return plasma.basicNoArgsOP(runtime.NegationName)
+}
+
 func (plasma *Plasma) pushOP() *errors.Error {
 	plasma.cursor++
 	plasma.objectStack.Push(plasma.code[plasma.cursor])
@@ -125,6 +144,12 @@ func (plasma *Plasma) Execute() (runtime.Object, *errors.Error) {
 			instructionExecError = plasma.bitwiseXorOP()
 		case runtime.AndOP:
 			instructionExecError = plasma.andOP()
+		case runtime.OrOP:
+			instructionExecError = plasma.orOP()
+		case runtime.NegateOP:
+			instructionExecError = plasma.negateOP()
+		case runtime.NOP:
+			plasma.cursor++
 		case runtime.ReturnOP:
 			plasma.cursor++
 			if plasma.objectStack.IsEmpty() {

@@ -7,6 +7,9 @@ import (
 type InstructionOP func(*Stack) *errors.Error
 
 const (
+	// UnaryExpression
+	NegationName = "Negate"
+	// Binary Expression
 	AdditionName            = "Addition"
 	RightAdditionName       = "RightAddition"
 	SubtractionName         = "Subtraction"
@@ -31,14 +34,22 @@ const (
 	RightBitwiseOrName      = "RightBitwiseOr"
 	BitwiseXorName          = "BitwiseXorOP"
 	RightBitwiseXorName     = "RightBitwiseXor"
-	BooleanName             = "Boolean"
-	AndName                 = "And"
-	RightAndName            = "RightAnd"
+	// Logical operations
+	AndName      = "And"
+	RightAndName = "RightAnd"
+	OrName       = "Or"
+	RightOrName  = "RightOr"
+	// Basic type transformation
+	BooleanName = "Boolean"
 )
 
 const (
+	NOP uint = iota
+	// Unary Operations
+	NegateOP
+	NegateBitsOP
 	// Binary Operations
-	AddOP uint = iota
+	AddOP
 	SubOP
 	DivOP
 	MulOP
@@ -54,8 +65,6 @@ const (
 	AndOP
 	OrOP
 
-	NegateBitsOP
-
 	// Memory Operations
 	PushOP
 
@@ -65,6 +74,10 @@ const (
 
 func getObjectBuiltInMethod(object Object, symbolName string) interface{} {
 	switch symbolName {
+	// Unary Expression
+	case NegationName:
+		return object.Negation
+	// Binary Operations
 	case AdditionName:
 		return object.Addition
 	case RightAdditionName:
@@ -113,10 +126,18 @@ func getObjectBuiltInMethod(object Object, symbolName string) interface{} {
 		return object.BitwiseXor
 	case RightBitwiseXorName:
 		return object.RightBitwiseXor
-	case BooleanName:
-		return object.Boolean
+	// Logical Operations
 	case AndName:
 		return object.And
+	case RightAndName:
+		return object.RightAnd
+	case OrName:
+		return object.Or
+	case RightOrName:
+		return object.Or
+	// Base type transformation
+	case BooleanName:
+		return object.Boolean
 	}
 	return nil
 }

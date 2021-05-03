@@ -94,6 +94,22 @@ var andBoolOnlyOperations = map[string][]interface{}{
 	"True":  {runtime.PushOP, runtime.NewTrue(masterSymTable), runtime.PushOP, runtime.NewTrue(masterSymTable), runtime.AndOP, runtime.ReturnOP},
 	"False": {runtime.PushOP, runtime.NewFalse(masterSymTable), runtime.PushOP, runtime.NewTrue(masterSymTable), runtime.AndOP, runtime.ReturnOP},
 }
+var orIntOnlyOperations = map[string][]interface{}{
+	"True":  {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "4", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "1", 10), runtime.OrOP, runtime.ReturnOP},
+	"False": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "0", 10), runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "0", 10), runtime.OrOP, runtime.ReturnOP},
+}
+var orBoolOnlyOperations = map[string][]interface{}{
+	"True":  {runtime.PushOP, runtime.NewTrue(masterSymTable), runtime.PushOP, runtime.NewTrue(masterSymTable), runtime.OrOP, runtime.ReturnOP},
+	"False": {runtime.PushOP, runtime.NewFalse(masterSymTable), runtime.PushOP, runtime.NewFalse(masterSymTable), runtime.OrOP, runtime.ReturnOP},
+}
+var negateIntOnlyOperations = map[string][]interface{}{
+	"False":  {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "1", 10), runtime.NegateOP, runtime.ReturnOP},
+	"True": {runtime.PushOP, runtime.NewIntegerFromString(masterSymTable, "0", 10), runtime.NegateOP, runtime.ReturnOP},
+}
+var negateBoolOnlyOperations = map[string][]interface{}{
+	"False":  {runtime.PushOP, runtime.NewTrue(masterSymTable), runtime.NegateOP, runtime.ReturnOP},
+	"True": {runtime.PushOP, runtime.NewFalse(masterSymTable), runtime.NegateOP, runtime.ReturnOP},
+}
 
 func TestDivOperations(t *testing.T) {
 	for expect, sample := range divOperations {
@@ -201,6 +217,38 @@ func TestAndIntOnlyOperations(t *testing.T) {
 
 func TestAndBoolOnlyOperations(t *testing.T) {
 	for expect, sample := range andBoolOnlyOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestOrIntOnlyOperations(t *testing.T) {
+	for expect, sample := range orIntOnlyOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestOrBoolOnlyOperations(t *testing.T) {
+	for expect, sample := range orBoolOnlyOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestNegateIntOnlyOperations(t *testing.T) {
+	for expect, sample := range negateIntOnlyOperations {
+		if !test(t, sample, expect) {
+			return
+		}
+	}
+}
+
+func TestNegateBoolOnlyOperations(t *testing.T) {
+	for expect, sample := range negateBoolOnlyOperations {
 		if !test(t, sample, expect) {
 			return
 		}

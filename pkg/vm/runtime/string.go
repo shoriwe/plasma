@@ -29,7 +29,7 @@ func (string_ *String) NegateBits() (Object, *errors.Error) {
 	panic("implement me")
 }
 
-func (string_ *String) Negation(object Object) (Object, *errors.Error) {
+func (string_ *String) Negation() (Object, *errors.Error) {
 	panic("implement me")
 }
 
