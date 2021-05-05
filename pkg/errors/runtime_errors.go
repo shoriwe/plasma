@@ -9,6 +9,8 @@ const (
 
 // Errors Types
 const (
+	UnknownVmOperationError    = "UnknownVMOperationError"
+	StackOverflowError         = "StackOverflowError"
 	TypeError                  = "TypeError"
 	OperationNotSupportedError = "OperationNotSupportedError"
 	NameNotFoundError          = "NameNotFoundError"
@@ -16,6 +18,7 @@ const (
 
 // Errors Messages
 const (
+	StackOverflowMessage         = "Memory stack has reached it's maximum size (platform uint size)"
 	ExpectingNArgumentsMessage   = "Expecting %d arguments but received %d"
 	OperationNotSupportedMessage = "Operation not supported"
 	NameNotFoundMessage          = "\"Name not found\""
@@ -34,5 +37,13 @@ func NewTypeError(expecting []string, received string) *Error {
 }
 
 func NewNameNotFoundError() *Error {
-	return New(-1, NameNotFoundMessage, NameNotFoundError)
+	return New(UnknownLine, NameNotFoundMessage, NameNotFoundError)
+}
+
+func NewStackOverflowError() *Error {
+	return New(UnknownLine, StackOverflowMessage, StackOverflowError)
+}
+
+func NewUnknownVMOperationError(operation uint16) *Error {
+	return New(UnknownLine, fmt.Sprintf("unknown operation with value %d", operation), UnknownVmOperationError)
 }
