@@ -2,17 +2,13 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/errors"
-	"github.com/shoriwe/gruby/pkg/vm/object"
-	_ "github.com/shoriwe/gruby/pkg/vm/object"
-	_ "github.com/shoriwe/gruby/pkg/vm/utils"
 	"testing"
 )
 
 func testMustSuccess(t *testing.T, samples map[string][]interface{}) {
 	for expectedResult, code := range samples {
 		vm := NewPlasmaVM()
-		object.SetupDefaultTypes(vm)
+		SetupDefaultTypes(vm)
 		vm.Initialize(code)
 		result, executionError := vm.Execute()
 		if executionError != nil {
@@ -23,33 +19,26 @@ func testMustSuccess(t *testing.T, samples map[string][]interface{}) {
 			t.Error(fmt.Sprintf("Expecting %s, received nil", expectedResult))
 			return
 		}
-		resultObject := result.(object.IObject)
-		toString, getError := resultObject.Get(object.ToString)
+		resultObject := result.(IObject)
+		toString, getError := resultObject.Get(ToString)
 		if getError != nil {
 			t.Error(getError.String())
 			return
 		}
-		var toStringCall interface{}
-		toStringCall, getError = toString.(*object.Function).Get(object.Call)
-		if getError != nil {
-			t.Error(getError.String())
+		var stringResult IObject
+		stringResult, executionError = toString.(*Function).Callable.Call(vm.masterSymbolTable, vm, resultObject)
+		if executionError != nil {
+			t.Error(executionError.String())
 			return
 		}
-		rawStringObject, transformationError := toStringCall.(func(...object.IObject) (object.IObject, *errors.Error))(resultObject)
-		if transformationError != nil {
-			t.Error(transformationError.String())
-			return
+		if stringResult.(*String).Value != expectedResult {
+			t.Errorf("Expecting: %s but received: %s", expectedResult, stringResult.(*String).Value)
 		}
-		if rawStringObject.(*object.String).Value != expectedResult {
-			t.Error(fmt.Sprintf("Expecting %s, received %s", expectedResult, rawStringObject.(*object.String).Value))
-			return
-		}
-
 	}
 }
 
 var newOPSamples = map[string][]interface{}{
-	"Hello": []interface{}{PushOP, "Hello", PushOP, 1, PushOP, object.StringName, GetOP, NewOP, ReturnOP},
+	"Hello": {PushOP, "Hello", NewStringOP, PushOP, 1, PushOP, StringName, GetOP, NewOP, ReturnOP},
 }
 
 func TestData(t *testing.T) {

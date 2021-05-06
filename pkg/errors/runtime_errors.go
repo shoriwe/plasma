@@ -24,8 +24,8 @@ const (
 	NameNotFoundMessage          = "\"Name not found\""
 )
 
-func NewOperationNotSupportedError(message string, typeReceived string) *Error {
-	return New(UnknownLine, fmt.Sprintf("%s for type %s", message, typeReceived), OperationNotSupportedError)
+func NewOperationNotSupportedError() *Error {
+	return New(UnknownLine, OperationNotSupportedMessage, OperationNotSupportedError)
 }
 
 func NewInvalidNumberOfArguments(received int, expecting int) *Error {

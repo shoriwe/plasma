@@ -1,4 +1,4 @@
-package utils
+package vm
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
