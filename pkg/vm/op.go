@@ -1,9 +1,11 @@
 package vm
 
 const (
-	NewOP uint16 = iota
-	NewStringOP
+	NewStringOP uint16 = iota
 	PushOP
+	PushN_OP
+	CopyOP
+	CallOP
 	GetOP
 	GetFromOP
 	ReturnOP

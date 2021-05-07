@@ -25,8 +25,9 @@ func (p *Plasma) Initialize(code []interface{}) *errors.Error {
 
 func (p *Plasma) newStringOP() *errors.Error {
 	p.Cursor++
-	value := p.MemoryStack.Pop().(string)
-	stringObject := NewString(Empty, nil, p.masterSymbolTable, value)
+	value := p.Code[p.Cursor].(string)
+	p.Cursor++
+	stringObject := NewString(p.masterSymbolTable, value)
 	p.MemoryStack.Push(stringObject)
 	return nil
 }
@@ -48,9 +49,26 @@ func (p *Plasma) newOp() *errors.Error {
 	return nil
 }
 
+func (p *Plasma) callOP() *errors.Error {
+	p.Cursor++
+	numberOfArguments := p.MemoryStack.Pop().(int)
+	caller := p.MemoryStack.Pop().(*Function)
+	var arguments []IObject
+	for i := 0; i < numberOfArguments; i++ {
+		arguments = append(arguments, p.MemoryStack.Pop().(IObject))
+	}
+	result, callError := caller.Callable.Call(p.MasterSymbolTable(), p, arguments...)
+	if callError != nil {
+		return callError
+	}
+	p.MemoryStack.Push(result)
+	return nil
+}
+
 func (p *Plasma) getOP() *errors.Error {
 	p.Cursor++
-	name := p.MemoryStack.Pop().(string)
+	name := p.Code[p.Cursor].(string)
+	p.Cursor++
 	obj, getError := p.masterSymbolTable.GetSelf(name)
 	if getError != nil {
 		return getError
@@ -61,13 +79,29 @@ func (p *Plasma) getOP() *errors.Error {
 
 func (p *Plasma) getFromOP() *errors.Error {
 	p.Cursor++
-	name := p.MemoryStack.Pop().(string)
+	name := p.Code[p.Cursor].(string)
+	p.Cursor++
 	obj := p.MemoryStack.Pop().(IObject)
 	target, getError := obj.Get(name)
 	if getError != nil {
 		return getError
 	}
 	p.MemoryStack.Push(target)
+	return nil
+}
+
+func (p *Plasma) pushN_OP() *errors.Error {
+	p.Cursor++
+	numberOfElements := p.Code[p.Cursor].(int)
+	p.Cursor++
+	for i := 0; i < numberOfElements; i++ {
+		value := p.Code[p.Cursor]
+		p.Cursor++
+		pushError := p.MemoryStack.Push(value)
+		if pushError != nil {
+			return pushError
+		}
+	}
 	return nil
 }
 
@@ -78,20 +112,34 @@ func (p *Plasma) pushOP() *errors.Error {
 	return p.MemoryStack.Push(value)
 }
 
+func (p *Plasma) copyOP() *errors.Error {
+	p.Cursor++
+	repeat := p.MemoryStack.Pop().(int)
+	obj := p.MemoryStack.Pop().(IObject)
+	for i := 0; i < repeat; i++ {
+		p.MemoryStack.Push(obj)
+	}
+	return nil
+}
+
 func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
 	for ; p.Cursor < p.CodeLength; {
 		switch p.Code[p.Cursor].(uint16) {
-		case NewOP:
-			executionError = p.newOp()
 		case NewStringOP:
 			executionError = p.newStringOP()
+		case CallOP:
+			executionError = p.callOP()
 		case GetOP:
 			executionError = p.getOP()
 		case GetFromOP:
 			executionError = p.getFromOP()
 		case PushOP:
 			executionError = p.pushOP()
+		case PushN_OP:
+			executionError = p.pushN_OP()
+		case CopyOP:
+			executionError = p.copyOP()
 		case ReturnOP:
 			if p.MemoryStack.HashNext() {
 				return p.MemoryStack.Pop().(IObject), nil

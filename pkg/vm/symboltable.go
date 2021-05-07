@@ -1,6 +1,8 @@
 package vm
 
-import "github.com/shoriwe/gruby/pkg/errors"
+import (
+	"github.com/shoriwe/gruby/pkg/errors"
+)
 
 type SymbolTable struct {
 	Parent  *SymbolTable

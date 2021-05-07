@@ -38,7 +38,22 @@ func testMustSuccess(t *testing.T, samples map[string][]interface{}) {
 }
 
 var newOPSamples = map[string][]interface{}{
-	"Hello": {PushOP, "Hello", NewStringOP, PushOP, 1, PushOP, StringName, GetOP, NewOP, ReturnOP},
+	"Hello": {
+		NewStringOP, "Hello",
+		GetOP, StringName,
+		PushOP, 1,
+		CallOP,
+		ReturnOP,
+	},
+	"True": { // "Hello".ToBool()
+		NewStringOP, "Hello",
+		PushOP, 2,
+		CopyOP,
+		GetFromOP, ToBool,
+		PushOP, 1,
+		CallOP,
+		ReturnOP,
+	},
 }
 
 func TestData(t *testing.T) {
