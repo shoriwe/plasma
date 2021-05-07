@@ -51,7 +51,8 @@ func (p *Plasma) newOp() *errors.Error {
 
 func (p *Plasma) callOP() *errors.Error {
 	p.Cursor++
-	numberOfArguments := p.MemoryStack.Pop().(int)
+	numberOfArguments := p.Code[p.Cursor].(int)
+	p.Cursor++
 	caller := p.MemoryStack.Pop().(*Function)
 	var arguments []IObject
 	for i := 0; i < numberOfArguments; i++ {
@@ -114,7 +115,8 @@ func (p *Plasma) pushOP() *errors.Error {
 
 func (p *Plasma) copyOP() *errors.Error {
 	p.Cursor++
-	repeat := p.MemoryStack.Pop().(int)
+	repeat := p.Code[p.Cursor].(int)
+	p.Cursor++
 	obj := p.MemoryStack.Pop().(IObject)
 	for i := 0; i < repeat; i++ {
 		p.MemoryStack.Push(obj)

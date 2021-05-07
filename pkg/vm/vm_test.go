@@ -41,17 +41,14 @@ var newOPSamples = map[string][]interface{}{
 	"Hello": {
 		NewStringOP, "Hello",
 		GetOP, StringName,
-		PushOP, 1,
-		CallOP,
+		CallOP, 1,
 		ReturnOP,
 	},
 	"True": { // "Hello".ToBool()
 		NewStringOP, "Hello",
-		PushOP, 2,
-		CopyOP,
+		CopyOP, 2,
 		GetFromOP, ToBool,
-		PushOP, 1,
-		CallOP,
+		CallOP, 1,
 		ReturnOP,
 	},
 }
