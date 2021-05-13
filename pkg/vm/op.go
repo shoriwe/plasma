@@ -1,7 +1,8 @@
 package vm
 
 const (
-	NewStringOP uint16 = iota
+	NewStringOP uint8 = iota
+	NoOP
 	PushOP
 	PushN_OP
 	CopyOP

@@ -3,9 +3,8 @@ package vm
 import "github.com/shoriwe/gruby/pkg/errors"
 
 type VirtualMachine interface {
-	Initialize([]interface{}) *errors.Error
+	Initialize([]Code) *errors.Error
 	Execute() (IObject, *errors.Error)
-	GetStack() Stack
-	MasterSymbolTable() *SymbolTable
-	New(*SymbolTable) VirtualMachine
+	LoadCode([]Code)
+	PushSymbolTable(*SymbolTable)
 }

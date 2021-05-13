@@ -1,55 +1,97 @@
 package vm
 
 import (
-	"github.com/shoriwe/gruby/pkg/errors"
 	"math/bits"
 )
 
-type Stack interface {
-	Push(interface{}) *errors.Error
-	Pop() interface{}
-	HashNext() bool
-	Clear()
-	Peek() interface{}
+type stackNode struct {
+	value interface{}
+	next  *stackNode
 }
 
-type ArrayStack struct {
-	content       []interface{}
-	currentLength uint
-}
-
-func (a *ArrayStack) Push(value interface{}) *errors.Error {
-	if a.currentLength == bits.UintSize {
-		return errors.NewStackOverflowError()
+func NewStackNode(value interface{}, next *stackNode) *stackNode {
+	return &stackNode{
+		value: value,
+		next:  next,
 	}
-	a.content = append(a.content, value)
-	a.currentLength++
-	return nil
 }
 
-func (a *ArrayStack) Pop() interface{} {
-	a.currentLength--
-	result := a.content[a.currentLength]
-	a.content = a.content[:a.currentLength]
-	return result
+type ObjectStack struct {
+	head   *stackNode
+	length uint
 }
 
-func (a *ArrayStack) HashNext() bool {
-	return a.currentLength > 0
+func (stack *ObjectStack) Pop() IObject {
+	result := stack.head.value
+	stack.head = stack.head.next
+	stack.length--
+	return result.(IObject)
 }
 
-func (a *ArrayStack) Peek() interface{} {
-	return a.content[a.currentLength-1]
+func (stack *ObjectStack) Peek() IObject {
+	return stack.head.value.(IObject)
 }
 
-func (a *ArrayStack) Clear() {
-	a.currentLength = 0
-	a.content = make([]interface{}, 0)
+func (stack *ObjectStack) Push(object IObject) {
+	if stack.length == bits.UintSize {
+		panic("Memory Stack is Full")
+	}
+	stack.length++
+	stack.head = NewStackNode(object, stack.head)
 }
 
-func NewArrayStack() *ArrayStack {
-	return &ArrayStack{
-		content:       make([]interface{}, 0),
-		currentLength: 0,
+func (stack *ObjectStack) HasNext() bool {
+	return stack.length != 0
+}
+
+func (stack *ObjectStack) Clear() {
+	stack.head = nil
+	stack.length = 0
+}
+
+func NewObjectStack() *ObjectStack {
+	return &ObjectStack{
+		head:   nil,
+		length: 0,
+	}
+}
+
+type SymbolStack struct {
+	head   *stackNode
+	length uint
+}
+
+func (stack *SymbolStack) Pop() *SymbolTable {
+	result := stack.head.value
+	stack.head = stack.head.next
+	stack.length--
+	return result.(*SymbolTable)
+}
+
+func (stack *SymbolStack) Peek() *SymbolTable {
+	return stack.head.value.(*SymbolTable)
+}
+
+func (stack *SymbolStack) Push(symbolTable *SymbolTable) {
+	if stack.length == bits.UintSize {
+		panic("Memory Stack is Full")
+	}
+	stack.length++
+	stack.head = NewStackNode(symbolTable, stack.head)
+}
+
+func (stack *SymbolStack) HasNext() bool {
+	return stack.length != 0
+}
+
+func (stack *SymbolStack) Clear() {
+	stack.head = nil
+	stack.length = 0
+}
+
+func NewSymbolStack() *SymbolStack {
+	return &SymbolStack{
+		head:   nil,
+		length: 0,
 	}
 }

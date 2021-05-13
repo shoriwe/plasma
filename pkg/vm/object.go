@@ -6,8 +6,8 @@ import (
 	"sync"
 )
 
-const Empty = ""
 const (
+	Self = "self"
 	// IObject Creation
 	Initialize = "Initialize" // Executed just after New
 	// Unary Operations
@@ -96,38 +96,34 @@ var counter = &ObjCounter{
 
 type FunctionCallback func(VirtualMachine, ...IObject) (IObject, *errors.Error)
 
-type ConstructorFunction func(VirtualMachine, *SymbolTable, *SymbolTable, []interface{}) (IObject, *errors.Error)
-
-const CallableName = "Callable"
-
 type Callable interface {
 	NumberOfArguments() int
-	Call(*SymbolTable, VirtualMachine, ...IObject) (IObject, *errors.Error) // This should return directly the object or the code of the function
+	Call() (FunctionCallback, []Code) // self should return directly the object or the code of the function
+}
+
+type Constructor interface {
+	Callable
+	C()
 }
 
 type PlasmaFunction struct {
 	numberOfArguments int
-	Code              []interface{}
+	Code              []Code
 }
 
 func (p *PlasmaFunction) NumberOfArguments() int {
 	return p.numberOfArguments
 }
 
-func (p *PlasmaFunction) Call(parent *SymbolTable, vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
-	if len(arguments) != p.numberOfArguments {
-		return nil, errors.NewInvalidNumberOfArguments(len(arguments), p.numberOfArguments)
+func (p *PlasmaFunction) Call() (IObject, []Code) {
+	return nil, p.Code
+}
+
+func NewPlasmaFunction(numberOfArguments int, code []Code) *PlasmaFunction {
+	return &PlasmaFunction{
+		numberOfArguments: numberOfArguments,
+		Code:              code,
 	}
-	vmCopy := vm.New(parent)
-	initializationError := vmCopy.Initialize(p.Code)
-	if initializationError != nil {
-		return nil, initializationError
-	}
-	result, executionError := vmCopy.Execute()
-	if executionError != nil {
-		return nil, executionError
-	}
-	return result.(IObject), nil
 }
 
 type BuiltInFunction struct {
@@ -139,15 +135,8 @@ func (g *BuiltInFunction) NumberOfArguments() int {
 	return g.numberOfArguments
 }
 
-func (g *BuiltInFunction) Call(_ *SymbolTable, vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
-	if len(arguments) != g.numberOfArguments {
-		return nil, errors.NewInvalidNumberOfArguments(len(arguments), g.numberOfArguments)
-	}
-	result, callError := g.callback(vm, arguments...)
-	if callError != nil {
-		return nil, callError
-	}
-	return result, nil
+func (g *BuiltInFunction) Call() (FunctionCallback, []Code) {
+	return g.callback, nil
 }
 
 func NewBuiltInFunction(numberOfArguments int, callback FunctionCallback) *BuiltInFunction {
@@ -158,47 +147,21 @@ func NewBuiltInFunction(numberOfArguments int, callback FunctionCallback) *Built
 }
 
 type PlasmaConstructor struct {
+	Constructor
 	numberOfArguments int
-	Code              []interface{}
+	Code              []Code
 }
 
 func (c *PlasmaConstructor) NumberOfArguments() int {
 	return c.numberOfArguments
 }
 
-func (c *PlasmaConstructor) Call(parent *SymbolTable, vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
-	if len(arguments) != c.numberOfArguments {
-		return nil, errors.NewInvalidNumberOfArguments(len(arguments), c.numberOfArguments)
-	}
-	obj := NewObject(Empty, nil, parent)
-	vmCopy := vm.New(obj.SymbolTable())
-	vmInitializationError := vmCopy.Initialize(c.Code)
-	if vmInitializationError != nil {
-		return nil, vmInitializationError
-	}
-	_, executionError := vmCopy.Execute()
-	if executionError != nil {
-		return nil, executionError
-	}
-	for _, subClass := range obj.SubClasses() {
-		_, subClassInitError := subClass.Callable.Call(obj.SymbolTable(), vm)
-		if subClassInitError != nil {
-			return nil, subClassInitError
-		}
-	}
-	initialize, getError := obj.Get(Initialize)
-	if getError != nil {
-		return nil, getError
-	}
-	_, initializationError := initialize.(*Function).Callable.Call(obj.SymbolTable(), vm, append([]IObject{obj}, arguments...)...)
-	if initializationError != nil {
-		return nil, initializationError
-	}
-	return obj, nil
+func (c *PlasmaConstructor) Call() (FunctionCallback, []Code) {
+	return nil, c.Code
 }
 
-// This should  be used  at function definition time
-func NewPlasmaConstructor(numberOfArguments int, code []interface{}) *PlasmaConstructor {
+// self should  be used  at function definition time
+func NewPlasmaConstructor(numberOfArguments int, code []Code) *PlasmaConstructor {
 	return &PlasmaConstructor{
 		numberOfArguments: numberOfArguments,
 		Code:              code,
@@ -206,6 +169,7 @@ func NewPlasmaConstructor(numberOfArguments int, code []interface{}) *PlasmaCons
 }
 
 type BuiltInConstructor struct {
+	Constructor
 	numberOfArguments int
 	callback          FunctionCallback
 }
@@ -214,29 +178,8 @@ func (c *BuiltInConstructor) NumberOfArguments() int {
 	return c.numberOfArguments
 }
 
-func (c *BuiltInConstructor) Call(_ *SymbolTable, vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
-	if len(arguments) != c.numberOfArguments {
-		return nil, errors.NewInvalidNumberOfArguments(len(arguments), c.numberOfArguments)
-	}
-	obj, callError := c.callback(vm, arguments...)
-	if callError != nil {
-		return nil, callError
-	}
-	for _, subClass := range obj.SubClasses() {
-		_, subClassInitError := subClass.Callable.Call(obj.SymbolTable(), vm)
-		if subClassInitError != nil {
-			return nil, subClassInitError
-		}
-	}
-	initialize, getError := obj.Get(Initialize)
-	if getError != nil {
-		return nil, getError
-	}
-	_, initializationError := initialize.(*Function).Callable.Call(obj.SymbolTable(), vm, obj)
-	if initializationError != nil {
-		return nil, initializationError
-	}
-	return obj, nil
+func (c *BuiltInConstructor) Call() (FunctionCallback, []Code) {
+	return c.callback, nil
 }
 
 func NewBuiltInConstructor(numberOfArguments int, callback FunctionCallback) *BuiltInConstructor {
@@ -259,7 +202,6 @@ type IObject interface {
 	SubClasses() []*Function
 	Get(string) (IObject, *errors.Error)
 	Set(string, IObject)
-	VirtualMachine() VirtualMachine
 }
 
 // MetaClass for IObject
@@ -269,10 +211,6 @@ type Object struct {
 	subClasses     []*Function
 	symbols        *SymbolTable
 	virtualMachine VirtualMachine
-}
-
-func (o *Object) VirtualMachine() VirtualMachine {
-	return o.virtualMachine
 }
 
 func (o *Object) Id() uint {
@@ -303,33 +241,54 @@ func ObjInitialize(_ VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	return nil, nil
 }
 
+func CallFunction(function *Function, vm VirtualMachine, parent *SymbolTable, self IObject, arguments ...IObject) (IObject, *errors.Error) {
+	symbols := NewSymbolTable(parent)
+	if self != nil {
+		arguments = append([]IObject{self}, arguments...)
+		symbols.Set(Self, self)
+	}
+	callback, code := function.Callable.Call()
+	var result IObject
+	var callError *errors.Error
+	if callback != nil {
+		result, callError = callback(vm, arguments...)
+	} else if code != nil {
+		vm.PushSymbolTable(symbols)
+		vm.LoadCode(code)
+		result, callError = vm.Execute()
+	} else {
+		panic("callback and code are nil")
+	}
+	if callError != nil {
+		return nil, callError
+	}
+	return result, nil
+}
+
 func ObjAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 	self := arguments[0]
 	leftToBool, foundError := self.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
-	var leftBool IObject
-	var transformationError *errors.Error
 	if _, ok := leftToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, leftToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
-	leftBool, transformationError = leftToBool.(*Function).Callable.Call(self.SymbolTable(), vm, self)
+	leftBool, transformationError := CallFunction(leftToBool.(*Function), vm, self.SymbolTable(), self)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-
 	other := arguments[1]
 	var rightToBool interface{}
 	rightToBool, foundError = other.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
-	var rightBool IObject
 	if _, ok := rightToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, rightToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
-	rightBool, transformationError = rightToBool.(*Function).Callable.Call(other.SymbolTable(), vm, other)
+	var rightBool IObject
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, other.SymbolTable(), other)
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -342,27 +301,24 @@ func ObjRightAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 	if foundError != nil {
 		return nil, foundError
 	}
-	var rightBool IObject
-	var transformationError *errors.Error
 	if _, ok := rightToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, rightToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
-	rightBool, transformationError = rightToBool.(*Function).Callable.Call(self.SymbolTable(), vm, self)
+	rightBool, transformationError := CallFunction(rightToBool.(*Function), vm, self.SymbolTable(), self)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-
 	other := arguments[1]
 	var leftToBool interface{}
 	leftToBool, foundError = other.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
-	var leftBool IObject
 	if _, ok := leftToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, leftToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
-	leftBool, transformationError = leftToBool.(*Function).Callable.Call(other.SymbolTable(), vm, other)
+	var leftBool IObject
+	leftBool, transformationError = CallFunction(leftToBool.(*Function), vm, other.SymbolTable(), other)
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -375,12 +331,10 @@ func ObjOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 	if foundError != nil {
 		return nil, foundError
 	}
-	var transformationError *errors.Error
 	if _, ok := leftToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, leftToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
-	var leftBool IObject
-	leftBool, transformationError = leftToBool.(*Function).Callable.Call(self.SymbolTable(), vm, self)
+	leftBool, transformationError := CallFunction(leftToBool.(*Function), vm, self.SymbolTable(), self)
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -392,10 +346,10 @@ func ObjOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, foundError
 	}
 	if _, ok := rightToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, rightToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
 	var rightBool IObject
-	rightBool, transformationError = rightToBool.(*Function).Callable.Call(other.SymbolTable(), vm, other)
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, other.SymbolTable(), other)
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -408,16 +362,13 @@ func ObjRightOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error
 	if foundError != nil {
 		return nil, foundError
 	}
-	var transformationError *errors.Error
 	if _, ok := rightToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, rightToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
-	var rightBool IObject
-	rightBool, transformationError = rightToBool.(*Function).Callable.Call(self.SymbolTable(), vm, self)
+	rightBool, transformationError := CallFunction(rightToBool.(*Function), vm, self.SymbolTable(), self)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-
 	other := arguments[0]
 	var leftToBool interface{}
 	leftToBool, foundError = other.Get(ToBool)
@@ -425,10 +376,10 @@ func ObjRightOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error
 		return nil, foundError
 	}
 	if _, ok := leftToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, leftToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
 	var leftBool IObject
-	leftBool, transformationError = leftToBool.(*Function).Callable.Call(other.SymbolTable(), vm, other)
+	leftBool, transformationError = CallFunction(leftToBool.(*Function), vm, other.SymbolTable(), other)
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -441,12 +392,10 @@ func ObjXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 	if foundError != nil {
 		return nil, foundError
 	}
-	var transformationError *errors.Error
 	if _, ok := leftToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, leftToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
-	var leftBool IObject
-	leftBool, transformationError = leftToBool.(*Function).Callable.Call(self.SymbolTable(), vm, self)
+	leftBool, transformationError := CallFunction(leftToBool.(*Function), vm, self.SymbolTable(), self)
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -458,10 +407,10 @@ func ObjXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, foundError
 	}
 	if _, ok := rightToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, rightToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
 	var rightBool IObject
-	rightBool, transformationError = rightToBool.(*Function).Callable.Call(other.SymbolTable(), vm, other)
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, other.SymbolTable(), other)
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -474,12 +423,10 @@ func ObjRightXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 	if foundError != nil {
 		return nil, foundError
 	}
-	var transformationError *errors.Error
 	if _, ok := leftToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, leftToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
-	var leftBool IObject
-	leftBool, transformationError = leftToBool.(*Function).Callable.Call(self.SymbolTable(), vm, self)
+	leftBool, transformationError := CallFunction(leftToBool.(*Function), vm, self.SymbolTable(), self)
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -491,10 +438,10 @@ func ObjRightXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 		return nil, foundError
 	}
 	if _, ok := rightToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, rightToBool.(IObject).TypeName())
+		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
 	var rightBool IObject
-	rightBool, transformationError = rightToBool.(*Function).Callable.Call(other.SymbolTable(), vm, other)
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, other.SymbolTable(), other)
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -527,20 +474,20 @@ func ObjRightNotEquals(_ VirtualMachine, arguments ...IObject) (IObject, *errors
 
 func ObjNegate(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 	self := arguments[0]
-	thisToBool, foundError := self.Get(ToBool)
+	selfToBool, foundError := self.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
-	var transformationError *errors.Error
-	if _, ok := thisToBool.(*Function); !ok {
-		return nil, errors.NewTypeError([]string{FunctionName, CallableName}, thisToBool.(IObject).TypeName())
+	if _, ok := selfToBool.(*Function); !ok {
+		return nil, errors.NewTypeError(selfToBool.(IObject).TypeName(), FunctionName)
 	}
-	var thisBool IObject
-	thisBool, transformationError = thisToBool.(Callable).Call(self.SymbolTable(), vm, self)
+	var selfBool IObject
+	var transformationError *errors.Error
+	selfBool, transformationError = CallFunction(selfToBool.(*Function), vm, self.SymbolTable(), self)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	return NewBool(self.SymbolTable().Parent, !thisBool.(*Bool).Value), nil
+	return NewBool(self.SymbolTable().Parent, !selfBool.(*Bool).Value), nil
 }
 
 func ObjToBool(_ VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -689,7 +636,7 @@ func StringAdd(_ VirtualMachine, arguments ...IObject) (IObject, *errors.Error) 
 	self := arguments[0]
 	other := arguments[1]
 	if _, ok := other.(*String); !ok {
-		return nil, errors.NewTypeError([]string{StringName}, other.TypeName())
+		return nil, errors.NewTypeError(other.TypeName(), StringName)
 	}
 	return NewString(
 		self.SymbolTable().Parent,
@@ -701,7 +648,7 @@ func StringRightAdd(_ VirtualMachine, arguments ...IObject) (IObject, *errors.Er
 	self := arguments[0]
 	other := arguments[1]
 	if _, ok := other.(*String); !ok {
-		return nil, errors.NewTypeError([]string{StringName}, other.TypeName())
+		return nil, errors.NewTypeError(other.TypeName(), StringName)
 	}
 	return NewString(
 		self.SymbolTable().Parent,
@@ -801,22 +748,24 @@ func NewBool(parentSymbols *SymbolTable, value bool) *Bool {
 	return bool_
 }
 
-func SetupDefaultTypes(vm VirtualMachine) {
+func SetDefaultSymbolTable() *SymbolTable {
+	symbolTable := NewSymbolTable(nil)
 	// String
-	vm.MasterSymbolTable().Set(StringName,
-		NewFunction(vm.MasterSymbolTable(),
-			NewBuiltInConstructor(1,
-				func(vm2 VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	symbolTable.Set(StringName,
+		NewFunction(symbolTable,
+			NewBuiltInFunction(1,
+				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 					toString, getError := arguments[0].Get(ToString)
 					if getError != nil {
 						return nil, getError
 					}
 					if _, ok := toString.(*Function); !ok {
-						return nil, errors.NewTypeError([]string{FunctionName}, toString.(IObject).TypeName())
+						return nil, errors.NewTypeError(toString.(IObject).TypeName(), FunctionName)
 					}
-					return toString.(*Function).Callable.Call(arguments[0].SymbolTable(), vm2, arguments[0])
+					return CallFunction(toString.(*Function), vm, arguments[0].SymbolTable().Parent, arguments[0])
 				},
 			),
 		),
 	)
+	return symbolTable
 }

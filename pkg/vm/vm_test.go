@@ -1,58 +1,114 @@
 package vm
 
-import (
-	"fmt"
-	"testing"
+import "testing"
+
+type Test struct {
+	code     []Code
+	result   interface{}
+	behavior uint
+}
+
+func NewTest(code []Code, result interface{}, behavior uint) Test {
+	return Test{
+		code:     code,
+		result:   result,
+		behavior: behavior,
+	}
+}
+
+const (
+	stringEquals uint = iota
 )
 
-func testMustSuccess(t *testing.T, samples map[string][]interface{}) {
-	for expectedResult, code := range samples {
+func testIt(t *testing.T, tests []Test) {
+	for _, test := range tests {
 		vm := NewPlasmaVM()
-		SetupDefaultTypes(vm)
-		vm.Initialize(code)
+		vm.Initialize(test.code)
 		result, executionError := vm.Execute()
 		if executionError != nil {
-			t.Error(executionError.String())
+			t.Error(executionError)
 			return
 		}
-		if result == nil {
-			t.Error(fmt.Sprintf("Expecting %s, received nil", expectedResult))
-			return
-		}
-		resultObject := result.(IObject)
-		toString, getError := resultObject.Get(ToString)
-		if getError != nil {
-			t.Error(getError.String())
-			return
-		}
-		var stringResult IObject
-		stringResult, executionError = toString.(*Function).Callable.Call(vm.masterSymbolTable, vm, resultObject)
-		if executionError != nil {
-			t.Error(executionError.String())
-			return
-		}
-		if stringResult.(*String).Value != expectedResult {
-			t.Errorf("Expecting: %s but received: %s", expectedResult, stringResult.(*String).Value)
+		switch test.behavior {
+		case stringEquals:
+
+			toString, getError := result.Get(ToString)
+			if getError != nil {
+				t.Error(getError)
+				return
+			}
+			if _, ok := toString.(*Function); !ok {
+				t.Errorf("ToString is not a function")
+				return
+			}
+			stringResult, callError := CallFunction(toString.(*Function), vm, result.SymbolTable(), result)
+			if callError != nil {
+				t.Error(callError)
+				return
+			}
+			if _, ok2 := stringResult.(*String); !ok2 {
+				t.Errorf("ToString doesn't return a string object")
+				return
+			}
+			if stringResult.(*String).Value != test.result.(string) {
+				t.Errorf("Expecting: %s but received: %s", test.result.(string), stringResult.(*String).Value)
+				return
+			}
 		}
 	}
 }
 
-var newOPSamples = map[string][]interface{}{
-	"Hello": {
-		NewStringOP, "Hello",
-		GetOP, StringName,
-		CallOP, 1,
-		ReturnOP,
-	},
-	"True": { // "Hello".ToBool()
-		NewStringOP, "Hello",
-		CopyOP, 2,
-		GetFromOP, ToBool,
-		CallOP, 1,
-		ReturnOP,
-	},
+var stringCreationSamples = []Test{
+	NewTest(
+		[]Code{
+			NewCode(ReturnOP, 1, nil),
+			NewCode(NoOP, 1, "Hello"),
+			NewCode(NewStringOP, 1, nil),
+		},
+		"Hello",
+		stringEquals,
+	),
+	NewTest(
+		[]Code{
+			NewCode(ReturnOP, 1, nil),
+			NewCode(NoOP, 1, "Carro"),
+			NewCode(NewStringOP, 1, nil),
+		},
+		"Carro",
+		stringEquals,
+	),
+	NewTest(
+		[]Code{
+			NewCode(ReturnOP, 1, nil),
+			NewCode(NoOP, 1, "45098430958"),
+			NewCode(NewStringOP, 1, nil),
+		},
+		"45098430958",
+		stringEquals,
+	),
 }
 
-func TestData(t *testing.T) {
-	testMustSuccess(t, newOPSamples)
+func TestStringCreation(t *testing.T) {
+	testIt(t, stringCreationSamples)
+}
+
+var stringBuiltInTransformationFunction = []Test{
+	NewTest(
+		[]Code{
+			NewCode(ReturnOP, 1, nil),
+			NewCode(NoOP, 1, 1),
+			NewCode(NoOP, 1, false),
+			NewCode(CallOP, 1, nil),
+			NewCode(NoOP, 1, StringName),
+			NewCode(GetOP, 1, nil),
+			NewCode(NoOP, 1, "Hello"),
+			NewCode(NewStringOP, 1, nil),
+		},
+		"Hello",
+		stringEquals,
+	),
+}
+
+func TestStringBuiltInTransformationFunction(t *testing.T) {
+	testIt(t, stringBuiltInTransformationFunction)
 }

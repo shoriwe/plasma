@@ -5,129 +5,112 @@ import (
 )
 
 type Plasma struct {
-	Code              []interface{}
-	Cursor            int
-	CodeLength        int
-	MemoryStack       Stack
-	masterSymbolTable *SymbolTable
+	Code        *Bytecode
+	MemoryStack *ObjectStack
+	Context     *SymbolStack
 }
 
-func (p *Plasma) GetStack() Stack {
-	return p.MemoryStack
+func (p *Plasma) LoadCode(codes []Code) {
+	for _, code := range codes {
+		p.Code.Push(code)
+	}
 }
 
-func (p *Plasma) Initialize(code []interface{}) *errors.Error {
-	p.Code = code
-	p.CodeLength = len(code)
+func (p *Plasma) PushSymbolTable(table *SymbolTable) {
+	p.Context.Push(table)
+}
+
+func (p *Plasma) Initialize(code []Code) *errors.Error {
+	p.Code = NewBytecodeFromArray(code)
 	p.MemoryStack.Clear()
+	p.Context.Clear()
+	p.Context.Push(SetDefaultSymbolTable())
 	return nil
 }
 
 func (p *Plasma) newStringOP() *errors.Error {
-	p.Cursor++
-	value := p.Code[p.Cursor].(string)
-	p.Cursor++
-	stringObject := NewString(p.masterSymbolTable, value)
+	value := p.Code.Next().Value.(string)
+	stringObject := NewString(p.Context.Peek(), value)
 	p.MemoryStack.Push(stringObject)
 	return nil
 }
 
-func (p *Plasma) newOp() *errors.Error {
-	p.Cursor++
-	type_ := p.MemoryStack.Pop().(*Function)
-	numberOfArguments := p.MemoryStack.Pop().(int)
-	var arguments []IObject
-	for i := 0; i < numberOfArguments; i++ {
-		arguments = append(arguments, p.MemoryStack.Pop().(IObject))
-	}
-	// Create the object
-	instance, creationError := type_.Callable.Call(p.masterSymbolTable, p, arguments...)
-	if creationError != nil {
-		return creationError
-	}
-	p.MemoryStack.Push(instance)
-	return nil
-}
-
 func (p *Plasma) callOP() *errors.Error {
-	p.Cursor++
-	numberOfArguments := p.Code[p.Cursor].(int)
-	p.Cursor++
-	caller := p.MemoryStack.Pop().(*Function)
+	function := p.MemoryStack.Pop()
+	if _, ok := function.(*Function); !ok {
+		var getError *errors.Error
+		function, getError = function.Get(Call)
+		if getError != nil {
+			return getError
+		}
+		if _, ok2 := function.(*Function); !ok2 {
+			return errors.New(errors.UnknownLine, "Expecting Function", "NonFunctionObjectReceived")
+		}
+	}
+	var parent *SymbolTable
+	if p.Code.Next().Value.(bool) {
+		parent = function.SymbolTable().Parent
+	} else {
+		parent = p.Context.Peek()
+	}
+	numberOfArguments := p.Code.Next().Value.(int)
 	var arguments []IObject
 	for i := 0; i < numberOfArguments; i++ {
-		arguments = append(arguments, p.MemoryStack.Pop().(IObject))
+		arguments = append(arguments, p.MemoryStack.Pop())
 	}
-	result, callError := caller.Callable.Call(p.MasterSymbolTable(), p, arguments...)
-	if callError != nil {
-		return callError
+	var result IObject
+	var callError *errors.Error
+	if _, ok3 := function.(*Function).Callable.(Constructor); ok3 {
+		result, callError = CallFunction(function.(*Function), p, parent, nil)
+		if callError != nil {
+			return callError
+		}
+		resultInit, getError := result.Get(Initialize)
+		if getError != nil {
+			return getError
+		}
+		if _, ok4 := resultInit.(*Function); !ok4 {
+			return errors.New(errors.UnknownLine, "Expecting Function", "NonFunctionObjectReceived")
+		}
+		_, callError = CallFunction(resultInit.(*Function), p, result.SymbolTable(), result, arguments...)
+		if callError != nil {
+			return callError
+		}
+	} else {
+		result, callError = CallFunction(function.(*Function), p, parent, nil, arguments...)
+		if callError != nil {
+			return callError
+		}
 	}
 	p.MemoryStack.Push(result)
 	return nil
 }
 
 func (p *Plasma) getOP() *errors.Error {
-	p.Cursor++
-	name := p.Code[p.Cursor].(string)
-	p.Cursor++
-	obj, getError := p.masterSymbolTable.GetSelf(name)
+	name := p.Code.Next().Value.(string)
+	result, getError := p.Context.Peek().GetAny(name)
 	if getError != nil {
 		return getError
 	}
-	p.MemoryStack.Push(obj)
+	p.MemoryStack.Push(result)
 	return nil
 }
 
 func (p *Plasma) getFromOP() *errors.Error {
-	p.Cursor++
-	name := p.Code[p.Cursor].(string)
-	p.Cursor++
-	obj := p.MemoryStack.Pop().(IObject)
-	target, getError := obj.Get(name)
+	name := p.Code.Next().Value.(string)
+	result, getError := p.Context.Pop().GetSelf(name)
 	if getError != nil {
 		return getError
 	}
-	p.MemoryStack.Push(target)
-	return nil
-}
-
-func (p *Plasma) pushN_OP() *errors.Error {
-	p.Cursor++
-	numberOfElements := p.Code[p.Cursor].(int)
-	p.Cursor++
-	for i := 0; i < numberOfElements; i++ {
-		value := p.Code[p.Cursor]
-		p.Cursor++
-		pushError := p.MemoryStack.Push(value)
-		if pushError != nil {
-			return pushError
-		}
-	}
-	return nil
-}
-
-func (p *Plasma) pushOP() *errors.Error {
-	p.Cursor++
-	value := p.Code[p.Cursor]
-	p.Cursor++
-	return p.MemoryStack.Push(value)
-}
-
-func (p *Plasma) copyOP() *errors.Error {
-	p.Cursor++
-	repeat := p.Code[p.Cursor].(int)
-	p.Cursor++
-	obj := p.MemoryStack.Pop().(IObject)
-	for i := 0; i < repeat; i++ {
-		p.MemoryStack.Push(obj)
-	}
+	p.MemoryStack.Push(result)
 	return nil
 }
 
 func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
-	for ; p.Cursor < p.CodeLength; {
-		switch p.Code[p.Cursor].(uint16) {
+	for ; p.Code.HasNext(); {
+		code := p.Code.Next()
+		switch code.Instruction.OpCode {
 		case NewStringOP:
 			executionError = p.newStringOP()
 		case CallOP:
@@ -136,19 +119,13 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.getOP()
 		case GetFromOP:
 			executionError = p.getFromOP()
-		case PushOP:
-			executionError = p.pushOP()
-		case PushN_OP:
-			executionError = p.pushN_OP()
-		case CopyOP:
-			executionError = p.copyOP()
 		case ReturnOP:
-			if p.MemoryStack.HashNext() {
-				return p.MemoryStack.Pop().(IObject), nil
+			if p.MemoryStack.HasNext() {
+				return p.MemoryStack.Pop(), nil
 			}
 			return nil, nil
 		default:
-			return nil, errors.NewUnknownVMOperationError(p.Code[p.Cursor].(uint16))
+			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}
 		if executionError != nil {
 			return nil, executionError
@@ -157,25 +134,10 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 	return nil, nil
 }
 
-func (p *Plasma) New(symbolTable *SymbolTable) VirtualMachine {
-	return &Plasma{
-		Code:              nil,
-		Cursor:            0,
-		CodeLength:        0,
-		MemoryStack:       NewArrayStack(),
-		masterSymbolTable: symbolTable,
-	}
-}
-
-func (p *Plasma) MasterSymbolTable() *SymbolTable {
-	return p.masterSymbolTable
-}
-
 func NewPlasmaVM() *Plasma {
 	return &Plasma{
-		Code:              nil,
-		Cursor:            0,
-		MemoryStack:       NewArrayStack(),
-		masterSymbolTable: NewSymbolTable(nil),
+		Code:        nil,
+		MemoryStack: NewObjectStack(),
+		Context:     NewSymbolStack(),
 	}
 }

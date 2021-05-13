@@ -32,7 +32,7 @@ func NewInvalidNumberOfArguments(received int, expecting int) *Error {
 	return New(UnknownLine, fmt.Sprintf(ExpectingNArgumentsMessage, expecting, received), TypeError)
 }
 
-func NewTypeError(expecting []string, received string) *Error {
+func NewTypeError(received string, expecting ...string) *Error {
 	return New(UnknownLine, fmt.Sprintf("Expecting %s but received %s", expecting, received), TypeError)
 }
 
@@ -44,6 +44,6 @@ func NewStackOverflowError() *Error {
 	return New(UnknownLine, StackOverflowMessage, StackOverflowError)
 }
 
-func NewUnknownVMOperationError(operation uint16) *Error {
+func NewUnknownVMOperationError(operation uint8) *Error {
 	return New(UnknownLine, fmt.Sprintf("unknown operation with value %d", operation), UnknownVmOperationError)
 }
