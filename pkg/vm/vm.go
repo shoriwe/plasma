@@ -7,4 +7,6 @@ type VirtualMachine interface {
 	Execute() (IObject, *errors.Error)
 	LoadCode([]Code)
 	PushSymbolTable(*SymbolTable)
+	PeekSymbolTable() *SymbolTable
+	PopSymbolTable() *SymbolTable
 }

@@ -41,7 +41,7 @@ func testIt(t *testing.T, tests []Test) {
 				t.Errorf("ToString is not a function")
 				return
 			}
-			stringResult, callError := CallFunction(toString.(*Function), vm, result.SymbolTable(), result)
+			stringResult, callError := CallFunction(toString.(*Function), vm, result.SymbolTable())
 			if callError != nil {
 				t.Error(callError)
 				return

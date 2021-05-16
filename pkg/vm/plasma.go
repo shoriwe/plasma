@@ -20,6 +20,10 @@ func (p *Plasma) PushSymbolTable(table *SymbolTable) {
 	p.Context.Push(table)
 }
 
+func (p *Plasma) PopSymbolTable() *SymbolTable {
+	return p.Context.Pop()
+}
+
 func (p *Plasma) Initialize(code []Code) *errors.Error {
 	p.Code = NewBytecodeFromArray(code)
 	p.MemoryStack.Clear()
@@ -28,6 +32,9 @@ func (p *Plasma) Initialize(code []Code) *errors.Error {
 	return nil
 }
 
+func (p *Plasma) PeekSymbolTable() *SymbolTable {
+	return p.Context.Peek()
+}
 func (p *Plasma) newStringOP() *errors.Error {
 	value := p.Code.Next().Value.(string)
 	stringObject := NewString(p.Context.Peek(), value)
@@ -72,12 +79,12 @@ func (p *Plasma) callOP() *errors.Error {
 		if _, ok4 := resultInit.(*Function); !ok4 {
 			return errors.New(errors.UnknownLine, "Expecting Function", "NonFunctionObjectReceived")
 		}
-		_, callError = CallFunction(resultInit.(*Function), p, result.SymbolTable(), result, arguments...)
+		_, callError = CallFunction(resultInit.(*Function), p, result.SymbolTable(), arguments...)
 		if callError != nil {
 			return callError
 		}
 	} else {
-		result, callError = CallFunction(function.(*Function), p, parent, nil, arguments...)
+		result, callError = CallFunction(function.(*Function), p, parent, arguments...)
 		if callError != nil {
 			return callError
 		}
@@ -108,6 +115,7 @@ func (p *Plasma) getFromOP() *errors.Error {
 
 func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
+	defer p.PopSymbolTable()
 	for ; p.Code.HasNext(); {
 		code := p.Code.Next()
 		switch code.Instruction.OpCode {
@@ -131,6 +139,7 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			return nil, executionError
 		}
 	}
+
 	return nil, nil
 }
 
