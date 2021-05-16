@@ -1572,12 +1572,12 @@ func FloatToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	return NewString(vm.PeekSymbolTable(), fmt.Sprint(self.(*Float).Value)), nil
 }
 
-func FloatToFloat(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+func FloatToInteger(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	self, getError := vm.PeekSymbolTable().GetSelf(Self)
 	if getError != nil {
 		return nil, getError
 	}
-	return NewFloat(vm.PeekSymbolTable(), self.(*Float).Value), nil
+	return NewInteger(vm.PeekSymbolTable(), int64(self.(*Float).Value)), nil
 }
 
 func FloatAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -1985,54 +1985,40 @@ func FloatRightLessThanOrEqual(vm VirtualMachine, arguments ...IObject) (IObject
 
 /*
 	Supported methods
-	// Unary Operations
-	NegBits
-	Negate
 	// Binary Operations
 	//// Basic Binary
-	Add          Integer or Float
-	RightAdd     Integer or Float
-	Sub          Integer or Float
-	RightSub     Integer or Float
-	Mul          Integer or Float
-	RightMul     Integer or Float
-	Div          Integer or Float
-	RightDiv     Integer or Float
-	Mod          Integer or Float
-	RightMod     Integer or Float
-	Pow          Integer or Float
-	RightPow     Integer or Float
-	//// Bitwise Binary
-	BitXor
-	RightBitXor
-	BitAnd
-	RightBitAnd
-	BitOr
-	RightBitOr
-	BitLeft
-	RightBitLeft
-	BitRight
-	RightBitRight
+	Add          Integer or Float  - (Done)
+	RightAdd     Integer or Float  - (Done)
+	Sub          Integer or Float  - (Done)
+	RightSub     Integer or Float  - (Done)
+	Mul          Integer or Float  - (Done)
+	RightMul     Integer or Float  - (Done)
+	Div          Integer or Float  - (Done)
+	RightDiv     Integer or Float  - (Done)
+	Mod          Integer or Float  - (Done)
+	RightMod     Integer or Float  - (Done)
+	Pow          Integer or Float  - (Done)
+	RightPow     Integer or Float  - (Done)
 	//// Comparison Binary
-	Equals                        Integer or Float
-	RightEquals                   Integer or Float
-	NotEquals                     Integer or Float
-	RightNotEquals                Integer or Float
-	GreaterThan                   Integer or Float
-	RightGreaterThan              Integer or Float
-	LessThan                      Integer or Float
-	RightLessThan                 Integer or Float
-	GreaterThanOrEqual            Integer or Float
-	RightGreaterThanOrEqual       Integer or Float
-	LessThanOrEqual               Integer or Float
-	RightLessThanOrEqual          Integer or Float
+	Equals                        Integer or Float    - (Done)
+	RightEquals                   Integer or Float    - (Done)
+	NotEquals                     Integer or Float    - (Done)
+	RightNotEquals                Integer or Float    - (Done)
+	GreaterThan                   Integer or Float    - (Done)
+	RightGreaterThan              Integer or Float    - (Done)
+	LessThan                      Integer or Float    - (Done)
+	RightLessThan                 Integer or Float    - (Done)
+	GreaterThanOrEqual            Integer or Float    - (Done)
+	RightGreaterThanOrEqual       Integer or Float    - (Done)
+	LessThanOrEqual               Integer or Float    - (Done)
+	RightLessThanOrEqual          Integer or Float    - (Done)
 	// Behavior
-	Copy
+	Copy          - (Done)
 	// Transformation
-	ToInteger
-	ToFloat
-	ToString
-	ToBool
+	ToInteger    - (Done)
+	ToFloat      - (Done)
+	ToString     - (Done)
+	ToBool       - (Done)
 */
 func NewFloat(parentSymbols *SymbolTable, value float64) *Float {
 	float_ := &Float{
@@ -2068,8 +2054,8 @@ func NewFloat(parentSymbols *SymbolTable, value float64) *Float {
 
 	float_.Set(Copy, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatCopy)))
 
+	float_.Set(ToInteger, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatToInteger)))
 	float_.Set(ToFloat, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatCopy)))
-	float_.Set(ToFloat, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatToFloat)))
 	float_.Set(ToString, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatToString)))
 	float_.Set(ToBool, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatToBool)))
 	return float_
