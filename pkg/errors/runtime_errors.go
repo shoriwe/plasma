@@ -9,11 +9,13 @@ const (
 
 // Errors Types
 const (
-	UnknownVmOperationError    = "UnknownVMOperationError"
-	StackOverflowError         = "StackOverflowError"
-	TypeError                  = "TypeError"
-	OperationNotSupportedError = "OperationNotSupportedError"
-	NameNotFoundError          = "NameNotFoundError"
+	UnknownVmOperationError      = "UnknownVMOperationError"
+	StackOverflowError           = "StackOverflowError"
+	TypeError                    = "TypeError"
+	OperationNotSupportedError   = "OperationNotSupportedError"
+	NameNotFoundError            = "NameNotFoundError"
+	IndexError                   = "IndexError"
+	InvalidNumberDefinitionError = "InvalidNumberDefinitionError"
 )
 
 // Errors Messages
@@ -23,6 +25,18 @@ const (
 	OperationNotSupportedMessage = "Operation not supported"
 	NameNotFoundMessage          = "\"Name not found\""
 )
+
+func NewInvalidFloatDefinition(line int, s string) *Error {
+	return New(line, fmt.Sprintf("Invalid Float definition: %s", s), InvalidNumberDefinitionError)
+}
+
+func NewInvalidIntegerDefinition(line int, s string) *Error {
+	return New(line, fmt.Sprintf("Invalid Integer definition: %s", s), InvalidNumberDefinitionError)
+}
+
+func NewIndexOutOfRange(line int, length int, index int) *Error {
+	return New(line, fmt.Sprintf("index %d out of bound for a %d container", index, length), IndexError)
+}
 
 func NewOperationNotSupportedError() *Error {
 	return New(UnknownLine, OperationNotSupportedMessage, OperationNotSupportedError)

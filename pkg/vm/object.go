@@ -4,8 +4,45 @@ import (
 	"fmt"
 	"github.com/shoriwe/gruby/pkg/errors"
 	"math"
+	"regexp"
+	"strconv"
+	"strings"
 	"sync"
 )
+
+var (
+	integerPattern = regexp.MustCompile("[-]\\d+(_\\d)*")
+	hexPattern     = regexp.MustCompile("[-]\\d+(_\\d)*")
+	octalPattern   = regexp.MustCompile("[-]\\d+(_\\d)*")
+	binaryPattern  = regexp.MustCompile("[-]\\d+(_\\d)*")
+)
+
+var (
+	floatPattern      = regexp.MustCompile("[-]\\d+(_\\d)*((\\.\\d+(_\\d)*([eE]-\\d+)?)|([eE]-\\d+))")
+	scientificPattern = regexp.MustCompile("[-]\\d+(_\\d)*")
+)
+
+func ParseInteger(s string) (string, int, bool) {
+	if integerPattern.MatchString(s) {
+		return strings.ReplaceAll(s, "_", ""), 10, true
+	} else if hexPattern.MatchString(s) {
+
+	} else if octalPattern.MatchString(s) {
+
+	} else if binaryPattern.MatchString(s) {
+
+	}
+	return "", 0, false
+}
+
+func ParseFloat(s string) (string, bool) {
+	if floatPattern.MatchString(s) {
+		return strings.ReplaceAll(s, "_", ""), true
+	} else if scientificPattern.MatchString(s) {
+
+	}
+	return "", false
+}
 
 func Repeat(s string, times int64) string {
 	result := ""
@@ -14,6 +51,20 @@ func Repeat(s string, times int64) string {
 		result += s
 	}
 	return result
+}
+
+func CalcIndex(object IObject, length int) (int, *errors.Error) {
+	index := int(object.(*Integer).Value)
+	if length <= index {
+		return 0, errors.NewIndexOutOfRange(errors.UnknownLine, length, index)
+	}
+	if index < 0 {
+		index = length + index
+		if index < 0 {
+			return 0, errors.NewIndexOutOfRange(errors.UnknownLine, length, index)
+		}
+	}
+	return index, nil
 }
 
 const (
@@ -214,7 +265,6 @@ func (c *PlasmaConstructor) Call() (IObject, FunctionCallback, []Code) {
 	return nil, nil, c.Code
 }
 
-// self should  be used  at function definition time
 func NewPlasmaConstructor(numberOfArguments int, code []Code) *PlasmaConstructor {
 	return &PlasmaConstructor{
 		numberOfArguments: numberOfArguments,
@@ -334,9 +384,9 @@ func ObjAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	other := arguments[1]
+	right := arguments[1]
 	var rightToBool interface{}
-	rightToBool, foundError = other.Get(ToBool)
+	rightToBool, foundError = right.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
@@ -344,11 +394,11 @@ func ObjAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
 	var rightBool IObject
-	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, other.SymbolTable(), other)
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, right.SymbolTable(), right)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	return NewBool(leftBool.SymbolTable().Parent, leftBool.(*Bool).Value && rightBool.(*Bool).Value), nil
+	return NewBool(vm.PeekSymbolTable(), leftBool.(*Bool).Value && rightBool.(*Bool).Value), nil
 }
 
 func ObjRightAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -367,9 +417,9 @@ func ObjRightAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	other := arguments[1]
+	left := arguments[1]
 	var leftToBool interface{}
-	leftToBool, foundError = other.Get(ToBool)
+	leftToBool, foundError = left.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
@@ -377,11 +427,11 @@ func ObjRightAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
 	var leftBool IObject
-	leftBool, transformationError = CallFunction(leftToBool.(*Function), vm, other.SymbolTable(), other)
+	leftBool, transformationError = CallFunction(leftToBool.(*Function), vm, left.SymbolTable(), left)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	return NewBool(rightBool.SymbolTable().Parent, leftBool.(*Bool).Value && rightBool.(*Bool).Value), nil
+	return NewBool(vm.PeekSymbolTable(), leftBool.(*Bool).Value && rightBool.(*Bool).Value), nil
 }
 
 func ObjOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -401,9 +451,9 @@ func ObjOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, transformationError
 	}
 
-	other := arguments[1]
+	right := arguments[1]
 	var rightToBool interface{}
-	rightToBool, foundError = other.Get(ToBool)
+	rightToBool, foundError = right.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
@@ -411,11 +461,11 @@ func ObjOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
 	var rightBool IObject
-	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, other.SymbolTable(), other)
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, right.SymbolTable(), right)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	return NewBool(leftBool.SymbolTable().Parent, leftBool.(*Bool).Value || rightBool.(*Bool).Value), nil
+	return NewBool(vm.PeekSymbolTable(), leftBool.(*Bool).Value || rightBool.(*Bool).Value), nil
 }
 
 func ObjRightOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -434,9 +484,9 @@ func ObjRightOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	other := arguments[0]
+	left := arguments[0]
 	var leftToBool interface{}
-	leftToBool, foundError = other.Get(ToBool)
+	leftToBool, foundError = left.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
@@ -444,11 +494,11 @@ func ObjRightOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error
 		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
 	var leftBool IObject
-	leftBool, transformationError = CallFunction(leftToBool.(*Function), vm, other.SymbolTable(), other)
+	leftBool, transformationError = CallFunction(leftToBool.(*Function), vm, left.SymbolTable(), left)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	return NewBool(rightBool.SymbolTable().Parent, leftBool.(*Bool).Value || rightBool.(*Bool).Value), nil
+	return NewBool(vm.PeekSymbolTable(), leftBool.(*Bool).Value || rightBool.(*Bool).Value), nil
 }
 
 func ObjXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -468,7 +518,7 @@ func ObjXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, transformationError
 	}
 
-	other := arguments[1]
+	right := arguments[1]
 	var rightToBool interface{}
 	rightToBool, foundError = arguments[1].Get(ToBool)
 	if foundError != nil {
@@ -478,11 +528,11 @@ func ObjXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
 	var rightBool IObject
-	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, other.SymbolTable(), other)
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, right.SymbolTable(), right)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	return NewBool(leftBool.SymbolTable().Parent, leftBool.(*Bool).Value != rightBool.(*Bool).Value), nil
+	return NewBool(vm.PeekSymbolTable(), leftBool.(*Bool).Value != rightBool.(*Bool).Value), nil
 }
 
 func ObjRightXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -502,7 +552,7 @@ func ObjRightXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 		return nil, transformationError
 	}
 
-	other := arguments[0]
+	left := arguments[0]
 	var rightToBool interface{}
 	rightToBool, foundError = arguments[1].Get(ToBool)
 	if foundError != nil {
@@ -512,11 +562,11 @@ func ObjRightXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
 	var rightBool IObject
-	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, other.SymbolTable(), other)
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, left.SymbolTable(), left)
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	return NewBool(leftBool.SymbolTable().Parent, rightBool.(*Bool).Value != leftBool.(*Bool).Value), nil
+	return NewBool(vm.PeekSymbolTable(), rightBool.(*Bool).Value != leftBool.(*Bool).Value), nil
 }
 
 func ObjEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -524,8 +574,8 @@ func ObjEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error)
 	if getError != nil {
 		return nil, getError
 	}
-	other := arguments[1]
-	return NewBool(self.SymbolTable().Parent, self.Id() == other.Id()), nil
+	right := arguments[1]
+	return NewBool(vm.PeekSymbolTable(), self.Id() == right.Id()), nil
 }
 
 func ObjRightEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -533,8 +583,8 @@ func ObjRightEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.E
 	if getError != nil {
 		return nil, getError
 	}
-	other := arguments[0]
-	return NewBool(self.SymbolTable().Parent, other.Id() == self.Id()), nil
+	left := arguments[0]
+	return NewBool(vm.PeekSymbolTable(), left.Id() == self.Id()), nil
 }
 
 func ObjNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -542,8 +592,8 @@ func ObjNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Err
 	if getError != nil {
 		return nil, getError
 	}
-	other := arguments[1]
-	return NewBool(self.SymbolTable().Parent, self.Id() != other.Id()), nil
+	right := arguments[1]
+	return NewBool(vm.PeekSymbolTable(), self.Id() != right.Id()), nil
 }
 
 func ObjRightNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -551,8 +601,8 @@ func ObjRightNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *error
 	if getError != nil {
 		return nil, getError
 	}
-	other := arguments[0]
-	return NewBool(self.SymbolTable().Parent, other.Id() != self.Id()), nil
+	left := arguments[0]
+	return NewBool(vm.PeekSymbolTable(), left.Id() != self.Id()), nil
 }
 
 func ObjNegate(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
@@ -573,15 +623,11 @@ func ObjNegate(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	return NewBool(self.SymbolTable().Parent, !selfBool.(*Bool).Value), nil
+	return NewBool(vm.PeekSymbolTable(), !selfBool.(*Bool).Value), nil
 }
 
 func ObjToBool(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
-	self, getError := vm.PeekSymbolTable().GetSelf(Self)
-	if getError != nil {
-		return nil, getError
-	}
-	return NewBool(self.SymbolTable().Parent, true), nil
+	return NewBool(vm.PeekSymbolTable(), true), nil
 }
 
 func ObjToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
@@ -589,15 +635,12 @@ func ObjToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	return NewString(self.SymbolTable().Parent,
+	return NewString(vm.PeekSymbolTable(),
 		fmt.Sprintf("%s-%d", self.TypeName(), self.Id())), nil
 }
 
 const FunctionName = "Function"
 
-/*
-   Should have only Call
-*/
 type Function struct {
 	*Object
 	Callable Callable
@@ -616,25 +659,33 @@ func NewFunction(parentSymbols *SymbolTable, callable Callable) *Function {
 	return function
 }
 
+// NewObject Creates an Empty Object
 /*
-   Classes will be handled as functions
-*/
-// Creates an Empty Object
-/*
-   Pre-implemented methods
-   And - (Done)
-   Or - (Done)
-   Xor - (Done)
-   Equals  - (Done)
-   NotEquals - (Done)
-   Negate - (Done)
-   Initialize - (Done)
-   ToString - (Done)
-   ToBool - (Done)
-   Copy SymbolTable only
-   Dir SymbolTable to Special Hash
-   SubClasses
-   Class
+	Negate
+	//// Logical Binary
+	And           - (Done)
+	RightAnd      - (Done)
+	Or            - (Done)
+	RightOr       - (Done)
+	Xor           - (Done)
+	RightXor      - (Done)
+	//// Comparison Binary
+	Equals            - (Done)
+	RightEquals       - (Done)
+	NotEquals         - (Done)
+	RightNotEquals    - (Done)
+	// Behavior
+	Assign
+	Copy
+	Dir
+	Index
+	Call
+	Iter
+	Class
+	SubClasses
+	// Transformation
+	ToString
+	ToBool - (Done)
 */
 func NewObject(
 	typeName string,
@@ -721,7 +772,8 @@ const StringName = "String"
 
 type String struct {
 	*Object
-	Value string
+	Value  string
+	Length int
 }
 
 func StringAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -729,13 +781,13 @@ func StringAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error)
 	if getError != nil {
 		return nil, getError
 	}
-	other := arguments[1]
-	if _, ok := other.(*String); !ok {
-		return nil, errors.NewTypeError(other.TypeName(), StringName)
+	right := arguments[1]
+	if _, ok := right.(*String); !ok {
+		return nil, errors.NewTypeError(right.TypeName(), StringName)
 	}
 	return NewString(
-		self.SymbolTable().Parent,
-		self.(*String).Value+other.(*String).Value,
+		vm.PeekSymbolTable(),
+		self.(*String).Value+right.(*String).Value,
 	), nil
 }
 
@@ -744,13 +796,43 @@ func StringRightAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.E
 	if getError != nil {
 		return nil, getError
 	}
-	other := arguments[1]
-	if _, ok := other.(*String); !ok {
-		return nil, errors.NewTypeError(other.TypeName(), StringName)
+	left := arguments[1]
+	if _, ok := left.(*String); !ok {
+		return nil, errors.NewTypeError(left.TypeName(), StringName)
 	}
 	return NewString(
-		self.SymbolTable().Parent,
-		other.(*String).Value+self.(*String).Value,
+		vm.PeekSymbolTable(),
+		left.(*String).Value+self.(*String).Value,
+	), nil
+}
+
+func StringMul(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	right := arguments[1]
+	if _, ok := right.(*Integer); !ok {
+		return nil, errors.NewTypeError(right.TypeName(), IntegerName)
+	}
+	return NewString(
+		vm.PeekSymbolTable(),
+		Repeat(self.(*String).Value, right.(*Integer).Value),
+	), nil
+}
+
+func StringRightMul(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	left := arguments[1]
+	if _, ok := left.(*Integer); !ok {
+		return nil, errors.NewTypeError(left.TypeName(), IntegerName)
+	}
+	return NewString(
+		vm.PeekSymbolTable(),
+		Repeat(self.(*String).Value, left.(*Integer).Value),
 	), nil
 }
 
@@ -760,7 +842,7 @@ func StringCopy(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		return nil, getError
 	}
 	return NewString(
-		self.SymbolTable().Parent,
+		vm.PeekSymbolTable(),
 		self.(*String).Value,
 	), nil
 }
@@ -770,7 +852,7 @@ func StringToBool(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	return NewBool(self.SymbolTable().Parent, len(self.(*String).Value) != 0), nil
+	return NewBool(vm.PeekSymbolTable(), self.(*String).Length != 0), nil
 }
 
 func StringEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -780,9 +862,9 @@ func StringEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Err
 	}
 	right := arguments[0]
 	if _, ok := right.(*String); !ok {
-		return NewBool(self.SymbolTable().Parent, false), nil
+		return NewBool(vm.PeekSymbolTable(), false), nil
 	}
-	return NewBool(self.SymbolTable().Parent, self.(*String).Value == right.(*String).Value), nil
+	return NewBool(vm.PeekSymbolTable(), self.(*String).Value == right.(*String).Value), nil
 }
 
 func StringRightEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -792,9 +874,9 @@ func StringRightEquals(vm VirtualMachine, arguments ...IObject) (IObject, *error
 	}
 	left := arguments[0]
 	if _, ok := left.(*String); !ok {
-		return NewBool(self.SymbolTable().Parent, false), nil
+		return NewBool(vm.PeekSymbolTable(), false), nil
 	}
-	return NewBool(self.SymbolTable().Parent, left.(*String).Value == self.(*String).Value), nil
+	return NewBool(vm.PeekSymbolTable(), left.(*String).Value == self.(*String).Value), nil
 }
 
 func StringNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -804,9 +886,9 @@ func StringNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.
 	}
 	right := arguments[0]
 	if _, ok := right.(*String); !ok {
-		return NewBool(self.SymbolTable().Parent, false), nil
+		return NewBool(vm.PeekSymbolTable(), false), nil
 	}
-	return NewBool(self.SymbolTable().Parent, self.(*String).Value != right.(*String).Value), nil
+	return NewBool(vm.PeekSymbolTable(), self.(*String).Value != right.(*String).Value), nil
 }
 
 func StringRightNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -816,28 +898,112 @@ func StringRightNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *er
 	}
 	left := arguments[0]
 	if _, ok := left.(*String); !ok {
-		return NewBool(self.SymbolTable().Parent, false), nil
+		return NewBool(vm.PeekSymbolTable(), false), nil
 	}
-	return NewBool(self.SymbolTable().Parent, left.(*String).Value != self.(*String).Value), nil
+	return NewBool(vm.PeekSymbolTable(), left.(*String).Value != self.(*String).Value), nil
+}
+
+func StringIndex(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	indexObject := arguments[0]
+	if _, ok := indexObject.(*Integer); !ok {
+		return nil, errors.NewTypeError(indexObject.TypeName(), IntegerName)
+	}
+	index, getIndexError := CalcIndex(indexObject, self.(*String).Length)
+	if getIndexError != nil {
+		return nil, getIndexError
+	}
+	return NewString(vm.PeekSymbolTable(), string(self.(*String).Value[index])), nil
+}
+
+func StringToInteger(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	content, base, valid := ParseInteger(self.(*String).Value)
+	if !valid {
+		return nil, errors.NewInvalidIntegerDefinition(errors.UnknownLine, self.(*String).Value)
+	}
+	number, parsingError := strconv.ParseInt(content, base, 64)
+	if parsingError != nil {
+		return nil, errors.NewInvalidIntegerDefinition(errors.UnknownLine, self.(*String).Value)
+	}
+	return NewInteger(vm.PeekSymbolTable(), number), nil
+}
+
+func StringToFloat(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	content, valid := ParseFloat(self.(*String).Value)
+	if !valid {
+		return nil, errors.NewInvalidFloatDefinition(errors.UnknownLine, self.(*String).Value)
+	}
+	number, parsingError := strconv.ParseFloat(content, 64)
+	if parsingError != nil {
+		return nil, errors.NewInvalidFloatDefinition(errors.UnknownLine, self.(*String).Value)
+	}
+	return NewFloat(vm.PeekSymbolTable(), number), nil
+}
+
+func StringToArray(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	var content []IObject
+	for _, char := range self.(*String).Value {
+		content = append(content, NewString(
+			vm.PeekSymbolTable(), string(char),
+		),
+		)
+	}
+	return NewArray(vm.PeekSymbolTable(), content), nil
+}
+
+func StringToTuple(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	var content []IObject
+	for _, char := range self.(*String).Value {
+		content = append(content, NewString(
+			vm.PeekSymbolTable(), string(char),
+		),
+		)
+	}
+	return NewTuple(vm.PeekSymbolTable(), content), nil
 }
 
 /*
-	Methods for Strings
-	Supported Binary Operations
-	Add Strings only - (Done)
-	Mul String with integer
-	Class
-	SubClasses
+	// Binary Operations
+	//// Basic Binary
+	Add         String only - (Done)
+	RightAdd    String only - (Done)
+	Mul         String with Integer only      - (Done)
+	RightMul    String with Integer only      - (Done)
+	//// Comparison Binary
+	Equals              String only - (Done)
+	RightEquals         String only - (Done)
+	NotEquals           String only - (Done)
+	RightNotEquals      String only - (Done)
+	// Behavior
+	Copy               - (Done)
+	Index
 	Iter
-	Assign
-	Equals - (Done)
-	NotEquals - (Done)
-	Index - Integer or Tuple
-	Copy - (Done)
-	ToString - (Done)
+	// Transformation
 	ToInteger
 	ToFloat
-	ToBool - (Done)
+	ToString       - (Done)
+	ToBool
+	ToArray
+	ToTuple
 */
 func NewString(
 	parentSymbols *SymbolTable,
@@ -846,18 +1012,28 @@ func NewString(
 	string_ := &String{
 		Object: NewObject(StringName, nil, parentSymbols),
 		Value:  value,
+		Length: len(value),
 	}
 	string_.Set(Add, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 1, StringAdd)))
 	string_.Set(RightAdd, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 1, StringRightAdd)))
-	string_.Set(ToString, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringCopy)))
-	string_.Set(Copy, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringCopy)))
-	string_.Set(ToBool, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToBool)))
+	string_.Set(Mul, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 1, StringMul)))
+	string_.Set(RightMul, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 1, StringRightMul)))
+
 	string_.Set(Equals, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringEquals)))
 	string_.Set(RightEquals, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringRightEquals)))
 	string_.Set(NotEquals, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringNotEquals)))
 	string_.Set(RightNotEquals, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringRightNotEquals)))
-	// string_.Set(ToInteger, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToInteger)))
-	// string_.Set(ToFloat, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToFloat)))
+
+	string_.Set(Copy, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringCopy)))
+	string_.Set(Index, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringIndex)))
+	// string_.Set(Iter, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringIter)))
+
+	string_.Set(ToInteger, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToInteger)))
+	string_.Set(ToFloat, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToFloat)))
+	string_.Set(ToString, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringCopy)))
+	string_.Set(ToBool, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToBool)))
+	string_.Set(ToArray, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToArray)))
+	string_.Set(ToTuple, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToTuple)))
 	return string_
 }
 
@@ -2069,12 +2245,32 @@ type Array struct {
 	Length  int
 }
 
+func NewArray(parentSymbols *SymbolTable, content []IObject) *Array {
+	array := &Array{
+		Object:  NewObject(ArrayName, nil, parentSymbols),
+		Content: content,
+		Length:  len(content),
+	}
+
+	return array
+}
+
 const TupleName = "Tuple"
 
 type Tuple struct {
 	*Object
 	Content []IObject
 	Length  int
+}
+
+func NewTuple(parentSymbols *SymbolTable, content []IObject) *Tuple {
+	tuple := &Tuple{
+		Object:  NewObject(TupleName, nil, parentSymbols),
+		Content: content,
+		Length:  len(content),
+	}
+
+	return tuple
 }
 
 const BoolName = "Bool"
@@ -2087,23 +2283,125 @@ type Bool struct {
 	Value bool
 }
 
+func BoolEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	right := arguments[0]
+	if _, ok := right.(*Bool); !ok {
+		return NewBool(vm.PeekSymbolTable(), false), nil
+	}
+	return NewBool(vm.PeekSymbolTable(), self.(*Bool).Value == right.(*Bool).Value), nil
+}
+
+func BoolRightEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	left := arguments[0]
+	if _, ok := left.(*Bool); !ok {
+		return NewBool(vm.PeekSymbolTable(), false), nil
+	}
+	return NewBool(vm.PeekSymbolTable(), left.(*Bool).Value == self.(*Bool).Value), nil
+}
+
+func BoolNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	right := arguments[0]
+	if _, ok := right.(*Bool); !ok {
+		return NewBool(vm.PeekSymbolTable(), false), nil
+	}
+	return NewBool(vm.PeekSymbolTable(), self.(*Bool).Value != right.(*Bool).Value), nil
+}
+
+func BoolRightNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	left := arguments[0]
+	if _, ok := left.(*Bool); !ok {
+		return NewBool(vm.PeekSymbolTable(), false), nil
+	}
+	return NewBool(vm.PeekSymbolTable(), left.(*Bool).Value != self.(*Bool).Value), nil
+}
+
+func BoolCopy(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewBool(vm.PeekSymbolTable(), self.(*Bool).Value), nil
+}
+
+func BoolToInteger(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	if self.(*Bool).Value {
+		return NewInteger(vm.PeekSymbolTable(), 1), nil
+	}
+	return NewInteger(vm.PeekSymbolTable(), 0), nil
+}
+
+func BoolToFloat(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	if self.(*Bool).Value {
+		return NewFloat(vm.PeekSymbolTable(), 1), nil
+	}
+	return NewFloat(vm.PeekSymbolTable(), 0), nil
+}
+
 func BoolToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	self, getError := vm.PeekSymbolTable().GetSelf(Self)
 	if getError != nil {
 		return nil, getError
 	}
 	if self.(*Bool).Value {
-		return NewString(self.SymbolTable().Parent, TrueName), nil
+		return NewString(vm.PeekSymbolTable(), TrueName), nil
 	}
-	return NewString(self.SymbolTable().Parent, FalseName), nil
+	return NewString(vm.PeekSymbolTable(), FalseName), nil
 }
+
+/*
+	// Binary Operations
+	//// Comparison Binary
+	Equals - (Done)
+	RightEquals - (Done)
+	NotEquals
+	RightNotEquals
+	// Behavior
+	Copy
+	// Transformation
+	ToInteger
+	ToFloat
+	ToString   - (Done)
+	ToBool
+*/
 
 func NewBool(parentSymbols *SymbolTable, value bool) *Bool {
 	bool_ := &Bool{
 		Object: NewObject(BoolName, nil, parentSymbols),
 		Value:  value,
 	}
+	bool_.Set(Equals, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 1, BoolEquals)))
+	bool_.Set(RightEquals, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 1, BoolRightEquals)))
+	bool_.Set(NotEquals, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 1, BoolNotEquals)))
+	bool_.Set(RightNotEquals, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 1, BoolRightNotEquals)))
+	bool_.Set(Copy, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolCopy)))
+	bool_.Set(ToInteger, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolToInteger)))
+	bool_.Set(ToFloat, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolToFloat)))
 	bool_.Set(ToString, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolToString)))
+	bool_.Set(ToBool, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolCopy)))
 	return bool_
 }
 
