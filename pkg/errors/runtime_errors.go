@@ -16,6 +16,7 @@ const (
 	NameNotFoundError            = "NameNotFoundError"
 	IndexError                   = "IndexError"
 	InvalidNumberDefinitionError = "InvalidNumberDefinitionError"
+	StringHashingError           = "StringHashingError"
 )
 
 // Errors Messages
@@ -26,6 +27,9 @@ const (
 	NameNotFoundMessage          = "\"Name not found\""
 )
 
+func NewHashingStringError() *Error {
+	return New(UnknownLine, "Unknown cause for hashing error", StringHashingError)
+}
 func NewInvalidFloatDefinition(line int, s string) *Error {
 	return New(line, fmt.Sprintf("Invalid Float definition: %s", s), InvalidNumberDefinitionError)
 }

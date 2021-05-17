@@ -2,12 +2,15 @@ package vm
 
 import (
 	"github.com/shoriwe/gruby/pkg/errors"
+	"hash"
+	"hash/crc64"
 )
 
 type Plasma struct {
 	Code        *Bytecode
 	MemoryStack *ObjectStack
 	Context     *SymbolStack
+	Crc64Hash   hash.Hash64
 }
 
 func (p *Plasma) LoadCode(codes []Code) {
@@ -143,10 +146,21 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 	return nil, nil
 }
 
+func (p *Plasma) HashString(s string) (int64, *errors.Error) {
+	_, hashingError := p.Crc64Hash.Write([]byte(s))
+	if hashingError != nil {
+		return 0, errors.NewHashingStringError()
+	}
+	hashValue := p.Crc64Hash.Sum64()
+	p.Crc64Hash.Reset()
+	return int64(hashValue), nil
+}
+
 func NewPlasmaVM() *Plasma {
 	return &Plasma{
 		Code:        nil,
 		MemoryStack: NewObjectStack(),
 		Context:     NewSymbolStack(),
+		Crc64Hash:   crc64.New(crc64.MakeTable(9223372036854775807)),
 	}
 }
