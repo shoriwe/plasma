@@ -17,6 +17,7 @@ const (
 	IndexError                   = "IndexError"
 	InvalidNumberDefinitionError = "InvalidNumberDefinitionError"
 	StringHashingError           = "StringHashingError"
+	UnhashableTypeError          = "UnhashableTypeError"
 )
 
 // Errors Messages
@@ -27,6 +28,9 @@ const (
 	NameNotFoundMessage          = "\"Name not found\""
 )
 
+func NewUnhashableTypeError(line int) *Error {
+	return New(line, "Object Type is unhashable", UnhashableTypeError)
+}
 func NewHashingStringError() *Error {
 	return New(UnknownLine, "Unknown cause for hashing error", StringHashingError)
 }
