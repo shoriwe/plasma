@@ -1794,62 +1794,6 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Erro
 	}, nil
 }
 
-func (parser *Parser) parseStructStatement() (*ast.StructStatement, *errors.Error) {
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	if !parser.matchKind(lexer.IdentifierKind) {
-		return nil, newNonIdentifierReceivedError(parser.currentLine(), StructStatement)
-	}
-	name := &ast.Identifier{
-		Token: parser.currentToken,
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	if !parser.matchDirect(lexer.NewLine) {
-		return nil, newSyntaxError(parser.currentLine(), StructStatement)
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	var fields []*ast.Identifier
-	for ; !parser.complete; {
-		if parser.matchDirect(lexer.End) {
-			break
-		} else if parser.matchKind(lexer.Separator) {
-			tokenizingError = parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
-			continue
-		} else if !parser.matchKind(lexer.IdentifierKind) {
-			return nil, newNonIdentifierReceivedError(parser.currentLine(), StructStatement)
-		}
-		fields = append(fields, &ast.Identifier{
-			Token: parser.currentToken,
-		})
-		tokenizingError = parser.next()
-		if tokenizingError != nil {
-			return nil, tokenizingError
-		}
-	}
-	if !parser.matchDirect(lexer.End) {
-		return nil, newStatementNeverEndedError(parser.currentLine(), StructStatement)
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	return &ast.StructStatement{
-		Name:   name,
-		Fields: fields,
-	}, nil
-}
-
 func (parser *Parser) parseDeferStatement() (*ast.DeferStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -1866,25 +1810,6 @@ func (parser *Parser) parseDeferStatement() (*ast.DeferStatement, *errors.Error)
 		}, nil
 	default:
 		return nil, newNonFunctionCallReceivedError(parser.currentLine(), DeferStatement)
-	}
-}
-
-func (parser *Parser) parseGoStatement() (*ast.GoStatement, *errors.Error) {
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	methodInvocation, parsingError := parser.parseBinaryExpression(0)
-	if parsingError != nil {
-		return nil, parsingError
-	}
-	switch methodInvocation.(type) {
-	case *ast.MethodInvocationExpression:
-		return &ast.GoStatement{
-			X: methodInvocation.(*ast.MethodInvocationExpression),
-		}, nil
-	default:
-		return nil, newNonFunctionCallReceivedError(parser.currentLine(), GoStatement)
 	}
 }
 
@@ -2029,62 +1954,6 @@ func (parser *Parser) parsePassStatement() (*ast.PassStatement, *errors.Error) {
 	return &ast.PassStatement{}, nil
 }
 
-func (parser *Parser) parseEnumStatement() (*ast.EnumStatement, *errors.Error) { // What about initializing it's identifiers with an specific value?
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	if !parser.matchKind(lexer.IdentifierKind) {
-		return nil, newNonIdentifierReceivedError(parser.currentLine(), EnumStatement)
-	}
-	namespace := &ast.Identifier{
-		Token: parser.currentToken,
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	if !parser.matchDirect(lexer.NewLine) {
-		return nil, newSyntaxError(parser.currentLine(), EnumStatement)
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	var identifiers []*ast.Identifier
-	for ; !parser.complete; {
-		if parser.matchDirect(lexer.End) {
-			break
-		} else if parser.matchKind(lexer.Separator) {
-			tokenizingError = parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
-			continue
-		} else if !parser.matchKind(lexer.IdentifierKind) {
-			return nil, newNonIdentifierReceivedError(parser.currentLine(), EnumStatement)
-		}
-		identifiers = append(identifiers, &ast.Identifier{
-			Token: parser.currentToken,
-		})
-		tokenizingError = parser.next()
-		if tokenizingError != nil {
-			return nil, tokenizingError
-		}
-	}
-	if !parser.matchDirect(lexer.End) {
-		return nil, newStatementNeverEndedError(parser.currentLine(), EnumStatement)
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	return &ast.EnumStatement{
-		Name:            namespace,
-		EnumIdentifiers: identifiers,
-	}, nil
-}
-
 func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 	switch parser.currentToken.Kind {
 	case lexer.Literal, lexer.Boolean, lexer.NoneType:
@@ -2120,8 +1989,6 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 			return parser.parseFunctionDefinitionStatement()
 		case lexer.Async:
 			return parser.parseAsyncFunctionDefinitionStatement()
-		case lexer.Struct:
-			return parser.parseStructStatement()
 		case lexer.Interface:
 			return parser.parseInterfaceStatement()
 		case lexer.Defer:
@@ -2132,8 +1999,6 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 			return parser.parseRaiseStatement()
 		case lexer.Try:
 			return parser.parseTryStatement()
-		case lexer.Go:
-			return parser.parseGoStatement()
 		case lexer.Return:
 			return parser.parseReturnStatement()
 		case lexer.Yield:
@@ -2148,8 +2013,6 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 			return parser.parseRedoStatement()
 		case lexer.Pass:
 			return parser.parsePassStatement()
-		case lexer.Enum:
-			return parser.parseEnumStatement()
 		case lexer.GoTo:
 			return parser.parseGoToStatement()
 		case lexer.Do:

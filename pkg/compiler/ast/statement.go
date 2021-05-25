@@ -102,12 +102,6 @@ type AsyncFunctionDefinitionStatement struct {
 	Body      []Node
 }
 
-type StructStatement struct {
-	Statement
-	Name   *Identifier
-	Fields []*Identifier
-}
-
 type InterfaceStatement struct {
 	Statement
 	Name                   *Identifier
@@ -121,12 +115,6 @@ type ClassStatement struct {
 	Name  *Identifier
 	Bases []Expression // Identifiers and selectors
 	Body  []Node
-}
-
-type EnumStatement struct {
-	Statement
-	Name            *Identifier
-	EnumIdentifiers []*Identifier
 }
 
 type ExceptBlock struct {
@@ -155,11 +143,6 @@ type BeginStatement struct {
 type EndStatement struct {
 	Statement
 	Body []Node
-}
-
-type GoStatement struct {
-	Statement
-	X *MethodInvocationExpression
 }
 
 type ReturnStatement struct {

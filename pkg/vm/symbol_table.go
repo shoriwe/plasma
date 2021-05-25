@@ -37,6 +37,12 @@ func (symbolTable *SymbolTable) GetAny(symbol string) (IObject, *errors.Error) {
 	return result, nil
 }
 
+func (symbolTable *SymbolTable) Update(newEntries map[string]IObject) {
+	for key, value := range newEntries {
+		symbolTable.Symbols[key] = value
+	}
+}
+
 func NewSymbolTable(parentSymbols *SymbolTable) *SymbolTable {
 	return &SymbolTable{
 		Parent:  parentSymbols,

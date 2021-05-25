@@ -31,7 +31,6 @@ func testIt(t *testing.T, tests []Test) {
 		}
 		switch test.behavior {
 		case stringEquals:
-
 			toString, getError := result.Get(ToString)
 			if getError != nil {
 				t.Error(getError)
@@ -99,7 +98,7 @@ var stringBuiltInTransformationFunction = []Test{
 			NewCode(NoOP, 1, 1),
 			NewCode(NoOP, 1, false),
 			NewCode(CallOP, 1, nil),
-			NewCode(NoOP, 1, StringName),
+			NewCode(NoOP, 1, ToString),
 			NewCode(GetOP, 1, nil),
 			NewCode(NoOP, 1, "Hello"),
 			NewCode(NewStringOP, 1, nil),

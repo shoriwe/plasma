@@ -45,16 +45,45 @@ func (p *Plasma) newStringOP() *errors.Error {
 	return nil
 }
 
+func (p *Plasma) constructObject(type_ *Type) *errors.Error {
+	object, constructionError := ConstructObject(type_, p, p.PeekSymbolTable())
+	if constructionError != nil {
+		return constructionError
+	}
+	initFunc, getError := object.Get(Initialize)
+	if getError != nil {
+		return getError
+	}
+	if _, ok := initFunc.(*Function); !ok {
+		return errors.NewTypeError(initFunc.TypeName(), FunctionName)
+	}
+	numberOfArguments := p.Code.Next().Value.(int)
+	var arguments []IObject
+	for i := 0; i < numberOfArguments; i++ {
+		arguments = append(arguments, p.MemoryStack.Pop())
+	}
+	_, callError := CallFunction(initFunc.(*Function), p, object.SymbolTable(), arguments...)
+	if callError != nil {
+		return callError
+	}
+	p.MemoryStack.Push(object)
+	return nil
+}
+
 func (p *Plasma) callOP() *errors.Error {
 	function := p.MemoryStack.Pop()
 	if _, ok := function.(*Function); !ok {
-		var getError *errors.Error
-		function, getError = function.Get(Call)
-		if getError != nil {
-			return getError
-		}
-		if _, ok2 := function.(*Function); !ok2 {
-			return errors.New(errors.UnknownLine, "Expecting Function", "NonFunctionObjectReceived")
+		if _, ok = function.(*Type); ok {
+			return p.constructObject(function.(*Type))
+		} else {
+			var getError *errors.Error
+			function, getError = function.Get(Call)
+			if getError != nil {
+				return getError
+			}
+			if _, ok2 := function.(*Function); !ok2 {
+				return errors.New(errors.UnknownLine, "Expecting Function", "NonFunctionObjectReceived")
+			}
 		}
 	}
 	var parent *SymbolTable

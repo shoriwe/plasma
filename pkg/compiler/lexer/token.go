@@ -218,7 +218,6 @@ var (
 	ModuleString       = "module"
 	DefString          = "def"
 	LambdaString       = "lambda"
-	StructString       = "struct"
 	InterfaceString    = "interface"
 	GoString           = "go"
 	ClassString        = "class"

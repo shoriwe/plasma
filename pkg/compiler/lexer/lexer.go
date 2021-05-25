@@ -301,8 +301,6 @@ func guessKind(buffer []byte) (uint8, uint8) {
 		return Keyboard, Def
 	case LambdaString:
 		return Keyboard, Lambda
-	case StructString:
-		return Keyboard, Struct
 	case InterfaceString:
 		return Keyboard, Interface
 	case GoString:

@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	TypeName     = "Type"
 	ObjectName   = "Object"
 	FunctionName = "Function"
 	StringName   = "String"
@@ -25,7 +26,79 @@ const (
 	NoneName     = "NoneType"
 	BytesName    = "Bytes"
 	HashName     = "Hash"
+	IterName     = "Iterator"
+	ModuleName   = "Module"
 	None         = "None"
+)
+
+const (
+	Self = "self"
+	// IObject Creation
+	Initialize = "Initialize" // Executed just after New
+	// Unary Operations
+	NegBits = "NegBits"
+	Negate  = "Negate"
+	// Binary Operations
+	//// Basic Binary
+	Add      = "Add"
+	RightAdd = "RightAdd"
+	Sub      = "Sub"
+	RightSub = "RightSub"
+	Mul      = "Mul"
+	RightMul = "RightMul"
+	Div      = "Div"
+	RightDiv = "RightDiv"
+	Mod      = "Mod"
+	RightMod = "RightMod"
+	Pow      = "Pow"
+	RightPow = "RightPow"
+	//// Bitwise Binary
+	BitXor        = "BitXor"
+	RightBitXor   = "RightBitXor"
+	BitAnd        = "BitAnd"
+	RightBitAnd   = "RightBitAnd"
+	BitOr         = "BitOr"
+	RightBitOr    = "RightBitOr"
+	BitLeft       = "BitLeft"
+	RightBitLeft  = "RightBitLeft"
+	BitRight      = "BitRight"
+	RightBitRight = "RightBitRight"
+	//// Logical Binary
+	And      = "And"
+	RightAnd = "RightAnd"
+	Or       = "Or"
+	RightOr  = "RightOr"
+	Xor      = "Xor"
+	RightXor = "RightXor"
+	//// Comparison Binary
+	Equals                  = "Equals"
+	RightEquals             = "RightEquals"
+	NotEquals               = "NotEquals"
+	RightNotEquals          = "RightNotEquals"
+	GreaterThan             = "GreaterThan"
+	RightGreaterThan        = "RightGreaterThan"
+	LessThan                = "LessThan"
+	RightLessThan           = "RightLessThan"
+	GreaterThanOrEqual      = "GreaterThanOrEqual"
+	RightGreaterThanOrEqual = "RightGreaterThanOrEqual"
+	LessThanOrEqual         = "LessThanOrEqual"
+	RightLessThanOrEqual    = "RightLessThanOrEqual"
+	// Behavior
+	Hash       = "Hash"
+	Copy       = "Copy"
+	Index      = "Index"
+	Assign     = "Assign"
+	Call       = "Call"
+	Iter       = "Iter"
+	Class      = "Class"
+	SubClasses = "SubClasses"
+	// Transformation
+	ToInteger = "ToInteger"
+	ToFloat   = "ToFloat"
+	ToString  = "ToString"
+	ToBool    = "ToBool"
+	ToArray   = "ToArray"
+	ToTuple   = "ToTuple"
 )
 
 var (
@@ -87,77 +160,6 @@ func CalcIndex(object IObject, length int) (int, *errors.Error) {
 	return index, nil
 }
 
-const (
-	Self = "self"
-	// IObject Creation
-	Initialize = "Initialize" // Executed just after New
-	// Unary Operations
-	NegBits = "NegBits"
-	Negate  = "Negate"
-	// Binary Operations
-	//// Basic Binary
-	Add      = "Add"
-	RightAdd = "RightAdd"
-	Sub      = "Sub"
-	RightSub = "RightSub"
-	Mul      = "Mul"
-	RightMul = "RightMul"
-	Div      = "Div"
-	RightDiv = "RightDiv"
-	Mod      = "Mod"
-	RightMod = "RightMod"
-	Pow      = "Pow"
-	RightPow = "RightPow"
-	//// Bitwise Binary
-	BitXor        = "BitXor"
-	RightBitXor   = "RightBitXor"
-	BitAnd        = "BitAnd"
-	RightBitAnd   = "RightBitAnd"
-	BitOr         = "BitOr"
-	RightBitOr    = "RightBitOr"
-	BitLeft       = "BitLeft"
-	RightBitLeft  = "RightBitLeft"
-	BitRight      = "BitRight"
-	RightBitRight = "RightBitRight"
-	//// Logical Binary
-	And      = "And"
-	RightAnd = "RightAnd"
-	Or       = "Or"
-	RightOr  = "RightOr"
-	Xor      = "Xor"
-	RightXor = "RightXor"
-	//// Comparison Binary
-	Equals                  = "Equals"
-	RightEquals             = "RightEquals"
-	NotEquals               = "NotEquals"
-	RightNotEquals          = "RightNotEquals"
-	GreaterThan             = "GreaterThan"
-	RightGreaterThan        = "RightGreaterThan"
-	LessThan                = "LessThan"
-	RightLessThan           = "RightLessThan"
-	GreaterThanOrEqual      = "GreaterThanOrEqual"
-	RightGreaterThanOrEqual = "RightGreaterThanOrEqual"
-	LessThanOrEqual         = "LessThanOrEqual"
-	RightLessThanOrEqual    = "RightLessThanOrEqual"
-	// Behavior
-	Hash       = "Hash"
-	Copy       = "Copy"
-	Dir        = "Dir"
-	Index      = "Index"
-	Assign     = "Assign"
-	Call       = "Call"
-	Iter       = "Iter"
-	Class      = "Class"
-	SubClasses = "SubClasses"
-	// Transformation
-	ToInteger = "ToInteger"
-	ToFloat   = "ToFloat"
-	ToString  = "ToString"
-	ToBool    = "ToBool"
-	ToArray   = "ToArray"
-	ToTuple   = "ToTuple"
-)
-
 type ObjCounter struct {
 	currentId uint
 	mutex     *sync.Mutex
@@ -181,11 +183,6 @@ type FunctionCallback func(VirtualMachine, ...IObject) (IObject, *errors.Error)
 type Callable interface {
 	NumberOfArguments() int
 	Call() (IObject, FunctionCallback, []Code) // self should return directly the object or the code of the function
-}
-
-type Constructor interface {
-	Callable
-	C()
 }
 
 type PlasmaFunction struct {
@@ -272,45 +269,42 @@ func NewBuiltInClassFunction(self IObject, numberOfArguments int, callback Funct
 	}
 }
 
+type Constructor interface {
+	Initialize(VirtualMachine, IObject) *errors.Error
+}
+
 type PlasmaConstructor struct {
 	Constructor
-	numberOfArguments int
-	Code              []Code
+	Code []Code
 }
 
-func (c *PlasmaConstructor) NumberOfArguments() int {
-	return c.numberOfArguments
+func (c *PlasmaConstructor) Initialize(vm VirtualMachine, object IObject) *errors.Error {
+	vm.LoadCode(c.Code)
+	vm.PushSymbolTable(object.SymbolTable())
+	_, executionError := vm.Execute()
+	return executionError
 }
 
-func (c *PlasmaConstructor) Call() (IObject, FunctionCallback, []Code) {
-	return nil, nil, c.Code
-}
-
-func NewPlasmaConstructor(numberOfArguments int, code []Code) *PlasmaConstructor {
+func NewPlasmaConstructor(code []Code) *PlasmaConstructor {
 	return &PlasmaConstructor{
-		numberOfArguments: numberOfArguments,
-		Code:              code,
+		Code: code,
 	}
 }
 
+type ConstructorCallBack func(VirtualMachine, IObject) *errors.Error
+
 type BuiltInConstructor struct {
 	Constructor
-	numberOfArguments int
-	callback          FunctionCallback
+	callback ConstructorCallBack
 }
 
-func (c *BuiltInConstructor) NumberOfArguments() int {
-	return c.numberOfArguments
+func (c *BuiltInConstructor) Initialize(vm VirtualMachine, object IObject) *errors.Error {
+	return c.callback(vm, object)
 }
 
-func (c *BuiltInConstructor) Call() (IObject, FunctionCallback, []Code) {
-	return nil, c.callback, nil
-}
-
-func NewBuiltInConstructor(numberOfArguments int, callback FunctionCallback) *BuiltInConstructor {
+func NewBuiltInConstructor(callback ConstructorCallBack) *BuiltInConstructor {
 	return &BuiltInConstructor{
-		numberOfArguments: numberOfArguments,
-		callback:          callback,
+		callback: callback,
 	}
 }
 
@@ -324,7 +318,7 @@ type IObject interface {
 	Id() uint
 	TypeName() string
 	SymbolTable() *SymbolTable
-	SubClasses() []*Function
+	SubClasses() []*Type
 	Get(string) (IObject, *errors.Error)
 	Set(string, IObject)
 	GetHash() int64
@@ -335,7 +329,7 @@ type IObject interface {
 type Object struct {
 	id             uint
 	typeName       string
-	subClasses     []*Function
+	subClasses     []*Type
 	symbols        *SymbolTable
 	virtualMachine VirtualMachine
 	hash           int64
@@ -345,7 +339,7 @@ func (o *Object) Id() uint {
 	return o.id
 }
 
-func (o *Object) SubClasses() []*Function {
+func (o *Object) SubClasses() []*Type {
 	return o.subClasses
 }
 
@@ -378,6 +372,9 @@ func ObjInitialize(_ VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 }
 
 func CallFunction(function *Function, vm VirtualMachine, parent *SymbolTable, arguments ...IObject) (IObject, *errors.Error) {
+	if function.Callable.NumberOfArguments() != len(arguments) {
+		return nil, errors.NewInvalidNumberOfArguments(len(arguments), function.Callable.NumberOfArguments())
+	}
 	symbols := NewSymbolTable(parent)
 	self, callback, code := function.Callable.Call()
 	if self != nil {
@@ -398,6 +395,17 @@ func CallFunction(function *Function, vm VirtualMachine, parent *SymbolTable, ar
 		return nil, callError
 	}
 	return result, nil
+}
+
+func ConstructObject(type_ *Type, vm VirtualMachine, parent *SymbolTable) (IObject, *errors.Error) {
+	object := NewObject(type_.typeName, type_.subClasses, parent)
+	for _, subclass := range object.subClasses {
+		initializationError := subclass.Constructor.Initialize(vm, object)
+		if initializationError != nil {
+			return nil, initializationError
+		}
+	}
+	return object, nil
 }
 
 func ObjAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -687,7 +695,6 @@ func ObjHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	return NewInteger(vm.PeekSymbolTable(), self.GetHash()), nil
 }
 
-// NewObject Creates an Empty Object
 /*
 	Negate
 	//// Logical Binary
@@ -715,86 +722,90 @@ func ObjHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	ToString - (Done)
 	ToBool - (Done)
 */
+func ObjectInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.SymbolTable().Update(map[string]IObject{
+		// IObject Creation
+		Initialize: NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjInitialize)),
+		// Unary Operations
+		NegBits: NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		Negate:  NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjNegate)),
+		// Binary Operations
+		//// Math binary
+		Add:           NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightAdd:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		Sub:           NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightSub:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		Mul:           NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightMul:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		Div:           NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightDiv:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		Mod:           NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightMod:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		Pow:           NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightPow:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		BitXor:        NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightBitXor:   NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		BitAnd:        NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightBitAnd:   NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		BitOr:         NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightBitOr:    NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		BitLeft:       NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightBitLeft:  NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		BitRight:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightBitRight: NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		//// Logical binary
+		And:      NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjAnd)),
+		RightAnd: NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjRightAnd)),
+		Or:       NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjOr)),
+		RightOr:  NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjRightOr)),
+		Xor:      NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjXor)),
+		RightXor: NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjRightXor)),
+		//// Comparison binary
+		Equals:                  NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjEquals)),
+		RightEquals:             NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjRightEquals)),
+		NotEquals:               NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjNotEquals)),
+		RightNotEquals:          NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjRightNotEquals)),
+		GreaterThan:             NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightGreaterThan:        NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		LessThan:                NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightLessThan:           NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		GreaterThanOrEqual:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightGreaterThanOrEqual: NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		LessThanOrEqual:         NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		RightLessThanOrEqual:    NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		// Behavior
+		Hash:       NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjHash)),
+		Copy:       NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		Index:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
+		Assign:     NewFunction(object.SymbolTable(), NewNotImplementedCallable(2)),
+		Call:       NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		Iter:       NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		Class:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		SubClasses: NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		// Transformation
+		ToInteger: NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		ToFloat:   NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		ToString:  NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjToString)),
+		ToBool:    NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjToBool)),
+		ToArray:   NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		ToTuple:   NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+	})
+	return nil
+}
+
+// NewObject Creates an Empty Object
 func NewObject(
 	typeName string,
-	subClasses []*Function,
+	subClasses []*Type,
 	parentSymbols *SymbolTable,
 ) *Object {
 	result := &Object{
 		id:         counter.NextId(),
 		typeName:   typeName,
 		subClasses: subClasses,
-		hash:       0,
+		symbols:    NewSymbolTable(parentSymbols),
 	}
-	result.symbols = NewSymbolTable(parentSymbols)
-	result.symbols.Symbols = map[string]IObject{
-		// IObject Creation
-		Initialize: NewFunction(result.symbols, NewBuiltInClassFunction(result, 0, ObjInitialize)),
-		// Unary Operations
-		NegBits: NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		Negate:  NewFunction(result.symbols, NewBuiltInClassFunction(result, 0, ObjNegate)),
-		// Binary Operations
-		//// Math binary
-		Add:           NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightAdd:      NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		Sub:           NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightSub:      NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		Mul:           NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightMul:      NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		Div:           NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightDiv:      NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		Mod:           NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightMod:      NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		Pow:           NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightPow:      NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		BitXor:        NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightBitXor:   NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		BitAnd:        NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightBitAnd:   NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		BitOr:         NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightBitOr:    NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		BitLeft:       NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightBitLeft:  NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		BitRight:      NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightBitRight: NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		//// Logical binary
-		And:      NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjAnd)),
-		RightAnd: NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjRightAnd)),
-		Or:       NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjOr)),
-		RightOr:  NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjRightOr)),
-		Xor:      NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjXor)),
-		RightXor: NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjRightXor)),
-		//// Comparison binary
-		Equals:                  NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjEquals)),
-		RightEquals:             NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjRightEquals)),
-		NotEquals:               NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjNotEquals)),
-		RightNotEquals:          NewFunction(result.symbols, NewBuiltInClassFunction(result, 1, ObjRightNotEquals)),
-		GreaterThan:             NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightGreaterThan:        NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		LessThan:                NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightLessThan:           NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		GreaterThanOrEqual:      NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightGreaterThanOrEqual: NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		LessThanOrEqual:         NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		RightLessThanOrEqual:    NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		// Behavior
-		Hash:       NewFunction(result.symbols, NewBuiltInClassFunction(result, 0, ObjHash)),
-		Copy:       NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		Dir:        NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		Index:      NewFunction(result.symbols, NewNotImplementedCallable(1)),
-		Assign:     NewFunction(result.symbols, NewNotImplementedCallable(2)),
-		Call:       NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		Iter:       NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		Class:      NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		SubClasses: NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		// Transformation
-		ToInteger: NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		ToFloat:   NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		ToString:  NewFunction(result.symbols, NewBuiltInClassFunction(result, 0, ObjToString)),
-		ToBool:    NewFunction(result.symbols, NewBuiltInClassFunction(result, 0, ObjToBool)),
-		ToArray:   NewFunction(result.symbols, NewNotImplementedCallable(0)),
-		ToTuple:   NewFunction(result.symbols, NewNotImplementedCallable(0)),
-	}
+	ObjectInitialize(nil, result)
 	return result
 }
 
@@ -1081,6 +1092,28 @@ func StringHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	ToArray        - (Done)
 	ToTuple        - (Done)
 */
+func StringInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.Set(Add, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringAdd)))
+	object.Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringRightAdd)))
+	object.Set(Mul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringMul)))
+	object.Set(RightMul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringRightMul)))
+	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringEquals)))
+	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringRightEquals)))
+	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringNotEquals)))
+	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringRightNotEquals)))
+	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringHash)))
+	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringCopy)))
+	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringIndex)))
+	// object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringIter)))
+	object.Set(ToInteger, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringToInteger)))
+	object.Set(ToFloat, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringToFloat)))
+	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringCopy)))
+	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringToBool)))
+	object.Set(ToArray, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringToArray)))
+	object.Set(ToTuple, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringToTuple)))
+	return nil
+}
+
 func NewString(
 	parentSymbols *SymbolTable,
 	value string,
@@ -1090,27 +1123,7 @@ func NewString(
 		Value:  value,
 		Length: len(value),
 	}
-	string_.Set(Add, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 1, StringAdd)))
-	string_.Set(RightAdd, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 1, StringRightAdd)))
-	string_.Set(Mul, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 1, StringMul)))
-	string_.Set(RightMul, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 1, StringRightMul)))
-
-	string_.Set(Equals, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringEquals)))
-	string_.Set(RightEquals, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringRightEquals)))
-	string_.Set(NotEquals, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringNotEquals)))
-	string_.Set(RightNotEquals, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringRightNotEquals)))
-
-	string_.Set(Hash, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringHash)))
-	string_.Set(Copy, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringCopy)))
-	string_.Set(Index, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringIndex)))
-	// string_.Set(Iter, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringIter)))
-
-	string_.Set(ToInteger, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToInteger)))
-	string_.Set(ToFloat, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToFloat)))
-	string_.Set(ToString, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringCopy)))
-	string_.Set(ToBool, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToBool)))
-	string_.Set(ToArray, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToArray)))
-	string_.Set(ToTuple, NewFunction(string_.symbols, NewBuiltInClassFunction(string_, 0, StringToTuple)))
+	StringInitialize(nil, string_)
 	return string_
 }
 
@@ -1593,31 +1606,36 @@ type Bytes struct {
 	ToArray         - (Done)
 	ToTuple         - (Done)
 */
+func BytesInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.Set(Add, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesAdd)))
+	object.Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesRightAdd)))
+	object.Set(Mul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesMul)))
+	object.Set(RightMul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesRightMul)))
+
+	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesEquals)))
+	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesRightEquals)))
+	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesNotEquals)))
+	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesRightNotEquals)))
+
+	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesHash)))
+	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesCopy)))
+	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesIndex)))
+
+	object.Set(ToInteger, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesToInteger)))
+	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesToString)))
+	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesToBool)))
+	object.Set(ToArray, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesToArray)))
+	object.Set(ToTuple, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesToTuple)))
+	return nil
+}
+
 func NewBytes(parent *SymbolTable, content []*Integer) IObject {
 	bytes_ := &Bytes{
 		Object:  NewObject(BytesName, nil, parent),
 		Content: content,
 		Length:  len(content),
 	}
-	bytes_.Set(Add, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 1, BytesAdd)))
-	bytes_.Set(RightAdd, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 1, BytesRightAdd)))
-	bytes_.Set(Mul, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 1, BytesMul)))
-	bytes_.Set(RightMul, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 1, BytesRightMul)))
-
-	bytes_.Set(Equals, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 1, BytesEquals)))
-	bytes_.Set(RightEquals, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 1, BytesRightEquals)))
-	bytes_.Set(NotEquals, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 1, BytesNotEquals)))
-	bytes_.Set(RightNotEquals, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 1, BytesRightNotEquals)))
-
-	bytes_.Set(Hash, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 0, BytesHash)))
-	bytes_.Set(Copy, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 0, BytesCopy)))
-	bytes_.Set(Index, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 1, BytesIndex)))
-
-	bytes_.Set(ToInteger, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 0, BytesToInteger)))
-	bytes_.Set(ToString, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 0, BytesToString)))
-	bytes_.Set(ToBool, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 0, BytesToBool)))
-	bytes_.Set(ToArray, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 0, BytesToArray)))
-	bytes_.Set(ToTuple, NewFunction(bytes_.symbols, NewBuiltInClassFunction(bytes_, 0, BytesToTuple)))
+	BytesInitialize(nil, bytes_)
 	return bytes_
 }
 
@@ -2261,58 +2279,62 @@ func IntegerHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	ToString - (Done)
 	ToBool - (Done)
 */
+func IntegerInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.SymbolTable().Set(NegBits, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerNegBits)))
+
+	object.SymbolTable().Set(Add, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerAdd)))
+	object.SymbolTable().Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightAdd)))
+	object.SymbolTable().Set(Sub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerSub)))
+	object.SymbolTable().Set(RightSub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightSub)))
+	object.SymbolTable().Set(Mul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerMul)))
+	object.SymbolTable().Set(RightMul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightMul)))
+	object.SymbolTable().Set(Div, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerDiv)))
+	object.SymbolTable().Set(RightDiv, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightDiv)))
+	object.SymbolTable().Set(Mod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerMod)))
+	object.SymbolTable().Set(RightMod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightMod)))
+	object.SymbolTable().Set(Pow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerPow)))
+	object.SymbolTable().Set(RightPow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightPow)))
+
+	object.SymbolTable().Set(BitXor, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitXor)))
+	object.SymbolTable().Set(RightBitXor, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitXor)))
+	object.SymbolTable().Set(BitAnd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitAnd)))
+	object.SymbolTable().Set(RightBitAnd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitAnd)))
+	object.SymbolTable().Set(BitOr, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitOr)))
+	object.SymbolTable().Set(RightBitOr, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitOr)))
+	object.SymbolTable().Set(BitLeft, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitLeft)))
+	object.SymbolTable().Set(RightBitLeft, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitLeft)))
+	object.SymbolTable().Set(BitRight, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitRight)))
+	object.SymbolTable().Set(RightBitRight, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitRight)))
+
+	object.SymbolTable().Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerEquals)))
+	object.SymbolTable().Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightEquals)))
+	object.SymbolTable().Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerNotEquals)))
+	object.SymbolTable().Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightNotEquals)))
+	object.SymbolTable().Set(GreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerGreaterThan)))
+	object.SymbolTable().Set(RightGreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightGreaterThan)))
+	object.SymbolTable().Set(LessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerLessThan)))
+	object.SymbolTable().Set(RightLessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightLessThan)))
+	object.SymbolTable().Set(GreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerGreaterThanOrEqual)))
+	object.SymbolTable().Set(RightGreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightGreaterThanOrEqual)))
+	object.SymbolTable().Set(LessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerLessThanOrEqual)))
+	object.SymbolTable().Set(RightLessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightLessThanOrEqual)))
+
+	object.SymbolTable().Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerHash)))
+	object.SymbolTable().Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerCopy)))
+
+	object.SymbolTable().Set(ToInteger, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerCopy)))
+	object.SymbolTable().Set(ToFloat, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerToFloat)))
+	object.SymbolTable().Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerToString)))
+	object.SymbolTable().Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerToBool)))
+	return nil
+}
+
 func NewInteger(parentSymbols *SymbolTable, value int64) *Integer {
 	integer := &Integer{
 		NewObject(IntegerName, nil, parentSymbols),
 		value,
 	}
-
-	integer.Set(NegBits, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerNegBits)))
-
-	integer.Set(Add, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerAdd)))
-	integer.Set(RightAdd, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightAdd)))
-	integer.Set(Sub, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerSub)))
-	integer.Set(RightSub, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightSub)))
-	integer.Set(Mul, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerMul)))
-	integer.Set(RightMul, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightMul)))
-	integer.Set(Div, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerDiv)))
-	integer.Set(RightDiv, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightDiv)))
-	integer.Set(Mod, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerMod)))
-	integer.Set(RightMod, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightMod)))
-	integer.Set(Pow, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerPow)))
-	integer.Set(RightPow, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightPow)))
-
-	integer.Set(BitXor, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerBitXor)))
-	integer.Set(RightBitXor, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightBitXor)))
-	integer.Set(BitAnd, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerBitAnd)))
-	integer.Set(RightBitAnd, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightBitAnd)))
-	integer.Set(BitOr, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerBitOr)))
-	integer.Set(RightBitOr, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightBitOr)))
-	integer.Set(BitLeft, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerBitLeft)))
-	integer.Set(RightBitLeft, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightBitLeft)))
-	integer.Set(BitRight, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerBitRight)))
-	integer.Set(RightBitRight, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightBitRight)))
-
-	integer.Set(Equals, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerEquals)))
-	integer.Set(RightEquals, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightEquals)))
-	integer.Set(NotEquals, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerNotEquals)))
-	integer.Set(RightNotEquals, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightNotEquals)))
-	integer.Set(GreaterThan, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerGreaterThan)))
-	integer.Set(RightGreaterThan, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightGreaterThan)))
-	integer.Set(LessThan, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerLessThan)))
-	integer.Set(RightLessThan, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightLessThan)))
-	integer.Set(GreaterThanOrEqual, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerGreaterThanOrEqual)))
-	integer.Set(RightGreaterThanOrEqual, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightGreaterThanOrEqual)))
-	integer.Set(LessThanOrEqual, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerLessThanOrEqual)))
-	integer.Set(RightLessThanOrEqual, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerRightLessThanOrEqual)))
-
-	integer.Set(Hash, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerHash)))
-	integer.Set(Copy, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerCopy)))
-
-	integer.Set(ToInteger, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerCopy)))
-	integer.Set(ToFloat, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerToFloat)))
-	integer.Set(ToString, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerToString)))
-	integer.Set(ToBool, NewFunction(integer.symbols, NewBuiltInClassFunction(integer, 0, IntegerToBool)))
+	IntegerInitialize(nil, integer)
 	return integer
 }
 
@@ -2801,7 +2823,7 @@ func FloatHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	LessThanOrEqual               Integer or Float    - (Done)
 	RightLessThanOrEqual          Integer or Float    - (Done)
 	// Behavior
-	Hash          - Done
+	Hash          - (Done)
 	Copy          - (Done)
 	// Transformation
 	ToInteger    - (Done)
@@ -2809,45 +2831,49 @@ func FloatHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	ToString     - (Done)
 	ToBool       - (Done)
 */
+func FloatInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.Set(Add, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatAdd)))
+	object.Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightAdd)))
+	object.Set(Sub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatSub)))
+	object.Set(RightSub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightSub)))
+	object.Set(Mul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatMul)))
+	object.Set(RightMul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightMul)))
+	object.Set(Div, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatDiv)))
+	object.Set(RightDiv, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightDiv)))
+	object.Set(Mod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatMod)))
+	object.Set(RightMod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightMod)))
+	object.Set(Pow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatPow)))
+	object.Set(RightPow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightPow)))
+
+	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatEquals)))
+	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightEquals)))
+	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatNotEquals)))
+	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightNotEquals)))
+	object.Set(GreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatGreaterThan)))
+	object.Set(RightGreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightGreaterThan)))
+	object.Set(LessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatLessThan)))
+	object.Set(RightLessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightLessThan)))
+	object.Set(GreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatGreaterThanOrEqual)))
+	object.Set(RightGreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightGreaterThanOrEqual)))
+	object.Set(LessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatLessThanOrEqual)))
+	object.Set(RightLessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightLessThanOrEqual)))
+
+	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatHash)))
+	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatCopy)))
+
+	object.Set(ToInteger, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatToInteger)))
+	object.Set(ToFloat, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatCopy)))
+	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatToString)))
+	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatToBool)))
+	return nil
+}
+
 func NewFloat(parentSymbols *SymbolTable, value float64) *Float {
 	float_ := &Float{
 		NewObject(IntegerName, nil, parentSymbols),
 		value,
 	}
-
-	float_.Set(Add, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatAdd)))
-	float_.Set(RightAdd, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightAdd)))
-	float_.Set(Sub, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatSub)))
-	float_.Set(RightSub, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightSub)))
-	float_.Set(Mul, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatMul)))
-	float_.Set(RightMul, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightMul)))
-	float_.Set(Div, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatDiv)))
-	float_.Set(RightDiv, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightDiv)))
-	float_.Set(Mod, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatMod)))
-	float_.Set(RightMod, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightMod)))
-	float_.Set(Pow, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatPow)))
-	float_.Set(RightPow, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightPow)))
-
-	float_.Set(Equals, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatEquals)))
-	float_.Set(RightEquals, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightEquals)))
-	float_.Set(NotEquals, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatNotEquals)))
-	float_.Set(RightNotEquals, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightNotEquals)))
-	float_.Set(GreaterThan, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatGreaterThan)))
-	float_.Set(RightGreaterThan, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightGreaterThan)))
-	float_.Set(LessThan, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatLessThan)))
-	float_.Set(RightLessThan, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightLessThan)))
-	float_.Set(GreaterThanOrEqual, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatGreaterThanOrEqual)))
-	float_.Set(RightGreaterThanOrEqual, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightGreaterThanOrEqual)))
-	float_.Set(LessThanOrEqual, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatLessThanOrEqual)))
-	float_.Set(RightLessThanOrEqual, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatRightLessThanOrEqual)))
-
-	float_.Set(Hash, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatHash)))
-	float_.Set(Copy, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatCopy)))
-
-	float_.Set(ToInteger, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatToInteger)))
-	float_.Set(ToFloat, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatCopy)))
-	float_.Set(ToString, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatToString)))
-	float_.Set(ToBool, NewFunction(float_.symbols, NewBuiltInClassFunction(float_, 0, FloatToBool)))
+	FloatInitialize(nil, float_)
 	return float_
 }
 
@@ -3234,6 +3260,22 @@ func ArrayHash(_ VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	ToArray       - (Done)
 	ToTuple       - (Done)
 */
+func ArrayInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ArrayEquals)))
+	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ArrayRightEquals)))
+	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ArrayNotEquals)))
+	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ArrayRightNotEquals)))
+	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayHash)))
+	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayCopy)))
+	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ArrayIndex)))
+	object.Set(Assign, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 2, ArrayAssign)))
+	// object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayIter)))
+	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayToString)))
+	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayToBool)))
+	object.Set(ToArray, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayToArray)))
+	object.Set(ToTuple, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayToTuple)))
+	return nil
+}
 
 func NewArray(parentSymbols *SymbolTable, content []IObject) *Array {
 	array := &Array{
@@ -3241,19 +3283,7 @@ func NewArray(parentSymbols *SymbolTable, content []IObject) *Array {
 		Content: content,
 		Length:  len(content),
 	}
-	array.Set(Equals, NewFunction(array.symbols, NewBuiltInClassFunction(array, 1, ArrayEquals)))
-	array.Set(RightEquals, NewFunction(array.symbols, NewBuiltInClassFunction(array, 1, ArrayRightEquals)))
-	array.Set(NotEquals, NewFunction(array.symbols, NewBuiltInClassFunction(array, 1, ArrayNotEquals)))
-	array.Set(RightNotEquals, NewFunction(array.symbols, NewBuiltInClassFunction(array, 1, ArrayRightNotEquals)))
-	array.Set(Hash, NewFunction(array.symbols, NewBuiltInClassFunction(array, 0, ArrayHash)))
-	array.Set(Copy, NewFunction(array.symbols, NewBuiltInClassFunction(array, 0, ArrayCopy)))
-	array.Set(Index, NewFunction(array.symbols, NewBuiltInClassFunction(array, 1, ArrayIndex)))
-	array.Set(Assign, NewFunction(array.symbols, NewBuiltInClassFunction(array, 2, ArrayAssign)))
-	// array.Set(Iter, NewFunction(array.symbols, NewBuiltInClassFunction(array, 0, ArrayIter)))
-	array.Set(ToString, NewFunction(array.symbols, NewBuiltInClassFunction(array, 0, ArrayToString)))
-	array.Set(ToBool, NewFunction(array.symbols, NewBuiltInClassFunction(array, 0, ArrayToBool)))
-	array.Set(ToArray, NewFunction(array.symbols, NewBuiltInClassFunction(array, 0, ArrayToArray)))
-	array.Set(ToTuple, NewFunction(array.symbols, NewBuiltInClassFunction(array, 0, ArrayToTuple)))
+	ArrayInitialize(nil, array)
 	return array
 }
 
@@ -3637,9 +3667,9 @@ func TupleHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	NotEquals         - (Done)
 	RightNotEquals    - (Done)
 	// Behavior
-	Hash      - (Done)
-	Copy      - (Done)
-	Index   Integer or Tuple
+	Hash						- (Done)
+	Copy						- (Done)
+	Index   Integer or Tuple	- (Done)
 	Iter
 	// Transformation
 	ToString      - (Done)
@@ -3647,24 +3677,29 @@ func TupleHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	ToArray       - (Done)
 	ToTuple       - (Done)
 */
+func TupleInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, TupleEquals)))
+	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, TupleRightEquals)))
+	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, TupleNotEquals)))
+	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, TupleRightNotEquals)))
+	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleHash)))
+	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleCopy)))
+	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, TupleIndex)))
+	// object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleIter)))
+	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleToString)))
+	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleToBool)))
+	object.Set(ToArray, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleToArray)))
+	object.Set(ToTuple, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleToTuple)))
+	return nil
+}
+
 func NewTuple(parentSymbols *SymbolTable, content []IObject) *Tuple {
 	tuple := &Tuple{
 		Object:  NewObject(TupleName, nil, parentSymbols),
 		Content: content,
 		Length:  len(content),
 	}
-	tuple.Set(Equals, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 1, TupleEquals)))
-	tuple.Set(RightEquals, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 1, TupleRightEquals)))
-	tuple.Set(NotEquals, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 1, TupleNotEquals)))
-	tuple.Set(RightNotEquals, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 1, TupleRightNotEquals)))
-	tuple.Set(Hash, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 0, TupleHash)))
-	tuple.Set(Copy, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 0, TupleCopy)))
-	tuple.Set(Index, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 1, TupleIndex)))
-	// tuple.Set(Iter, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 0, TupleIter)))
-	tuple.Set(ToString, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 0, TupleToString)))
-	tuple.Set(ToBool, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 0, TupleToBool)))
-	tuple.Set(ToArray, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 0, TupleToArray)))
-	tuple.Set(ToTuple, NewFunction(tuple.symbols, NewBuiltInClassFunction(tuple, 0, TupleToTuple)))
+	TupleInitialize(nil, tuple)
 	return tuple
 }
 
@@ -3793,52 +3828,541 @@ func BoolHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	ToString   - (Done)
 	ToBool      - (Done)
 */
+func BoolInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BoolEquals)))
+	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BoolRightEquals)))
+	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BoolNotEquals)))
+	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BoolRightNotEquals)))
+	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BoolHash)))
+	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BoolCopy)))
+	object.Set(ToInteger, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BoolToInteger)))
+	object.Set(ToFloat, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BoolToFloat)))
+	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BoolToString)))
+	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BoolCopy)))
+	return nil
+}
 
 func NewBool(parentSymbols *SymbolTable, value bool) *Bool {
 	bool_ := &Bool{
 		Object: NewObject(BoolName, nil, parentSymbols),
 		Value:  value,
 	}
-	bool_.Set(Equals, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 1, BoolEquals)))
-	bool_.Set(RightEquals, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 1, BoolRightEquals)))
-	bool_.Set(NotEquals, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 1, BoolNotEquals)))
-	bool_.Set(RightNotEquals, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 1, BoolRightNotEquals)))
-	bool_.Set(Copy, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolHash)))
-	bool_.Set(Copy, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolCopy)))
-	bool_.Set(ToInteger, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolToInteger)))
-	bool_.Set(ToFloat, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolToFloat)))
-	bool_.Set(ToString, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolToString)))
-	bool_.Set(ToBool, NewFunction(bool_.symbols, NewBuiltInClassFunction(bool_, 0, BoolCopy)))
+	BoolInitialize(nil, bool_)
 	return bool_
+}
+
+type KeyValue struct {
+	Key   IObject
+	Value IObject
+}
+type HashTable struct {
+	*Object
+	Content map[int64][]*KeyValue
+	Length  int
+}
+
+func HashTableEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	rawRight := arguments[0]
+	if _, ok := rawRight.(*HashTable); !ok {
+		return NewBool(vm.PeekSymbolTable(), false), nil
+	}
+	right := rawRight.(*HashTable)
+	if self.(*HashTable).Length != right.Length {
+		return NewBool(vm.PeekSymbolTable(), false), nil
+	}
+	var rightIndex IObject
+	rightIndex, getError = right.Get(Index)
+	if getError != nil {
+		return nil, getError
+	}
+	if _, ok := rightIndex.(*Function); !ok {
+		return nil, errors.NewTypeError(rightIndex.TypeName(), FunctionName)
+	}
+	for key, leftValue := range self.(*HashTable).Content {
+		// Check if other has the key
+		rightValue, ok := right.Content[key]
+		if !ok {
+			return NewBool(vm.PeekSymbolTable(), false), nil
+		}
+		// Check if the each entry one has the same length
+		if len(leftValue) != len(rightValue) {
+			return NewBool(vm.PeekSymbolTable(), false), nil
+		}
+		// Start comparing the entries
+		for _, entry := range leftValue {
+			_, indexingError := CallFunction(rightIndex.(*Function), vm, vm.PeekSymbolTable(), entry.Key)
+			if indexingError != nil {
+				return NewBool(vm.PeekSymbolTable(), false), nil
+			}
+		}
+	}
+	return NewBool(vm.PeekSymbolTable(), true), nil
+}
+
+func HashTableRightEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	rawLeft := arguments[0]
+	if _, ok := rawLeft.(*HashTable); !ok {
+		return NewBool(vm.PeekSymbolTable(), false), nil
+	}
+	left := rawLeft.(*HashTable)
+	if self.(*HashTable).Length != left.Length {
+		return NewBool(vm.PeekSymbolTable(), false), nil
+	}
+	var leftIndex IObject
+	leftIndex, getError = left.Get(Index)
+	if getError != nil {
+		return nil, getError
+	}
+	if _, ok := leftIndex.(*Function); !ok {
+		return nil, errors.NewTypeError(leftIndex.TypeName(), FunctionName)
+	}
+	for key, leftValue := range left.Content {
+		// Check if other has the key
+		rightValue, ok := self.(*HashTable).Content[key]
+		if !ok {
+			return NewBool(vm.PeekSymbolTable(), false), nil
+		}
+		// Check if the each entry one has the same length
+		if len(leftValue) != len(rightValue) {
+			return NewBool(vm.PeekSymbolTable(), false), nil
+		}
+		// Start comparing the entries
+		for _, entry := range leftValue {
+			_, indexingError := CallFunction(leftIndex.(*Function), vm, vm.PeekSymbolTable(), entry.Key)
+			if indexingError != nil {
+				return NewBool(vm.PeekSymbolTable(), false), nil
+			}
+		}
+	}
+	return NewBool(vm.PeekSymbolTable(), true), nil
+}
+
+func HashTableNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	rawRight := arguments[0]
+	if _, ok := rawRight.(*HashTable); !ok {
+		return NewBool(vm.PeekSymbolTable(), true), nil
+	}
+	right := rawRight.(*HashTable)
+	if self.(*HashTable).Length != right.Length {
+		return NewBool(vm.PeekSymbolTable(), true), nil
+	}
+	var rightIndex IObject
+	rightIndex, getError = right.Get(Index)
+	if getError != nil {
+		return nil, getError
+	}
+	if _, ok := rightIndex.(*Function); !ok {
+		return nil, errors.NewTypeError(rightIndex.TypeName(), FunctionName)
+	}
+	for key, leftValue := range self.(*HashTable).Content {
+		// Check if other has the key
+		rightValue, ok := right.Content[key]
+		if !ok {
+			return NewBool(vm.PeekSymbolTable(), true), nil
+		}
+		// Check if the each entry one has the same length
+		if len(leftValue) != len(rightValue) {
+			return NewBool(vm.PeekSymbolTable(), true), nil
+		}
+		// Start comparing the entries
+		for _, entry := range leftValue {
+			_, indexingError := CallFunction(rightIndex.(*Function), vm, vm.PeekSymbolTable(), entry.Key)
+			if indexingError != nil {
+				return NewBool(vm.PeekSymbolTable(), true), nil
+			}
+		}
+	}
+	return NewBool(vm.PeekSymbolTable(), false), nil
+}
+
+func HashTableRightNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	rawLeft := arguments[0]
+	if _, ok := rawLeft.(*HashTable); !ok {
+		return NewBool(vm.PeekSymbolTable(), true), nil
+	}
+	left := rawLeft.(*HashTable)
+	if self.(*HashTable).Length != left.Length {
+		return NewBool(vm.PeekSymbolTable(), true), nil
+	}
+	var leftIndex IObject
+	leftIndex, getError = left.Get(Index)
+	if getError != nil {
+		return nil, getError
+	}
+	if _, ok := leftIndex.(*Function); !ok {
+		return nil, errors.NewTypeError(leftIndex.TypeName(), FunctionName)
+	}
+	for key, leftValue := range left.Content {
+		// Check if other has the key
+		rightValue, ok := self.(*HashTable).Content[key]
+		if !ok {
+			return NewBool(vm.PeekSymbolTable(), true), nil
+		}
+		// Check if the each entry one has the same length
+		if len(leftValue) != len(rightValue) {
+			return NewBool(vm.PeekSymbolTable(), true), nil
+		}
+		// Start comparing the entries
+		for _, entry := range leftValue {
+			_, indexingError := CallFunction(leftIndex.(*Function), vm, vm.PeekSymbolTable(), entry.Key)
+			if indexingError != nil {
+				return NewBool(vm.PeekSymbolTable(), true), nil
+			}
+		}
+	}
+	return NewBool(vm.PeekSymbolTable(), false), nil
+}
+
+func HashTableHash(_ VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	return nil, errors.NewUnhashableTypeError(errors.UnknownLine)
+}
+
+func HashTableIndex(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	indexObject := arguments[0]
+	var indexObjectHash IObject
+	indexObjectHash, getError = indexObject.Get(Hash)
+	if _, ok := indexObjectHash.(*Function); !ok {
+		return nil, errors.NewTypeError(indexObjectHash.TypeName(), FunctionName)
+	}
+	indexHash, callError := CallFunction(indexObjectHash.(*Function), vm, indexObject.SymbolTable())
+	if callError != nil {
+		return nil, callError
+	}
+	if _, ok := indexHash.(*Integer); !ok {
+		return nil, errors.NewTypeError(indexHash.TypeName(), IntegerName)
+	}
+	keyValues, found := self.(*HashTable).Content[indexHash.(*Integer).Value]
+	if !found {
+		return nil, errors.NewKeyNotFoundError()
+	}
+	var indexObjectEquals IObject
+	indexObjectEquals, getError = indexObject.Get(Equals)
+	if _, ok := indexObjectEquals.(*Function); !ok {
+		return nil, errors.NewTypeError(indexObjectEquals.TypeName(), FunctionName)
+	}
+	var equals IObject
+	for _, keyValue := range keyValues {
+		equals, callError = CallFunction(indexObjectEquals.(*Function), vm, indexObject.SymbolTable(), keyValue.Key)
+		if callError != nil {
+			return nil, callError
+		}
+		if _, ok := equals.(*Bool); !ok {
+			return nil, errors.NewTypeError(equals.TypeName(), BoolName)
+		}
+		if equals.(*Bool).Value {
+			return keyValue.Value, nil
+		}
+	}
+	return nil, errors.NewKeyNotFoundError()
+}
+
+func HashTableAssign(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	indexObject := arguments[0]
+	newValue := arguments[1]
+	var indexObjectHash IObject
+	indexObjectHash, getError = indexObject.Get(Hash)
+	if _, ok := indexObjectHash.(*Function); !ok {
+		return nil, errors.NewTypeError(indexObjectHash.TypeName(), FunctionName)
+	}
+	indexHash, callError := CallFunction(indexObjectHash.(*Function), vm, indexObject.SymbolTable())
+	if callError != nil {
+		return nil, callError
+	}
+	if _, ok := indexHash.(*Integer); !ok {
+		return nil, errors.NewTypeError(indexHash.TypeName(), IntegerName)
+	}
+	keyValues, found := self.(*HashTable).Content[indexHash.(*Integer).Value]
+	if !found {
+		return nil, errors.NewKeyNotFoundError()
+	}
+	var indexObjectEquals IObject
+	indexObjectEquals, getError = indexObject.Get(Equals)
+	if _, ok := indexObjectEquals.(*Function); !ok {
+		return nil, errors.NewTypeError(indexObjectEquals.TypeName(), FunctionName)
+	}
+	var equals IObject
+	for index, keyValue := range keyValues {
+		equals, callError = CallFunction(indexObjectEquals.(*Function), vm, indexObject.SymbolTable(), keyValue.Key)
+		if callError != nil {
+			return nil, callError
+		}
+		if _, ok := equals.(*Bool); !ok {
+			return nil, errors.NewTypeError(equals.TypeName(), BoolName)
+		}
+		if equals.(*Bool).Value {
+			self.(*HashTable).Content[indexHash.(*Integer).Value][index].Value = newValue
+			self.(*HashTable).Length++
+			return vm.PeekSymbolTable().GetAny(None)
+		}
+	}
+	self.(*HashTable).Length++
+	self.(*HashTable).Content[indexHash.(*Integer).Value] = append(self.(*HashTable).Content[indexHash.(*Integer).Value], &KeyValue{
+		Key:   indexObject,
+		Value: newValue,
+	})
+	return vm.PeekSymbolTable().GetAny(None)
+}
+
+func HashTableToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	result := "{"
+	var (
+		keyToString   IObject
+		keyString     IObject
+		valueToString IObject
+		valueString   IObject
+		callError     *errors.Error
+	)
+	for _, keyValues := range self.(*HashTable).Content {
+		for _, keyValue := range keyValues {
+			keyToString, getError = keyValue.Key.Get(ToString)
+			if getError != nil {
+				return nil, getError
+			}
+			keyString, callError = CallFunction(keyToString.(*Function), vm, keyValue.Key.SymbolTable())
+			if callError != nil {
+				return nil, callError
+			}
+			if _, ok := keyString.(*String); !ok {
+				return nil, errors.NewTypeError(keyString.TypeName(), StringName)
+			}
+			result += keyString.(*String).Value
+			valueToString, getError = keyValue.Value.Get(ToString)
+			if getError != nil {
+				return nil, getError
+			}
+			valueString, callError = CallFunction(valueToString.(*Function), vm, keyValue.Value.SymbolTable())
+			if callError != nil {
+				return nil, callError
+			}
+			if _, ok := valueString.(*String); !ok {
+				return nil, errors.NewTypeError(keyString.TypeName(), StringName)
+			}
+			result += ":" + valueString.(*String).Value + ","
+		}
+	}
+	if len(result) > 1 {
+		result = result[:len(result)-1]
+	}
+	return NewString(vm.PeekSymbolTable(), result+"}"), nil
+}
+
+func HashTableToBool(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	if self.(*HashTable).Length > 0 {
+		return NewBool(vm.PeekSymbolTable(), true), nil
+	}
+	return NewBool(vm.PeekSymbolTable(), false), nil
+}
+
+func HashTableToArray(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	var keys []IObject
+	for _, keyValues := range self.(*HashTable).Content {
+		for _, keyValue := range keyValues {
+			keys = append(keys, keyValue.Key)
+		}
+	}
+	return NewArray(vm.PeekSymbolTable(), keys), nil
+}
+
+func HashTableToTuple(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	var keys []IObject
+	for _, keyValues := range self.(*HashTable).Content {
+		for _, keyValue := range keyValues {
+			keys = append(keys, keyValue.Key)
+		}
+	}
+	return NewTuple(vm.PeekSymbolTable(), keys), nil
+}
+
+/*
+	// Binary Operations
+	//// Comparison Binary
+	Equals                 - (Done)
+	RightEquals            - (Done)
+	NotEquals              - (Done)
+	RightNotEquals         - (Done)
+	// Behavior
+	Hash  Unhashable type  - (Done)
+	Copy                   - ()
+	Index                  - (Done)
+	Assign                 - (Done)
+	// Transformation
+	ToString  			- (Done)
+	ToBool    			- (Done)
+	ToArray   Keys only - (Done)
+	ToTuple   Keys only - (Done)
+*/
+func HashTableInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, HashTableEquals)))
+	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, HashTableRightEquals)))
+	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, HashTableNotEquals)))
+	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, HashTableRightNotEquals)))
+
+	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableHash)))
+	// object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableHash)))
+	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, HashTableIndex)))
+	object.Set(Assign, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 2, HashTableAssign)))
+
+	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableToString)))
+	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableToBool)))
+	object.Set(ToArray, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableToArray)))
+	object.Set(ToTuple, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableToTuple)))
+	return nil
+}
+
+func NewHashTable(parent *SymbolTable, entries map[int64][]*KeyValue, entriesLength int) *HashTable {
+	hashTable := &HashTable{
+		Object:  NewObject(HashName, nil, parent),
+		Content: entries,
+		Length:  entriesLength,
+	}
+	HashTableInitialize(nil, hashTable)
+	return hashTable
+}
+
+type Type struct {
+	*Object
+	Constructor Constructor
+}
+
+func NewType(parent *SymbolTable, subclasses []*Type, constructor Constructor) *Type {
+	return &Type{
+		Object:      NewObject(TypeName, subclasses, parent),
+		Constructor: constructor,
+	}
 }
 
 /*
 	SetDefaultSymbolTable
+	// Types
+	Type       - (Done)
+	Function   - (Done)
+	Object     - (Done)
+	Bool       - (Done)
+	Bytes      - (Done)
+	String     - (Done)
+	HashTable  - (Done)
+	Integer    - (Done)
+	Array      - (Done)
+	Tuple      - (Done)
 	// Names
-	None 	   - (Done)
+	None 	   - ()
 	// Functions
 	Hash       - ()
 	Id         - ()
 	Range      - ()
 	Len        - ()
-	// Types
-	String     - (Done)
-	Tuple      - (Done)
-	Array      - (Done)
-	Integer    - (Done)
-	Float      - (Done)
-	Bool       - (Done)
-	HashTable  - ()
-	Iter       - ()
-	Bytes      - ()
-	Object     - (Done)
+	// Direct To... (Transformations)
+	ToString     - (Done)
+	ToTuple      - (Done)
+	ToArray      - (Done)
+	ToInteger    - (Done)
+	ToFloat      - (Done)
+	ToBool       - (Done)
+	ToHashTable  - ()
+	ToIter       - ()
+	ToBytes      - ()
+	ToObject     - ()
 */
 func SetDefaultSymbolTable() *SymbolTable {
 	symbolTable := NewSymbolTable(nil)
+	// Types
+	type_ := NewType(nil, nil,
+		NewBuiltInConstructor(ObjectInitialize),
+	)
+	symbolTable.Set(TypeName, type_)
+	symbolTable.Set(BoolName,
+		NewType(nil, []*Type{type_},
+			NewBuiltInConstructor(BoolInitialize),
+		),
+	)
+	symbolTable.Set(ObjectName,
+		NewType(nil, []*Type{type_},
+			NewBuiltInConstructor(ObjectInitialize),
+		),
+	)
+	symbolTable.Set(FunctionName,
+		NewType(nil, []*Type{type_},
+			NewBuiltInConstructor(func(machine VirtualMachine, object IObject) *errors.Error {
+				return nil
+			}),
+		),
+	)
+	symbolTable.Set(IntegerName,
+		NewType(nil, []*Type{type_},
+			NewBuiltInConstructor(IntegerInitialize),
+		),
+	)
+	symbolTable.Set(StringName,
+		NewType(nil, []*Type{type_},
+			NewBuiltInConstructor(StringInitialize),
+		),
+	)
+	symbolTable.Set(BytesName,
+		NewType(nil, []*Type{type_},
+			NewBuiltInConstructor(BytesInitialize),
+		),
+	)
+	symbolTable.Set(TupleName,
+		NewType(nil, []*Type{type_},
+			NewBuiltInConstructor(TupleInitialize),
+		),
+	)
+	symbolTable.Set(ArrayName,
+		NewType(nil, []*Type{type_},
+			NewBuiltInConstructor(ArrayInitialize),
+		),
+	)
+	symbolTable.Set(HashName,
+		NewType(nil, []*Type{type_},
+			NewBuiltInConstructor(HashTableInitialize),
+		),
+	)
+	// Names
 	symbolTable.Set(None,
 		NewObject(NoneName, nil, symbolTable),
 	)
-	symbolTable.Set(FloatName,
+	// To... (Transformations)
+	symbolTable.Set(ToFloat,
 		NewFunction(symbolTable,
 			NewBuiltInFunction(1,
 				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -3854,16 +4378,7 @@ func SetDefaultSymbolTable() *SymbolTable {
 			),
 		),
 	)
-	symbolTable.Set(ObjectName,
-		NewFunction(symbolTable,
-			NewBuiltInFunction(0,
-				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
-					return NewObject(ObjectName, nil, vm.PeekSymbolTable()), nil
-				},
-			),
-		),
-	)
-	symbolTable.Set(StringName,
+	symbolTable.Set(ToString,
 		NewFunction(symbolTable,
 			NewBuiltInFunction(1,
 				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -3879,7 +4394,7 @@ func SetDefaultSymbolTable() *SymbolTable {
 			),
 		),
 	)
-	symbolTable.Set(IntegerName,
+	symbolTable.Set(ToInteger,
 		NewFunction(symbolTable,
 			NewBuiltInFunction(1,
 				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -3895,7 +4410,7 @@ func SetDefaultSymbolTable() *SymbolTable {
 			),
 		),
 	)
-	symbolTable.Set(ArrayName,
+	symbolTable.Set(ToArray,
 		NewFunction(symbolTable,
 			NewBuiltInFunction(1,
 				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -3911,7 +4426,7 @@ func SetDefaultSymbolTable() *SymbolTable {
 			),
 		),
 	)
-	symbolTable.Set(TupleName,
+	symbolTable.Set(ToTuple,
 		NewFunction(symbolTable,
 			NewBuiltInFunction(1,
 				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -3927,7 +4442,7 @@ func SetDefaultSymbolTable() *SymbolTable {
 			),
 		),
 	)
-	symbolTable.Set(BoolName,
+	symbolTable.Set(ToBool,
 		NewFunction(symbolTable,
 			NewBuiltInFunction(1,
 				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
