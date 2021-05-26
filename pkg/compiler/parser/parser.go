@@ -2351,11 +2351,10 @@ func (parser *Parser) Parse() (*ast.Program, *errors.Error) {
 	return result, nil
 }
 
-func NewParser(lexer_ *lexer.Lexer) (*Parser, *errors.Error) {
-	parser := &Parser{
+func NewParser(lexer_ *lexer.Lexer) *Parser {
+	return &Parser{
 		lexer:        lexer_,
 		complete:     false,
 		currentToken: nil,
 	}
-	return parser, nil
 }

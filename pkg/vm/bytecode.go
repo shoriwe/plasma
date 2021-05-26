@@ -1,6 +1,8 @@
 package vm
 
-import "math/bits"
+import (
+	"math/bits"
+)
 
 type Instruction struct {
 	OpCode uint8
@@ -64,8 +66,9 @@ func NewBytecodeFromArray(codes []Code) *Bytecode {
 		currentInstruction: nil,
 		length:             0,
 	}
-	for _, code := range codes {
-		result.Push(code)
+	codesLength := len(codes)
+	for i := codesLength - 1; i > -1; i-- {
+		result.Push(codes[i])
 	}
 	return result
 }

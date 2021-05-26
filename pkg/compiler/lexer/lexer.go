@@ -1,14 +1,14 @@
 package lexer
 
 import (
-	"github.com/shoriwe/gruby/pkg/compiler/reader"
 	"github.com/shoriwe/gruby/pkg/errors"
+	reader2 "github.com/shoriwe/gruby/pkg/reader"
 )
 
 type Lexer struct {
 	lastToken *Token
 	line      int
-	reader    reader.Reader
+	reader    reader2.Reader
 	complete  bool
 	peekToken *Token
 }
@@ -623,7 +623,7 @@ func (lexer *Lexer) Peek() (*Token, *errors.Error) {
 	return lexer.peekToken, nil
 }
 
-func NewLexer(codeReader reader.Reader) *Lexer {
+func NewLexer(codeReader reader2.Reader) *Lexer {
 	return &Lexer{
 		lastToken: nil,
 		line:      0,

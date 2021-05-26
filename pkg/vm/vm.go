@@ -10,4 +10,5 @@ type VirtualMachine interface {
 	PeekSymbolTable() *SymbolTable
 	PopSymbolTable() *SymbolTable
 	HashString(string) (int64, *errors.Error)
+	InitializeByteCode(*Bytecode)
 }

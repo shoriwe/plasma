@@ -41,7 +41,7 @@ func (stack *ObjectStack) Push(object IObject) {
 }
 
 func (stack *ObjectStack) HasNext() bool {
-	return stack.length != 0
+	return stack.length > 0
 }
 
 func (stack *ObjectStack) Clear() {
@@ -81,7 +81,7 @@ func (stack *SymbolStack) Push(symbolTable *SymbolTable) {
 }
 
 func (stack *SymbolStack) HasNext() bool {
-	return stack.length != 0
+	return stack.length > 0
 }
 
 func (stack *SymbolStack) Clear() {

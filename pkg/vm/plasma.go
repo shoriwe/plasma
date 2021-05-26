@@ -38,10 +38,17 @@ func (p *Plasma) Initialize(code []Code) *errors.Error {
 func (p *Plasma) PeekSymbolTable() *SymbolTable {
 	return p.Context.Peek()
 }
-func (p *Plasma) newStringOP() *errors.Error {
-	value := p.Code.Next().Value.(string)
+func (p *Plasma) newStringOP(code Code) *errors.Error {
+	value := code.Value.(string)
 	stringObject := NewString(p.Context.Peek(), value)
 	p.MemoryStack.Push(stringObject)
+	return nil
+}
+
+func (p *Plasma) newIntegerOP(code Code) *errors.Error {
+	value := code.Value.(int64)
+	integer := NewInteger(p.Context.Peek(), value)
+	p.MemoryStack.Push(integer)
 	return nil
 }
 
@@ -152,7 +159,9 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 		code := p.Code.Next()
 		switch code.Instruction.OpCode {
 		case NewStringOP:
-			executionError = p.newStringOP()
+			executionError = p.newStringOP(code)
+		case NewIntegerOP:
+			executionError = p.newIntegerOP(code)
 		case CallOP:
 			executionError = p.callOP()
 		case GetOP:
@@ -163,7 +172,7 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			if p.MemoryStack.HasNext() {
 				return p.MemoryStack.Pop(), nil
 			}
-			return nil, nil
+			return p.PeekSymbolTable().GetAny(None)
 		default:
 			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}
@@ -172,7 +181,7 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 		}
 	}
 
-	return nil, nil
+	return p.PeekSymbolTable().GetAny(None)
 }
 
 func (p *Plasma) HashString(s string) (int64, *errors.Error) {
@@ -183,6 +192,13 @@ func (p *Plasma) HashString(s string) (int64, *errors.Error) {
 	hashValue := p.Crc64Hash.Sum64()
 	p.Crc64Hash.Reset()
 	return int64(hashValue), nil
+}
+
+func (p *Plasma) InitializeByteCode(bytecode *Bytecode) {
+	p.Code = bytecode
+	p.MemoryStack.Clear()
+	p.Context.Clear()
+	p.Context.Push(SetDefaultSymbolTable())
 }
 
 func NewPlasmaVM() *Plasma {

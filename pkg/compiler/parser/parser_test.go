@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/shoriwe/gruby/pkg/compiler/ast"
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
-	"github.com/shoriwe/gruby/pkg/compiler/reader"
+	reader2 "github.com/shoriwe/gruby/pkg/reader"
 	"strings"
 	"testing"
 )
@@ -442,12 +442,8 @@ func walk(node ast.Node) string {
 
 func test(t *testing.T, samples []string) {
 	for sampleIndex, sample := range samples {
-		lex := lexer.NewLexer(reader.NewStringReader(sample))
-		parser, parserCreationError := NewParser(lex)
-		if parserCreationError != nil {
-			t.Error(parserCreationError.String())
-			return
-		}
+		lex := lexer.NewLexer(reader2.NewStringReader(sample))
+		parser := NewParser(lex)
 		program, parsingError := parser.Parse()
 		if parsingError != nil {
 			t.Error(parsingError.String())

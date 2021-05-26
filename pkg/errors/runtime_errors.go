@@ -19,6 +19,7 @@ const (
 	StringHashingError           = "StringHashingError"
 	UnhashableTypeError          = "UnhashableTypeError"
 	KeyNotFoundError             = "KeyNotFoundError"
+	GoRuntimeError               = "GoRuntimeError"
 )
 
 // Errors Messages
