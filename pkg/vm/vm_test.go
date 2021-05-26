@@ -49,8 +49,8 @@ func testIt(t *testing.T, tests []Test) {
 				t.Errorf("ToString doesn't return a string object")
 				return
 			}
-			if stringResult.(*String).Value != test.result.(string) {
-				t.Errorf("Expecting: %s but received: %s", test.result.(string), stringResult.(*String).Value)
+			if stringResult.(*String).String != test.result.(string) {
+				t.Errorf("Expecting: %s but received: %s", test.result.(string), stringResult.(*String).String)
 				return
 			}
 		}
