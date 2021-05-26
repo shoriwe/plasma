@@ -99,6 +99,25 @@ const (
 	ToBool    = "ToBool"
 	ToArray   = "ToArray"
 	ToTuple   = "ToTuple"
+	// Built-In Getters and Setters
+	//// Getters
+	GetInteger64 = "GetInteger64"
+	GetBool      = "GetBool"
+	GetBytes     = "GetBytes"
+	GetString    = "GetString"
+	GetFloat64   = "GetFloat64"
+	GetContent   = "GetContent"
+	GetKeyValues = "GetKeyValues"
+	GetLength    = "GetLength"
+	//// Setters
+	SetBool      = "SetBool"
+	SetBytes     = "SetBytes"
+	SetString    = "SetString"
+	SetInteger64 = "SetInteger64"
+	SetFloat64   = "SetFloat64"
+	SetContent   = "SetContent"
+	SetKeyValues = "SetKeyValues"
+	SetLength    = "SetLength"
 )
 
 var (
@@ -323,7 +342,7 @@ type IObject interface {
 	Set(string, IObject)
 	GetHash() int64
 	SetHash(int64)
-	// Getters
+
 	GetBool() bool
 	GetBytes() []*Integer
 	GetString() string
@@ -332,7 +351,7 @@ type IObject interface {
 	GetContent() []IObject
 	GetKeyValues() map[int64][]*KeyValue
 	GetLength() int
-	// Setters
+
 	SetBool(bool)
 	SetBytes([]*Integer)
 	SetString(string)
@@ -792,6 +811,132 @@ func ObjHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	return NewInteger(vm.PeekSymbolTable(), self.GetHash()), nil
 }
 
+func ObjGetInteger64(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewInteger(vm.PeekSymbolTable(), self.GetInteger64()), nil
+}
+func ObjGetBool(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewBool(vm.PeekSymbolTable(), self.GetBool()), nil
+}
+func ObjGetBytes(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewBytes(vm.PeekSymbolTable(), self.GetBytes()), nil
+}
+func ObjGetString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewString(vm.PeekSymbolTable(), self.GetString()), nil
+}
+func ObjGetFloat64(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewFloat(vm.PeekSymbolTable(), self.GetFloat64()), nil
+}
+func ObjGetContent(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewArray(vm.PeekSymbolTable(), self.GetContent()), nil
+}
+func ObjGetKeyValues(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewHashTable(vm.PeekSymbolTable(), self.GetKeyValues(), self.GetLength()), nil
+}
+func ObjGetLength(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewInteger(vm.PeekSymbolTable(), int64(self.GetLength())), nil
+}
+
+func ObjSetBool(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	self.SetBool(arguments[0].GetBool())
+	return vm.PeekSymbolTable().GetAny(None)
+}
+func ObjSetBytes(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	self.SetBytes(arguments[0].GetBytes())
+	self.SetLength(arguments[0].GetLength())
+	return vm.PeekSymbolTable().GetAny(None)
+}
+func ObjSetString(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	self.SetString(arguments[0].GetString())
+	self.SetLength(arguments[0].GetLength())
+	return vm.PeekSymbolTable().GetAny(None)
+}
+func ObjSetInteger64(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	self.SetInteger64(arguments[0].GetInteger64())
+	return vm.PeekSymbolTable().GetAny(None)
+}
+func ObjSetFloat64(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	self.SetFloat64(arguments[0].GetFloat64())
+	return vm.PeekSymbolTable().GetAny(None)
+}
+func ObjSetContent(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	self.SetContent(arguments[0].GetContent())
+	self.SetLength(arguments[0].GetLength())
+	return vm.PeekSymbolTable().GetAny(None)
+}
+func ObjSetKeyValues(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	self.SetKeyValues(arguments[0].GetKeyValues())
+	self.SetLength(arguments[0].GetLength())
+	return vm.PeekSymbolTable().GetAny(None)
+}
+func ObjSetLength(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	self.SetLength(arguments[0].GetLength())
+	return vm.PeekSymbolTable().GetAny(None)
+}
+
 /*
 	Negate
 	//// Logical Binary
@@ -886,6 +1031,25 @@ func ObjectInitialize(_ VirtualMachine, object IObject) *errors.Error {
 		ToBool:    NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjToBool)),
 		ToArray:   NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
 		ToTuple:   NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		// Getters and Setters for Built in properties
+		//// Getters
+		GetInteger64: NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjGetInteger64)),
+		GetBool:      NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjGetBool)),
+		GetBytes:     NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjGetBytes)),
+		GetString:    NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjGetString)),
+		GetFloat64:   NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjGetFloat64)),
+		GetContent:   NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjGetContent)),
+		GetKeyValues: NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjGetKeyValues)),
+		GetLength:    NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjGetLength)),
+		//// Setters
+		SetBool:      NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjSetBool)),
+		SetBytes:     NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjSetBytes)),
+		SetString:    NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjSetString)),
+		SetInteger64: NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjSetInteger64)),
+		SetFloat64:   NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjSetFloat64)),
+		SetContent:   NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjSetContent)),
+		SetKeyValues: NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjSetKeyValues)),
+		SetLength:    NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ObjSetLength)),
 	})
 	return nil
 }
@@ -4427,6 +4591,8 @@ func SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set(FalseName,
 		NewBool(nil, false),
 	)
+	// Functions
+
 	// To... (Transformations)
 	symbolTable.Set(ToFloat,
 		NewFunction(symbolTable,
