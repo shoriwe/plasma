@@ -303,8 +303,6 @@ func guessKind(buffer []byte) (uint8, uint8) {
 		return Keyboard, Lambda
 	case InterfaceString:
 		return Keyboard, Interface
-	case GoString:
-		return Keyboard, Go
 	case ClassString:
 		return Keyboard, Class
 	case TryString:
@@ -335,8 +333,6 @@ func guessKind(buffer []byte) (uint8, uint8) {
 		return Keyboard, BEGIN
 	case ENDString:
 		return Keyboard, END
-	case EnumString:
-		return Keyboard, Enum
 	case NotString: // Unary operator
 		return Operator, Not
 	case TrueString:
@@ -347,8 +343,6 @@ func guessKind(buffer []byte) (uint8, uint8) {
 		return NoneType, None
 	case DeferString:
 		return Keyboard, Defer
-	case GoToString:
-		return Keyboard, GoTo
 	case ContextString:
 		return Keyboard, Context
 	}

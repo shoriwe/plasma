@@ -33,12 +33,11 @@ const (
 	NoneType
 	EOF
 
-	// Punctuation
 	Comma
 	Colon
 	SemiColon
 	NewLine
-	// Reserved Keyboards
+
 	Pass
 	Super
 	End
@@ -64,9 +63,7 @@ const (
 	Module
 	Def
 	Lambda
-	Struct
 	Interface
-	Go
 	Class
 	Try
 	Except
@@ -76,11 +73,8 @@ const (
 	Await
 	BEGIN
 	END
-	Enum
-	GoTo
 	Context
 
-	// Assigns
 	Assign
 	NegateBitsAssign
 	BitwiseOrAssign
@@ -95,30 +89,29 @@ const (
 	FloorDivAssign
 	ModulusAssign
 	PowerOfAssign
-	// Unary Operators
+
 	Not
 	SignNot
 	NegateBits
-	// Binary Operators
-	//// Logical operators
+
 	And
 	Or
 	Xor
 	In
-	////
+
 	Equals
 	NotEqual
 	GreaterThan
 	GreaterOrEqualThan
 	LessThan
 	LessOrEqualThan
-	//// Bitwise Operations
+
 	BitwiseOr
 	BitwiseXor
 	BitWiseAnd
 	BitwiseLeft
 	BitwiseRight
-	//// Basic Binary expressions
+
 	Add // This is also an unary operator
 	Sub // This is also an unary operator
 	Star
@@ -126,7 +119,7 @@ const (
 	FloorDiv
 	Modulus
 	PowerOf
-	// Reserved Literals
+
 	True
 	False
 	None
@@ -159,7 +152,6 @@ type Token struct {
 */
 
 var (
-	// Chars
 	CommaChar              uint8 = ','
 	ColonChar              uint8 = ':'
 	SemiColonChar          uint8 = ';'
@@ -190,11 +182,6 @@ var (
 	CommentChar            uint8 = '#'
 	BackSlashChar          uint8 = '\\'
 
-	// Complex Patterns
-	BitwiseLeftString  = "<<"
-	BitwiseRightString = ">>"
-	PowerOfString      = "**"
-	FloorDivString     = "//"
 	PassString         = "pass"
 	SuperString        = "super"
 	EndString          = "end"
@@ -219,7 +206,6 @@ var (
 	DefString          = "def"
 	LambdaString       = "lambda"
 	InterfaceString    = "interface"
-	GoString           = "go"
 	ClassString        = "class"
 	TryString          = "try"
 	ExceptString       = "except"
@@ -233,12 +219,10 @@ var (
 	AwaitString        = "await"
 	BEGINString        = "BEGIN"
 	ENDString          = "END"
-	EnumString         = "enum"
 	NotString          = "not"
 	TrueString         = "True"
 	FalseString        = "False"
 	NoneString         = "None"
-	GoToString         = "goto"
 	ContextString      = "context"
 	RaiseString        = "raise"
 	AsString           = "as"

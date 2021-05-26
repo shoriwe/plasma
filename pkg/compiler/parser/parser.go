@@ -20,7 +20,6 @@ const (
 	FinallyBlock                = "Finally Block"
 	BeginStatement              = "Begin Statement"
 	InterfaceStatement          = "Interface Statement"
-	GoToStatement               = "GoTo Statement"
 	BinaryExpression            = "Binary Expression"
 	UnaryExpression             = "Unary Expression"
 	PointerExpression           = "Pointer Expression"
@@ -39,13 +38,10 @@ const (
 	SwitchStatement             = "Switch Statement"
 	CaseBlock                   = "Case Block"
 	DefaultBlock                = "Default Block"
-	StructStatement             = "Struct Statement"
 	DeferStatement              = "Defer Statement"
-	GoStatement                 = "Go Statement"
 	ReturnStatement             = "Return Statement"
 	YieldStatement              = "Yield Statement"
 	SuperStatement              = "Super Statement"
-	EnumStatement               = "Enum Statement"
 	SelectorExpression          = "Selector Expression"
 	MethodInvocationExpression  = "Method Invocation Expression"
 	IndexExpression             = "Index Expression"
@@ -896,24 +892,6 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, *error
 		Bases:                  bases,
 		MethodDefinitions:      methods,
 		AsyncMethodDefinitions: asyncMethods,
-	}, nil
-}
-
-func (parser *Parser) parseGoToStatement() (*ast.GoToStatement, *errors.Error) {
-	line := parser.currentLine()
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	identifier, parsingError := parser.parseBinaryExpression(0)
-	if parsingError != nil {
-		return nil, parsingError
-	}
-	if _, ok := identifier.(*ast.Identifier); !ok {
-		return nil, newNonIdentifierReceivedError(line, GoToStatement)
-	}
-	return &ast.GoToStatement{
-		Name: identifier.(*ast.Identifier),
 	}, nil
 }
 
@@ -2013,8 +1991,6 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 			return parser.parseRedoStatement()
 		case lexer.Pass:
 			return parser.parsePassStatement()
-		case lexer.GoTo:
-			return parser.parseGoToStatement()
 		case lexer.Do:
 			return parser.parseDoWhileStatement()
 		}

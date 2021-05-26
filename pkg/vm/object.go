@@ -342,9 +342,6 @@ type IObject interface {
 	SetKeyValues(map[int64][]*KeyValue)
 	SetLength(int)
 	IncreaseLength()
-	//
-	// AssignContentValue(int, IObject)
-	// AssignKeyValue(int64, *KeyValue)
 }
 
 // MetaClass for IObject

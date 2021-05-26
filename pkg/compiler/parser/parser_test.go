@@ -160,8 +160,6 @@ func walker(node ast.Node) string {
 		return result
 	case *ast.DeferStatement:
 		return "defer " + walker(node.(*ast.DeferStatement).X)
-	case *ast.GoStatement:
-		return "go " + walker(node.(*ast.GoStatement).X)
 	case *ast.SuperInvocationStatement:
 		result := "super("
 		for index, argument := range node.(*ast.SuperInvocationStatement).Arguments {
@@ -223,18 +221,6 @@ func walker(node ast.Node) string {
 			}
 		}
 		return result + "\nend"
-	case *ast.EnumStatement:
-		result := "enum " + walker(node.(*ast.EnumStatement).Name)
-		for _, identifier := range node.(*ast.EnumStatement).EnumIdentifiers {
-			result += "\n\t" + walker(identifier)
-		}
-		return result + "\nend"
-	case *ast.StructStatement:
-		result := "struct " + walker(node.(*ast.StructStatement).Name)
-		for _, identifier := range node.(*ast.StructStatement).Fields {
-			result += "\n\t" + walker(identifier)
-		}
-		return result + "\nend"
 	case *ast.SwitchStatement:
 		result := "switch " + walker(node.(*ast.SwitchStatement).Target)
 		for _, caseBlock := range node.(*ast.SwitchStatement).CaseBlocks {
@@ -282,8 +268,6 @@ func walker(node ast.Node) string {
 		return "&" + walker(node.(*ast.PointerExpression).X)
 	case *ast.AwaitExpression:
 		return "await " + walker(node.(*ast.AwaitExpression).X)
-	case *ast.GoToStatement:
-		return "goto " + walker(node.(*ast.GoToStatement).Name)
 	case *ast.ForLoopStatement:
 		result := "for "
 		for index, receiver := range node.(*ast.ForLoopStatement).Receivers {
@@ -517,7 +501,6 @@ var basicSamples = []string{
 	"yield 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
 	"return 1",
 	"return 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
-	"go super_duper()",
 	"defer a()",
 	"super(1)",
 	"super(1, 2)",
@@ -543,16 +526,6 @@ var basicSamples = []string{
 		"\t\tprint(2)\n" +
 		"\tend\n" +
 		"end",
-	"enum Tokens\n" +
-		"\tString\n" +
-		"\tFloat\n" +
-		"\tInteger\n" +
-		"end",
-	"struct ListNode\n" +
-		"\tValue\n" +
-		"\tLeft\n" +
-		"\tRight\n" +
-		"end",
 	"switch Token.Kind\n" +
 		"case Numeric, CommandOutput\n" +
 		"\tbreak\n" +
@@ -573,7 +546,6 @@ var basicSamples = []string{
 	"*&(c)",
 	"*(&c + 1)",
 	"await parser().a()",
-	"goto abc",
 	"[]",
 	"for a, b, c in range(10)\n" +
 		"\tprint(\"hello world!\")\n" +
