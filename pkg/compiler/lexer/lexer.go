@@ -1,17 +1,16 @@
 package lexer
 
 import (
+	"github.com/shoriwe/gruby/pkg/compiler/reader"
 	"github.com/shoriwe/gruby/pkg/errors"
 )
 
 type Lexer struct {
-	cursor           int
-	lastToken        *Token
-	line             int
-	sourceCode       string
-	sourceCodeLength int
-	complete         bool
-	peekToken        *Token
+	lastToken *Token
+	line      int
+	reader    reader.Reader
+	complete  bool
+	peekToken *Token
 }
 
 func (lexer *Lexer) HasNext() bool {
@@ -33,8 +32,8 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener uint8) ([]byte, u
 	var tokenizingError *errors.Error
 	escaped := false
 	finish := false
-	for ; (lexer.cursor < lexer.sourceCodeLength) && !finish; lexer.cursor++ {
-		char := lexer.sourceCode[lexer.cursor]
+	for ; lexer.reader.HasNext() && !finish; lexer.reader.Next() {
+		char := lexer.reader.Char()
 		if escaped {
 			switch char {
 			case '\\', '\'', '"', '`', 'a', 'b', 'e', 'f', 'n', 'r', 't', '?', 'u', 'x':
@@ -64,19 +63,19 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener uint8) ([]byte, u
 
 func (lexer *Lexer) tokenizeHexadecimal(letterX uint8) ([]byte, uint8, uint8, *errors.Error) {
 	result := []byte{'0', letterX}
-	if !(lexer.cursor < lexer.sourceCodeLength) {
+	if !(lexer.reader.HasNext()) {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
-	nextDigit := lexer.sourceCode[lexer.cursor]
+	nextDigit := lexer.reader.Char()
 	if !(('0' <= nextDigit && nextDigit <= '9') ||
 		('a' <= nextDigit && nextDigit <= 'f') ||
 		('A' <= nextDigit && nextDigit <= 'F')) {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
-	lexer.cursor++
+	lexer.reader.Next()
 	result = append(result, nextDigit)
-	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
-		nextDigit = lexer.sourceCode[lexer.cursor]
+	for ; lexer.reader.HasNext(); lexer.reader.Next() {
+		nextDigit = lexer.reader.Char()
 		if !(('0' <= nextDigit && nextDigit <= '9') || ('a' <= nextDigit && nextDigit <= 'f') || ('A' <= nextDigit && nextDigit <= 'F')) && nextDigit != '_' {
 			return result, Literal, HexadecimalInteger, nil
 		}
@@ -87,17 +86,17 @@ func (lexer *Lexer) tokenizeHexadecimal(letterX uint8) ([]byte, uint8, uint8, *e
 
 func (lexer *Lexer) tokenizeBinary(letterB uint8) ([]byte, uint8, uint8, *errors.Error) {
 	result := []byte{'0', letterB}
-	if !(lexer.cursor < lexer.sourceCodeLength) {
+	if !(lexer.reader.HasNext()) {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
-	nextDigit := lexer.sourceCode[lexer.cursor]
+	nextDigit := lexer.reader.Char()
 	if !(nextDigit == '0' || nextDigit == '1') {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
-	lexer.cursor++
+	lexer.reader.Next()
 	result = append(result, nextDigit)
-	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
-		nextDigit = lexer.sourceCode[lexer.cursor]
+	for ; lexer.reader.HasNext(); lexer.reader.Next() {
+		nextDigit = lexer.reader.Char()
 		if !(nextDigit == '0' || nextDigit == '1') && nextDigit != '_' {
 			return result, Literal, BinaryInteger, nil
 		}
@@ -108,17 +107,17 @@ func (lexer *Lexer) tokenizeBinary(letterB uint8) ([]byte, uint8, uint8, *errors
 
 func (lexer *Lexer) tokenizeOctal(letterO uint8) ([]byte, uint8, uint8, *errors.Error) {
 	result := []byte{'0', letterO}
-	if !(lexer.cursor < lexer.sourceCodeLength) {
+	if !(lexer.reader.HasNext()) {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
-	nextDigit := lexer.sourceCode[lexer.cursor]
+	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '7') {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
-	lexer.cursor++
+	lexer.reader.Next()
 	result = append(result, nextDigit)
-	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
-		nextDigit = lexer.sourceCode[lexer.cursor]
+	for ; lexer.reader.HasNext(); lexer.reader.Next() {
+		nextDigit = lexer.reader.Char()
 		if !('0' <= nextDigit && nextDigit <= '7') && nextDigit != '_' {
 			return result, Literal, OctalInteger, nil
 		}
@@ -129,27 +128,27 @@ func (lexer *Lexer) tokenizeOctal(letterO uint8) ([]byte, uint8, uint8, *errors.
 
 func (lexer *Lexer) tokenizeScientificFloat(base []byte) ([]byte, uint8, uint8, *errors.Error) {
 	result := base
-	if !(lexer.cursor < lexer.sourceCodeLength) {
+	if !(lexer.reader.HasNext()) {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
-	direction := lexer.sourceCode[lexer.cursor]
+	direction := lexer.reader.Char()
 	if direction != '-' && direction != '+' {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
-	lexer.cursor++
+	lexer.reader.Next()
 	// Ensure next is a number
-	if !(lexer.cursor < lexer.sourceCodeLength) {
+	if !(lexer.reader.HasNext()) {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
 	result = append(result, direction)
-	nextDigit := lexer.sourceCode[lexer.cursor]
+	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '9') {
 		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
 	}
 	result = append(result, nextDigit)
-	lexer.cursor++
-	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
-		nextDigit = lexer.sourceCode[lexer.cursor]
+	lexer.reader.Next()
+	for ; lexer.reader.HasNext(); lexer.reader.Next() {
+		nextDigit = lexer.reader.Char()
 		if !('0' <= nextDigit && nextDigit <= '9') && nextDigit != '_' {
 			return result, Literal, ScientificFloat, nil
 		}
@@ -159,19 +158,19 @@ func (lexer *Lexer) tokenizeScientificFloat(base []byte) ([]byte, uint8, uint8, 
 }
 
 func (lexer *Lexer) tokenizeFloat(base []byte) ([]byte, uint8, uint8, *errors.Error) {
-	if !(lexer.cursor < lexer.sourceCodeLength) {
-		lexer.cursor--
+	if !(lexer.reader.HasNext()) {
+		lexer.reader.Redo()
 		return base[:len(base)-1], Literal, Integer, nil
 	}
-	nextDigit := lexer.sourceCode[lexer.cursor]
+	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '9') {
-		lexer.cursor--
+		lexer.reader.Redo()
 		return base[:len(base)-1], Literal, Integer, nil
 	}
-	lexer.cursor++
+	lexer.reader.Next()
 	result := append(base, nextDigit)
-	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
-		nextDigit = lexer.sourceCode[lexer.cursor]
+	for ; lexer.reader.HasNext(); lexer.reader.Next() {
+		nextDigit = lexer.reader.Char()
 		if ('0' <= nextDigit && nextDigit <= '9') || nextDigit == '_' {
 			result = append(result, nextDigit)
 		} else if (nextDigit == 'e') || (nextDigit == 'E') {
@@ -184,23 +183,23 @@ func (lexer *Lexer) tokenizeFloat(base []byte) ([]byte, uint8, uint8, *errors.Er
 }
 
 func (lexer *Lexer) tokenizeInteger(base []byte) ([]byte, uint8, uint8, *errors.Error) {
-	if !(lexer.cursor < lexer.sourceCodeLength) {
+	if !(lexer.reader.HasNext()) {
 		return base, Literal, Integer, nil
 	}
-	nextDigit := lexer.sourceCode[lexer.cursor]
+	nextDigit := lexer.reader.Char()
 	if nextDigit == '.' {
-		lexer.cursor++
+		lexer.reader.Next()
 		return lexer.tokenizeFloat(append(base, nextDigit))
 	} else if nextDigit == 'e' || nextDigit == 'E' {
-		lexer.cursor++
+		lexer.reader.Next()
 		return lexer.tokenizeScientificFloat(append(base, nextDigit))
 	} else if !('0' <= nextDigit && nextDigit <= '9') {
 		return base, Literal, Integer, nil
 	}
-	lexer.cursor++
+	lexer.reader.Next()
 	result := append(base, nextDigit)
-	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
-		nextDigit = lexer.sourceCode[lexer.cursor]
+	for ; lexer.reader.HasNext(); lexer.reader.Next() {
+		nextDigit = lexer.reader.Char()
 		if nextDigit == 'e' || nextDigit == 'E' {
 			return lexer.tokenizeScientificFloat(append(result, nextDigit))
 		} else if nextDigit == '.' {
@@ -215,11 +214,11 @@ func (lexer *Lexer) tokenizeInteger(base []byte) ([]byte, uint8, uint8, *errors.
 }
 
 func (lexer *Lexer) tokenizeNumeric(firstDigit uint8) ([]byte, uint8, uint8, *errors.Error) {
-	if !(lexer.cursor < lexer.sourceCodeLength) {
+	if !(lexer.reader.HasNext()) {
 		return []byte{firstDigit}, Literal, Integer, nil
 	}
-	nextChar := lexer.sourceCode[lexer.cursor]
-	lexer.cursor++
+	nextChar := lexer.reader.Char()
+	lexer.reader.Next()
 	switch firstDigit {
 	case '0': // In this scenario it can be a float,  scientific float, integer, hex integer, octal integer or binary integer
 		switch nextChar {
@@ -250,7 +249,7 @@ func (lexer *Lexer) tokenizeNumeric(firstDigit uint8) ([]byte, uint8, uint8, *er
 			}
 		}
 	}
-	lexer.cursor--
+	lexer.reader.Redo()
 	return []byte{firstDigit}, Literal, Integer, nil
 }
 
@@ -351,8 +350,8 @@ func guessKind(buffer []byte) (uint8, uint8) {
 
 func (lexer *Lexer) tokenizeChars(startingChar uint8) ([]byte, uint8, uint8, *errors.Error) {
 	content := []byte{startingChar}
-	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
-		char := lexer.sourceCode[lexer.cursor]
+	for ; lexer.reader.HasNext(); lexer.reader.Next() {
+		char := lexer.reader.Char()
 		if ('a' <= char && char <= 'z') || ('A' <= char && char <= 'Z') || ('0' <= char && char <= '9') || (char == '_') {
 			content = append(content, char)
 		} else {
@@ -365,8 +364,8 @@ func (lexer *Lexer) tokenizeChars(startingChar uint8) ([]byte, uint8, uint8, *er
 
 func (lexer *Lexer) tokenizeComment() ([]byte, uint8, *errors.Error) {
 	var content []byte
-	for ; lexer.cursor < lexer.sourceCodeLength; lexer.cursor++ {
-		char := lexer.sourceCode[lexer.cursor]
+	for ; lexer.reader.HasNext(); lexer.reader.Next() {
+		char := lexer.reader.Char()
 		if char == '\n' {
 			break
 		}
@@ -379,26 +378,26 @@ func (lexer *Lexer) tokenizeRepeatableOperator(char uint8, singleDirectValue uin
 	content := []byte{char}
 	kind := singleKind
 	directValue := singleDirectValue
-	if lexer.cursor < lexer.sourceCodeLength {
-		nextChar := lexer.sourceCode[lexer.cursor]
+	if lexer.reader.HasNext() {
+		nextChar := lexer.reader.Char()
 		if nextChar == char {
 			content = append(content, nextChar)
-			lexer.cursor++
+			lexer.reader.Next()
 			kind = doubleKind
 			directValue = doubleDirectValue
-			if lexer.cursor < lexer.sourceCodeLength {
-				nextNextChar := lexer.sourceCode[lexer.cursor]
+			if lexer.reader.HasNext() {
+				nextNextChar := lexer.reader.Char()
 				if nextNextChar == '=' {
 					content = append(content, nextNextChar)
 					kind = assignDoubleKind
-					lexer.cursor++
+					lexer.reader.Next()
 					directValue = assignDoubleDirectValue
 				}
 			}
 		} else if nextChar == '=' {
 			kind = assignSingleKind
 			content = append(content, nextChar)
-			lexer.cursor++
+			lexer.reader.Next()
 			directValue = assignSingleDirectValue
 		}
 	}
@@ -409,13 +408,13 @@ func (lexer *Lexer) tokenizeNotRepeatableOperator(char uint8, single uint8, sing
 	content := []byte{char}
 	kind := singleKind
 	directValue := single
-	if lexer.cursor < lexer.sourceCodeLength {
-		nextChar := lexer.sourceCode[lexer.cursor]
+	if lexer.reader.HasNext() {
+		nextChar := lexer.reader.Char()
 		if nextChar == '=' {
 			kind = assignKind
 			directValue = assign
 			content = append(content, nextChar)
-			lexer.cursor++
+			lexer.reader.Next()
 		}
 	}
 	return content, kind, directValue
@@ -426,14 +425,14 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		lexer.peekToken = nil
 		return result, nil
 	}
-	if lexer.cursor == lexer.sourceCodeLength {
+	if !lexer.reader.HasNext() {
 		lexer.complete = true
 		return &Token{
 			String:      "EOF",
 			DirectValue: EOF,
 			Kind:        EOF,
 			Line:        lexer.line,
-			Index:       lexer.cursor,
+			Index:       lexer.reader.Index(),
 		}, nil
 	}
 	var tokenizingError *errors.Error
@@ -441,9 +440,9 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 	var content []byte
 	directValue := Unknown
 	line := lexer.line
-	index := lexer.cursor
-	char := lexer.sourceCode[lexer.cursor]
-	lexer.cursor++
+	index := lexer.reader.Index()
+	char := lexer.reader.Char()
+	lexer.reader.Next()
 	switch char {
 	case NewLineChar:
 		lexer.line++
@@ -539,22 +538,22 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Assign, Assignment, Equals, Comparator)
 	case BackSlashChar:
 		content = []byte{char}
-		if lexer.cursor < lexer.sourceCodeLength {
-			nextChar := lexer.sourceCode[lexer.cursor]
+		if lexer.reader.HasNext() {
+			nextChar := lexer.reader.Char()
 			if nextChar != '\n' {
 				return nil, errors.New(lexer.line, "line escape not followed by a new line", errors.LexingError)
 			}
 			content = append(content, '\n')
-			lexer.cursor++
+			lexer.reader.Next()
 		}
 		kind = PendingEscape
 	default:
 		if char == 'b' {
-			if lexer.cursor < lexer.sourceCodeLength {
-				nextChar := lexer.sourceCode[lexer.cursor]
+			if lexer.reader.HasNext() {
+				nextChar := lexer.reader.Char()
 				if nextChar == '\'' || nextChar == '"' {
 					var byteStringPart []byte
-					lexer.cursor++
+					lexer.reader.Next()
 					byteStringPart, kind, directValue, tokenizingError = lexer.tokenizeStringLikeExpressions(nextChar)
 					content = append([]byte{char}, byteStringPart...)
 					if directValue != Unknown {
@@ -624,6 +623,12 @@ func (lexer *Lexer) Peek() (*Token, *errors.Error) {
 	return lexer.peekToken, nil
 }
 
-func NewLexer(sourceCode string) *Lexer {
-	return &Lexer{0, nil, 1, sourceCode, len(sourceCode), false, nil}
+func NewLexer(codeReader reader.Reader) *Lexer {
+	return &Lexer{
+		lastToken: nil,
+		line:      0,
+		reader:    codeReader,
+		complete:  false,
+		peekToken: nil,
+	}
 }

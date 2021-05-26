@@ -4344,7 +4344,6 @@ func HashTableAssign(vm VirtualMachine, arguments ...IObject) (IObject, *errors.
 		}
 		if equals.GetBool() {
 			self.GetKeyValues()[indexHash.GetInteger64()][index].Value = newValue
-			self.IncreaseLength()
 			return vm.PeekSymbolTable().GetAny(None)
 		}
 	}

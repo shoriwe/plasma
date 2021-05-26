@@ -1,12 +1,13 @@
 package lexer
 
 import (
+	"github.com/shoriwe/gruby/pkg/compiler/reader"
 	"testing"
 )
 
 func test(t *testing.T, samples map[string][]*Token) {
 	for sample, result := range samples {
-		lexer := NewLexer(sample)
+		lexer := NewLexer(reader.NewStringReader(sample))
 		var computedTokens []*Token
 		for ; lexer.HasNext(); {
 			token, tokenizationError := lexer.Next()
