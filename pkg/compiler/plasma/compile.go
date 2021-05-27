@@ -91,14 +91,20 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) *errors.E
 
 				string(
 					cleanup.ReplaceEscaped(
-						[]byte(literal.Token.String[1:len(literal.Token.String)-1])),
+						[]rune(literal.Token.String[1:len(literal.Token.String)-1])),
 				),
 			),
 		)
 	case lexer.ByteString:
 		c.pushInstruction(
-			vm.NewCode(vm.NewBytesOP, literal.Token.Line, cleanup.ReplaceEscaped(
-				[]byte(literal.Token.String[2:len(literal.Token.String)-1])),
+			vm.NewCode(vm.NewBytesOP, literal.Token.Line,
+				[]byte(
+					string(
+						cleanup.ReplaceEscaped(
+							[]rune(literal.Token.String[2:len(literal.Token.String)-1]),
+						),
+					),
+				),
 			),
 		)
 	case lexer.True:

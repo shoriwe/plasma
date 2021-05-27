@@ -1,42 +1,67 @@
 package cleanup
 
 import (
-	"bytes"
-	"regexp"
 	"strconv"
 )
 
-func ReplaceEscaped(s []byte) []byte {
-	// Replace escaped literals
-	for _, char := range []byte("\\'\"`") {
-		s = bytes.ReplaceAll(s, []byte{'\\', char}, []byte{char})
-	}
-	// Replace with char based
-	s = bytes.ReplaceAll(s, []byte{'\\', 'a'}, []byte{7})         // a
-	s = bytes.ReplaceAll(s, []byte{'\\', 'b'}, []byte{8})         // b
-	s = bytes.ReplaceAll(s, []byte{'\\', 'e'}, []byte{'\\', 'e'}) // e
-	s = bytes.ReplaceAll(s, []byte{'\\', 'f'}, []byte{12})        // f
-	s = bytes.ReplaceAll(s, []byte{'\\', 'n'}, []byte{10})        // n
-	s = bytes.ReplaceAll(s, []byte{'\\', 'r'}, []byte{13})        // r
-	s = bytes.ReplaceAll(s, []byte{'\\', 't'}, []byte{9})         // t
-	s = bytes.ReplaceAll(s, []byte{'\\', '?'}, []byte{'\\', '?'}) // ?
-	// Replace hex with numbers
-	hexEscapes := regexp.MustCompile("(?i)\\\\[Xx][0-9a-fA-F][0-9a-fA-F]").FindAll(s, -1)
-	for _, hexEscape := range hexEscapes {
-		number, parsingError := strconv.ParseUint(string(hexEscape[2:]), 16, 8)
-		if parsingError != nil {
-			panic(parsingError)
+var directCharEscapeValue = map[rune][]rune{
+	'a': {7},
+	'b': {8},
+	'e': {'\\', 'e'},
+	'f': {12},
+	'n': {10},
+	'r': {13},
+	't': {9},
+	'?': {'\\', '?'},
+}
+
+func ReplaceEscaped(s []rune) []rune {
+	sLength := len(s)
+	escaped := false
+	var result []rune
+	for index := 0; index < sLength; index++ {
+		char := s[index]
+		if escaped {
+			switch char {
+			case 'a', 'b', 'e', 'f', 'n', 'r', 't', '?':
+				// Replace char based
+				result = append(result, directCharEscapeValue[char]...)
+			case '\\', '\'', '"', '`':
+				// Replace escaped literals
+				result = append(result, char)
+			case 'x':
+				// Replace hex with numbers
+				index++
+				a := s[index]
+				index++
+				b := s[index]
+				number, parsingError := strconv.ParseUint(string([]rune{a, b}), 16, 32)
+				if parsingError != nil {
+					panic(parsingError)
+				}
+				result = append(result, rune(number))
+			case 'u':
+				// Replace unicode with numbers
+				index++
+				a := s[index]
+				index++
+				b := s[index]
+				index++
+				c := s[index]
+				index++
+				d := s[index]
+				number, parsingError := strconv.ParseUint(string([]rune{a, b, c, d}), 16, 32)
+				if parsingError != nil {
+					panic(parsingError)
+				}
+				result = append(result, rune(number))
+			}
+			escaped = false
+		} else if char == '\\' {
+			escaped = true
+		} else {
+			result = append(result, char)
 		}
-		s = bytes.ReplaceAll(s, hexEscape, []byte{uint8(number)})
 	}
-	// Replace unicode with numbers
-	unicodeEscapes := regexp.MustCompile("(?i)\\\\[Uu][0-9a-fA-F]{4,6}").FindAll(s, -1)
-	for _, unicodeEscape := range unicodeEscapes {
-		number, parsingError := strconv.ParseUint(string(unicodeEscape[2:]), 16, 32)
-		if parsingError != nil {
-			panic(parsingError)
-		}
-		s = bytes.ReplaceAll(s, unicodeEscape, []byte(string(rune(number))))
-	}
-	return s
+	return result
 }
