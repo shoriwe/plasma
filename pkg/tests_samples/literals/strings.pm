@@ -6,3 +6,7 @@ World'
 "Hello World"
 "Hello
 World"
+# Byte Strings
+b"Hello world"
+# Escaped chars
+"Hello\nWorld"

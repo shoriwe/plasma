@@ -1,11 +1,12 @@
 package vm
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
+	"github.com/shoriwe/gruby/pkg/cleanup"
 	"github.com/shoriwe/gruby/pkg/errors"
 	"math"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -120,40 +121,23 @@ const (
 	SetLength    = "SetLength"
 )
 
-var (
-	integerPattern = regexp.MustCompile("(?m)^-?\\d+(_|\\d)*$")
-	hexPattern     = regexp.MustCompile("(?m)^0[xX][a-zA-Z0-9]+(_|[a-zA-Z0-9])*$")
-	octalPattern   = regexp.MustCompile("(?m)^0[oO][0-7]+(_|[0-7])*$")
-	binaryPattern  = regexp.MustCompile("(?m)^0[bB][01]+(_|[01])*$")
-)
-
-var (
-	floatPattern          = regexp.MustCompile("(?m)^-?\\d+(_|\\d)*\\.\\d+(_|\\d)*$")
-	scientificPattern     = regexp.MustCompile("(?m)^-?((\\d+(_|\\d)*)|(\\d+(_|\\d)*\\.\\d+(_|\\d)*))[eE][-+]\\d+(_|\\d)*$")
-	numberPartPattern     = regexp.MustCompile("(?m)^-?((\\d+(_|\\d)*)|(\\d+(_|\\d)*\\.\\d+(_|\\d)*))[eE][-+]")
-	scientificPartPattern = regexp.MustCompile("(?m)[eE][-+]\\d+(_|\\d)*$")
-)
-
-func ParseInteger(s string) (string, int, bool) {
-	if integerPattern.MatchString(s) {
-		return strings.ReplaceAll(s, "_", ""), 10, true
-	} else if hexPattern.MatchString(s) {
-		return strings.ReplaceAll(s[2:], "_", ""), 8, true
-	} else if octalPattern.MatchString(s) {
-		return strings.ReplaceAll(s[2:], "_", ""), 16, true
-	} else if binaryPattern.MatchString(s) {
-		return strings.ReplaceAll(s[2:], "_", ""), 2, true
+func ParseInteger(s string) (int64, *errors.Error) {
+	s = strings.ReplaceAll(s, "_", "")
+	var number int64
+	var parsingError error
+	if strings.HasPrefix(s, "0x") || strings.HasPrefix(s, "0X") {
+		number, parsingError = strconv.ParseInt(s[2:], 16, 64)
+	} else if strings.HasPrefix(s, "0o") || strings.HasPrefix(s, "0O") {
+		number, parsingError = strconv.ParseInt(s[2:], 8, 64)
+	} else if strings.HasPrefix(s, "0B") || strings.HasPrefix(s, "0B") {
+		number, parsingError = strconv.ParseInt(s[2:], 2, 64)
+	} else {
+		number, parsingError = strconv.ParseInt(s, 10, 64)
 	}
-	return "", 0, false
-}
-
-func ParseFloat(s string) (string, bool) {
-	if floatPattern.MatchString(s) {
-		return strings.ReplaceAll(s, "_", ""), true
-	} else if scientificPattern.MatchString(s) {
-		// ToDo: Support scientific numbers
+	if parsingError != nil {
+		return 0, errors.New(errors.UnknownLine, parsingError.Error(), errors.GoRuntimeError)
 	}
-	return "", false
+	return number, nil
 }
 
 func Repeat(s string, times int64) string {
@@ -344,7 +328,7 @@ type IObject interface {
 	SetHash(int64)
 
 	GetBool() bool
-	GetBytes() []*Integer
+	GetBytes() []uint8
 	GetString() string
 	GetInteger64() int64
 	GetFloat64() float64
@@ -353,7 +337,7 @@ type IObject interface {
 	GetLength() int
 
 	SetBool(bool)
-	SetBytes([]*Integer)
+	SetBytes([]uint8)
 	SetString(string)
 	SetInteger64(int64)
 	SetFloat64(float64)
@@ -374,7 +358,7 @@ type Object struct {
 	// Stuff Related to built in objects
 	Bool      bool
 	String    string
-	Bytes     []*Integer
+	Bytes     []uint8
 	Integer64 int64
 	Float64   float64
 	Content   []IObject
@@ -391,7 +375,7 @@ func (o *Object) GetBool() bool {
 	return o.Bool
 }
 
-func (o *Object) GetBytes() []*Integer {
+func (o *Object) GetBytes() []uint8 {
 	return o.Bytes
 }
 
@@ -447,7 +431,7 @@ func (o *Object) SetBool(b bool) {
 	o.Bool = b
 }
 
-func (o *Object) SetBytes(b []*Integer) {
+func (o *Object) SetBytes(b []uint8) {
 	o.Bytes = b
 }
 
@@ -1073,7 +1057,7 @@ func NewObject(
 	result.Float64 = 0
 	result.Content = []IObject{}
 	result.KeyValues = map[int64][]*KeyValue{}
-	result.Bytes = []*Integer{}
+	result.Bytes = []uint8{}
 	ObjectInitialize(nil, result)
 	return result
 }
@@ -1244,13 +1228,9 @@ func StringToInteger(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	content, base, valid := ParseInteger(self.GetString())
-	if !valid {
-		return nil, errors.NewInvalidIntegerDefinition(errors.UnknownLine, self.GetString())
-	}
-	number, parsingError := strconv.ParseInt(content, base, 64)
+	number, parsingError := ParseInteger(self.GetString())
 	if parsingError != nil {
-		return nil, errors.NewInvalidIntegerDefinition(errors.UnknownLine, self.GetString())
+		return nil, parsingError
 	}
 	return NewInteger(vm.PeekSymbolTable(), number), nil
 }
@@ -1260,11 +1240,7 @@ func StringToFloat(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	content, valid := ParseFloat(self.GetString())
-	if !valid {
-		return nil, errors.NewInvalidFloatDefinition(errors.UnknownLine, self.GetString())
-	}
-	number, parsingError := strconv.ParseFloat(content, 64)
+	number, parsingError := cleanup.ParseFloat(strings.ReplaceAll(self.GetString(), "_", ""))
 	if parsingError != nil {
 		return nil, errors.NewInvalidFloatDefinition(errors.UnknownLine, self.GetString())
 	}
@@ -1385,42 +1361,9 @@ func BytesAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) 
 	if _, ok := right.(*Bytes); !ok {
 		return nil, errors.NewTypeError(right.TypeName(), BytesName)
 	}
-	var newContent []*Integer
-	var byteCopyFunc IObject
-	for _, byte_ := range self.GetBytes() {
-		byteCopyFunc, getError = byte_.Get(Copy)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := byteCopyFunc.(*Function); !ok {
-			return nil, errors.NewTypeError(byteCopyFunc.TypeName(), FunctionName)
-		}
-		byteCopy, callError := CallFunction(byteCopyFunc.(*Function), vm, vm.PeekSymbolTable())
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := byteCopy.(*Integer); !ok {
-			return nil, errors.NewTypeError(byteCopy.TypeName(), IntegerName)
-		}
-		newContent = append(newContent, byteCopy.(*Integer))
-	}
-	for _, byte_ := range right.GetBytes() {
-		byteCopyFunc, getError = byte_.Get(Copy)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := byteCopyFunc.(*Function); !ok {
-			return nil, errors.NewTypeError(byteCopyFunc.TypeName(), FunctionName)
-		}
-		byteCopy, callError := CallFunction(byteCopyFunc.(*Function), vm, vm.PeekSymbolTable())
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := byteCopy.(*Integer); !ok {
-			return nil, errors.NewTypeError(byteCopy.TypeName(), IntegerName)
-		}
-		newContent = append(newContent, byteCopy.(*Integer))
-	}
+	var newContent []uint8
+	copy(newContent, self.GetBytes())
+	newContent = append(newContent, right.GetBytes()...)
 	return NewBytes(vm.PeekSymbolTable(), newContent), nil
 }
 
@@ -1433,42 +1376,9 @@ func BytesRightAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Er
 	if _, ok := left.(*Bytes); !ok {
 		return nil, errors.NewTypeError(left.TypeName(), BytesName)
 	}
-	var newContent []*Integer
-	var byteCopyFunc IObject
-	for _, byte_ := range left.GetBytes() {
-		byteCopyFunc, getError = byte_.Get(Copy)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := byteCopyFunc.(*Function); !ok {
-			return nil, errors.NewTypeError(byteCopyFunc.TypeName(), FunctionName)
-		}
-		byteCopy, callError := CallFunction(byteCopyFunc.(*Function), vm, vm.PeekSymbolTable())
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := byteCopy.(*Integer); !ok {
-			return nil, errors.NewTypeError(byteCopy.TypeName(), IntegerName)
-		}
-		newContent = append(newContent, byteCopy.(*Integer))
-	}
-	for _, byte_ := range self.GetBytes() {
-		byteCopyFunc, getError = byte_.Get(Copy)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := byteCopyFunc.(*Function); !ok {
-			return nil, errors.NewTypeError(byteCopyFunc.TypeName(), FunctionName)
-		}
-		byteCopy, callError := CallFunction(byteCopyFunc.(*Function), vm, vm.PeekSymbolTable())
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := byteCopy.(*Integer); !ok {
-			return nil, errors.NewTypeError(byteCopy.TypeName(), IntegerName)
-		}
-		newContent = append(newContent, byteCopy.(*Integer))
-	}
+	var newContent []uint8
+	copy(newContent, left.GetBytes())
+	newContent = append(newContent, self.GetBytes()...)
 	return NewBytes(vm.PeekSymbolTable(), newContent), nil
 }
 
@@ -1481,29 +1391,7 @@ func BytesMul(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) 
 	if _, ok := right.(*Integer); !ok {
 		return nil, errors.NewTypeError(right.TypeName(), IntegerName)
 	}
-	var i int64
-	var newContent []*Integer
-	var byteCopyFunc IObject
-	for i = 0; i < right.GetInteger64(); i++ {
-		for _, byte_ := range self.GetBytes() {
-			byteCopyFunc, getError = byte_.Get(Copy)
-			if getError != nil {
-				return nil, getError
-			}
-			if _, ok := byteCopyFunc.(*Function); !ok {
-				return nil, errors.NewTypeError(byteCopyFunc.TypeName(), FunctionName)
-			}
-			byteCopy, callError := CallFunction(byteCopyFunc.(*Function), vm, vm.PeekSymbolTable())
-			if callError != nil {
-				return nil, callError
-			}
-			if _, ok := byteCopy.(*Integer); !ok {
-				return nil, errors.NewTypeError(byteCopy.TypeName(), IntegerName)
-			}
-			newContent = append(newContent, byteCopy.(*Integer))
-		}
-	}
-	return NewBytes(vm.PeekSymbolTable(), newContent), nil
+	return NewBytes(vm.PeekSymbolTable(), bytes.Repeat(self.GetBytes(), int(right.GetInteger64()))), nil
 }
 
 func BytesRightMul(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -1515,29 +1403,7 @@ func BytesRightMul(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Er
 	if _, ok := left.(*Integer); !ok {
 		return nil, errors.NewTypeError(left.TypeName(), IntegerName)
 	}
-	var i int64
-	var newContent []*Integer
-	var byteCopyFunc IObject
-	for i = 0; i < left.GetInteger64(); i++ {
-		for _, byte_ := range self.GetBytes() {
-			byteCopyFunc, getError = byte_.Get(Copy)
-			if getError != nil {
-				return nil, getError
-			}
-			if _, ok := byteCopyFunc.(*Function); !ok {
-				return nil, errors.NewTypeError(byteCopyFunc.TypeName(), FunctionName)
-			}
-			byteCopy, callError := CallFunction(byteCopyFunc.(*Function), vm, vm.PeekSymbolTable())
-			if callError != nil {
-				return nil, callError
-			}
-			if _, ok := byteCopy.(*Integer); !ok {
-				return nil, errors.NewTypeError(byteCopy.TypeName(), IntegerName)
-			}
-			newContent = append(newContent, byteCopy.(*Integer))
-		}
-	}
-	return NewBytes(vm.PeekSymbolTable(), newContent), nil
+	return NewBytes(vm.PeekSymbolTable(), bytes.Repeat(left.GetBytes(), int(self.GetInteger64()))), nil
 }
 
 func BytesEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -1552,27 +1418,7 @@ func BytesEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 	if self.GetLength() != right.GetLength() {
 		return NewBool(vm.PeekSymbolTable(), false), nil
 	}
-	var leftEquals IObject
-	for index, byte_ := range self.GetBytes() {
-		leftEquals, getError = byte_.Get(Equals)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := leftEquals.(*Function); !ok {
-			return nil, errors.NewTypeError(leftEquals.TypeName(), FunctionName)
-		}
-		result, callError := CallFunction(leftEquals.(*Function), vm, vm.PeekSymbolTable(), right.GetBytes()[index])
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := result.(*Bool); !ok {
-			return nil, errors.NewTypeError(result.TypeName(), BoolName)
-		}
-		if !result.GetBool() {
-			return NewBool(vm.PeekSymbolTable(), false), nil
-		}
-	}
-	return NewBool(vm.PeekSymbolTable(), true), nil
+	return NewBool(vm.PeekSymbolTable(), bytes.Compare(self.GetBytes(), right.GetBytes()) == 0), nil
 }
 
 func BytesRightEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -1587,27 +1433,7 @@ func BytesRightEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors
 	if left.GetLength() != self.GetLength() {
 		return NewBool(vm.PeekSymbolTable(), false), nil
 	}
-	var leftEquals IObject
-	for index, byte_ := range left.GetBytes() {
-		leftEquals, getError = byte_.Get(RightEquals)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := leftEquals.(*Function); !ok {
-			return nil, errors.NewTypeError(leftEquals.TypeName(), FunctionName)
-		}
-		result, callError := CallFunction(leftEquals.(*Function), vm, vm.PeekSymbolTable(), self.GetBytes()[index])
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := result.(*Bool); !ok {
-			return nil, errors.NewTypeError(result.TypeName(), BoolName)
-		}
-		if !result.GetBool() {
-			return NewBool(vm.PeekSymbolTable(), false), nil
-		}
-	}
-	return NewBool(vm.PeekSymbolTable(), true), nil
+	return NewBool(vm.PeekSymbolTable(), bytes.Compare(left.GetBytes(), self.GetBytes()) == 0), nil
 }
 
 func BytesNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -1622,27 +1448,7 @@ func BytesNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.E
 	if self.GetLength() != right.GetLength() {
 		return NewBool(vm.PeekSymbolTable(), false), nil
 	}
-	var leftEquals IObject
-	for index, byte_ := range self.GetBytes() {
-		leftEquals, getError = byte_.Get(NotEquals)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := leftEquals.(*Function); !ok {
-			return nil, errors.NewTypeError(leftEquals.TypeName(), FunctionName)
-		}
-		result, callError := CallFunction(leftEquals.(*Function), vm, vm.PeekSymbolTable(), right.GetBytes()[index])
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := result.(*Bool); !ok {
-			return nil, errors.NewTypeError(result.TypeName(), BoolName)
-		}
-		if !result.GetBool() {
-			return NewBool(vm.PeekSymbolTable(), false), nil
-		}
-	}
-	return NewBool(vm.PeekSymbolTable(), true), nil
+	return NewBool(vm.PeekSymbolTable(), bytes.Compare(self.GetBytes(), right.GetBytes()) == 0), nil
 }
 
 func BytesRightNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -1657,27 +1463,7 @@ func BytesRightNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *err
 	if left.GetLength() != self.GetLength() {
 		return NewBool(vm.PeekSymbolTable(), false), nil
 	}
-	var leftEquals IObject
-	for index, byte_ := range left.GetBytes() {
-		leftEquals, getError = byte_.Get(RightNotEquals)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := leftEquals.(*Function); !ok {
-			return nil, errors.NewTypeError(leftEquals.TypeName(), FunctionName)
-		}
-		result, callError := CallFunction(leftEquals.(*Function), vm, vm.PeekSymbolTable(), self.GetBytes()[index])
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := result.(*Bool); !ok {
-			return nil, errors.NewTypeError(result.TypeName(), BoolName)
-		}
-		if !result.GetBool() {
-			return NewBool(vm.PeekSymbolTable(), false), nil
-		}
-	}
-	return NewBool(vm.PeekSymbolTable(), true), nil
+	return NewBool(vm.PeekSymbolTable(), bytes.Compare(left.GetBytes(), self.GetBytes()) == 0), nil
 }
 
 func BytesHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
@@ -1685,15 +1471,11 @@ func BytesHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	var hashNumber int64
-	for index, byte_ := range self.GetBytes() {
-		if index == 0 {
-			hashNumber = byte_.hash
-		} else {
-			hashNumber <<= byte_.hash
-		}
+	selfHash, hashingError := vm.HashBytes(append(self.GetBytes(), []byte("Bytes")...))
+	if hashingError != nil {
+		return nil, hashingError
 	}
-	return NewInteger(vm.PeekSymbolTable(), hashNumber), nil
+	return NewInteger(vm.PeekSymbolTable(), selfHash), nil
 }
 
 func BytesCopy(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
@@ -1701,10 +1483,8 @@ func BytesCopy(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	var newBytes []*Integer
-	for _, byte_ := range self.GetBytes() {
-		newBytes = append(newBytes, NewInteger(vm.PeekSymbolTable(), byte_.Integer64))
-	}
+	var newBytes []uint8
+	copy(newBytes, self.GetBytes())
 	return NewBytes(vm.PeekSymbolTable(), newBytes), nil
 }
 
@@ -1720,7 +1500,7 @@ func BytesIndex(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error
 		if calcError != nil {
 			return nil, calcError
 		}
-		return self.GetBytes()[index], nil
+		return NewInteger(vm.PeekSymbolTable(), int64(self.GetBytes()[index])), nil
 	} else if _, ok = indexObject.(*Tuple); ok {
 		if len(indexObject.GetContent()) != 2 {
 			return nil, errors.NewInvalidNumberOfArguments(len(indexObject.GetContent()), 2)
@@ -1744,11 +1524,7 @@ func BytesToInteger(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	var numbers []uint8
-	for _, byte_ := range self.GetBytes() {
-		numbers = append(numbers, uint8(byte_.Integer64))
-	}
-	return NewInteger(vm.PeekSymbolTable(), int64(binary.BigEndian.Uint32(numbers))), nil
+	return NewInteger(vm.PeekSymbolTable(), int64(binary.BigEndian.Uint32(self.GetBytes()))), nil
 }
 
 func BytesToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
@@ -1756,11 +1532,7 @@ func BytesToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	var numbers []uint8
-	for _, byte_ := range self.GetBytes() {
-		numbers = append(numbers, uint8(byte_.Integer64))
-	}
-	return NewString(vm.PeekSymbolTable(), string(numbers)), nil
+	return NewString(vm.PeekSymbolTable(), string(self.GetBytes())), nil
 }
 
 func BytesToBool(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
@@ -1777,23 +1549,8 @@ func BytesToArray(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		return nil, getError
 	}
 	var newContent []IObject
-	var byteCopyFunc IObject
 	for _, byte_ := range self.GetBytes() {
-		byteCopyFunc, getError = byte_.Get(Copy)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := byteCopyFunc.(*Function); !ok {
-			return nil, errors.NewTypeError(byteCopyFunc.TypeName(), FunctionName)
-		}
-		byteCopy, callError := CallFunction(byteCopyFunc.(*Function), vm, vm.PeekSymbolTable())
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := byteCopy.(*Integer); !ok {
-			return nil, errors.NewTypeError(byteCopy.TypeName(), IntegerName)
-		}
-		newContent = append(newContent, byteCopy.(*Integer))
+		newContent = append(newContent, NewInteger(vm.PeekSymbolTable(), int64(byte_)))
 	}
 	return NewArray(vm.PeekSymbolTable(), newContent), nil
 }
@@ -1804,23 +1561,8 @@ func BytesToTuple(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		return nil, getError
 	}
 	var newContent []IObject
-	var byteCopyFunc IObject
 	for _, byte_ := range self.GetBytes() {
-		byteCopyFunc, getError = byte_.Get(Copy)
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := byteCopyFunc.(*Function); !ok {
-			return nil, errors.NewTypeError(byteCopyFunc.TypeName(), FunctionName)
-		}
-		byteCopy, callError := CallFunction(byteCopyFunc.(*Function), vm, vm.PeekSymbolTable())
-		if callError != nil {
-			return nil, callError
-		}
-		if _, ok := byteCopy.(*Integer); !ok {
-			return nil, errors.NewTypeError(byteCopy.TypeName(), IntegerName)
-		}
-		newContent = append(newContent, byteCopy.(*Integer))
+		newContent = append(newContent, NewInteger(vm.PeekSymbolTable(), int64(byte_)))
 	}
 	return NewTuple(vm.PeekSymbolTable(), newContent), nil
 }
@@ -1876,7 +1618,7 @@ func BytesInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	return nil
 }
 
-func NewBytes(parent *SymbolTable, content []*Integer) IObject {
+func NewBytes(parent *SymbolTable, content []uint8) IObject {
 	bytes_ := &Bytes{
 		Object: NewObject(BytesName, nil, parent),
 	}

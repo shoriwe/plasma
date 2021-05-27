@@ -38,10 +38,18 @@ func (p *Plasma) Initialize(code []Code) *errors.Error {
 func (p *Plasma) PeekSymbolTable() *SymbolTable {
 	return p.Context.Peek()
 }
+
 func (p *Plasma) newStringOP(code Code) *errors.Error {
 	value := code.Value.(string)
 	stringObject := NewString(p.Context.Peek(), value)
 	p.MemoryStack.Push(stringObject)
+	return nil
+}
+
+func (p *Plasma) newBytesOP(code Code) *errors.Error {
+	value := code.Value.([]byte)
+	bytesObject := NewBytes(p.Context.Peek(), value)
+	p.MemoryStack.Push(bytesObject)
 	return nil
 }
 
@@ -186,6 +194,8 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 		switch code.Instruction.OpCode {
 		case NewStringOP:
 			executionError = p.newStringOP(code)
+		case NewBytesOP:
+			executionError = p.newBytesOP(code)
 		case NewIntegerOP:
 			executionError = p.newIntegerOP(code)
 		case NewFloatOP:
@@ -220,6 +230,16 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 
 func (p *Plasma) HashString(s string) (int64, *errors.Error) {
 	_, hashingError := p.Crc64Hash.Write([]byte(s))
+	if hashingError != nil {
+		return 0, errors.NewHashingStringError()
+	}
+	hashValue := p.Crc64Hash.Sum64()
+	p.Crc64Hash.Reset()
+	return int64(hashValue), nil
+}
+
+func (p *Plasma) HashBytes(s []byte) (int64, *errors.Error) {
+	_, hashingError := p.Crc64Hash.Write(s)
 	if hashingError != nil {
 		return 0, errors.NewHashingStringError()
 	}

@@ -1,6 +1,7 @@
 package gruby
 
 import (
+	"fmt"
 	"github.com/shoriwe/gruby/pkg/compiler/plasma"
 	"github.com/shoriwe/gruby/pkg/reader"
 	"github.com/shoriwe/gruby/pkg/vm"
@@ -30,7 +31,6 @@ func TestLiterals(t *testing.T) {
 		if file.IsDir() {
 			continue
 		}
-		t.Log(file.Name())
 		fileHandler, openError := os.Open(filepath.Join(currentDir, package_, samplesDirectory, literals, file.Name()))
 		if openError != nil {
 			t.Fatal(openError)
@@ -66,6 +66,6 @@ func TestLiterals(t *testing.T) {
 			}
 			fmt.Println(stringResult.GetString())
 		*/
-
+		fmt.Println(fmt.Sprintf("[+] %s: SUCCESS", file.Name()))
 	}
 }
