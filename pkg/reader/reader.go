@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"bufio"
 	"io"
 	"os"
 )
@@ -10,11 +11,11 @@ type Reader interface {
 	Redo()
 	HasNext() bool
 	Index() int
-	Char() uint8
+	Char() rune
 }
 
 type StringReader struct {
-	content string
+	content []rune
 	index   int
 	length  int
 }
@@ -35,45 +36,49 @@ func (s *StringReader) Index() int {
 	return s.index
 }
 
-func (s *StringReader) Char() uint8 {
+func (s *StringReader) Char() rune {
 	return s.content[s.index]
 }
 
 func NewStringReader(code string) *StringReader {
 	return &StringReader{
-		content: code,
+		content: []rune(code),
 		index:   0,
 		length:  len(code),
 	}
 }
 
 type FileReader struct {
-	fileHandler *os.File
-	index       int
-	currentChar uint8
-	finish      bool
+	fileHandler       *os.File
+	reader            io.RuneReader
+	index             int
+	currentChar       rune
+	currentCharLength int
+	finish            bool
 }
 
 func (f *FileReader) Next() {
-	charSlice := make([]byte, 1)
-	_, readingError := f.fileHandler.Read(charSlice)
+	rune_, runeSize, readingError := f.reader.ReadRune()
 	if readingError != nil {
-		if readingError == io.EOF {
-			f.finish = true
-			return
+		if readingError != io.EOF {
+			panic(readingError)
 		}
+		f.finish = true
+		return
 	}
-	f.index++
-	f.currentChar = charSlice[0]
+	f.currentChar = rune_
+	f.currentCharLength = runeSize
+	f.index += runeSize
 }
 
 func (f *FileReader) Redo() {
 	if f.index > 0 {
-		_, seekError := f.fileHandler.Seek(-2, io.SeekCurrent)
+		_, seekError := f.fileHandler.Seek(int64(f.index-f.currentCharLength), io.SeekStart)
+		f.reader = bufio.NewReader(f.fileHandler)
 		if seekError != nil {
 			panic(seekError)
 		}
-		f.index--
+		f.index -= f.currentCharLength
 		f.finish = false
 		f.Next()
 	}
@@ -87,14 +92,17 @@ func (f *FileReader) Index() int {
 	return f.index
 }
 
-func (f *FileReader) Char() uint8 {
+func (f *FileReader) Char() rune {
 	return f.currentChar
 }
 
 func NewFileReader(fileHandler *os.File) *FileReader {
 	return &FileReader{
-		fileHandler: fileHandler,
-		index:       0,
-		currentChar: 0,
+		fileHandler:       fileHandler,
+		reader:            bufio.NewReader(fileHandler),
+		index:             0,
+		currentChar:       0,
+		currentCharLength: 0,
+		finish:            false,
 	}
 }
