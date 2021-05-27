@@ -2,7 +2,6 @@ package cleanup
 
 import (
 	"bytes"
-	"encoding/binary"
 	"regexp"
 	"strconv"
 )
@@ -37,15 +36,7 @@ func ReplaceEscaped(s []byte) []byte {
 		if parsingError != nil {
 			panic(parsingError)
 		}
-		unicodeBytes := make([]byte, 6)
-		binary.LittleEndian.PutUint32(unicodeBytes, uint32(number))
-		index := 5
-		for ; index > -1; index-- {
-			if unicodeBytes[index] != 0 {
-				break
-			}
-		}
-		s = bytes.ReplaceAll(s, unicodeEscape, unicodeBytes[:index+1])
+		s = bytes.ReplaceAll(s, unicodeEscape, []byte(string(rune(number))))
 	}
 	return s
 }

@@ -87,7 +87,9 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) *errors.E
 	case lexer.SingleQuoteString, lexer.DoubleQuoteString:
 		c.pushInstruction(
 			vm.NewCode(
-				vm.NewStringOP, literal.Token.Line, string(
+				vm.NewStringOP, literal.Token.Line,
+
+				string(
 					cleanup.ReplaceEscaped(
 						[]byte(literal.Token.String[1:len(literal.Token.String)-1])),
 				),

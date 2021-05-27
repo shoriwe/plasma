@@ -11,5 +11,5 @@ b"Hello world"
 # Escaped chars
 "Hello\nWorld"
 "Hello\x41World"
-"Hello\u0041World"
-"\u0041"
+"\u0041ntonio"
+"500\u20ac"
