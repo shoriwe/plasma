@@ -66,5 +66,6 @@ func TestLiterals(t *testing.T) {
 			}
 			fmt.Println(stringResult.GetString())
 		*/
+
 	}
 }

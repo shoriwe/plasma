@@ -68,12 +68,15 @@ func (f *FileReader) Next() {
 }
 
 func (f *FileReader) Redo() {
-	_, seekError := f.fileHandler.Seek(-1, io.SeekCurrent)
-	if seekError != nil {
-		panic(seekError)
+	if f.index > 0 {
+		_, seekError := f.fileHandler.Seek(-2, io.SeekCurrent)
+		if seekError != nil {
+			panic(seekError)
+		}
+		f.index--
+		f.finish = false
+		f.Next()
 	}
-	f.index--
-	f.Next()
 }
 
 func (f *FileReader) HasNext() bool {
@@ -91,7 +94,7 @@ func (f *FileReader) Char() uint8 {
 func NewFileReader(fileHandler *os.File) *FileReader {
 	return &FileReader{
 		fileHandler: fileHandler,
-		index:       -1,
+		index:       0,
 		currentChar: 0,
 	}
 }

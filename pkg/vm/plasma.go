@@ -52,6 +52,32 @@ func (p *Plasma) newIntegerOP(code Code) *errors.Error {
 	return nil
 }
 
+func (p *Plasma) newFloatOP(code Code) *errors.Error {
+	value := code.Value.(float64)
+	float := NewFloat(p.Context.Peek(), value)
+	p.MemoryStack.Push(float)
+	return nil
+}
+
+func (p *Plasma) newTrueBoolOP() *errors.Error {
+	p.MemoryStack.Push(NewBool(p.PeekSymbolTable(), true))
+	return nil
+}
+
+func (p *Plasma) newFalseBoolOP() *errors.Error {
+	p.MemoryStack.Push(NewBool(p.PeekSymbolTable(), false))
+	return nil
+}
+
+func (p *Plasma) getNoneOP() *errors.Error {
+	none, getError := p.PeekSymbolTable().GetAny(None)
+	if getError != nil {
+		return getError
+	}
+	p.MemoryStack.Push(none)
+	return nil
+}
+
 func (p *Plasma) constructObject(type_ *Type) *errors.Error {
 	object, constructionError := ConstructObject(type_, p, p.PeekSymbolTable())
 	if constructionError != nil {
@@ -162,6 +188,14 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.newStringOP(code)
 		case NewIntegerOP:
 			executionError = p.newIntegerOP(code)
+		case NewFloatOP:
+			executionError = p.newFloatOP(code)
+		case NewTrueBoolOP:
+			executionError = p.newTrueBoolOP()
+		case NewFalseBoolOP:
+			executionError = p.newFalseBoolOP()
+		case GetNoneOP:
+			executionError = p.getNoneOP()
 		case CallOP:
 			executionError = p.callOP()
 		case GetOP:

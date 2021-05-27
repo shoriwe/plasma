@@ -5,6 +5,7 @@ import (
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
 	"github.com/shoriwe/gruby/pkg/compiler/parser"
 	"github.com/shoriwe/gruby/pkg/errors"
+	"github.com/shoriwe/gruby/pkg/float"
 	"github.com/shoriwe/gruby/pkg/reader"
 	"github.com/shoriwe/gruby/pkg/vm"
 	"strconv"
@@ -75,20 +76,25 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) *errors.E
 			return errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
 		}
 		c.pushInstruction(vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number))
-	case lexer.Float:
-		break
-	case lexer.ScientificFloat:
-		break
+	case lexer.Float, lexer.ScientificFloat:
+		numberString := literal.Token.String
+		numberString = strings.ReplaceAll(numberString, "_", "")
+		number, parsingError := float.ParseFloat(numberString)
+		if parsingError != nil {
+			return errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
+		}
+		c.pushInstruction(vm.NewCode(vm.NewFloatOP, literal.Token.Line, number))
 	case lexer.SingleQuoteString, lexer.DoubleQuoteString:
-		break
+		// ToDo: Do Something to replace escaped chars
+		c.pushInstruction(vm.NewCode(vm.NewStringOP, literal.Token.Line, literal.Token.String[1:len(literal.Token.String)-1]))
 	case lexer.ByteString:
 		break
 	case lexer.True:
-		break
+		c.pushInstruction(vm.NewCode(vm.NewTrueBoolOP, literal.Token.Line, nil))
 	case lexer.False:
-		break
+		c.pushInstruction(vm.NewCode(vm.NewFalseBoolOP, literal.Token.Line, nil))
 	case lexer.None:
-		break
+		c.pushInstruction(vm.NewCode(vm.GetNoneOP, literal.Token.Line, nil))
 	}
 	return nil
 }

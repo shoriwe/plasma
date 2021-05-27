@@ -12,6 +12,7 @@ const (
 	Literal
 	Tab
 	IdentifierKind
+	JunkKind
 	Separator
 	Punctuation
 	Assignment
