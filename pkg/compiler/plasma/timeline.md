@@ -1,8 +1,29 @@
 - [ ] Literals
+    - [X] Integers
+        - [X] Decimal
+        - [X] Hex
+        - [X] Binary
+        - [X] Octal
+    - [X] Float
+        - [X] Basic
+        - [X] Scientific
+    - [ ] String
+        - [ ] Single Quote
+        - [ ] Double Quote
+    - [ ] Bytes
+    - [X] Bool
+        - [X] True
+        - [X] False
+    - [X] None
 - [ ] Complex types
+    - [ ] Tuple
+    - [ ] Array
+    - [ ] Hash Table
 - [ ] Selector Expressions
 - [ ] Unary Expressions
-- [ ] Binary expressions
+- [ ] Binary Expressions
+- [ ] Lambda Expressions
+- [ ] Assign Statement
 - [ ] Flow control
 - [ ] Function definition
 - [ ] Class definition

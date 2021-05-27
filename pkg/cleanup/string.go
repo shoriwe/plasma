@@ -2,6 +2,9 @@ package cleanup
 
 import (
 	"bytes"
+	"encoding/binary"
+	"regexp"
+	"strconv"
 )
 
 func ReplaceEscaped(s []byte) []byte {
@@ -19,8 +22,30 @@ func ReplaceEscaped(s []byte) []byte {
 	s = bytes.ReplaceAll(s, []byte{'\\', 't'}, []byte{9})         // t
 	s = bytes.ReplaceAll(s, []byte{'\\', '?'}, []byte{'\\', '?'}) // ?
 	// Replace hex with numbers
-	// ToDo: Support hex escape
+	hexEscapes := regexp.MustCompile("(?i)\\\\[Xx][0-9a-fA-F][0-9a-fA-F]").FindAll(s, -1)
+	for _, hexEscape := range hexEscapes {
+		number, parsingError := strconv.ParseUint(string(hexEscape[2:]), 16, 8)
+		if parsingError != nil {
+			panic(parsingError)
+		}
+		s = bytes.ReplaceAll(s, hexEscape, []byte{uint8(number)})
+	}
 	// Replace unicode with numbers
-	// ToDo: Support unicode escape
+	unicodeEscapes := regexp.MustCompile("(?i)\\\\[Uu][0-9a-fA-F]{4,6}").FindAll(s, -1)
+	for _, unicodeEscape := range unicodeEscapes {
+		number, parsingError := strconv.ParseUint(string(unicodeEscape[2:]), 16, 32)
+		if parsingError != nil {
+			panic(parsingError)
+		}
+		unicodeBytes := make([]byte, 6)
+		binary.LittleEndian.PutUint32(unicodeBytes, uint32(number))
+		index := 5
+		for ; index > -1; index-- {
+			if unicodeBytes[index] != 0 {
+				break
+			}
+		}
+		s = bytes.ReplaceAll(s, unicodeEscape, unicodeBytes[:index+1])
+	}
 	return s
 }

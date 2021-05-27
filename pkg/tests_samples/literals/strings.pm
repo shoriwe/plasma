@@ -10,3 +10,6 @@ World"
 b"Hello world"
 # Escaped chars
 "Hello\nWorld"
+"Hello\x41World"
+"Hello\u0041World"
+"\u0041"
