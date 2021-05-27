@@ -7,10 +7,10 @@
     - [X] Float
         - [X] Basic
         - [X] Scientific
-    - [ ] String
-        - [ ] Single Quote
-        - [ ] Double Quote
-    - [ ] Bytes
+    - [X] String
+        - [X] Single Quote
+        - [X] Double Quote
+    - [X] Bytes
     - [X] Bool
         - [X] True
         - [X] False
