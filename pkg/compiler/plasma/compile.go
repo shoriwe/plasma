@@ -117,10 +117,70 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) *errors.E
 	return nil
 }
 
+func (c *Compiler) compileTuple(tuple *ast.TupleExpression) *errors.Error {
+	valuesLength := len(tuple.Values)
+	for i := valuesLength - 1; i > -1; i-- {
+		valueCompilationError := c.compileExpression(tuple.Values[i])
+		if valueCompilationError != nil {
+			return valueCompilationError
+		}
+	}
+	c.programCode = append(c.programCode, vm.NewCode(vm.NewTupleOP, errors.UnknownLine, len(tuple.Values)))
+	return nil
+}
+
+func (c *Compiler) compileArray(array *ast.ArrayExpression) *errors.Error {
+	valuesLength := len(array.Values)
+	for i := valuesLength - 1; i > -1; i-- {
+		valueCompilationError := c.compileExpression(array.Values[i])
+		if valueCompilationError != nil {
+			return valueCompilationError
+		}
+	}
+	c.programCode = append(c.programCode, vm.NewCode(vm.NewArrayOP, errors.UnknownLine, len(array.Values)))
+	return nil
+}
+
+func (c *Compiler) compileHash(hash *ast.HashExpression) *errors.Error {
+	valuesLength := len(hash.Values)
+	for i := valuesLength - 1; i > -1; i-- {
+		valueCompilationError := c.compileExpression(hash.Values[i].Value)
+		if valueCompilationError != nil {
+			return valueCompilationError
+		}
+		keyCompilationError := c.compileExpression(hash.Values[i].Key)
+		if keyCompilationError != nil {
+			return keyCompilationError
+		}
+	}
+	c.programCode = append(c.programCode, vm.NewCode(vm.NewHashOP, errors.UnknownLine, len(hash.Values)))
+	return nil
+}
+
+func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
+	switch expression.(type) {
+	case *ast.BasicLiteralExpression:
+		return c.compileLiteral(expression.(*ast.BasicLiteralExpression))
+	case *ast.TupleExpression:
+		return c.compileTuple(expression.(*ast.TupleExpression))
+	case *ast.ArrayExpression:
+		return c.compileArray(expression.(*ast.ArrayExpression))
+	case *ast.HashExpression:
+		return c.compileHash(expression.(*ast.HashExpression))
+	}
+	return nil
+}
+
+func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
+	return nil
+}
+
 func (c *Compiler) compile(node ast.Node) *errors.Error {
 	switch node.(type) {
-	case *ast.BasicLiteralExpression:
-		return c.compileLiteral(node.(*ast.BasicLiteralExpression))
+	case ast.Expression:
+		return c.compileExpression(node.(ast.Expression))
+	case ast.Statement:
+		return c.compileStatement(node.(ast.Statement))
 	}
 	return nil
 }

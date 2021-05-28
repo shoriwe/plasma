@@ -1,16 +1,23 @@
 package vm
 
 import (
+	"crypto/rand"
 	"github.com/shoriwe/gruby/pkg/errors"
 	"hash"
-	"hash/crc64"
+	"hash/crc32"
+	"math/big"
+)
+
+const (
+	polySize = 4294967295
 )
 
 type Plasma struct {
 	Code        *Bytecode
 	MemoryStack *ObjectStack
 	Context     *SymbolStack
-	Crc64Hash   hash.Hash64
+	Crc32Hash   hash.Hash32
+	seed        uint64
 }
 
 func (p *Plasma) LoadCode(codes []Code) {
@@ -83,6 +90,64 @@ func (p *Plasma) getNoneOP() *errors.Error {
 		return getError
 	}
 	p.MemoryStack.Push(none)
+	return nil
+}
+
+func (p *Plasma) newTupleOP(code Code) *errors.Error {
+	numberOfValues := code.Value.(int)
+	var values []IObject
+	for i := 0; i < numberOfValues; i++ {
+		if !p.MemoryStack.HasNext() {
+			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
+		}
+		values = append(values, p.MemoryStack.Pop())
+	}
+	p.MemoryStack.Push(NewTuple(p.PeekSymbolTable(), values))
+	return nil
+}
+
+func (p *Plasma) newArrayOP(code Code) *errors.Error {
+	numberOfValues := code.Value.(int)
+	var values []IObject
+	for i := 0; i < numberOfValues; i++ {
+		if !p.MemoryStack.HasNext() {
+			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
+		}
+		values = append(values, p.MemoryStack.Pop())
+	}
+	p.MemoryStack.Push(NewArray(p.PeekSymbolTable(), values))
+	return nil
+}
+
+func (p *Plasma) newHashOP(code Code) *errors.Error {
+	numberOfValues := code.Value.(int)
+	var keyValues []*KeyValue
+	for i := 0; i < numberOfValues; i++ {
+		if !p.MemoryStack.HasNext() {
+			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
+		}
+		key := p.MemoryStack.Pop()
+		if !p.MemoryStack.HasNext() {
+			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
+		}
+		value := p.MemoryStack.Pop()
+		keyValues = append(keyValues, &KeyValue{
+			Key:   key,
+			Value: value,
+		})
+	}
+	hashTable := NewHashTable(p.PeekSymbolTable(), map[int64][]*KeyValue{}, numberOfValues)
+	hashTableAssign, getError := hashTable.Get(Assign)
+	if getError != nil {
+		return getError
+	}
+	for _, keyValue := range keyValues {
+		_, assignError := CallFunction(hashTableAssign.(*Function), p, hashTable.SymbolTable(), keyValue.Key, keyValue.Value)
+		if assignError != nil {
+			return assignError
+		}
+	}
+	p.MemoryStack.Push(hashTable)
 	return nil
 }
 
@@ -192,6 +257,7 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 	for ; p.Code.HasNext(); {
 		code := p.Code.Next()
 		switch code.Instruction.OpCode {
+		// Literals
 		case NewStringOP:
 			executionError = p.newStringOP(code)
 		case NewBytesOP:
@@ -206,6 +272,14 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.newFalseBoolOP()
 		case GetNoneOP:
 			executionError = p.getNoneOP()
+		// Composite creation
+		case NewTupleOP:
+			executionError = p.newTupleOP(code)
+		case NewArrayOP:
+			executionError = p.newArrayOP(code)
+		case NewHashOP:
+			executionError = p.newHashOP(code)
+		//
 		case CallOP:
 			executionError = p.callOP()
 		case GetOP:
@@ -224,28 +298,31 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			return nil, executionError
 		}
 	}
-
 	return p.PeekSymbolTable().GetAny(None)
 }
 
 func (p *Plasma) HashString(s string) (int64, *errors.Error) {
-	_, hashingError := p.Crc64Hash.Write([]byte(s))
+	_, hashingError := p.Crc32Hash.Write([]byte(s))
 	if hashingError != nil {
 		return 0, errors.NewHashingStringError()
 	}
-	hashValue := p.Crc64Hash.Sum64()
-	p.Crc64Hash.Reset()
+	hashValue := p.Crc32Hash.Sum32()
+	p.Crc32Hash.Reset()
 	return int64(hashValue), nil
 }
 
 func (p *Plasma) HashBytes(s []byte) (int64, *errors.Error) {
-	_, hashingError := p.Crc64Hash.Write(s)
+	_, hashingError := p.Crc32Hash.Write(s)
 	if hashingError != nil {
 		return 0, errors.NewHashingStringError()
 	}
-	hashValue := p.Crc64Hash.Sum64()
-	p.Crc64Hash.Reset()
+	hashValue := p.Crc32Hash.Sum32()
+	p.Crc32Hash.Reset()
 	return int64(hashValue), nil
+}
+
+func (p *Plasma) Seed() uint64 {
+	return p.seed
 }
 
 func (p *Plasma) InitializeByteCode(bytecode *Bytecode) {
@@ -256,10 +333,15 @@ func (p *Plasma) InitializeByteCode(bytecode *Bytecode) {
 }
 
 func NewPlasmaVM() *Plasma {
+	number, randError := rand.Int(rand.Reader, big.NewInt(polySize))
+	if randError != nil {
+		panic(randError)
+	}
 	return &Plasma{
 		Code:        nil,
 		MemoryStack: NewObjectStack(),
 		Context:     NewSymbolStack(),
-		Crc64Hash:   crc64.New(crc64.MakeTable(9223372036854775807)),
+		Crc32Hash:   crc32.New(crc32.MakeTable(polySize)),
+		seed:        number.Uint64(),
 	}
 }

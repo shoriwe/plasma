@@ -14,15 +14,17 @@ const (
 	package_         = "pkg"
 	samplesDirectory = "tests_samples"
 	literals         = "literals"
+	composites       = "composites"
 )
 
-func TestLiterals(t *testing.T) {
+func test(t *testing.T, directory string) {
 	currentDir, currentDirGetError := os.Getwd()
 	if currentDirGetError != nil {
 		t.Fatal(currentDirGetError)
 		return
 	}
-	directoryContent, directoryReadingError := os.ReadDir(filepath.Join(currentDir, package_, samplesDirectory, literals))
+	directory = filepath.Join(currentDir, directory)
+	directoryContent, directoryReadingError := os.ReadDir(directory)
 	if directoryReadingError != nil {
 		t.Fatal(directoryReadingError)
 		return
@@ -31,19 +33,23 @@ func TestLiterals(t *testing.T) {
 		if file.IsDir() {
 			continue
 		}
-		fileHandler, openError := os.Open(filepath.Join(currentDir, package_, samplesDirectory, literals, file.Name()))
+		fileHandler, openError := os.Open(filepath.Join(directory, file.Name()))
 		if openError != nil {
 			t.Fatal(openError)
 			return
 		}
-		compiler := plasma.NewCompiler(reader.NewFileReader(fileHandler))
+		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler))
+		// content, _ := io.ReadAll(fileHandler)
+		// compiler := plasma.NewCompiler(reader.NewStringReader(string(content)))
 		code, compilingError := compiler.Compile()
 		if compilingError != nil {
 			t.Fatal(compilingError)
 			return
 		}
+
 		plasmaVm := vm.NewPlasmaVM()
 		plasmaVm.InitializeByteCode(code)
+		//result, executionError := plasmaVm.Execute()
 		_, executionError := plasmaVm.Execute()
 		if executionError != nil {
 			t.Fatal(executionError)
@@ -68,4 +74,12 @@ func TestLiterals(t *testing.T) {
 		*/
 		fmt.Println(fmt.Sprintf("[+] %s: SUCCESS", file.Name()))
 	}
+}
+
+func TestLiterals(t *testing.T) {
+	test(t, filepath.Join(package_, samplesDirectory, literals))
+}
+
+func TestComposites(t *testing.T) {
+	test(t, filepath.Join(package_, samplesDirectory, composites))
 }

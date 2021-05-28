@@ -12,4 +12,5 @@ type VirtualMachine interface {
 	HashString(string) (int64, *errors.Error)
 	HashBytes([]byte) (int64, *errors.Error)
 	InitializeByteCode(*Bytecode)
+	Seed() uint64
 }

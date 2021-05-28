@@ -1,7 +1,6 @@
 package reader
 
 import (
-	"bufio"
 	"io"
 	"os"
 )
@@ -48,61 +47,10 @@ func NewStringReader(code string) *StringReader {
 	}
 }
 
-type FileReader struct {
-	fileHandler       *os.File
-	reader            io.RuneReader
-	index             int
-	currentChar       rune
-	currentCharLength int
-	finish            bool
-}
-
-func (f *FileReader) Next() {
-	rune_, runeSize, readingError := f.reader.ReadRune()
+func NewStringReaderFromFile(file *os.File) *StringReader {
+	content, readingError := io.ReadAll(file)
 	if readingError != nil {
-		if readingError != io.EOF {
-			panic(readingError)
-		}
-		f.finish = true
-		return
+		panic(readingError)
 	}
-	f.currentChar = rune_
-	f.currentCharLength = runeSize
-	f.index += runeSize
-}
-
-func (f *FileReader) Redo() {
-	if f.index > 0 {
-		_, seekError := f.fileHandler.Seek(int64(f.index-f.currentCharLength), io.SeekStart)
-		f.reader = bufio.NewReader(f.fileHandler)
-		if seekError != nil {
-			panic(seekError)
-		}
-		f.index -= f.currentCharLength
-		f.finish = false
-		f.Next()
-	}
-}
-
-func (f *FileReader) HasNext() bool {
-	return !f.finish
-}
-
-func (f *FileReader) Index() int {
-	return f.index
-}
-
-func (f *FileReader) Char() rune {
-	return f.currentChar
-}
-
-func NewFileReader(fileHandler *os.File) *FileReader {
-	return &FileReader{
-		fileHandler:       fileHandler,
-		reader:            bufio.NewReader(fileHandler),
-		index:             0,
-		currentChar:       0,
-		currentCharLength: 0,
-		finish:            false,
-	}
+	return NewStringReader(string(content))
 }

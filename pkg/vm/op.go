@@ -10,6 +10,11 @@ const (
 	NewFalseBoolOP
 	GetNoneOP
 
+	// Composite creation
+	NewTupleOP
+	NewArrayOP
+	NewHashOP
+
 	NoOP
 	PushOP
 	PushN_OP

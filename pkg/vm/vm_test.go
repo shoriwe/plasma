@@ -60,27 +60,24 @@ func testIt(t *testing.T, tests []Test) {
 var stringCreationSamples = []Test{
 	NewTest(
 		[]Code{
+			NewCode(NewStringOP, 1, "Hello"),
 			NewCode(ReturnOP, 1, nil),
-			NewCode(NoOP, 1, "Hello"),
-			NewCode(NewStringOP, 1, nil),
 		},
 		"Hello",
 		stringEquals,
 	),
 	NewTest(
 		[]Code{
+			NewCode(NewStringOP, 1, "Carro"),
 			NewCode(ReturnOP, 1, nil),
-			NewCode(NoOP, 1, "Carro"),
-			NewCode(NewStringOP, 1, nil),
 		},
 		"Carro",
 		stringEquals,
 	),
 	NewTest(
 		[]Code{
+			NewCode(NewStringOP, 1, "45098430958"),
 			NewCode(ReturnOP, 1, nil),
-			NewCode(NoOP, 1, "45098430958"),
-			NewCode(NewStringOP, 1, nil),
 		},
 		"45098430958",
 		stringEquals,
@@ -98,10 +95,8 @@ var stringBuiltInTransformationFunction = []Test{
 			NewCode(NoOP, 1, 1),
 			NewCode(NoOP, 1, false),
 			NewCode(CallOP, 1, nil),
-			NewCode(NoOP, 1, ToString),
-			NewCode(GetOP, 1, nil),
-			NewCode(NoOP, 1, "Hello"),
-			NewCode(NewStringOP, 1, nil),
+			NewCode(GetOP, 1, ToString),
+			NewCode(NewStringOP, 1, "Hello"),
 		},
 		"Hello",
 		stringEquals,

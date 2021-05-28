@@ -13,6 +13,12 @@ import (
 )
 
 const (
+	XXPrime1 uint64 = 11400714785074694791
+	XXPrime2 uint64 = 14029467366897019727
+	XXPrime5 uint64 = 2870177450012600261
+)
+
+const (
 	TypeName     = "Type"
 	ObjectName   = "Object"
 	FunctionName = "Function"
@@ -343,6 +349,7 @@ type IObject interface {
 	SetFloat64(float64)
 	SetContent([]IObject)
 	SetKeyValues(map[int64][]*KeyValue)
+	AddKeyValue(int64, *KeyValue)
 	SetLength(int)
 	IncreaseLength()
 }
@@ -421,6 +428,10 @@ func (o *Object) SetContent(objects []IObject) {
 
 func (o *Object) SetKeyValues(m map[int64][]*KeyValue) {
 	o.KeyValues = m
+}
+
+func (o *Object) AddKeyValue(hash int64, keyValue *KeyValue) {
+	o.KeyValues[hash] = append(o.KeyValues[hash], keyValue)
 }
 
 func (o *Object) SetLength(i int) {
@@ -2206,14 +2217,7 @@ func IntegerHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	if self.GetHash() == 0 {
-		integerHash, hashingError := vm.HashString(fmt.Sprintf("%d-%s", self.(*Integer).hash, IntegerName))
-		if hashingError != nil {
-			return nil, hashingError
-		}
-		self.SetHash(integerHash)
-	}
-	return NewInteger(vm.PeekSymbolTable(), self.GetHash()), nil
+	return NewInteger(vm.PeekSymbolTable(), self.GetInteger64()), nil
 }
 
 /*
@@ -3168,7 +3172,7 @@ func ArrayToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	result := "("
+	result := "["
 	var objectToString IObject
 	var objectString IObject
 	var callError *errors.Error
@@ -3189,7 +3193,7 @@ func ArrayToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		}
 		result += objectString.GetString()
 	}
-	return NewString(vm.PeekSymbolTable(), result+")"), nil
+	return NewString(vm.PeekSymbolTable(), result+"]"), nil
 }
 
 func ArrayToBool(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
@@ -3607,7 +3611,7 @@ func TupleHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	var tupleHash int64 = 0
+	tupleHash := XXPrime5 ^ vm.Seed()
 	var objectHashFunc IObject
 	for _, object := range self.GetContent() {
 		objectHashFunc, getError = object.Get(Hash)
@@ -3624,13 +3628,16 @@ func TupleHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		if _, ok := objectHash.(*Integer); !ok {
 			return nil, errors.NewTypeError(objectHash.TypeName(), IntegerName)
 		}
-		if tupleHash == 0 {
-			tupleHash = objectHash.GetInteger64()
-		} else {
-			tupleHash <<= objectHash.GetInteger64()
-		}
+		tupleHash += uint64(objectHash.GetInteger64()) * XXPrime2
+		tupleHash = (tupleHash << 31) | (tupleHash >> 33)
+		tupleHash *= XXPrime1
+		tupleHash &= (1 << 64) - 1
 	}
-	return NewInteger(vm.PeekSymbolTable(), tupleHash), nil
+	finalTupleHash := int64(tupleHash)
+	if finalTupleHash < 0 {
+		finalTupleHash = -finalTupleHash
+	}
+	return NewInteger(vm.PeekSymbolTable(), finalTupleHash), nil
 }
 
 /*
@@ -4067,8 +4074,12 @@ func HashTableAssign(vm VirtualMachine, arguments ...IObject) (IObject, *errors.
 		return nil, errors.NewTypeError(indexHash.TypeName(), IntegerName)
 	}
 	keyValues, found := self.GetKeyValues()[indexHash.GetInteger64()]
-	if !found {
-		return nil, errors.NewKeyNotFoundError()
+	if found {
+		self.AddKeyValue(indexHash.GetInteger64(), &KeyValue{
+			Key:   indexObject,
+			Value: newValue,
+		})
+		return vm.PeekSymbolTable().GetAny(None)
 	}
 	var indexObjectEquals IObject
 	indexObjectEquals, getError = indexObject.Get(Equals)
@@ -4129,11 +4140,11 @@ func HashTableToString(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error)
 			if callError != nil {
 				return nil, callError
 			}
-			result += ":" + valueString.GetString() + ","
+			result += ": " + valueString.GetString() + ", "
 		}
 	}
 	if len(result) > 1 {
-		result = result[:len(result)-1]
+		result = result[:len(result)-2]
 	}
 	return NewString(vm.PeekSymbolTable(), result+"}"), nil
 }
