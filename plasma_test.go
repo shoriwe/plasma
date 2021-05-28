@@ -49,29 +49,27 @@ func test(t *testing.T, directory string) {
 
 		plasmaVm := vm.NewPlasmaVM()
 		plasmaVm.InitializeByteCode(code)
-		//result, executionError := plasmaVm.Execute()
-		_, executionError := plasmaVm.Execute()
+		result, executionError := plasmaVm.Execute()
+		// _, executionError := plasmaVm.Execute()
 		if executionError != nil {
 			t.Fatal(executionError)
 			return
 		}
-		/*
-			resultToString, getError := result.Get(vm.ToString)
-			if getError != nil {
-				t.Fatal(getError)
-				return
-			}
-			if _, ok := resultToString.(*vm.Function); !ok {
-				t.Fatal("Expecting ToString function")
-				return
-			}
-			stringResult, callError := vm.CallFunction(resultToString.(*vm.Function), plasmaVm, result.SymbolTable())
-			if callError != nil {
-				t.Fatal(callError)
-				return
-			}
-			fmt.Println(stringResult.GetString())
-		*/
+		resultToString, getError := result.Get(vm.ToString)
+		if getError != nil {
+			t.Fatal(getError)
+			return
+		}
+		if _, ok := resultToString.(*vm.Function); !ok {
+			t.Fatal("Expecting ToString function")
+			return
+		}
+		stringResult, callError := vm.CallFunction(resultToString.(*vm.Function), plasmaVm, result.SymbolTable())
+		if callError != nil {
+			t.Fatal(callError)
+			return
+		}
+		fmt.Println(stringResult.GetString())
 		fmt.Println(fmt.Sprintf("[+] %s: SUCCESS", file.Name()))
 	}
 }

@@ -15,10 +15,10 @@
         - [X] True
         - [X] False
     - [X] None
-- [ ] Complex types
-    - [ ] Tuple
-    - [ ] Array
-    - [ ] Hash Table
+- [X] Complex types
+    - [X] Tuple
+    - [X] Array
+    - [X] Hash Table
 - [ ] Selector Expressions
 - [ ] Unary Expressions
 - [ ] Binary Expressions
