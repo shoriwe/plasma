@@ -13,17 +13,11 @@ const (
 )
 
 type Plasma struct {
-	Code        *Bytecode
+	Code        *CodeStack
 	MemoryStack *ObjectStack
 	Context     *SymbolStack
 	Crc32Hash   hash.Hash32
 	seed        uint64
-}
-
-func (p *Plasma) LoadCode(codes []Code) {
-	for _, code := range codes {
-		p.Code.Push(code)
-	}
 }
 
 func (p *Plasma) PushSymbolTable(table *SymbolTable) {
@@ -35,7 +29,7 @@ func (p *Plasma) PopSymbolTable() *SymbolTable {
 }
 
 func (p *Plasma) Initialize(code []Code) *errors.Error {
-	p.Code = NewBytecodeFromArray(code)
+	p.PushCode(NewBytecodeFromArray(code))
 	p.MemoryStack.Clear()
 	p.Context.Clear()
 	p.Context.Push(SetDefaultSymbolTable())
@@ -204,111 +198,36 @@ func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide IObject, rightHandSi
 	return nil
 }
 
-func (p *Plasma) constructObject(type_ *Type) *errors.Error {
-	object, constructionError := ConstructObject(type_, p, p.PeekSymbolTable())
-	if constructionError != nil {
-		return constructionError
-	}
-	initFunc, getError := object.Get(Initialize)
-	if getError != nil {
-		return getError
-	}
-	if _, ok := initFunc.(*Function); !ok {
-		return errors.NewTypeError(initFunc.TypeName(), FunctionName)
-	}
-	numberOfArguments := p.Code.Next().Value.(int)
-	var arguments []IObject
-	for i := 0; i < numberOfArguments; i++ {
-		arguments = append(arguments, p.MemoryStack.Pop())
-	}
-	_, callError := CallFunction(initFunc.(*Function), p, object.SymbolTable(), arguments...)
-	if callError != nil {
-		return callError
-	}
-	p.MemoryStack.Push(object)
-	return nil
-}
-
-func (p *Plasma) callOP() *errors.Error {
-	function := p.MemoryStack.Pop()
-	if _, ok := function.(*Function); !ok {
-		if _, ok = function.(*Type); ok {
-			return p.constructObject(function.(*Type))
-		} else {
-			var getError *errors.Error
-			function, getError = function.Get(Call)
-			if getError != nil {
-				return getError
-			}
-			if _, ok2 := function.(*Function); !ok2 {
-				return errors.New(errors.UnknownLine, "Expecting Function", "NonFunctionObjectReceived")
-			}
-		}
-	}
-	var parent *SymbolTable
-	if p.Code.Next().Value.(bool) {
-		parent = function.SymbolTable().Parent
-	} else {
-		parent = p.Context.Peek()
-	}
-	numberOfArguments := p.Code.Next().Value.(int)
-	var arguments []IObject
-	for i := 0; i < numberOfArguments; i++ {
-		arguments = append(arguments, p.MemoryStack.Pop())
-	}
-	var result IObject
-	var callError *errors.Error
-	if _, ok3 := function.(*Function).Callable.(Constructor); ok3 {
-		result, callError = CallFunction(function.(*Function), p, parent, nil)
-		if callError != nil {
-			return callError
-		}
-		resultInit, getError := result.Get(Initialize)
+func (p *Plasma) returnOP(code Code) *errors.Error {
+	numberOfReturnValues := code.Value.(int)
+	if numberOfReturnValues == 0 {
+		noneValue, getError := p.PeekSymbolTable().GetAny(None)
 		if getError != nil {
 			return getError
 		}
-		if _, ok4 := resultInit.(*Function); !ok4 {
-			return errors.New(errors.UnknownLine, "Expecting Function", "NonFunctionObjectReceived")
-		}
-		_, callError = CallFunction(resultInit.(*Function), p, result.SymbolTable(), arguments...)
-		if callError != nil {
-			return callError
-		}
-	} else {
-		result, callError = CallFunction(function.(*Function), p, parent, arguments...)
-		if callError != nil {
-			return callError
-		}
+		p.MemoryStack.Push(noneValue)
+		return nil
 	}
-	p.MemoryStack.Push(result)
-	return nil
-}
 
-func (p *Plasma) getOP() *errors.Error {
-	name := p.Code.Next().Value.(string)
-	result, getError := p.Context.Peek().GetAny(name)
-	if getError != nil {
-		return getError
+	var values []IObject
+	for i := 0; i < numberOfReturnValues; i++ {
+		if !p.MemoryStack.HasNext() {
+			return errors.NewInvalidNumberOfArguments(i, numberOfReturnValues)
+		}
+		values = append(values, p.MemoryStack.Pop())
 	}
-	p.MemoryStack.Push(result)
-	return nil
-}
-
-func (p *Plasma) getFromOP() *errors.Error {
-	name := p.Code.Next().Value.(string)
-	result, getError := p.Context.Pop().GetSelf(name)
-	if getError != nil {
-		return getError
-	}
-	p.MemoryStack.Push(result)
+	p.MemoryStack.Push(NewTuple(p.PeekSymbolTable(), values))
 	return nil
 }
 
 func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
-	defer p.PopSymbolTable()
-	for ; p.Code.HasNext(); {
-		code := p.Code.Next()
+	defer func() {
+		p.PopSymbolTable()
+		p.PopCode()
+	}()
+	for ; p.PeekCode().HasNext(); {
+		code := p.PeekCode().Next()
 		switch code.Instruction.OpCode {
 		// Literals
 		case NewStringOP:
@@ -379,23 +298,17 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 		case LessThanOrEqualOP:
 			executionError = p.leftBinaryExpressionFuncCall(LessThanOrEqual)
 		//
-		case CallOP:
-			executionError = p.callOP()
-		case GetOP:
-			executionError = p.getOP()
-		case GetFromOP:
-			executionError = p.getFromOP()
 		case ReturnOP:
-			if p.MemoryStack.HasNext() {
-				return p.MemoryStack.Pop(), nil
-			}
-			return p.PeekSymbolTable().GetAny(None)
+			executionError = p.returnOP(code)
 		default:
 			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}
 		if executionError != nil {
 			return nil, executionError
 		}
+	}
+	if p.MemoryStack.HasNext() {
+		return p.MemoryStack.Pop(), nil
 	}
 	return p.PeekSymbolTable().GetAny(None)
 }
@@ -425,10 +338,22 @@ func (p *Plasma) Seed() uint64 {
 }
 
 func (p *Plasma) InitializeByteCode(bytecode *Bytecode) {
-	p.Code = bytecode
+	p.PushCode(bytecode)
 	p.MemoryStack.Clear()
 	p.Context.Clear()
 	p.Context.Push(SetDefaultSymbolTable())
+}
+
+func (p *Plasma) PushCode(code *Bytecode) {
+	p.Code.Push(code)
+}
+
+func (p *Plasma) PopCode() *Bytecode {
+	return p.Code.Pop()
+}
+
+func (p *Plasma) PeekCode() *Bytecode {
+	return p.Code.Peek()
 }
 
 func NewPlasmaVM() *Plasma {
@@ -437,7 +362,7 @@ func NewPlasmaVM() *Plasma {
 		panic(randError)
 	}
 	return &Plasma{
-		Code:        nil,
+		Code:        NewCodeStack(),
 		MemoryStack: NewObjectStack(),
 		Context:     NewSymbolStack(),
 		Crc32Hash:   crc32.New(crc32.MakeTable(polySize)),

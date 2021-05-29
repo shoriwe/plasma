@@ -2091,7 +2091,7 @@ func (parser *Parser) parseIndexExpression(expression ast.Expression) (*ast.Inde
 	}, nil
 }
 
-func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLineExpression, *errors.Error) {
+func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLinerExpression, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -2105,7 +2105,7 @@ func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLineExpr
 		return nil, newNonExpressionReceivedError(line, IfOneLinerExpression)
 	}
 	if !parser.matchDirect(lexer.Else) {
-		return &ast.IfOneLineExpression{
+		return &ast.IfOneLinerExpression{
 			Result:     result,
 			Condition:  condition.(ast.Expression),
 			ElseResult: nil,
@@ -2123,7 +2123,7 @@ func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLineExpr
 	if _, ok := elseResult.(ast.Expression); !ok {
 		return nil, newNonExpressionReceivedError(line, OneLineElseBlock)
 	}
-	return &ast.IfOneLineExpression{
+	return &ast.IfOneLinerExpression{
 		Result:     result,
 		Condition:  condition.(ast.Expression),
 		ElseResult: elseResult.(ast.Expression),

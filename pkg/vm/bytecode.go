@@ -1,9 +1,5 @@
 package vm
 
-import (
-	"math/bits"
-)
-
 type Instruction struct {
 	OpCode uint8
 	Line   int
@@ -29,46 +25,30 @@ func NewCode(opCode uint8, line int, value interface{}) Code {
 	}
 }
 
-type bytecodeNode struct {
-	code Code
-	next *bytecodeNode
-}
-
 type Bytecode struct {
-	currentInstruction *bytecodeNode
-	length             uint
+	instructions []Code
+	length       int
+	index        int
 }
 
 func (bytecode *Bytecode) HasNext() bool {
-	return bytecode.length != 0
+	return bytecode.index < bytecode.length
 }
 
 func (bytecode *Bytecode) Next() Code {
-	result := bytecode.currentInstruction
-	bytecode.currentInstruction = bytecode.currentInstruction.next
-	bytecode.length--
-	return result.code
+	result := bytecode.instructions[bytecode.index]
+	bytecode.index++
+	return result
 }
 
-func (bytecode *Bytecode) Push(code Code) {
-	if bytecode.length == bits.UintSize {
-		panic("Bytecode reached its maximum capacity which is platform uint")
-	}
-	bytecode.currentInstruction = &bytecodeNode{
-		code: code,
-		next: bytecode.currentInstruction,
-	}
-	bytecode.length++
+func (bytecode *Bytecode) Jump(offset int) {
+	bytecode.index += offset
 }
 
 func NewBytecodeFromArray(codes []Code) *Bytecode {
-	result := &Bytecode{
-		currentInstruction: nil,
-		length:             0,
+	return &Bytecode{
+		instructions: codes,
+		length:       len(codes),
+		index:        0,
 	}
-	codesLength := len(codes)
-	for i := codesLength - 1; i > -1; i-- {
-		result.Push(codes[i])
-	}
-	return result
 }

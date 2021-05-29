@@ -288,7 +288,7 @@ type PlasmaConstructor struct {
 }
 
 func (c *PlasmaConstructor) Initialize(vm VirtualMachine, object IObject) *errors.Error {
-	vm.LoadCode(c.Code)
+	vm.PushCode(NewBytecodeFromArray(c.Code))
 	vm.PushSymbolTable(object.SymbolTable())
 	_, executionError := vm.Execute()
 	return executionError
@@ -500,7 +500,7 @@ func CallFunction(function *Function, vm VirtualMachine, parent *SymbolTable, ar
 	if callback != nil {
 		result, callError = callback(vm, arguments...)
 	} else if code != nil {
-		vm.LoadCode(code)
+		vm.PushCode(NewBytecodeFromArray(code))
 		result, callError = vm.Execute()
 	} else {
 		panic("callback and code are nil")

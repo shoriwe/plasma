@@ -16,6 +16,46 @@ func NewStackNode(value interface{}, next *stackNode) *stackNode {
 	}
 }
 
+type CodeStack struct {
+	head   *stackNode
+	length uint
+}
+
+func (stack *CodeStack) Pop() *Bytecode {
+	result := stack.head.value
+	stack.head = stack.head.next
+	stack.length--
+	return result.(*Bytecode)
+}
+
+func (stack *CodeStack) Peek() *Bytecode {
+	return stack.head.value.(*Bytecode)
+}
+
+func (stack *CodeStack) Push(code *Bytecode) {
+	if stack.length == bits.UintSize {
+		panic("Memory Stack is Full")
+	}
+	stack.length++
+	stack.head = NewStackNode(code, stack.head)
+}
+
+func (stack *CodeStack) HasNext() bool {
+	return stack.length > 0
+}
+
+func (stack *CodeStack) Clear() {
+	stack.head = nil
+	stack.length = 0
+}
+
+func NewCodeStack() *CodeStack {
+	return &CodeStack{
+		head:   nil,
+		length: 0,
+	}
+}
+
 type ObjectStack struct {
 	head   *stackNode
 	length uint

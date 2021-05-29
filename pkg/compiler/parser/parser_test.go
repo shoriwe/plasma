@@ -103,11 +103,11 @@ func walker(node ast.Node) string {
 			result += ": " + walker(value.Value)
 		}
 		return result + "}"
-	case *ast.IfOneLineExpression:
-		result := walker(node.(*ast.IfOneLineExpression).Result)
-		result += " if " + walker(node.(*ast.IfOneLineExpression).Condition)
-		if node.(*ast.IfOneLineExpression).ElseResult != nil {
-			result += " else " + walker(node.(*ast.IfOneLineExpression).ElseResult)
+	case *ast.IfOneLinerExpression:
+		result := walker(node.(*ast.IfOneLinerExpression).Result)
+		result += " if " + walker(node.(*ast.IfOneLinerExpression).Condition)
+		if node.(*ast.IfOneLinerExpression).ElseResult != nil {
+			result += " else " + walker(node.(*ast.IfOneLinerExpression).ElseResult)
 		}
 		return result
 	case *ast.UnlessOneLinerExpression:

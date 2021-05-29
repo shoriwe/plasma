@@ -236,6 +236,14 @@ func (c *Compiler) compileParenthesesExpression(parenthesesExpression *ast.Paren
 	return c.compileExpression(parenthesesExpression.X)
 }
 
+func (c *Compiler) compileIfOneLinerExpression(ifOneLineExpression *ast.IfOneLinerExpression) *errors.Error {
+	return nil
+}
+
+func (c *Compiler) compileUnlessOneLinerExpression(ifOneLineExpression *ast.UnlessOneLinerExpression) *errors.Error {
+	return nil
+}
+
 func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 	switch expression.(type) {
 	case *ast.BasicLiteralExpression:
@@ -252,6 +260,10 @@ func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 		return c.compileBinaryExpression(expression.(*ast.BinaryExpression))
 	case *ast.ParenthesesExpression:
 		return c.compileParenthesesExpression(expression.(*ast.ParenthesesExpression))
+	case *ast.IfOneLinerExpression:
+		return c.compileIfOneLinerExpression(expression.(*ast.IfOneLinerExpression))
+	case *ast.UnlessOneLinerExpression:
+		return c.compileUnlessOneLinerExpression(expression.(*ast.UnlessOneLinerExpression))
 	}
 	return nil
 }
@@ -300,8 +312,6 @@ func (c *Compiler) Compile() (*vm.Bytecode, *errors.Error) {
 	if compileError != nil {
 		return nil, compileError
 	}
-
-	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, nil))
 	return vm.NewBytecodeFromArray(c.programCode), nil
 }
 

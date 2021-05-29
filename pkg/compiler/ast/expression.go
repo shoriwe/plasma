@@ -93,7 +93,7 @@ type AwaitExpression struct {
 	X *MethodInvocationExpression
 }
 
-type IfOneLineExpression struct {
+type IfOneLinerExpression struct {
 	Expression
 	Result     Expression
 	Condition  Expression
