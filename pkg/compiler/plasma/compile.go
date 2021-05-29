@@ -157,6 +157,81 @@ func (c *Compiler) compileHash(hash *ast.HashExpression) *errors.Error {
 	return nil
 }
 
+func (c *Compiler) compileUnaryExpression(unaryExpression *ast.UnaryExpression) *errors.Error {
+	expressionCompileError := c.compileExpression(unaryExpression.X)
+	if expressionCompileError != nil {
+		return expressionCompileError
+	}
+	switch unaryExpression.Operator.DirectValue {
+	case lexer.NegateBits:
+		c.pushInstruction(vm.NewCode(vm.NegateBitsOP, unaryExpression.Operator.Line, nil))
+	case lexer.Not, lexer.SignNot:
+		c.pushInstruction(vm.NewCode(vm.BoolNegateOP, unaryExpression.Operator.Line, nil))
+	}
+	return nil
+}
+
+func (c *Compiler) compileBinaryExpression(binaryExpression *ast.BinaryExpression) *errors.Error {
+	// Compile first right hand side
+	rightHandSideCompileError := c.compileExpression(binaryExpression.RightHandSide)
+	if rightHandSideCompileError != nil {
+		return rightHandSideCompileError
+	}
+	// Then left hand side
+	leftHandSideCompileError := c.compileExpression(binaryExpression.LeftHandSide)
+	if leftHandSideCompileError != nil {
+		return leftHandSideCompileError
+	}
+	var operation uint8
+	// Finally decide the instruction to use
+	switch binaryExpression.Operator.DirectValue {
+	case lexer.Add:
+		operation = vm.AddOP
+	case lexer.Sub:
+		operation = vm.SubOP
+	case lexer.Star:
+		operation = vm.MulOP
+	case lexer.Div:
+		operation = vm.DivOP
+	case lexer.Modulus:
+		operation = vm.ModOP
+	case lexer.PowerOf:
+		operation = vm.PowOP
+	case lexer.BitwiseXor:
+		operation = vm.BitXorOP
+	case lexer.BitWiseAnd:
+		operation = vm.BitAndOP
+	case lexer.BitwiseOr:
+		operation = vm.BitOrOP
+	case lexer.BitwiseLeft:
+		operation = vm.BitLeftOP
+	case lexer.BitwiseRight:
+		operation = vm.BitRightOP
+	case lexer.And:
+		operation = vm.AndOP
+	case lexer.Or:
+		operation = vm.OrOP
+	case lexer.Xor:
+		operation = vm.XorOP
+	case lexer.Equals:
+		operation = vm.EqualsOP
+	case lexer.NotEqual:
+		operation = vm.NotEqualsOP
+	case lexer.GreaterThan:
+		operation = vm.GreaterThanOP
+	case lexer.LessThan:
+		operation = vm.LessThanOP
+	case lexer.GreaterOrEqualThan:
+		operation = vm.GreaterThanOrEqualOP
+	case lexer.LessOrEqualThan:
+		operation = vm.LessThanOrEqualOP
+	default:
+		panic(errors.NewUnknownVMOperationError(operation))
+	}
+	c.pushInstruction(vm.NewCode(operation, binaryExpression.Operator.Line, nil))
+	return nil
+}
+
 func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 	switch expression.(type) {
 	case *ast.BasicLiteralExpression:
@@ -167,6 +242,10 @@ func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 		return c.compileArray(expression.(*ast.ArrayExpression))
 	case *ast.HashExpression:
 		return c.compileHash(expression.(*ast.HashExpression))
+	case *ast.UnaryExpression:
+		return c.compileUnaryExpression(expression.(*ast.UnaryExpression))
+	case *ast.BinaryExpression:
+		return c.compileBinaryExpression(expression.(*ast.BinaryExpression))
 	}
 	return nil
 }
@@ -217,7 +296,6 @@ func (c *Compiler) Compile() (*vm.Bytecode, *errors.Error) {
 	}
 
 	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, nil))
-
 	return vm.NewBytecodeFromArray(c.programCode), nil
 }
 

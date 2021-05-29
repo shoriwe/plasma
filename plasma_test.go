@@ -11,10 +11,12 @@ import (
 )
 
 const (
-	package_         = "pkg"
-	samplesDirectory = "tests_samples"
-	literals         = "literals"
-	composites       = "composites"
+	package_          = "pkg"
+	samplesDirectory  = "tests_samples"
+	literals          = "literals"
+	composites        = "composites"
+	unaryExpressions  = "unary-expressions"
+	binaryExpressions = "binary-expressions"
 )
 
 func test(t *testing.T, directory string) {
@@ -80,4 +82,12 @@ func TestLiterals(t *testing.T) {
 
 func TestComposites(t *testing.T) {
 	test(t, filepath.Join(package_, samplesDirectory, composites))
+}
+
+func TestUnaryExpressions(t *testing.T) {
+	test(t, filepath.Join(package_, samplesDirectory, unaryExpressions))
+}
+
+func TestBinaryExpressions(t *testing.T) {
+	test(t, filepath.Join(package_, samplesDirectory, binaryExpressions))
 }

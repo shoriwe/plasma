@@ -326,6 +326,9 @@ func NewNotImplementedCallable(numberOfArguments int) *BuiltInClassFunction {
 type IObject interface {
 	Id() uint
 	TypeName() string
+	/*
+		ToDo: Include the pointer to the type object that construct the object
+	*/
 	SymbolTable() *SymbolTable
 	SubClasses() []*Type
 	Get(string) (IObject, *errors.Error)
@@ -535,7 +538,7 @@ func ObjAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	right := arguments[1]
+	right := arguments[0]
 	var rightToBool interface{}
 	rightToBool, foundError = right.Get(ToBool)
 	if foundError != nil {
@@ -568,7 +571,7 @@ func ObjRightAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 	if transformationError != nil {
 		return nil, transformationError
 	}
-	left := arguments[1]
+	left := arguments[0]
 	var leftToBool interface{}
 	leftToBool, foundError = left.Get(ToBool)
 	if foundError != nil {
@@ -602,7 +605,7 @@ func ObjOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, transformationError
 	}
 
-	right := arguments[1]
+	right := arguments[0]
 	var rightToBool interface{}
 	rightToBool, foundError = right.Get(ToBool)
 	if foundError != nil {
@@ -669,9 +672,9 @@ func ObjXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, transformationError
 	}
 
-	right := arguments[1]
+	right := arguments[0]
 	var rightToBool interface{}
-	rightToBool, foundError = arguments[1].Get(ToBool)
+	rightToBool, foundError = right.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
@@ -705,7 +708,7 @@ func ObjRightXor(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 
 	left := arguments[0]
 	var rightToBool interface{}
-	rightToBool, foundError = arguments[1].Get(ToBool)
+	rightToBool, foundError = left.Get(ToBool)
 	if foundError != nil {
 		return nil, foundError
 	}
@@ -725,7 +728,7 @@ func ObjEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error)
 	if getError != nil {
 		return nil, getError
 	}
-	right := arguments[1]
+	right := arguments[0]
 	return NewBool(vm.PeekSymbolTable(), self.Id() == right.Id()), nil
 }
 
@@ -743,7 +746,7 @@ func ObjNotEquals(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Err
 	if getError != nil {
 		return nil, getError
 	}
-	right := arguments[1]
+	right := arguments[0]
 	return NewBool(vm.PeekSymbolTable(), self.Id() != right.Id()), nil
 }
 
@@ -770,7 +773,7 @@ func ObjNegate(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	}
 	var selfBool IObject
 	var transformationError *errors.Error
-	selfBool, transformationError = CallFunction(selfToBool.(*Function), vm, self.SymbolTable(), self)
+	selfBool, transformationError = CallFunction(selfToBool.(*Function), vm, self.SymbolTable())
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -1100,7 +1103,7 @@ func StringAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error)
 	if getError != nil {
 		return nil, getError
 	}
-	right := arguments[1]
+	right := arguments[0]
 	return NewString(
 		vm.PeekSymbolTable(),
 		self.GetString()+right.GetString(),
@@ -1112,7 +1115,7 @@ func StringRightAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.E
 	if getError != nil {
 		return nil, getError
 	}
-	left := arguments[1]
+	left := arguments[0]
 	return NewString(
 		vm.PeekSymbolTable(),
 		left.GetString()+self.GetString(),
@@ -1124,7 +1127,7 @@ func StringMul(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error)
 	if getError != nil {
 		return nil, getError
 	}
-	right := arguments[1]
+	right := arguments[0]
 	if _, ok := right.(*Integer); !ok {
 		return nil, errors.NewTypeError(right.TypeName(), IntegerName)
 	}
@@ -1139,7 +1142,7 @@ func StringRightMul(vm VirtualMachine, arguments ...IObject) (IObject, *errors.E
 	if getError != nil {
 		return nil, getError
 	}
-	left := arguments[1]
+	left := arguments[0]
 	if _, ok := left.(*Integer); !ok {
 		return nil, errors.NewTypeError(left.TypeName(), IntegerName)
 	}
@@ -1333,10 +1336,10 @@ func StringInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	object.Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringRightAdd)))
 	object.Set(Mul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringMul)))
 	object.Set(RightMul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringRightMul)))
-	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringEquals)))
-	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringRightEquals)))
-	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringNotEquals)))
-	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringRightNotEquals)))
+	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringEquals)))
+	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringRightEquals)))
+	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringNotEquals)))
+	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringRightNotEquals)))
 	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringHash)))
 	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringCopy)))
 	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringIndex)))
@@ -1680,7 +1683,7 @@ func IntegerNegBits(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	return NewInteger(vm.PeekSymbolTable(), ^self.(Integer).Integer64), nil
+	return NewInteger(vm.PeekSymbolTable(), ^self.GetInteger64()), nil
 }
 
 func IntegerAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -1799,7 +1802,7 @@ func IntegerDiv(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error
 	right := arguments[0]
 	switch right.(type) {
 	case *Integer:
-		return NewInteger(vm.PeekSymbolTable(), self.GetInteger64()/right.GetInteger64()), nil
+		return NewFloat(vm.PeekSymbolTable(), float64(self.GetInteger64())/float64(right.GetInteger64())), nil
 	case *Float:
 		return NewFloat(vm.PeekSymbolTable(), float64(self.GetInteger64())/right.GetFloat64()), nil
 	default:
@@ -1815,7 +1818,7 @@ func IntegerRightDiv(vm VirtualMachine, arguments ...IObject) (IObject, *errors.
 	left := arguments[0]
 	switch left.(type) {
 	case *Integer:
-		return NewInteger(vm.PeekSymbolTable(), left.GetInteger64()/self.GetInteger64()), nil
+		return NewFloat(vm.PeekSymbolTable(), float64(left.GetInteger64())/float64(self.GetInteger64())), nil
 	case *Float:
 		return NewFloat(vm.PeekSymbolTable(), left.GetFloat64()/float64(self.GetInteger64())), nil
 	default:
@@ -2274,42 +2277,42 @@ func IntegerHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 func IntegerInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	object.SymbolTable().Set(NegBits, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerNegBits)))
 
-	object.SymbolTable().Set(Add, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerAdd)))
-	object.SymbolTable().Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightAdd)))
-	object.SymbolTable().Set(Sub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerSub)))
-	object.SymbolTable().Set(RightSub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightSub)))
-	object.SymbolTable().Set(Mul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerMul)))
-	object.SymbolTable().Set(RightMul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightMul)))
-	object.SymbolTable().Set(Div, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerDiv)))
-	object.SymbolTable().Set(RightDiv, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightDiv)))
-	object.SymbolTable().Set(Mod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerMod)))
-	object.SymbolTable().Set(RightMod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightMod)))
-	object.SymbolTable().Set(Pow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerPow)))
-	object.SymbolTable().Set(RightPow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightPow)))
+	object.SymbolTable().Set(Add, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerAdd)))
+	object.SymbolTable().Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightAdd)))
+	object.SymbolTable().Set(Sub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerSub)))
+	object.SymbolTable().Set(RightSub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightSub)))
+	object.SymbolTable().Set(Mul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerMul)))
+	object.SymbolTable().Set(RightMul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightMul)))
+	object.SymbolTable().Set(Div, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerDiv)))
+	object.SymbolTable().Set(RightDiv, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightDiv)))
+	object.SymbolTable().Set(Mod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerMod)))
+	object.SymbolTable().Set(RightMod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightMod)))
+	object.SymbolTable().Set(Pow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerPow)))
+	object.SymbolTable().Set(RightPow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightPow)))
 
-	object.SymbolTable().Set(BitXor, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitXor)))
-	object.SymbolTable().Set(RightBitXor, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitXor)))
-	object.SymbolTable().Set(BitAnd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitAnd)))
-	object.SymbolTable().Set(RightBitAnd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitAnd)))
-	object.SymbolTable().Set(BitOr, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitOr)))
-	object.SymbolTable().Set(RightBitOr, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitOr)))
-	object.SymbolTable().Set(BitLeft, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitLeft)))
-	object.SymbolTable().Set(RightBitLeft, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitLeft)))
-	object.SymbolTable().Set(BitRight, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerBitRight)))
-	object.SymbolTable().Set(RightBitRight, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightBitRight)))
+	object.SymbolTable().Set(BitXor, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerBitXor)))
+	object.SymbolTable().Set(RightBitXor, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightBitXor)))
+	object.SymbolTable().Set(BitAnd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerBitAnd)))
+	object.SymbolTable().Set(RightBitAnd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightBitAnd)))
+	object.SymbolTable().Set(BitOr, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerBitOr)))
+	object.SymbolTable().Set(RightBitOr, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightBitOr)))
+	object.SymbolTable().Set(BitLeft, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerBitLeft)))
+	object.SymbolTable().Set(RightBitLeft, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightBitLeft)))
+	object.SymbolTable().Set(BitRight, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerBitRight)))
+	object.SymbolTable().Set(RightBitRight, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightBitRight)))
 
-	object.SymbolTable().Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerEquals)))
-	object.SymbolTable().Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightEquals)))
-	object.SymbolTable().Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerNotEquals)))
-	object.SymbolTable().Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightNotEquals)))
-	object.SymbolTable().Set(GreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerGreaterThan)))
-	object.SymbolTable().Set(RightGreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightGreaterThan)))
-	object.SymbolTable().Set(LessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerLessThan)))
-	object.SymbolTable().Set(RightLessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightLessThan)))
-	object.SymbolTable().Set(GreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerGreaterThanOrEqual)))
-	object.SymbolTable().Set(RightGreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightGreaterThanOrEqual)))
-	object.SymbolTable().Set(LessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerLessThanOrEqual)))
-	object.SymbolTable().Set(RightLessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerRightLessThanOrEqual)))
+	object.SymbolTable().Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerEquals)))
+	object.SymbolTable().Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightEquals)))
+	object.SymbolTable().Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerNotEquals)))
+	object.SymbolTable().Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightNotEquals)))
+	object.SymbolTable().Set(GreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerGreaterThan)))
+	object.SymbolTable().Set(RightGreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightGreaterThan)))
+	object.SymbolTable().Set(LessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerLessThan)))
+	object.SymbolTable().Set(RightLessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightLessThan)))
+	object.SymbolTable().Set(GreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerGreaterThanOrEqual)))
+	object.SymbolTable().Set(RightGreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightGreaterThanOrEqual)))
+	object.SymbolTable().Set(LessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerLessThanOrEqual)))
+	object.SymbolTable().Set(RightLessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightLessThanOrEqual)))
 
 	object.SymbolTable().Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerHash)))
 	object.SymbolTable().Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerCopy)))
@@ -2823,31 +2826,31 @@ func FloatHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	ToBool       - (Done)
 */
 func FloatInitialize(_ VirtualMachine, object IObject) *errors.Error {
-	object.Set(Add, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatAdd)))
-	object.Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightAdd)))
-	object.Set(Sub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatSub)))
-	object.Set(RightSub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightSub)))
-	object.Set(Mul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatMul)))
-	object.Set(RightMul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightMul)))
-	object.Set(Div, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatDiv)))
-	object.Set(RightDiv, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightDiv)))
-	object.Set(Mod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatMod)))
-	object.Set(RightMod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightMod)))
-	object.Set(Pow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatPow)))
-	object.Set(RightPow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightPow)))
+	object.Set(Add, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatAdd)))
+	object.Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightAdd)))
+	object.Set(Sub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatSub)))
+	object.Set(RightSub, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightSub)))
+	object.Set(Mul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatMul)))
+	object.Set(RightMul, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightMul)))
+	object.Set(Div, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatDiv)))
+	object.Set(RightDiv, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightDiv)))
+	object.Set(Mod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatMod)))
+	object.Set(RightMod, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightMod)))
+	object.Set(Pow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatPow)))
+	object.Set(RightPow, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightPow)))
 
-	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatEquals)))
-	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightEquals)))
-	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatNotEquals)))
-	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightNotEquals)))
-	object.Set(GreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatGreaterThan)))
-	object.Set(RightGreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightGreaterThan)))
-	object.Set(LessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatLessThan)))
-	object.Set(RightLessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightLessThan)))
-	object.Set(GreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatGreaterThanOrEqual)))
-	object.Set(RightGreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightGreaterThanOrEqual)))
-	object.Set(LessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatLessThanOrEqual)))
-	object.Set(RightLessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatRightLessThanOrEqual)))
+	object.Set(Equals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatEquals)))
+	object.Set(RightEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightEquals)))
+	object.Set(NotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatNotEquals)))
+	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightNotEquals)))
+	object.Set(GreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatGreaterThan)))
+	object.Set(RightGreaterThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightGreaterThan)))
+	object.Set(LessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatLessThan)))
+	object.Set(RightLessThan, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightLessThan)))
+	object.Set(GreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatGreaterThanOrEqual)))
+	object.Set(RightGreaterThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightGreaterThanOrEqual)))
+	object.Set(LessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatLessThanOrEqual)))
+	object.Set(RightLessThanOrEqual, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, FloatRightLessThanOrEqual)))
 
 	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatHash)))
 	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, FloatCopy)))

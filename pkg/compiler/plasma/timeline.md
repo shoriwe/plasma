@@ -20,8 +20,30 @@
     - [X] Array
     - [X] Hash Table
 - [ ] Selector Expressions
-- [ ] Unary Expressions
+- [X] Unary Expressions
+    - [X] Negate Bits
+    - [X] Negate Bool
 - [ ] Binary Expressions
+    - [ ] Add
+    - [ ] Sub
+    - [ ] Mul
+    - [ ] Div
+    - [ ] Mod
+    - [ ] Pow
+    - [ ] BitXor
+    - [ ] BitAnd
+    - [ ] BitOr
+    - [ ] BitLeft
+    - [ ] BitRight
+    - [ ] And
+    - [ ] Or
+    - [ ] Xor
+    - [ ] Equals
+    - [ ] NotEquals
+    - [ ] GreaterThan
+    - [ ] LessThan
+    - [ ] GreaterThanOrEqual
+    - [ ] LessThanOrEqual
 - [ ] Lambda Expressions
 - [ ] Assign Statement
 - [ ] Flow control

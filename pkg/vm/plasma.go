@@ -151,6 +151,59 @@ func (p *Plasma) newHashOP(code Code) *errors.Error {
 	return nil
 }
 
+// Useful function to call those built ins that doesn't receive arguments of an object
+func (p *Plasma) noArgsGetAndCall(operationName string) *errors.Error {
+	object := p.MemoryStack.Pop()
+	operation, getError := object.Get(operationName)
+	if getError != nil {
+		return getError
+	}
+	if _, ok := operation.(*Function); !ok {
+		return errors.NewTypeError(operation.TypeName(), FunctionName)
+	}
+	result, callError := CallFunction(operation.(*Function), p, object.SymbolTable())
+	if callError != nil {
+		return callError
+	}
+	p.MemoryStack.Push(result)
+	return nil
+}
+
+// Function useful to cal object built-ins binary expression functions
+func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *errors.Error {
+	leftHandSide := p.MemoryStack.Pop()
+	rightHandSide := p.MemoryStack.Pop()
+	operation, getError := leftHandSide.Get(operationName)
+	if getError != nil {
+		return p.rightBinaryExpressionFuncCall(leftHandSide, rightHandSide, operationName)
+	}
+	if _, ok := operation.(*Function); !ok {
+		return p.rightBinaryExpressionFuncCall(leftHandSide, rightHandSide, operationName)
+	}
+	result, callError := CallFunction(operation.(*Function), p, leftHandSide.SymbolTable(), rightHandSide)
+	if callError != nil {
+		return p.rightBinaryExpressionFuncCall(leftHandSide, rightHandSide, operationName)
+	}
+	p.MemoryStack.Push(result)
+	return nil
+}
+
+func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide IObject, rightHandSide IObject, operationName string) *errors.Error {
+	operation, getError := rightHandSide.Get(operationName)
+	if getError != nil {
+		return getError
+	}
+	if _, ok := operation.(*Function); !ok {
+		return errors.NewTypeError(operation.TypeName(), FunctionName)
+	}
+	result, callError := CallFunction(operation.(*Function), p, rightHandSide.SymbolTable(), leftHandSide)
+	if callError != nil {
+		return callError
+	}
+	p.MemoryStack.Push(result)
+	return nil
+}
+
 func (p *Plasma) constructObject(type_ *Type) *errors.Error {
 	object, constructionError := ConstructObject(type_, p, p.PeekSymbolTable())
 	if constructionError != nil {
@@ -279,6 +332,52 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.newArrayOP(code)
 		case NewHashOP:
 			executionError = p.newHashOP(code)
+		// Unary Expressions
+		case NegateBitsOP:
+			executionError = p.noArgsGetAndCall(NegBits)
+		case BoolNegateOP:
+			executionError = p.noArgsGetAndCall(Negate)
+		// Binary Expressions
+		case AddOP:
+			executionError = p.leftBinaryExpressionFuncCall(Add)
+		case SubOP:
+			executionError = p.leftBinaryExpressionFuncCall(Sub)
+		case MulOP:
+			executionError = p.leftBinaryExpressionFuncCall(Mul)
+		case DivOP:
+			executionError = p.leftBinaryExpressionFuncCall(Div)
+		case ModOP:
+			executionError = p.leftBinaryExpressionFuncCall(Mod)
+		case PowOP:
+			executionError = p.leftBinaryExpressionFuncCall(Pow)
+		case BitXorOP:
+			executionError = p.leftBinaryExpressionFuncCall(BitXor)
+		case BitAndOP:
+			executionError = p.leftBinaryExpressionFuncCall(BitAnd)
+		case BitOrOP:
+			executionError = p.leftBinaryExpressionFuncCall(BitOr)
+		case BitLeftOP:
+			executionError = p.leftBinaryExpressionFuncCall(BitLeft)
+		case BitRightOP:
+			executionError = p.leftBinaryExpressionFuncCall(BitRight)
+		case AndOP:
+			executionError = p.leftBinaryExpressionFuncCall(And)
+		case OrOP:
+			executionError = p.leftBinaryExpressionFuncCall(Or)
+		case XorOP:
+			executionError = p.leftBinaryExpressionFuncCall(Xor)
+		case EqualsOP:
+			executionError = p.leftBinaryExpressionFuncCall(Equals)
+		case NotEqualsOP:
+			executionError = p.leftBinaryExpressionFuncCall(NotEquals)
+		case GreaterThanOP:
+			executionError = p.leftBinaryExpressionFuncCall(GreaterThan)
+		case LessThanOP:
+			executionError = p.leftBinaryExpressionFuncCall(LessThan)
+		case GreaterThanOrEqualOP:
+			executionError = p.leftBinaryExpressionFuncCall(GreaterThanOrEqual)
+		case LessThanOrEqualOP:
+			executionError = p.leftBinaryExpressionFuncCall(LessThanOrEqual)
 		//
 		case CallOP:
 			executionError = p.callOP()
