@@ -43,8 +43,9 @@ const (
 	// IObject Creation
 	Initialize = "Initialize" // Executed just after New
 	// Unary Operations
-	NegBits = "NegBits"
-	Negate  = "Negate"
+	NegBits  = "NegBits"
+	Negate   = "Negate"
+	Negative = "Negative"
 	// Binary Operations
 	//// Basic Binary
 	Add      = "Add"
@@ -967,8 +968,9 @@ func ObjectInitialize(_ VirtualMachine, object IObject) *errors.Error {
 		// IObject Creation
 		Initialize: NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjInitialize)),
 		// Unary Operations
-		NegBits: NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
-		Negate:  NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjNegate)),
+		NegBits:  NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		Negate:   NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjNegate)),
+		Negative: NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
 		// Binary Operations
 		//// Math binary
 		Add:           NewFunction(object.SymbolTable(), NewNotImplementedCallable(1)),
@@ -1342,7 +1344,7 @@ func StringInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringRightNotEquals)))
 	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringHash)))
 	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringCopy)))
-	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringIndex)))
+	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringIndex)))
 	// object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringIter)))
 	object.Set(ToInteger, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringToInteger)))
 	object.Set(ToFloat, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringToFloat)))
@@ -1684,6 +1686,14 @@ func IntegerNegBits(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		return nil, getError
 	}
 	return NewInteger(vm.PeekSymbolTable(), ^self.GetInteger64()), nil
+}
+
+func IntegerNegative(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return NewInteger(vm.PeekSymbolTable(), -self.GetInteger64()), nil
 }
 
 func IntegerAdd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
@@ -2276,6 +2286,7 @@ func IntegerHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 */
 func IntegerInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	object.SymbolTable().Set(NegBits, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerNegBits)))
+	object.SymbolTable().Set(Negative, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, IntegerNegative)))
 
 	object.SymbolTable().Set(Add, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerAdd)))
 	object.SymbolTable().Set(RightAdd, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, IntegerRightAdd)))

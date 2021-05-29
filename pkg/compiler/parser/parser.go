@@ -2043,28 +2043,14 @@ func (parser *Parser) parseIndexExpression(expression ast.Expression) (*ast.Inde
 	if tokenizationError != nil {
 		return nil, tokenizationError
 	}
-	var rightIndex ast.Node
+	// var rightIndex ast.Node
 	line := parser.currentLine()
-	leftIndex, parsingError := parser.parseBinaryExpression(0)
+	index, parsingError := parser.parseBinaryExpression(0)
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := leftIndex.(ast.Expression); !ok {
+	if _, ok := index.(ast.Expression); !ok {
 		return nil, newNonExpressionReceivedError(line, IndexExpression)
-	}
-	if parser.matchDirect(lexer.Colon) {
-		tokenizationError = parser.next()
-		if tokenizationError != nil {
-			return nil, tokenizationError
-		}
-		line = parser.currentLine()
-		rightIndex, parsingError = parser.parseBinaryExpression(0)
-		if parsingError != nil {
-			return nil, parsingError
-		}
-		if _, ok := leftIndex.(ast.Expression); !ok {
-			return nil, newNonExpressionReceivedError(line, IndexExpression)
-		}
 	}
 	if !parser.matchDirect(lexer.CloseSquareBracket) {
 		return nil, newSyntaxError(parser.currentLine(), IndexExpression)
@@ -2073,22 +2059,50 @@ func (parser *Parser) parseIndexExpression(expression ast.Expression) (*ast.Inde
 	if tokenizationError != nil {
 		return nil, tokenizationError
 	}
-	if rightIndex == nil {
+	return &ast.IndexExpression{
+		Expression: nil,
+		Source:     expression,
+		Index:      index.(ast.Expression),
+	}, nil
+	/*
+		if parser.matchDirect(lexer.Colon) {
+			tokenizationError = parser.next()
+			if tokenizationError != nil {
+				return nil, tokenizationError
+			}
+			line = parser.currentLine()
+			rightIndex, parsingError = parser.parseBinaryExpression(0)
+			if parsingError != nil {
+				return nil, parsingError
+			}
+			if _, ok := leftIndex.(ast.Expression); !ok {
+				return nil, newNonExpressionReceivedError(line, IndexExpression)
+			}
+		}
+		if !parser.matchDirect(lexer.CloseSquareBracket) {
+			return nil, newSyntaxError(parser.currentLine(), IndexExpression)
+		}
+		tokenizationError = parser.next()
+		if tokenizationError != nil {
+			return nil, tokenizationError
+		}
+		if rightIndex == nil {
+			return &ast.IndexExpression{
+				Source: expression,
+				Index: [2]ast.Expression{
+					leftIndex.(ast.Expression),
+					nil,
+				},
+			}, nil
+		}
 		return &ast.IndexExpression{
 			Source: expression,
 			Index: [2]ast.Expression{
 				leftIndex.(ast.Expression),
-				nil,
+				rightIndex.(ast.Expression),
 			},
 		}, nil
-	}
-	return &ast.IndexExpression{
-		Source: expression,
-		Index: [2]ast.Expression{
-			leftIndex.(ast.Expression),
-			rightIndex.(ast.Expression),
-		},
-	}, nil
+	*/
 }
 
 func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLinerExpression, *errors.Error) {

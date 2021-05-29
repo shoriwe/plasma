@@ -17,6 +17,7 @@ const (
 	composites        = "composites"
 	unaryExpressions  = "unary-expressions"
 	binaryExpressions = "binary-expressions"
+	indexExpressions  = "index-expressions"
 )
 
 func test(t *testing.T, directory string) {
@@ -90,4 +91,8 @@ func TestUnaryExpressions(t *testing.T) {
 
 func TestBinaryExpressions(t *testing.T) {
 	test(t, filepath.Join(package_, samplesDirectory, binaryExpressions))
+}
+
+func TestIndexExpressions(t *testing.T) {
+	test(t, filepath.Join(package_, samplesDirectory, indexExpressions))
 }

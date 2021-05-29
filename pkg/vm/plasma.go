@@ -198,6 +198,24 @@ func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide IObject, rightHandSi
 	return nil
 }
 
+func (p *Plasma) indexOP() *errors.Error {
+	index := p.MemoryStack.Pop()
+	source := p.MemoryStack.Pop()
+	indexOperation, getError := source.Get(Index)
+	if getError != nil {
+		return getError
+	}
+	if _, ok := indexOperation.(*Function); !ok {
+		return errors.NewTypeError(indexOperation.TypeName(), FunctionName)
+	}
+	result, callError := CallFunction(indexOperation.(*Function), p, source.SymbolTable(), index)
+	if callError != nil {
+		return callError
+	}
+	p.MemoryStack.Push(result)
+	return nil
+}
+
 func (p *Plasma) returnOP(code Code) *errors.Error {
 	numberOfReturnValues := code.Value.(int)
 	if numberOfReturnValues == 0 {
@@ -256,6 +274,8 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.noArgsGetAndCall(NegBits)
 		case BoolNegateOP:
 			executionError = p.noArgsGetAndCall(Negate)
+		case NegativeOP:
+			executionError = p.noArgsGetAndCall(Negative)
 		// Binary Expressions
 		case AddOP:
 			executionError = p.leftBinaryExpressionFuncCall(Add)
@@ -297,6 +317,9 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.leftBinaryExpressionFuncCall(GreaterThanOrEqual)
 		case LessThanOrEqualOP:
 			executionError = p.leftBinaryExpressionFuncCall(LessThanOrEqual)
+		//
+		case IndexOP:
+			executionError = p.indexOP()
 		//
 		case ReturnOP:
 			executionError = p.returnOP(code)

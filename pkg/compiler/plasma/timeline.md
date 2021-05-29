@@ -51,7 +51,7 @@
     - [ ] Generators
     - [ ] Call
     - [ ] Index
-    - [ ] Parentheses Expressions
+    - [X] Parentheses Expressions
     - [ ] Selector Expressions
 - [ ] Statements
     - [ ] Assign Statement

@@ -18,6 +18,7 @@ const (
 	// Unary Expressions
 	NegateBitsOP
 	BoolNegateOP
+	NegativeOP
 
 	// Binary Expressions
 	AddOP
@@ -40,6 +41,8 @@ const (
 	LessThanOP
 	GreaterThanOrEqualOP
 	LessThanOrEqualOP
+	//
+	IndexOP
 
 	NoOP
 	PushOP

@@ -19,10 +19,12 @@ import (
 type Compiler struct {
 	parser      *parser.Parser
 	programCode []vm.Code
+	codeLength  int
 }
 
 func (c *Compiler) pushInstruction(code vm.Code) {
 	c.programCode = append(c.programCode, code)
+	c.codeLength++
 }
 
 func (c *Compiler) compileBegin(begin *ast.BeginStatement) *errors.Error {
@@ -167,6 +169,8 @@ func (c *Compiler) compileUnaryExpression(unaryExpression *ast.UnaryExpression) 
 		c.pushInstruction(vm.NewCode(vm.NegateBitsOP, unaryExpression.Operator.Line, nil))
 	case lexer.Not, lexer.SignNot:
 		c.pushInstruction(vm.NewCode(vm.BoolNegateOP, unaryExpression.Operator.Line, nil))
+	case lexer.Sub:
+		c.pushInstruction(vm.NewCode(vm.NegativeOP, unaryExpression.Operator.Line, nil))
 	}
 	return nil
 }
@@ -244,6 +248,19 @@ func (c *Compiler) compileUnlessOneLinerExpression(ifOneLineExpression *ast.Unle
 	return nil
 }
 
+func (c *Compiler) compileIndexExpression(indexExpression *ast.IndexExpression) *errors.Error {
+	sourceCompilationError := c.compileExpression(indexExpression.Source)
+	if sourceCompilationError != nil {
+		return sourceCompilationError
+	}
+	indexCompilationError := c.compileExpression(indexExpression.Index)
+	if indexCompilationError != nil {
+		return indexCompilationError
+	}
+	c.pushInstruction(vm.NewCode(vm.IndexOP, errors.UnknownLine, nil))
+	return nil
+}
+
 func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 	switch expression.(type) {
 	case *ast.BasicLiteralExpression:
@@ -264,6 +281,8 @@ func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 		return c.compileIfOneLinerExpression(expression.(*ast.IfOneLinerExpression))
 	case *ast.UnlessOneLinerExpression:
 		return c.compileUnlessOneLinerExpression(expression.(*ast.UnlessOneLinerExpression))
+	case *ast.IndexExpression:
+		return c.compileIndexExpression(expression.(*ast.IndexExpression))
 	}
 	return nil
 }
@@ -319,5 +338,6 @@ func NewCompiler(codeReader reader.Reader, ) *Compiler {
 	return &Compiler{
 		parser:      parser.NewParser(lexer.NewLexer(codeReader)),
 		programCode: nil,
+		codeLength:  0,
 	}
 }
