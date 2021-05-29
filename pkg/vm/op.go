@@ -41,15 +41,10 @@ const (
 	LessThanOP
 	GreaterThanOrEqualOP
 	LessThanOrEqualOP
-	//
+	// Other expressions
 	IndexOP
+	SelectNameFromObjectOP
+	MethodInvocationOP
 
-	NoOP
-	PushOP
-	PushN_OP
-	CopyOP
-	CallOP
-	GetOP
-	GetFromOP
 	ReturnOP
 )

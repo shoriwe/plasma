@@ -49,10 +49,10 @@
     - [ ] One Line Unless
     - [ ] Identifiers
     - [ ] Generators
-    - [ ] Call
-    - [ ] Index
+    - [X] Call
+    - [X] Index
     - [X] Parentheses Expressions
-    - [ ] Selector Expressions
+    - [X] Selector Expressions
 - [ ] Statements
     - [ ] Assign Statement
     - [ ] DeferStatement

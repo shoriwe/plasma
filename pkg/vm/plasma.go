@@ -216,6 +216,40 @@ func (p *Plasma) indexOP() *errors.Error {
 	return nil
 }
 
+func (p *Plasma) selectNameFromObjectOP(code Code) *errors.Error {
+	name := code.Value.(string)
+	source := p.MemoryStack.Pop()
+	value, getError := source.Get(name)
+	if getError != nil {
+		return getError
+	}
+	p.MemoryStack.Push(value)
+	return nil
+}
+
+func (p *Plasma) methodInvocationOP(code Code) *errors.Error {
+	numberOfArguments := code.Value.(int)
+	function := p.MemoryStack.Pop()
+	var arguments []IObject
+	for i := 0; i < numberOfArguments; i++ {
+		if !p.MemoryStack.HasNext() {
+			return errors.NewInvalidNumberOfArguments(i, numberOfArguments)
+		}
+		arguments = append(arguments, p.MemoryStack.Pop())
+	}
+	var result IObject
+	var callError *errors.Error
+	switch function.(type) {
+	case *Function:
+		result, callError = CallFunction(function.(*Function), p, p.PeekSymbolTable(), arguments...)
+	}
+	if callError != nil {
+		return callError
+	}
+	p.MemoryStack.Push(result)
+	return nil
+}
+
 func (p *Plasma) returnOP(code Code) *errors.Error {
 	numberOfReturnValues := code.Value.(int)
 	if numberOfReturnValues == 0 {
@@ -317,9 +351,13 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.leftBinaryExpressionFuncCall(GreaterThanOrEqual)
 		case LessThanOrEqualOP:
 			executionError = p.leftBinaryExpressionFuncCall(LessThanOrEqual)
-		//
+		// Other Expressions
 		case IndexOP:
 			executionError = p.indexOP()
+		case SelectNameFromObjectOP:
+			executionError = p.selectNameFromObjectOP(code)
+		case MethodInvocationOP:
+			executionError = p.methodInvocationOP(code)
 		//
 		case ReturnOP:
 			executionError = p.returnOP(code)

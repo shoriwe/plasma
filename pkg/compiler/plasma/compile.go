@@ -261,6 +261,31 @@ func (c *Compiler) compileIndexExpression(indexExpression *ast.IndexExpression) 
 	return nil
 }
 
+func (c *Compiler) compileSelectorExpression(selectorExpression *ast.SelectorExpression) *errors.Error {
+	sourceCompilationError := c.compileExpression(selectorExpression.X)
+	if sourceCompilationError != nil {
+		return sourceCompilationError
+	}
+	c.pushInstruction(vm.NewCode(vm.SelectNameFromObjectOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String))
+	return nil
+}
+
+func (c *Compiler) compileMethodInvocationExpression(methodInvocationExpression *ast.MethodInvocationExpression) *errors.Error {
+	numberOfArguments := len(methodInvocationExpression.Arguments)
+	for i := numberOfArguments - 1; i > -1; i-- {
+		argumentCompilationError := c.compileExpression(methodInvocationExpression.Arguments[i])
+		if argumentCompilationError != nil {
+			return argumentCompilationError
+		}
+	}
+	functionCompilationError := c.compileExpression(methodInvocationExpression.Function)
+	if functionCompilationError != nil {
+		return functionCompilationError
+	}
+	c.pushInstruction(vm.NewCode(vm.MethodInvocationOP, errors.UnknownLine, len(methodInvocationExpression.Arguments)))
+	return nil
+}
+
 func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 	switch expression.(type) {
 	case *ast.BasicLiteralExpression:
@@ -283,6 +308,10 @@ func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 		return c.compileUnlessOneLinerExpression(expression.(*ast.UnlessOneLinerExpression))
 	case *ast.IndexExpression:
 		return c.compileIndexExpression(expression.(*ast.IndexExpression))
+	case *ast.SelectorExpression:
+		return c.compileSelectorExpression(expression.(*ast.SelectorExpression))
+	case *ast.MethodInvocationExpression:
+		return c.compileMethodInvocationExpression(expression.(*ast.MethodInvocationExpression))
 	}
 	return nil
 }
