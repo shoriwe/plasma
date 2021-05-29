@@ -296,8 +296,8 @@ func guessKind(buffer []rune) (uint8, uint8) {
 		return Keyboard, Yield
 	case ReturnString:
 		return Keyboard, Return
-	case RetryString:
-		return Keyboard, Retry
+	case ContinueString:
+		return Keyboard, Continue
 	case BreakString:
 		return Keyboard, Break
 	case RedoString:

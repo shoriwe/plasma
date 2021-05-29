@@ -57,7 +57,7 @@ const (
 	Default
 	Yield
 	Return
-	Retry
+	Continue
 	Break
 	Redo
 	Defer
@@ -199,7 +199,7 @@ var (
 	DefaultString      = "default"
 	YieldString        = "yield"
 	ReturnString       = "return"
-	RetryString        = "retry"
+	ContinueString     = "continue"
 	BreakString        = "break"
 	RedoString         = "redo"
 	DeferString        = "defer"

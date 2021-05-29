@@ -133,8 +133,8 @@ func walker(node ast.Node) string {
 		result := walker(node.(*ast.AssignStatement).LeftHandSide)
 		result += " " + node.(*ast.AssignStatement).AssignOperator.String + " "
 		return result + walker(node.(*ast.AssignStatement).RightHandSide)
-	case *ast.RetryStatement:
-		return "retry"
+	case *ast.ContinueStatement:
+		return "continue"
 	case *ast.BreakStatement:
 		return "break"
 	case *ast.RedoStatement:
@@ -263,10 +263,6 @@ func walker(node ast.Node) string {
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
-	case *ast.StarExpression:
-		return "*" + walker(node.(*ast.StarExpression).X)
-	case *ast.PointerExpression:
-		return "&" + walker(node.(*ast.PointerExpression).X)
 	case *ast.AwaitExpression:
 		return "await " + walker(node.(*ast.AwaitExpression).X)
 	case *ast.ForLoopStatement:
@@ -538,10 +534,6 @@ var basicSamples = []string{
 		"\ta += 1\n" +
 		"\tb -= 1\n" +
 		"end",
-	"&caller",
-	"*call(1, 2)",
-	"*&(c)",
-	"*(&c + 1)",
 	"await parser().a()",
 	"[]",
 	"for a, b, c in range(10)\n" +

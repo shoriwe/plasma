@@ -232,6 +232,10 @@ func (c *Compiler) compileBinaryExpression(binaryExpression *ast.BinaryExpressio
 	return nil
 }
 
+func (c *Compiler) compileParenthesesExpression(parenthesesExpression *ast.ParenthesesExpression) *errors.Error {
+	return c.compileExpression(parenthesesExpression.X)
+}
+
 func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 	switch expression.(type) {
 	case *ast.BasicLiteralExpression:
@@ -246,6 +250,8 @@ func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 		return c.compileUnaryExpression(expression.(*ast.UnaryExpression))
 	case *ast.BinaryExpression:
 		return c.compileBinaryExpression(expression.(*ast.BinaryExpression))
+	case *ast.ParenthesesExpression:
+		return c.compileParenthesesExpression(expression.(*ast.ParenthesesExpression))
 	}
 	return nil
 }

@@ -27,16 +27,6 @@ type HashExpression struct {
 	Values []*KeyValue
 }
 
-type StarExpression struct {
-	Expression
-	X Expression
-}
-
-type PointerExpression struct {
-	Expression
-	X Expression
-}
-
 type Identifier struct {
 	Expression
 	Token *lexer.Token

@@ -156,7 +156,7 @@ type SuperInvocationStatement struct {
 	Arguments []Expression
 }
 
-type RetryStatement struct {
+type ContinueStatement struct {
 	Statement
 }
 

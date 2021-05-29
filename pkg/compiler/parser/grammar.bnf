@@ -14,7 +14,7 @@ statement:
     | yield
     | super invocation
     | await
-    | retry
+    | continue
     | break
     | redo
     | 'pass'
@@ -88,7 +88,7 @@ return: 'return' (expression (',' expression))?
 yield: 'yield' (expression (',' expression))?
 super_invocation: 'super' '(' (expression (',' expression)*)? ')'
 await: 'await' expression
-retry: 'retry' identifier?
+continue: 'continue' identifier?
 break: 'break' identifier?
 redo: 'redo' identifier?
 

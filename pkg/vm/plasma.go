@@ -189,7 +189,7 @@ func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *errors.Erro
 }
 
 func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide IObject, rightHandSide IObject, operationName string) *errors.Error {
-	operation, getError := rightHandSide.Get(operationName)
+	operation, getError := rightHandSide.Get("Right" + operationName)
 	if getError != nil {
 		return getError
 	}

@@ -43,7 +43,7 @@
 - [X] Return
 - [X] Yield
 - [X] Super
-- [X] Retry
+- [X] Continue
 - [X] Break
 - [X] Redo
 - [X] Pass
@@ -90,7 +90,7 @@
 - [ ] Return
 - [ ] Yield
 - [ ] Super
-- [ ] Retry
+- [ ] Continue
 - [ ] Break
 - [ ] Redo
 - [ ] Pass

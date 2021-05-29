@@ -1,53 +1,79 @@
-- [ ] Literals
-    - [X] Integers
-        - [X] Decimal
-        - [X] Hex
-        - [X] Binary
-        - [X] Octal
-    - [X] Float
-        - [X] Basic
-        - [X] Scientific
-    - [X] String
-        - [X] Single Quote
-        - [X] Double Quote
-    - [X] Bytes
-    - [X] Bool
-        - [X] True
-        - [X] False
-    - [X] None
-- [X] Complex types
-    - [X] Tuple
-    - [X] Array
-    - [X] Hash Table
-- [ ] Selector Expressions
-- [X] Unary Expressions
-    - [X] Negate Bits
-    - [X] Negate Bool
-- [ ] Binary Expressions
-    - [ ] Add
-    - [ ] Sub
-    - [ ] Mul
-    - [ ] Div
-    - [ ] Mod
-    - [ ] Pow
-    - [ ] BitXor
-    - [ ] BitAnd
-    - [ ] BitOr
-    - [ ] BitLeft
-    - [ ] BitRight
-    - [ ] And
-    - [ ] Or
-    - [ ] Xor
-    - [ ] Equals
-    - [ ] NotEquals
-    - [ ] GreaterThan
-    - [ ] LessThan
-    - [ ] GreaterThanOrEqual
-    - [ ] LessThanOrEqual
-- [ ] Lambda Expressions
-- [ ] Assign Statement
-- [ ] Flow control
-- [ ] Function definition
-- [ ] Class definition
-- [ ] Interface definition
-- [ ] Module Definition
+- [ ] Expressions
+    - [X] Literals
+        - [X] Integers
+            - [X] Decimal
+            - [X] Hex
+            - [X] Binary
+            - [X] Octal
+        - [X] Float
+            - [X] Basic
+            - [X] Scientific
+        - [X] String
+            - [X] Single Quote
+            - [X] Double Quote
+        - [X] Bytes
+        - [X] Bool
+            - [X] True
+            - [X] False
+        - [X] None
+    - [X] Complex types
+        - [X] Tuple
+        - [X] Array
+        - [X] Hash Table
+    - [X] Unary Expressions
+        - [X] Negate Bits
+        - [X] Negate Bool
+    - [X] Binary Expressions
+        - [X] Add
+        - [X] Sub
+        - [X] Mul
+        - [X] Div
+        - [X] Mod
+        - [X] Pow
+        - [X] BitXor
+        - [X] BitAnd
+        - [X] BitOr
+        - [X] BitLeft
+        - [X] BitRight
+        - [X] And
+        - [X] Or
+        - [X] Xor
+        - [X] Equals
+        - [X] NotEquals
+        - [X] GreaterThan
+        - [X] LessThan
+        - [X] GreaterThanOrEqual
+        - [X] LessThanOrEqual
+    - [ ] Lambda Expressions
+    - [ ] One Line If
+    - [ ] One Line Unless
+    - [ ] Identifiers
+    - [ ] Generators
+    - [ ] Call
+    - [ ] Index
+    - [ ] Parentheses Expressions
+    - [ ] Selector Expressions
+- [ ] Statements
+    - [ ] Assign Statement
+    - [ ] DeferStatement
+    - [ ] Do While
+    - [ ] While
+    - [ ] Until
+    - [ ] For Loop
+    - [ ] If - Else - Elif
+    - [ ] Switch
+    - [ ] Module
+    - [ ] Function Definition
+    - [ ] Interface
+    - [ ] Class
+    - [ ] Raise
+    - [ ] Try - Except
+    - [ ] Begin
+    - [ ] End
+    - [ ] Return
+    - [ ] Yield
+    - [ ] Super
+    - [ ] Continue
+    - [ ] Break
+    - [ ] Redo
+    - [ ] Pass

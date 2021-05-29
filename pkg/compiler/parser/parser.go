@@ -21,9 +21,7 @@ const (
 	BeginStatement              = "Begin Statement"
 	InterfaceStatement          = "Interface Statement"
 	BinaryExpression            = "Binary Expression"
-	UnaryExpression             = "Unary Expression"
 	PointerExpression           = "Pointer Expression"
-	StarExpression              = "Star Expression"
 	AwaitExpression             = "Await Expression"
 	LambdaExpression            = "Lambda Expression"
 	ParenthesesExpression       = "Parentheses Expression"
@@ -984,38 +982,6 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, *errors.Error) {
 				Operator: operator,
 				X:        x.(ast.Expression),
 			}, nil
-		case lexer.BitWiseAnd:
-			tokenizingError := parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
-			line := parser.currentLine()
-			x, parsingError := parser.parseBinaryExpression(0)
-			if parsingError != nil {
-				return nil, parsingError
-			}
-			if _, ok := x.(ast.Expression); !ok {
-				return nil, newNonExpressionReceivedError(line, UnaryExpression)
-			}
-			return &ast.PointerExpression{
-				X: x.(ast.Expression),
-			}, nil
-		case lexer.Star:
-			tokenizingError := parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
-			line := parser.currentLine()
-			x, parsingError := parser.parseBinaryExpression(0)
-			if parsingError != nil {
-				return nil, parsingError
-			}
-			if _, ok := x.(ast.Expression); !ok {
-				return nil, newNonExpressionReceivedError(line, StarExpression)
-			}
-			return &ast.StarExpression{
-				X: x.(ast.Expression),
-			}, nil
 		}
 	} else if parser.matchKind(lexer.AwaitKeyboard) {
 		tokenizingError := parser.next()
@@ -1900,12 +1866,12 @@ func (parser *Parser) parseSuperStatement() (*ast.SuperInvocationStatement, *err
 	}, nil
 }
 
-func (parser *Parser) parseRetryStatement() (*ast.RetryStatement, *errors.Error) {
+func (parser *Parser) parseRetryStatement() (*ast.ContinueStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	return &ast.RetryStatement{}, nil
+	return &ast.ContinueStatement{}, nil
 }
 
 func (parser *Parser) parseBreakStatement() (*ast.BreakStatement, *errors.Error) {
@@ -1983,7 +1949,7 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 			return parser.parseYieldStatement()
 		case lexer.Super:
 			return parser.parseSuperStatement()
-		case lexer.Retry:
+		case lexer.Continue:
 			return parser.parseRetryStatement()
 		case lexer.Break:
 			return parser.parseBreakStatement()
