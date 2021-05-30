@@ -20,6 +20,16 @@ type Plasma struct {
 	seed        uint64
 }
 
+func (p *Plasma) PushObject(object IObject) {
+	p.MemoryStack.Push(object)
+}
+func (p *Plasma) PeekObject() IObject {
+	return p.MemoryStack.Peek()
+}
+func (p *Plasma) PopObject() IObject {
+	return p.MemoryStack.Pop()
+}
+
 func (p *Plasma) PushSymbolTable(table *SymbolTable) {
 	p.Context.Push(table)
 }
@@ -43,38 +53,38 @@ func (p *Plasma) PeekSymbolTable() *SymbolTable {
 func (p *Plasma) newStringOP(code Code) *errors.Error {
 	value := code.Value.(string)
 	stringObject := NewString(p.Context.Peek(), value)
-	p.MemoryStack.Push(stringObject)
+	p.PushObject(stringObject)
 	return nil
 }
 
 func (p *Plasma) newBytesOP(code Code) *errors.Error {
 	value := code.Value.([]byte)
 	bytesObject := NewBytes(p.Context.Peek(), value)
-	p.MemoryStack.Push(bytesObject)
+	p.PushObject(bytesObject)
 	return nil
 }
 
 func (p *Plasma) newIntegerOP(code Code) *errors.Error {
 	value := code.Value.(int64)
 	integer := NewInteger(p.Context.Peek(), value)
-	p.MemoryStack.Push(integer)
+	p.PushObject(integer)
 	return nil
 }
 
 func (p *Plasma) newFloatOP(code Code) *errors.Error {
 	value := code.Value.(float64)
 	float := NewFloat(p.Context.Peek(), value)
-	p.MemoryStack.Push(float)
+	p.PushObject(float)
 	return nil
 }
 
 func (p *Plasma) newTrueBoolOP() *errors.Error {
-	p.MemoryStack.Push(NewBool(p.PeekSymbolTable(), true))
+	p.PushObject(NewBool(p.PeekSymbolTable(), true))
 	return nil
 }
 
 func (p *Plasma) newFalseBoolOP() *errors.Error {
-	p.MemoryStack.Push(NewBool(p.PeekSymbolTable(), false))
+	p.PushObject(NewBool(p.PeekSymbolTable(), false))
 	return nil
 }
 
@@ -83,7 +93,7 @@ func (p *Plasma) getNoneOP() *errors.Error {
 	if getError != nil {
 		return getError
 	}
-	p.MemoryStack.Push(none)
+	p.PushObject(none)
 	return nil
 }
 
@@ -94,9 +104,9 @@ func (p *Plasma) newTupleOP(code Code) *errors.Error {
 		if !p.MemoryStack.HasNext() {
 			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
 		}
-		values = append(values, p.MemoryStack.Pop())
+		values = append(values, p.PopObject())
 	}
-	p.MemoryStack.Push(NewTuple(p.PeekSymbolTable(), values))
+	p.PushObject(NewTuple(p.PeekSymbolTable(), values))
 	return nil
 }
 
@@ -107,9 +117,9 @@ func (p *Plasma) newArrayOP(code Code) *errors.Error {
 		if !p.MemoryStack.HasNext() {
 			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
 		}
-		values = append(values, p.MemoryStack.Pop())
+		values = append(values, p.PopObject())
 	}
-	p.MemoryStack.Push(NewArray(p.PeekSymbolTable(), values))
+	p.PushObject(NewArray(p.PeekSymbolTable(), values))
 	return nil
 }
 
@@ -120,11 +130,11 @@ func (p *Plasma) newHashOP(code Code) *errors.Error {
 		if !p.MemoryStack.HasNext() {
 			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
 		}
-		key := p.MemoryStack.Pop()
+		key := p.PopObject()
 		if !p.MemoryStack.HasNext() {
 			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
 		}
-		value := p.MemoryStack.Pop()
+		value := p.PopObject()
 		keyValues = append(keyValues, &KeyValue{
 			Key:   key,
 			Value: value,
@@ -141,13 +151,13 @@ func (p *Plasma) newHashOP(code Code) *errors.Error {
 			return assignError
 		}
 	}
-	p.MemoryStack.Push(hashTable)
+	p.PushObject(hashTable)
 	return nil
 }
 
 // Useful function to call those built ins that doesn't receive arguments of an object
 func (p *Plasma) noArgsGetAndCall(operationName string) *errors.Error {
-	object := p.MemoryStack.Pop()
+	object := p.PopObject()
 	operation, getError := object.Get(operationName)
 	if getError != nil {
 		return getError
@@ -159,14 +169,14 @@ func (p *Plasma) noArgsGetAndCall(operationName string) *errors.Error {
 	if callError != nil {
 		return callError
 	}
-	p.MemoryStack.Push(result)
+	p.PushObject(result)
 	return nil
 }
 
 // Function useful to cal object built-ins binary expression functions
 func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *errors.Error {
-	leftHandSide := p.MemoryStack.Pop()
-	rightHandSide := p.MemoryStack.Pop()
+	leftHandSide := p.PopObject()
+	rightHandSide := p.PopObject()
 	operation, getError := leftHandSide.Get(operationName)
 	if getError != nil {
 		return p.rightBinaryExpressionFuncCall(leftHandSide, rightHandSide, operationName)
@@ -178,7 +188,7 @@ func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *errors.Erro
 	if callError != nil {
 		return p.rightBinaryExpressionFuncCall(leftHandSide, rightHandSide, operationName)
 	}
-	p.MemoryStack.Push(result)
+	p.PushObject(result)
 	return nil
 }
 
@@ -194,13 +204,13 @@ func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide IObject, rightHandSi
 	if callError != nil {
 		return callError
 	}
-	p.MemoryStack.Push(result)
+	p.PushObject(result)
 	return nil
 }
 
 func (p *Plasma) indexOP() *errors.Error {
-	index := p.MemoryStack.Pop()
-	source := p.MemoryStack.Pop()
+	index := p.PopObject()
+	source := p.PopObject()
 	indexOperation, getError := source.Get(Index)
 	if getError != nil {
 		return getError
@@ -212,30 +222,30 @@ func (p *Plasma) indexOP() *errors.Error {
 	if callError != nil {
 		return callError
 	}
-	p.MemoryStack.Push(result)
+	p.PushObject(result)
 	return nil
 }
 
 func (p *Plasma) selectNameFromObjectOP(code Code) *errors.Error {
 	name := code.Value.(string)
-	source := p.MemoryStack.Pop()
+	source := p.PopObject()
 	value, getError := source.Get(name)
 	if getError != nil {
 		return getError
 	}
-	p.MemoryStack.Push(value)
+	p.PushObject(value)
 	return nil
 }
 
 func (p *Plasma) methodInvocationOP(code Code) *errors.Error {
 	numberOfArguments := code.Value.(int)
-	function := p.MemoryStack.Pop()
+	function := p.PopObject()
 	var arguments []IObject
 	for i := 0; i < numberOfArguments; i++ {
 		if !p.MemoryStack.HasNext() {
 			return errors.NewInvalidNumberOfArguments(i, numberOfArguments)
 		}
-		arguments = append(arguments, p.MemoryStack.Pop())
+		arguments = append(arguments, p.PopObject())
 	}
 	var result IObject
 	var callError *errors.Error
@@ -249,7 +259,7 @@ func (p *Plasma) methodInvocationOP(code Code) *errors.Error {
 	if callError != nil {
 		return callError
 	}
-	p.MemoryStack.Push(result)
+	p.PushObject(result)
 	return nil
 }
 
@@ -258,7 +268,7 @@ func (p *Plasma) getIdentifierOP(code Code) *errors.Error {
 	if getError != nil {
 		return getError
 	}
-	p.MemoryStack.Push(value)
+	p.PushObject(value)
 	return nil
 }
 
@@ -266,22 +276,22 @@ func (p *Plasma) getIdentifierOP(code Code) *errors.Error {
 
 func (p *Plasma) assignIdentifierOP(code Code) *errors.Error {
 	identifier := code.Value.(string)
-	p.PeekSymbolTable().Set(identifier, p.MemoryStack.Pop())
+	p.PeekSymbolTable().Set(identifier, p.PopObject())
 	return nil
 }
 
 func (p *Plasma) assignSelectorOP(code Code) *errors.Error {
-	target := p.MemoryStack.Pop()
-	value := p.MemoryStack.Pop()
+	target := p.PopObject()
+	value := p.PopObject()
 	identifier := code.Value.(string)
 	target.Set(identifier, value)
 	return nil
 }
 
 func (p *Plasma) assignIndexOP() *errors.Error {
-	index := p.MemoryStack.Pop()
-	source := p.MemoryStack.Pop()
-	value := p.MemoryStack.Pop()
+	index := p.PopObject()
+	source := p.PopObject()
+	value := p.PopObject()
 	sourceAssign, getError := source.Get(Assign)
 	if getError != nil {
 		return getError
@@ -303,7 +313,7 @@ func (p *Plasma) returnOP(code Code) *errors.Error {
 		if getError != nil {
 			return getError
 		}
-		p.MemoryStack.Push(noneValue)
+		p.PushObject(noneValue)
 		return nil
 	}
 
@@ -312,18 +322,41 @@ func (p *Plasma) returnOP(code Code) *errors.Error {
 		if !p.MemoryStack.HasNext() {
 			return errors.NewInvalidNumberOfArguments(i, numberOfReturnValues)
 		}
-		values = append(values, p.MemoryStack.Pop())
+		values = append(values, p.PopObject())
 	}
-	p.MemoryStack.Push(NewTuple(p.PeekSymbolTable(), values))
+	if len(values) == 1 {
+		p.PushObject(values[0])
+		return nil
+	}
+	p.PushObject(NewTuple(p.PeekSymbolTable(), values))
+	return nil
+}
+
+// Special Instructions
+
+func (p *Plasma) loadFunctionArgumentsOP(code Code) *errors.Error {
+	for _, argument := range code.Value.([]string) {
+		value := p.PopObject()
+		p.PeekSymbolTable().Set(argument, value)
+	}
+	return nil
+}
+
+func (p *Plasma) newFunctionOP(code Code) *errors.Error {
+	functionInformation := code.Value.([2]int)
+	codeLength := functionInformation[0]
+	numberOfArguments := functionInformation[1]
+	start := p.PeekCode().index
+	p.PeekCode().index += codeLength
+	end := p.PeekCode().index
+	functionCode := make([]Code, codeLength)
+	copy(functionCode, p.PeekCode().instructions[start:end])
+	p.PushObject(NewFunction(p.PeekSymbolTable(), NewPlasmaFunction(numberOfArguments, functionCode)))
 	return nil
 }
 
 func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
-	defer func() {
-		p.PopSymbolTable()
-		p.PopCode()
-	}()
 	for ; p.PeekCode().HasNext(); {
 		code := p.PeekCode().Next()
 		switch code.Instruction.OpCode {
@@ -415,6 +448,11 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.assignIndexOP()
 		case ReturnOP:
 			executionError = p.returnOP(code)
+		// Special Instructions
+		case LoadFunctionArgumentsOP:
+			executionError = p.loadFunctionArgumentsOP(code)
+		case NewFunctionOP:
+			executionError = p.newFunctionOP(code)
 		default:
 			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}
@@ -423,7 +461,7 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 		}
 	}
 	if p.MemoryStack.HasNext() {
-		return p.MemoryStack.Pop(), nil
+		return p.PopObject(), nil
 	}
 	return p.PeekSymbolTable().GetAny(None)
 }

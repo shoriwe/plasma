@@ -27,6 +27,11 @@ func (c *Compiler) pushInstruction(code vm.Code) {
 	c.codeLength++
 }
 
+func (c *Compiler) extendInstructions(code []vm.Code) {
+	c.programCode = append(c.programCode, code...)
+	c.codeLength += len(code)
+}
+
 func (c *Compiler) compileBegin(begin *ast.BeginStatement) *errors.Error {
 	if begin != nil {
 		return c.compileBody(begin.Body)
@@ -291,6 +296,29 @@ func (c *Compiler) compileIdentifierExpression(identifier *ast.Identifier) *erro
 	return nil
 }
 
+func (c *Compiler) compileLambdaExpression(lambdaExpression *ast.LambdaExpression) *errors.Error {
+	start := c.codeLength
+	lambdaBodyCompilationError := c.compileExpression(lambdaExpression.Code)
+	if lambdaBodyCompilationError != nil {
+		return lambdaBodyCompilationError
+	}
+	offset := c.codeLength - start
+	functionCode := make([]vm.Code, offset)
+	copy(functionCode, c.programCode[start:])
+	c.programCode = c.programCode[:start]
+	c.codeLength -= offset
+	var arguments []string
+	argumentsLength := len(lambdaExpression.Arguments)
+	for i := argumentsLength - 1; i > -1; i-- {
+		arguments = append(arguments, lambdaExpression.Arguments[i].Token.String)
+	}
+	c.pushInstruction(vm.NewCode(vm.NewFunctionOP, errors.UnknownLine, [2]int{offset + 2, argumentsLength}))
+	c.pushInstruction(vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
+	c.extendInstructions(functionCode)
+	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
+	return nil
+}
+
 func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 	switch expression.(type) {
 	case *ast.BasicLiteralExpression:
@@ -319,6 +347,8 @@ func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 		return c.compileMethodInvocationExpression(expression.(*ast.MethodInvocationExpression))
 	case *ast.Identifier:
 		return c.compileIdentifierExpression(expression.(*ast.Identifier))
+	case *ast.LambdaExpression:
+		return c.compileLambdaExpression(expression.(*ast.LambdaExpression))
 	}
 	return nil
 }

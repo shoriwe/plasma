@@ -47,14 +47,14 @@
     - [ ] Lambda Expressions
     - [ ] One Line If
     - [ ] One Line Unless
-    - [ ] Identifiers
+    - [X] Identifiers
     - [ ] Generators
     - [X] Call
     - [X] Index
     - [X] Parentheses Expressions
     - [X] Selector Expressions
 - [ ] Statements
-    - [ ] Assign Statement
+    - [X] Assign Statement
     - [ ] DeferStatement
     - [ ] Do While
     - [ ] While

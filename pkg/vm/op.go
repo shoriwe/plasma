@@ -53,4 +53,8 @@ const (
 	AssignIndexOP
 
 	ReturnOP
+
+	// Special Instructions
+	LoadFunctionArgumentsOP
+	NewFunctionOP
 )

@@ -19,8 +19,10 @@ const (
 	binaryExpressions   = "binary-expressions"
 	indexExpressions    = "index-expressions"
 	selectorExpressions = "selector-expressions"
-	statementSamples    = "statements"
-	assignStatement     = "assignment"
+	lambdaExpressions   = "lambdas"
+
+	statementSamples = "statements"
+	assignStatement  = "assignment"
 )
 
 func test(t *testing.T, directory string) {
@@ -102,6 +104,10 @@ func TestIndexExpressions(t *testing.T) {
 
 func TestSelectorExpressions(t *testing.T) {
 	test(t, filepath.Join(testsSamples, expressionSamples, selectorExpressions))
+}
+
+func TestLambdaExpressions(t *testing.T) {
+	test(t, filepath.Join(testsSamples, expressionSamples, lambdaExpressions))
 }
 
 func TestAssignStatement(t *testing.T) {

@@ -204,7 +204,7 @@ func (p *PlasmaFunction) NumberOfArguments() int {
 	return p.numberOfArguments
 }
 
-func (p *PlasmaFunction) Call() (IObject, IObject, []Code) {
+func (p *PlasmaFunction) Call() (IObject, FunctionCallback, []Code) {
 	return nil, nil, p.Code
 }
 
@@ -501,11 +501,17 @@ func CallFunction(function *Function, vm VirtualMachine, parent *SymbolTable, ar
 	if callback != nil {
 		result, callError = callback(vm, arguments...)
 	} else if code != nil {
+		// Load the arguments
+		for _, argument := range arguments {
+			vm.PushObject(argument)
+		}
 		vm.PushCode(NewBytecodeFromArray(code))
 		result, callError = vm.Execute()
+		vm.PopCode()
 	} else {
 		panic("callback and code are nil")
 	}
+	vm.PopSymbolTable()
 	if callError != nil {
 		return nil, callError
 	}
@@ -1093,6 +1099,14 @@ func NewFunction(parentSymbols *SymbolTable, callable Callable) *Function {
 		},
 		Callable: callable,
 	}
+	function.Set(ToString, &Function{
+		Object: nil,
+		Callable: NewBuiltInClassFunction(function, 0,
+			func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+				return NewString(vm.PeekSymbolTable(), fmt.Sprintf("Function-%d", function.Id())), nil
+			},
+		),
+	})
 	return function
 }
 
@@ -4296,54 +4310,54 @@ func NewType(parent *SymbolTable, subclasses []*Type, constructor Constructor) *
 func SetDefaultSymbolTable() *SymbolTable {
 	symbolTable := NewSymbolTable(nil)
 	// Types
-	type_ := NewType(nil, nil,
+	type_ := NewType(symbolTable, nil,
 		NewBuiltInConstructor(ObjectInitialize),
 	)
 	symbolTable.Set(TypeName, type_)
 	symbolTable.Set(BoolName,
-		NewType(nil, []*Type{type_},
+		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(BoolInitialize),
 		),
 	)
 	symbolTable.Set(ObjectName,
-		NewType(nil, []*Type{type_},
+		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(ObjectInitialize),
 		),
 	)
 	symbolTable.Set(FunctionName,
-		NewType(nil, []*Type{type_},
+		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(func(machine VirtualMachine, object IObject) *errors.Error {
 				return nil
 			}),
 		),
 	)
 	symbolTable.Set(IntegerName,
-		NewType(nil, []*Type{type_},
+		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(IntegerInitialize),
 		),
 	)
 	symbolTable.Set(StringName,
-		NewType(nil, []*Type{type_},
+		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(StringInitialize),
 		),
 	)
 	symbolTable.Set(BytesName,
-		NewType(nil, []*Type{type_},
+		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(BytesInitialize),
 		),
 	)
 	symbolTable.Set(TupleName,
-		NewType(nil, []*Type{type_},
+		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(TupleInitialize),
 		),
 	)
 	symbolTable.Set(ArrayName,
-		NewType(nil, []*Type{type_},
+		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(ArrayInitialize),
 		),
 	)
 	symbolTable.Set(HashName,
-		NewType(nil, []*Type{type_},
+		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(HashTableInitialize),
 		),
 	)
@@ -4352,10 +4366,10 @@ func SetDefaultSymbolTable() *SymbolTable {
 		NewObject(NoneName, nil, symbolTable),
 	)
 	symbolTable.Set(TrueName,
-		NewBool(nil, true),
+		NewBool(symbolTable, true),
 	)
 	symbolTable.Set(FalseName,
-		NewBool(nil, false),
+		NewBool(symbolTable, false),
 	)
 	// Functions
 
