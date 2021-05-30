@@ -11,14 +11,16 @@ import (
 )
 
 const (
-	package_            = "pkg"
-	samplesDirectory    = "tests_samples"
+	testsSamples        = "tests_samples"
+	expressionSamples   = "expressions"
 	literals            = "literals"
 	composites          = "composites"
 	unaryExpressions    = "unary-expressions"
 	binaryExpressions   = "binary-expressions"
 	indexExpressions    = "index-expressions"
 	selectorExpressions = "selector-expressions"
+	statementSamples    = "statements"
+	assignStatement     = "assignment"
 )
 
 func test(t *testing.T, directory string) {
@@ -27,7 +29,7 @@ func test(t *testing.T, directory string) {
 		t.Fatal(currentDirGetError)
 		return
 	}
-	directory = filepath.Join(currentDir, directory)
+	directory = filepath.Join(currentDir, "pkg", directory)
 	directoryContent, directoryReadingError := os.ReadDir(directory)
 	if directoryReadingError != nil {
 		t.Fatal(directoryReadingError)
@@ -79,25 +81,29 @@ func test(t *testing.T, directory string) {
 }
 
 func TestLiterals(t *testing.T) {
-	test(t, filepath.Join(package_, samplesDirectory, literals))
+	test(t, filepath.Join(testsSamples, expressionSamples, literals))
 }
 
 func TestComposites(t *testing.T) {
-	test(t, filepath.Join(package_, samplesDirectory, composites))
+	test(t, filepath.Join(testsSamples, expressionSamples, composites))
 }
 
 func TestUnaryExpressions(t *testing.T) {
-	test(t, filepath.Join(package_, samplesDirectory, unaryExpressions))
+	test(t, filepath.Join(testsSamples, expressionSamples, unaryExpressions))
 }
 
 func TestBinaryExpressions(t *testing.T) {
-	test(t, filepath.Join(package_, samplesDirectory, binaryExpressions))
+	test(t, filepath.Join(testsSamples, expressionSamples, binaryExpressions))
 }
 
 func TestIndexExpressions(t *testing.T) {
-	test(t, filepath.Join(package_, samplesDirectory, indexExpressions))
+	test(t, filepath.Join(testsSamples, expressionSamples, indexExpressions))
 }
 
 func TestSelectorExpressions(t *testing.T) {
-	test(t, filepath.Join(package_, samplesDirectory, selectorExpressions))
+	test(t, filepath.Join(testsSamples, expressionSamples, selectorExpressions))
+}
+
+func TestAssignStatement(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, assignStatement))
 }

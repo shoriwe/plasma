@@ -87,22 +87,3 @@ var stringCreationSamples = []Test{
 func TestStringCreation(t *testing.T) {
 	testIt(t, stringCreationSamples)
 }
-
-var stringBuiltInTransformationFunction = []Test{
-	NewTest(
-		[]Code{
-			NewCode(ReturnOP, 1, nil),
-			NewCode(NoOP, 1, 1),
-			NewCode(NoOP, 1, false),
-			NewCode(CallOP, 1, nil),
-			NewCode(GetOP, 1, ToString),
-			NewCode(NewStringOP, 1, "Hello"),
-		},
-		"Hello",
-		stringEquals,
-	),
-}
-
-func TestStringBuiltInTransformationFunction(t *testing.T) {
-	testIt(t, stringBuiltInTransformationFunction)
-}

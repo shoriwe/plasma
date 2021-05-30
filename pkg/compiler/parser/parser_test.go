@@ -58,10 +58,7 @@ func walker(node ast.Node) string {
 		return result + ")"
 	case *ast.IndexExpression:
 		result := walker(node.(*ast.IndexExpression).Source) + "["
-		result += walker(node.(*ast.IndexExpression).Index[0])
-		if node.(*ast.IndexExpression).Index[1] != nil {
-			result += ":" + walker(node.(*ast.IndexExpression).Index[1])
-		}
+		result += walker(node.(*ast.IndexExpression).Index)
 		return result + "]"
 	case *ast.LambdaExpression:
 		result := "lambda "

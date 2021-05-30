@@ -286,6 +286,11 @@ func (c *Compiler) compileMethodInvocationExpression(methodInvocationExpression 
 	return nil
 }
 
+func (c *Compiler) compileIdentifierExpression(identifier *ast.Identifier) *errors.Error {
+	c.pushInstruction(vm.NewCode(vm.GetIdentifierOP, identifier.Token.Line, identifier.Token.String))
+	return nil
+}
+
 func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 	switch expression.(type) {
 	case *ast.BasicLiteralExpression:
@@ -312,11 +317,108 @@ func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 		return c.compileSelectorExpression(expression.(*ast.SelectorExpression))
 	case *ast.MethodInvocationExpression:
 		return c.compileMethodInvocationExpression(expression.(*ast.MethodInvocationExpression))
+	case *ast.Identifier:
+		return c.compileIdentifierExpression(expression.(*ast.Identifier))
 	}
 	return nil
 }
 
+// Statement compilation functions
+
+func (c *Compiler) compileAssignStatementMiddleBinaryExpression(leftHandSide ast.Expression, assignOperator *lexer.Token) *errors.Error {
+	leftHandSideCompilationError := c.compileExpression(leftHandSide)
+	if leftHandSideCompilationError != nil {
+		return leftHandSideCompilationError
+	}
+	// Finally decide the instruction to use
+	var operation uint8
+	switch assignOperator.DirectValue {
+	case lexer.AddAssign:
+		operation = vm.AddOP
+	case lexer.SubAssign:
+		operation = vm.SubOP
+	case lexer.StarAssign:
+		operation = vm.MulOP
+	case lexer.DivAssign:
+		operation = vm.DivOP
+	case lexer.ModulusAssign:
+		operation = vm.ModOP
+	case lexer.PowerOfAssign:
+		operation = vm.PowOP
+	case lexer.BitwiseXorAssign:
+		operation = vm.BitXorOP
+	case lexer.BitWiseAndAssign:
+		operation = vm.BitAndOP
+	case lexer.BitwiseOrAssign:
+		operation = vm.BitOrOP
+	case lexer.BitwiseLeftAssign:
+		operation = vm.BitLeftOP
+	case lexer.BitwiseRightAssign:
+		operation = vm.BitRightOP
+	default:
+		panic(errors.NewUnknownVMOperationError(operation))
+	}
+	c.pushInstruction(vm.NewCode(operation, assignOperator.Line, nil))
+	return nil
+}
+
+func (c *Compiler) compileIdentifierAssign(identifier *ast.Identifier) *errors.Error {
+	c.pushInstruction(vm.NewCode(vm.AssignIdentifierOP, identifier.Token.Line, identifier.Token.String))
+	return nil
+}
+
+func (c *Compiler) compileSelectorAssign(selectorExpression *ast.SelectorExpression) *errors.Error {
+	sourceCompilationError := c.compileExpression(selectorExpression.X)
+	if sourceCompilationError != nil {
+		return sourceCompilationError
+	}
+	c.pushInstruction(vm.NewCode(vm.AssignSelectorOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String))
+	return nil
+}
+
+func (c *Compiler) compileIndexAssign(indexExpression *ast.IndexExpression) *errors.Error {
+	sourceCompilationError := c.compileExpression(indexExpression.Source)
+	if sourceCompilationError != nil {
+		return sourceCompilationError
+	}
+	indexCompilationError := c.compileExpression(indexExpression.Index)
+	if indexCompilationError != nil {
+		return indexCompilationError
+	}
+	c.pushInstruction(vm.NewCode(vm.AssignIndexOP, errors.UnknownLine, nil))
+	return nil
+}
+
+func (c *Compiler) compileAssignStatement(assignStatement *ast.AssignStatement) *errors.Error {
+	valueCompilationError := c.compileExpression(assignStatement.RightHandSide)
+	if valueCompilationError != nil {
+		return valueCompilationError
+	}
+	if assignStatement.AssignOperator.DirectValue != lexer.Assign {
+		// Do something here to evaluate the operation
+		middleOperationCompilationError := c.compileAssignStatementMiddleBinaryExpression(assignStatement.LeftHandSide, assignStatement.AssignOperator)
+		if middleOperationCompilationError != nil {
+			return middleOperationCompilationError
+		}
+	}
+	switch assignStatement.LeftHandSide.(type) {
+	case *ast.Identifier:
+		return c.compileIdentifierAssign(assignStatement.LeftHandSide.(*ast.Identifier))
+	case *ast.SelectorExpression:
+		return c.compileSelectorAssign(assignStatement.LeftHandSide.(*ast.SelectorExpression))
+	case *ast.IndexExpression:
+		return c.compileIndexAssign(assignStatement.LeftHandSide.(*ast.IndexExpression))
+	}
+	// ToDo: Fix this return a better error
+	return errors.NewUnknownVMOperationError(errors.UnknownLine)
+}
+
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
+	switch statement.(type) {
+	case *ast.AssignStatement:
+		return c.compileAssignStatement(statement.(*ast.AssignStatement))
+
+	}
 	return nil
 }
 

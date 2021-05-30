@@ -42,9 +42,15 @@ const (
 	GreaterThanOrEqualOP
 	LessThanOrEqualOP
 	// Other expressions
+	GetIdentifierOP
 	IndexOP
 	SelectNameFromObjectOP
 	MethodInvocationOP
+
+	// Assign Statement
+	AssignIdentifierOP
+	AssignSelectorOP
+	AssignIndexOP
 
 	ReturnOP
 )

@@ -242,11 +242,57 @@ func (p *Plasma) methodInvocationOP(code Code) *errors.Error {
 	switch function.(type) {
 	case *Function:
 		result, callError = CallFunction(function.(*Function), p, p.PeekSymbolTable(), arguments...)
+	default:
+		// ToDo: Add Support for Types too
+		return errors.NewTypeError(function.TypeName(), FunctionName)
 	}
 	if callError != nil {
 		return callError
 	}
 	p.MemoryStack.Push(result)
+	return nil
+}
+
+func (p *Plasma) getIdentifierOP(code Code) *errors.Error {
+	value, getError := p.PeekSymbolTable().GetAny(code.Value.(string))
+	if getError != nil {
+		return getError
+	}
+	p.MemoryStack.Push(value)
+	return nil
+}
+
+// Assign Statement
+
+func (p *Plasma) assignIdentifierOP(code Code) *errors.Error {
+	identifier := code.Value.(string)
+	p.PeekSymbolTable().Set(identifier, p.MemoryStack.Pop())
+	return nil
+}
+
+func (p *Plasma) assignSelectorOP(code Code) *errors.Error {
+	target := p.MemoryStack.Pop()
+	value := p.MemoryStack.Pop()
+	identifier := code.Value.(string)
+	target.Set(identifier, value)
+	return nil
+}
+
+func (p *Plasma) assignIndexOP() *errors.Error {
+	index := p.MemoryStack.Pop()
+	source := p.MemoryStack.Pop()
+	value := p.MemoryStack.Pop()
+	sourceAssign, getError := source.Get(Assign)
+	if getError != nil {
+		return getError
+	}
+	if _, ok := sourceAssign.(*Function); !ok {
+		return errors.NewTypeError(sourceAssign.TypeName(), FunctionName)
+	}
+	_, callError := CallFunction(sourceAssign.(*Function), p, p.PeekSymbolTable(), index, value)
+	if callError != nil {
+		return callError
+	}
 	return nil
 }
 
@@ -352,13 +398,21 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 		case LessThanOrEqualOP:
 			executionError = p.leftBinaryExpressionFuncCall(LessThanOrEqual)
 		// Other Expressions
+		case GetIdentifierOP:
+			executionError = p.getIdentifierOP(code)
 		case IndexOP:
 			executionError = p.indexOP()
 		case SelectNameFromObjectOP:
 			executionError = p.selectNameFromObjectOP(code)
 		case MethodInvocationOP:
 			executionError = p.methodInvocationOP(code)
-		//
+		// Assign Statement
+		case AssignIdentifierOP:
+			executionError = p.assignIdentifierOP(code)
+		case AssignSelectorOP:
+			executionError = p.assignSelectorOP(code)
+		case AssignIndexOP:
+			executionError = p.assignIndexOP()
 		case ReturnOP:
 			executionError = p.returnOP(code)
 		default:
