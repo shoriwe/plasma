@@ -44,7 +44,7 @@
         - [X] LessThan
         - [X] GreaterThanOrEqual
         - [X] LessThanOrEqual
-    - [ ] Lambda Expressions
+    - [X] Lambda Expressions
     - [ ] One Line If
     - [ ] One Line Unless
     - [X] Identifiers

@@ -17,19 +17,20 @@ import (
 */
 
 type Compiler struct {
-	parser      *parser.Parser
-	programCode []vm.Code
-	codeLength  int
+	parser       *parser.Parser
+	instructions []vm.Code
+	index        int
+	length       int
 }
 
 func (c *Compiler) pushInstruction(code vm.Code) {
-	c.programCode = append(c.programCode, code)
-	c.codeLength++
+	c.instructions = append(c.instructions, code)
+	c.index++
+	c.length++
 }
 
 func (c *Compiler) extendInstructions(code []vm.Code) {
-	c.programCode = append(c.programCode, code...)
-	c.codeLength += len(code)
+	c.instructions = append(c.instructions, code...)
 }
 
 func (c *Compiler) compileBegin(begin *ast.BeginStatement) *errors.Error {
@@ -132,7 +133,7 @@ func (c *Compiler) compileTuple(tuple *ast.TupleExpression) *errors.Error {
 			return valueCompilationError
 		}
 	}
-	c.programCode = append(c.programCode, vm.NewCode(vm.NewTupleOP, errors.UnknownLine, len(tuple.Values)))
+	c.instructions = append(c.instructions, vm.NewCode(vm.NewTupleOP, errors.UnknownLine, len(tuple.Values)))
 	return nil
 }
 
@@ -144,7 +145,7 @@ func (c *Compiler) compileArray(array *ast.ArrayExpression) *errors.Error {
 			return valueCompilationError
 		}
 	}
-	c.programCode = append(c.programCode, vm.NewCode(vm.NewArrayOP, errors.UnknownLine, len(array.Values)))
+	c.instructions = append(c.instructions, vm.NewCode(vm.NewArrayOP, errors.UnknownLine, len(array.Values)))
 	return nil
 }
 
@@ -160,7 +161,7 @@ func (c *Compiler) compileHash(hash *ast.HashExpression) *errors.Error {
 			return keyCompilationError
 		}
 	}
-	c.programCode = append(c.programCode, vm.NewCode(vm.NewHashOP, errors.UnknownLine, len(hash.Values)))
+	c.instructions = append(c.instructions, vm.NewCode(vm.NewHashOP, errors.UnknownLine, len(hash.Values)))
 	return nil
 }
 
@@ -297,22 +298,20 @@ func (c *Compiler) compileIdentifierExpression(identifier *ast.Identifier) *erro
 }
 
 func (c *Compiler) compileLambdaExpression(lambdaExpression *ast.LambdaExpression) *errors.Error {
-	start := c.codeLength
-	lambdaBodyCompilationError := c.compileExpression(lambdaExpression.Code)
-	if lambdaBodyCompilationError != nil {
-		return lambdaBodyCompilationError
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	lambdaCodeCompilationError := c.compileExpression(lambdaExpression.Code)
+	if lambdaCodeCompilationError != nil {
+		return lambdaCodeCompilationError
 	}
-	offset := c.codeLength - start
-	functionCode := make([]vm.Code, offset)
-	copy(functionCode, c.programCode[start:])
-	c.programCode = c.programCode[:start]
-	c.codeLength -= offset
+	functionCode := c.instructions
+	c.instructions = nil
+	c.instructions = instructionsBackup
+	c.pushInstruction(vm.NewCode(vm.NewFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(lambdaExpression.Arguments)}))
 	var arguments []string
-	argumentsLength := len(lambdaExpression.Arguments)
-	for i := argumentsLength - 1; i > -1; i-- {
-		arguments = append(arguments, lambdaExpression.Arguments[i].Token.String)
+	for _, argument := range lambdaExpression.Arguments {
+		arguments = append(arguments, argument.Token.String)
 	}
-	c.pushInstruction(vm.NewCode(vm.NewFunctionOP, errors.UnknownLine, [2]int{offset + 2, argumentsLength}))
 	c.pushInstruction(vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
 	c.extendInstructions(functionCode)
 	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
@@ -472,7 +471,7 @@ func (c *Compiler) compileBody(body []ast.Node) *errors.Error {
 	return nil
 }
 
-func (c *Compiler) Compile() (*vm.Bytecode, *errors.Error) {
+func (c *Compiler) CompileToArray() ([]vm.Code, *errors.Error) {
 	codeAst, parsingError := c.parser.Parse()
 	if parsingError != nil {
 		return nil, parsingError
@@ -492,13 +491,22 @@ func (c *Compiler) Compile() (*vm.Bytecode, *errors.Error) {
 	if compileError != nil {
 		return nil, compileError
 	}
-	return vm.NewBytecodeFromArray(c.programCode), nil
+	return c.instructions, nil
+}
+
+func (c *Compiler) Compile() (*vm.Bytecode, *errors.Error) {
+	_, compilationError := c.CompileToArray()
+	if compilationError != nil {
+		return nil, compilationError
+	}
+	return vm.NewBytecodeFromArray(c.instructions), nil
 }
 
 func NewCompiler(codeReader reader.Reader, ) *Compiler {
 	return &Compiler{
-		parser:      parser.NewParser(lexer.NewLexer(codeReader)),
-		programCode: nil,
-		codeLength:  0,
+		parser:       parser.NewParser(lexer.NewLexer(codeReader)),
+		instructions: nil,
+		index:        -1,
+		length:       0,
 	}
 }

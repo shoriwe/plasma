@@ -326,9 +326,9 @@ func (p *Plasma) returnOP(code Code) *errors.Error {
 	}
 	if len(values) == 1 {
 		p.PushObject(values[0])
-		return nil
+	} else {
+		p.PushObject(NewTuple(p.PeekSymbolTable(), values))
 	}
-	p.PushObject(NewTuple(p.PeekSymbolTable(), values))
 	return nil
 }
 
