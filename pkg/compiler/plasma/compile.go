@@ -734,6 +734,9 @@ func (c *Compiler) compileBody(body []ast.Node) *errors.Error {
 		if compileError != nil {
 			return compileError
 		}
+		if _, ok := node.(ast.Expression); ok {
+			c.pushInstruction(vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
+		}
 	}
 	return nil
 }

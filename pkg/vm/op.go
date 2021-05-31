@@ -63,4 +63,5 @@ const (
 	LoadFunctionArgumentsOP
 	NewFunctionOP
 	JumpOP
+	PopOP
 )

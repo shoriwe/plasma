@@ -56,10 +56,22 @@
 - [ ] Statements
     - [X] Assign Statement
     - [ ] DeferStatement
-    - [ ] Do While
+    - [x] Do While
+        - [X] Continue
+        - [X] Break
+        - [X] Redo
     - [ ] While
+        - [ ] Continue
+        - [ ] Break
+        - [ ] Redo
     - [ ] Until
+        - [ ] Continue
+        - [ ] Break
+        - [ ] Redo
     - [ ] For Loop
+        - [ ] Continue
+        - [ ] Break
+        - [ ] Redo
     - [X] If - Else - Elif
     - [X] Unless - Else - Elif
     - [ ] Switch
@@ -72,9 +84,5 @@
     - [ ] Begin
     - [ ] End
     - [ ] Return
-    - [ ] Yield
     - [ ] Super
-    - [ ] Continue
-    - [ ] Break
-    - [ ] Redo
     - [ ] Pass

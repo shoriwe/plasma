@@ -534,6 +534,8 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.breakOP(code)
 		case ContinueOP:
 			executionError = p.continueOP(code)
+		case PopOP:
+			p.MemoryStack.Pop()
 		default:
 			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}
