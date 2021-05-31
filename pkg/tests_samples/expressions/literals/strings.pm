@@ -1,17 +1,17 @@
 # Single Quote Strings
-'Hello World'
-'Hello
-World'
+println('Hello World')
+println('Hello
+World')
 # Double Quote Strings
-"Hello World"
-"Hello
-World"
+println("Hello World")
+println("Hello
+World")
 # Byte Strings
-b"Hello world"
+println(b"Hello world")
 # Escaped chars
-"Hello\nWorld"
-"Hello\x41World"
-"\u0041ntonio"
-"Hello\\x41World"
-"500\u20ac"
-"500\\u20ac"
+println("Hello\nWorld")
+println("Hello\x41World")
+println("\u0041ntonio")
+println("Hello\\x41World")
+println("500\u20ac")
+println("500\\u20ac")

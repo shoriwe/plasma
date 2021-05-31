@@ -1,3 +1,3 @@
-b"AAAAA"[(0, 4)]
-b"AAAAA"[0]
-b"AAAAA"[(0, 4)][0]
+println(b"AAAAA"[(0, 4)])
+println(b"AAAAA"[0])
+println(b"AAAAA"[(0, 4)][0])

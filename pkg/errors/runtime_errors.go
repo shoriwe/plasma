@@ -30,6 +30,9 @@ const (
 	NameNotFoundMessage          = "\"Name not found\""
 )
 
+func NewGoRuntimeError(e error) *Error {
+	return New(UnknownLine, e.Error(), GoRuntimeError)
+}
 func NewKeyNotFoundError() *Error {
 	return New(UnknownLine, "Key not found in hash table", KeyNotFoundError)
 }

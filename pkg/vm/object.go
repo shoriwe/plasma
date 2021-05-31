@@ -4364,7 +4364,56 @@ func SetDefaultSymbolTable() *SymbolTable {
 		NewObject(NoneName, nil, symbolTable),
 	)
 	// Functions
-
+	symbolTable.Set("print",
+		NewFunction(symbolTable,
+			NewBuiltInFunction(1,
+				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+					value := arguments[0]
+					toString, getError := value.Get(ToString)
+					if getError != nil {
+						return nil, getError
+					}
+					if _, ok := toString.(*Function); !ok {
+						return nil, errors.NewTypeError(toString.TypeName(), FunctionName)
+					}
+					stringValue, callError := CallFunction(toString.(*Function), vm, value.SymbolTable())
+					if callError != nil {
+						return nil, callError
+					}
+					_, writeError := fmt.Fprintf(vm.StdOut(), "%s", stringValue.GetString())
+					if writeError != nil {
+						return nil, errors.NewGoRuntimeError(writeError)
+					}
+					return vm.PeekSymbolTable().GetAny(None)
+				},
+			),
+		),
+	)
+	symbolTable.Set("println",
+		NewFunction(symbolTable,
+			NewBuiltInFunction(1,
+				func(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
+					value := arguments[0]
+					toString, getError := value.Get(ToString)
+					if getError != nil {
+						return nil, getError
+					}
+					if _, ok := toString.(*Function); !ok {
+						return nil, errors.NewTypeError(toString.TypeName(), FunctionName)
+					}
+					stringValue, callError := CallFunction(toString.(*Function), vm, value.SymbolTable())
+					if callError != nil {
+						return nil, callError
+					}
+					_, writeError := fmt.Fprintf(vm.StdOut(), "%s\n", stringValue.GetString())
+					if writeError != nil {
+						return nil, errors.NewGoRuntimeError(writeError)
+					}
+					return vm.PeekSymbolTable().GetAny(None)
+				},
+			),
+		),
+	)
 	// To... (Transformations)
 	symbolTable.Set(ToFloat,
 		NewFunction(symbolTable,

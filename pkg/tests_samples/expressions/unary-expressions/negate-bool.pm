@@ -1,4 +1,4 @@
-!False
-!True
-!""
-!"1"
+println(!False)
+println(!True)
+println(!"")
+println(!"1")

@@ -1,4 +1,4 @@
 # Simple bit negation
-~1
-~3
-~-234777
+println(~1)
+println(~3)
+println(~-234777)

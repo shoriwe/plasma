@@ -1,1 +1,1 @@
-"1".ToInteger().Negative().Add(2345235)
+println("1".ToInteger().Negative().Add(2345235))

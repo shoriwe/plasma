@@ -2,9 +2,11 @@ package vm
 
 import (
 	"crypto/rand"
+	"fmt"
 	"github.com/shoriwe/gruby/pkg/errors"
 	"hash"
 	"hash/crc32"
+	"io"
 	"math/big"
 )
 
@@ -18,6 +20,9 @@ type Plasma struct {
 	Context     *SymbolStack
 	Crc32Hash   hash.Hash32
 	seed        uint64
+	stdin       io.Reader
+	stdout      io.Writer
+	stderr      io.Writer
 }
 
 func (p *Plasma) PushObject(object IObject) {
@@ -332,6 +337,25 @@ func (p *Plasma) returnOP(code Code) *errors.Error {
 	return nil
 }
 
+func (p *Plasma) ifJumpOP(code Code) *errors.Error {
+	condition := p.PopObject()
+	toBool, getError := condition.Get(ToBool)
+	if getError != nil {
+		return getError
+	}
+	if _, ok := toBool.(*Function); !ok {
+		return errors.NewTypeError(toBool.TypeName(), FunctionName)
+	}
+	conditionBool, callError := CallFunction(toBool.(*Function), p, toBool.SymbolTable())
+	if callError != nil {
+		return callError
+	}
+	if !conditionBool.GetBool() {
+		p.PeekCode().index += code.Value.(int)
+	}
+	return nil
+}
+
 // Special Instructions
 
 func (p *Plasma) loadFunctionArgumentsOP(code Code) *errors.Error {
@@ -355,10 +379,16 @@ func (p *Plasma) newFunctionOP(code Code) *errors.Error {
 	return nil
 }
 
+func (p *Plasma) jumpOP(code Code) *errors.Error {
+	p.PeekCode().index += code.Value.(int)
+	return nil
+}
+
 func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
 	for ; p.PeekCode().HasNext(); {
 		code := p.PeekCode().Next()
+		fmt.Println(code)
 		switch code.Instruction.OpCode {
 		// Literals
 		case NewStringOP:
@@ -455,11 +485,15 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 				return p.PopObject(), nil
 			}
 			return p.PeekSymbolTable().GetAny(None)
+		case IfJumpOP:
+			executionError = p.ifJumpOP(code)
 		// Special Instructions
 		case LoadFunctionArgumentsOP:
 			executionError = p.loadFunctionArgumentsOP(code)
 		case NewFunctionOP:
 			executionError = p.newFunctionOP(code)
+		case JumpOP:
+			executionError = p.jumpOP(code)
 		default:
 			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}
@@ -516,7 +550,19 @@ func (p *Plasma) PeekCode() *Bytecode {
 	return p.Code.Peek()
 }
 
-func NewPlasmaVM() *Plasma {
+func (p *Plasma) StdIn() io.Reader {
+	return p.stdin
+}
+
+func (p *Plasma) StdOut() io.Writer {
+	return p.stdout
+}
+
+func (p *Plasma) StdErr() io.Writer {
+	return p.stderr
+}
+
+func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 	number, randError := rand.Int(rand.Reader, big.NewInt(polySize))
 	if randError != nil {
 		panic(randError)
@@ -527,5 +573,8 @@ func NewPlasmaVM() *Plasma {
 		Context:     NewSymbolStack(),
 		Crc32Hash:   crc32.New(crc32.MakeTable(polySize)),
 		seed:        number.Uint64(),
+		stdin:       stdin,
+		stdout:      stdout,
+		stderr:      stderr,
 	}
 }

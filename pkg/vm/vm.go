@@ -1,6 +1,9 @@
 package vm
 
-import "github.com/shoriwe/gruby/pkg/errors"
+import (
+	"github.com/shoriwe/gruby/pkg/errors"
+	"io"
+)
 
 type VirtualMachine interface {
 	Initialize([]Code) *errors.Error
@@ -18,4 +21,7 @@ type VirtualMachine interface {
 	HashBytes([]byte) (int64, *errors.Error)
 	InitializeByteCode(*Bytecode)
 	Seed() uint64
+	StdIn() io.Reader
+	StdOut() io.Writer
+	StdErr() io.Writer
 }

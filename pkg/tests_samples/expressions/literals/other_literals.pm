@@ -1,5 +1,5 @@
 # Booleans
-True
-False
+println(True)
+println(False)
 # None Type
-None
+println(None)

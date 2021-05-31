@@ -1,1 +1,1 @@
-{"Hello": "World", "Hola": "Mundo", 0: "10"}[0]
+println({"Hello": "World", "Hola": "Mundo", 0: "10"}[0])

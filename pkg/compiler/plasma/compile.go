@@ -476,14 +476,93 @@ func (c *Compiler) compileReturnStatement(returnStatement *ast.ReturnStatement) 
 	return nil
 }
 
+func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) *errors.Error {
+	// Compile If Condition
+	instructionsBackup := c.instructions
+	conditionCompilationError := c.compileExpression(ifStatement.Condition)
+	if conditionCompilationError != nil {
+		return conditionCompilationError
+	}
+	condition := c.instructions
+	// Compile If Body
+	c.instructions = nil
+	bodyCompilationError := c.compileBody(ifStatement.Body)
+	if bodyCompilationError != nil {
+		return bodyCompilationError
+	}
+	bodyInstructions := c.instructions
+	// Compile Elif blocks
+	var compiledElifBlocks [][2][]vm.Code
+	for _, elif := range ifStatement.ElifBlocks {
+		// Elif condition
+		c.instructions = nil
+		elifConditionCompilationError := c.compileExpression(elif.Condition)
+		if elifConditionCompilationError != nil {
+			return elifConditionCompilationError
+		}
+		elifCondition := c.instructions
+		// Elif body
+		c.instructions = nil
+		elifBodyCompilationError := c.compileBody(elif.Body)
+		if elifBodyCompilationError != nil {
+			return elifBodyCompilationError
+		}
+		elifBody := c.instructions
+		// Append it
+		compiledElifBlocks = append(compiledElifBlocks, [2][]vm.Code{elifCondition, elifBody})
+	}
+	// Compile Else Block
+	var elseBody []vm.Code
+	if ifStatement.Else != nil {
+		c.instructions = nil
+		elseBodyCompilationError := c.compileBody(ifStatement.Else)
+		if elseBodyCompilationError != nil {
+			return elseBodyCompilationError
+		}
+		elseBody = c.instructions
+	}
+	// Sum the length of everything compiled for the on-success JUMP
+	successJump := len(bodyInstructions) + 1
+	for _, compiledElifBlock := range compiledElifBlocks {
+		successJump += len(compiledElifBlock[0]) + len(compiledElifBlock[1]) + 2
+	}
+	if elseBody != nil {
+		successJump += len(elseBody)
+	}
+	c.instructions = nil
+	bodyInstructionsLength := len(bodyInstructions)
+	successJump -= bodyInstructionsLength + 1
+	c.extendInstructions(instructionsBackup)
+	c.extendInstructions(condition)
+	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
+	c.extendInstructions(bodyInstructions)
+	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
+	for _, compiledElifBlock := range compiledElifBlocks {
+		c.extendInstructions(compiledElifBlock[0])
+		compiledElifBlockBodyLength := len(compiledElifBlock[1])
+		successJump -= len(compiledElifBlock[0]) + compiledElifBlockBodyLength + 2
+		c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
+		c.extendInstructions(compiledElifBlock[1])
+		c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
+	}
+	if elseBody != nil {
+		c.extendInstructions(elseBody)
+	}
+	return nil
+}
+
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	switch statement.(type) {
 	case *ast.AssignStatement:
+		// ToDo: Fix this, Is compiling the instruction twice
 		return c.compileAssignStatement(statement.(*ast.AssignStatement))
 	case *ast.FunctionDefinitionStatement:
 		return c.compileFunctionDefinition(statement.(*ast.FunctionDefinitionStatement))
 	case *ast.ReturnStatement:
 		return c.compileReturnStatement(statement.(*ast.ReturnStatement))
+	case *ast.IfStatement:
+		// ToDo: Fix this, Is compiling the instruction twice
+		return c.compileIfStatement(statement.(*ast.IfStatement))
 	}
 	return nil
 }

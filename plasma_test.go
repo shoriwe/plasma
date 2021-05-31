@@ -24,6 +24,7 @@ const (
 	statementSamples   = "statements"
 	assignStatement    = "assignment"
 	functionDefinition = "function-definition"
+	ifStatement        = "if-statement"
 )
 
 func test(t *testing.T, directory string) {
@@ -55,30 +56,32 @@ func test(t *testing.T, directory string) {
 			t.Fatal(compilingError)
 			return
 		}
-
-		plasmaVm := vm.NewPlasmaVM()
+		output := os.Stdout
+		plasmaVm := vm.NewPlasmaVM(nil, output, output)
 		plasmaVm.InitializeByteCode(code)
-		result, executionError := plasmaVm.Execute()
-		// _, executionError := plasmaVm.Execute()
+		// result, executionError := plasmaVm.Execute()
+		_, executionError := plasmaVm.Execute()
 		if executionError != nil {
 			t.Fatal(executionError)
 			return
 		}
-		resultToString, getError := result.Get(vm.ToString)
-		if getError != nil {
-			t.Fatal(getError)
-			return
-		}
-		if _, ok := resultToString.(*vm.Function); !ok {
-			t.Fatal("Expecting ToString function")
-			return
-		}
-		stringResult, callError := vm.CallFunction(resultToString.(*vm.Function), plasmaVm, result.SymbolTable())
-		if callError != nil {
-			t.Fatal(callError)
-			return
-		}
-		fmt.Println(stringResult.GetString())
+		/*
+			resultToString, getError := result.Get(vm.ToString)
+			if getError != nil {
+				t.Fatal(getError)
+				return
+			}
+			if _, ok := resultToString.(*vm.Function); !ok {
+				t.Fatal("Expecting ToString function")
+				return
+			}
+			stringResult, callError := vm.CallFunction(resultToString.(*vm.Function), plasmaVm, result.SymbolTable())
+			if callError != nil {
+				t.Fatal(callError)
+				return
+			}
+			fmt.Println(stringResult.GetString())
+		*/
 		fmt.Println(fmt.Sprintf("[+] %s: SUCCESS", file.Name()))
 	}
 }
@@ -117,4 +120,8 @@ func TestAssignStatement(t *testing.T) {
 
 func TestFunctionDefinitionStatement(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, functionDefinition))
+}
+
+func TestIfStatement(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, ifStatement))
 }

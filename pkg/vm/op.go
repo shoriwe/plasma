@@ -51,10 +51,12 @@ const (
 	AssignIdentifierOP
 	AssignSelectorOP
 	AssignIndexOP
+	IfJumpOP
 
 	ReturnOP
 
 	// Special Instructions
 	LoadFunctionArgumentsOP
 	NewFunctionOP
+	JumpOP
 )

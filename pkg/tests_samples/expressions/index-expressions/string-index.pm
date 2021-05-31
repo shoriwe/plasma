@@ -1,3 +1,3 @@
-"Hello"[(0, 4)]
-"Hello"[0]
-"AAAAA"[0]
+println("Hello"[(0, 4)])
+println("Hello"[0])
+println("AAAAA"[0])
