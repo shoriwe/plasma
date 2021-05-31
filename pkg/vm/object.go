@@ -33,7 +33,7 @@ const (
 	NoneName     = "NoneType"
 	BytesName    = "Bytes"
 	HashName     = "Hash"
-	IterName     = "Iterator"
+	IteratorName = "Iterator"
 	ModuleName   = "Module"
 	None         = "None"
 )
@@ -97,7 +97,9 @@ const (
 	Index      = "Index"
 	Assign     = "Assign"
 	Call       = "Call"
-	Iter       = "Iter"
+	Iter       = "Iter" // This should return a iterator object
+	HasNext    = "HasNext"
+	Next       = "Next"
 	Class      = "Class"
 	SubClasses = "SubClasses"
 	// Transformation
@@ -327,9 +329,7 @@ func NewNotImplementedCallable(numberOfArguments int) *BuiltInClassFunction {
 type IObject interface {
 	Id() uint
 	TypeName() string
-	/*
-		ToDo: Include the pointer to the type object that construct the object
-	*/
+	Class() (*Type, *errors.Error)
 	SymbolTable() *SymbolTable
 	SubClasses() []*Type
 	Get(string) (IObject, *errors.Error)
@@ -362,6 +362,7 @@ type IObject interface {
 type Object struct {
 	id             uint
 	typeName       string
+	class          *Type
 	subClasses     []*Type
 	symbols        *SymbolTable
 	virtualMachine VirtualMachine
@@ -452,6 +453,20 @@ func (o *Object) SetBytes(b []uint8) {
 
 func (o *Object) Id() uint {
 	return o.id
+}
+
+func (o *Object) Class() (*Type, *errors.Error) {
+	if o.class == nil {
+		class, getError := o.SymbolTable().GetAny(o.TypeName())
+		if getError != nil {
+			return nil, getError
+		}
+		if _, ok := class.(*Type); !ok {
+			return nil, errors.NewTypeError(class.TypeName(), TypeName)
+		}
+		o.class = class.(*Type)
+	}
+	return o.class, nil
 }
 
 func (o *Object) SubClasses() []*Type {
@@ -942,6 +957,14 @@ func ObjSetLength(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Err
 	return vm.PeekSymbolTable().GetAny(None)
 }
 
+func ObjClass(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	return self.Class()
+}
+
 /*
 	Negate
 	//// Logical Binary
@@ -959,7 +982,6 @@ func ObjSetLength(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Err
 	// Behavior
 	Hash - (Done)
 	Copy - (Done)
-	Dir
 	Index - (Done)
 	Call - (Done)
 	Iter - (Done)
@@ -1028,7 +1050,7 @@ func ObjectInitialize(_ VirtualMachine, object IObject) *errors.Error {
 		Assign:     NewFunction(object.SymbolTable(), NewNotImplementedCallable(2)),
 		Call:       NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
 		Iter:       NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
-		Class:      NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
+		Class:      NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ObjClass)),
 		SubClasses: NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
 		// Transformation
 		ToInteger: NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)),
@@ -1082,6 +1104,23 @@ func NewObject(
 	result.Bytes = []uint8{}
 	ObjectInitialize(nil, result)
 	return result
+}
+
+type Iterator struct {
+	*Object
+}
+
+func IteratorInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.Set(HasNext, NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)))
+	object.Set(Next, NewFunction(object.SymbolTable(), NewNotImplementedCallable(0)))
+	return nil
+}
+
+func NewIterator(parentSymbols *SymbolTable) *Iterator {
+	iterator := &Iterator{
+		Object: NewObject(IteratorName, nil, parentSymbols),
+	}
+	return iterator
 }
 
 type Function struct {
@@ -1322,11 +1361,56 @@ func StringHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	return NewInteger(vm.PeekSymbolTable(), self.GetHash()), nil
 }
 
+func StringIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	iterator := NewIterator(vm.PeekSymbolTable())
+	iterator.SetInteger64(0) // This is the index
+	iterator.SetString(self.GetString())
+	iterator.SetLength(self.GetLength())
+	iterator.Set(HasNext,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
+						return NewBool(vm.PeekSymbolTable(), true), nil
+					}
+					return NewBool(vm.PeekSymbolTable(), false), nil
+				},
+			),
+		),
+	)
+	iterator.Set(Next,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					char := string([]rune(funcSelf.GetString())[int(funcSelf.GetInteger64())])
+					funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
+					return NewString(vm.PeekSymbolTable(), char), nil
+				},
+			),
+		),
+	)
+	return iterator, nil
+}
+
 /*
 	// Binary Operations
 	//// Basic Binary
-	Add         String only - (Done)
-	RightAdd    String only - (Done)
+	Add         String only           		  - (Done)
+	RightAdd    String only           		  - (Done)
 	Mul         String with Integer only      - (Done)
 	RightMul    String with Integer only      - (Done)
 	//// Comparison Binary
@@ -1335,13 +1419,13 @@ func StringHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	NotEquals           String only - (Done)
 	RightNotEquals      String only - (Done)
 	// Behavior
-	Hash			   - (Done)
-	Copy               - (Done)
-	Index    Integer or Tuple
-	Iter
+	Hash			   		  - (Done)
+	Copy               		  - (Done)
+	Index    Integer or Tuple - (Done)
+	Iter                      - (Done)
 	// Transformation
-	ToInteger
-	ToFloat
+	ToInteger      - (Done)
+	ToFloat        - (Done)
 	ToString       - (Done)
 	ToBool         - (Done)
 	ToArray        - (Done)
@@ -1359,7 +1443,7 @@ func StringInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringHash)))
 	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringCopy)))
 	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, StringIndex)))
-	// object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringIter)))
+	object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringIter)))
 	object.Set(ToInteger, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringToInteger)))
 	object.Set(ToFloat, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringToFloat)))
 	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, StringCopy)))
@@ -1597,6 +1681,51 @@ func BytesToTuple(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	return NewTuple(vm.PeekSymbolTable(), newContent), nil
 }
 
+func BytesIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	iterator := NewIterator(vm.PeekSymbolTable())
+	iterator.SetInteger64(0) // This is the index
+	iterator.SetBytes(self.GetBytes())
+	iterator.SetLength(self.GetLength())
+	iterator.Set(HasNext,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
+						return NewBool(vm.PeekSymbolTable(), true), nil
+					}
+					return NewBool(vm.PeekSymbolTable(), false), nil
+				},
+			),
+		),
+	)
+	iterator.Set(Next,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					char := funcSelf.GetBytes()[int(funcSelf.GetInteger64())]
+					funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
+					return NewInteger(vm.PeekSymbolTable(), int64(char)), nil
+				},
+			),
+		),
+	)
+	return iterator, nil
+}
+
 type Bytes struct {
 	*Object
 }
@@ -1617,7 +1746,7 @@ type Bytes struct {
 	Hash            - (Done)
 	Copy            - (Done)
 	Index           - (Done)
-	Iter            - ()
+	Iter            - (Done)
 	// Transformation
 	ToInteger       - (Done)
 	ToString        - (Done)
@@ -1639,6 +1768,7 @@ func BytesInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesHash)))
 	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesCopy)))
 	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, BytesIndex)))
+	object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesIter)))
 
 	object.Set(ToInteger, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesToInteger)))
 	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, BytesToString)))
@@ -3252,6 +3382,54 @@ func ArrayHash(_ VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	return nil, errors.NewUnhashableTypeError(errors.UnknownLine)
 }
 
+func ArrayIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	iterator := NewIterator(vm.PeekSymbolTable())
+	iterator.SetInteger64(0)
+	iterator.SetContent(self.GetContent())
+	iterator.SetLength(self.GetLength())
+	iterator.Set(HasNext,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					if funcSelf.GetLength() != self.GetLength() {
+						funcSelf.SetLength(self.GetLength())
+					}
+					if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
+						return NewBool(vm.PeekSymbolTable(), true), nil
+					}
+					return NewBool(vm.PeekSymbolTable(), false), nil
+				},
+			),
+		),
+	)
+	iterator.Set(Next,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
+					funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
+					return value, nil
+				},
+			),
+		),
+	)
+	return iterator, nil
+}
+
 /*
 	// Binary Operations
 	//// Comparison Binary
@@ -3260,11 +3438,11 @@ func ArrayHash(_ VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	NotEquals         - (Done)
 	RightNotEquals    - (Done)
 	// Behavior
-	Hash  	  - (Done)
-	Copy      - (Done)
-	Index     Integer or Tuple
-	Assign	  - (Done)
-	Iter
+	Hash  	  					- (Done)
+	Copy      					- (Done)
+	Index     Integer or Tuple  - ()
+	Assign	  					- (Done)
+	Iter                        - (Done)
 	// Transformation
 	ToString      - (Done)
 	ToBool        - (Done)
@@ -3280,7 +3458,7 @@ func ArrayInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayCopy)))
 	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, ArrayIndex)))
 	object.Set(Assign, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 2, ArrayAssign)))
-	// object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayIter)))
+	object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayIter)))
 	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayToString)))
 	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayToBool)))
 	object.Set(ToArray, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, ArrayToArray)))
@@ -3668,6 +3846,51 @@ func TupleHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	return NewInteger(vm.PeekSymbolTable(), finalTupleHash), nil
 }
 
+func TupleIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	iterator := NewIterator(vm.PeekSymbolTable())
+	iterator.SetInteger64(0)
+	iterator.SetContent(self.GetContent())
+	iterator.SetLength(self.GetLength())
+	iterator.Set(HasNext,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
+						return NewBool(vm.PeekSymbolTable(), true), nil
+					}
+					return NewBool(vm.PeekSymbolTable(), false), nil
+				},
+			),
+		),
+	)
+	iterator.Set(Next,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
+					funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
+					return value, nil
+				},
+			),
+		),
+	)
+	return iterator, nil
+}
+
 /*
 	// Binary Operations
 	//// Comparison Binary
@@ -3678,8 +3901,8 @@ func TupleHash(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	// Behavior
 	Hash						- (Done)
 	Copy						- (Done)
-	Index   Integer or Tuple	- (Done)
-	Iter
+	Index   Integer or Tuple	- ()
+	Iter                        - (Done)
 	// Transformation
 	ToString      - (Done)
 	ToBool        - (Done)
@@ -3694,7 +3917,7 @@ func TupleInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleHash)))
 	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleCopy)))
 	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, TupleIndex)))
-	// object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleIter)))
+	object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleIter)))
 	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleToString)))
 	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleToBool)))
 	object.Set(ToArray, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, TupleToArray)))
@@ -4039,6 +4262,10 @@ func HashTableHash(_ VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	return nil, errors.NewUnhashableTypeError(errors.UnknownLine)
 }
 
+func HashTableCopy(_ VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	panic("Implement me!!!")
+}
+
 func HashTableIndex(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 	self, getError := vm.PeekSymbolTable().GetSelf(Self)
 	if getError != nil {
@@ -4216,6 +4443,63 @@ func HashTableToTuple(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) 
 	return NewTuple(vm.PeekSymbolTable(), keys), nil
 }
 
+func HashTableIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+	self, getError := vm.PeekSymbolTable().GetSelf(Self)
+	if getError != nil {
+		return nil, getError
+	}
+	var toTuple IObject
+	toTuple, getError = self.Get(ToTuple)
+	if getError != nil {
+		return nil, getError
+	}
+	if _, ok := toTuple.(*Function); !ok {
+		return nil, errors.NewTypeError(toTuple.TypeName(), FunctionName)
+	}
+	hashKeys, callError := CallFunction(toTuple.(*Function), vm, self.SymbolTable())
+	if callError != nil {
+		return nil, callError
+	}
+	iterator := NewIterator(vm.PeekSymbolTable())
+	iterator.SetInteger64(0) // This is the index
+	iterator.SetContent(hashKeys.GetContent())
+	iterator.SetLength(self.GetLength())
+	iterator.Set(HasNext,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
+						return NewBool(vm.PeekSymbolTable(), true), nil
+					}
+					return NewBool(vm.PeekSymbolTable(), false), nil
+				},
+			),
+		),
+	)
+	iterator.Set(Next,
+		NewFunction(iterator.SymbolTable(),
+			NewBuiltInClassFunction(iterator,
+				0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+					if funcGetError != nil {
+						return nil, funcGetError
+					}
+					value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
+					funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
+					return value, nil
+				},
+			),
+		),
+	)
+	return iterator, nil
+}
+
 /*
 	// Binary Operations
 	//// Comparison Binary
@@ -4228,6 +4512,7 @@ func HashTableToTuple(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) 
 	Copy                   - ()
 	Index                  - (Done)
 	Assign                 - (Done)
+	Iter                   - (Done)
 	// Transformation
 	ToString  			- (Done)
 	ToBool    			- (Done)
@@ -4241,9 +4526,10 @@ func HashTableInitialize(_ VirtualMachine, object IObject) *errors.Error {
 	object.Set(RightNotEquals, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, HashTableRightNotEquals)))
 
 	object.Set(Hash, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableHash)))
-	// object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableHash)))
+	object.Set(Copy, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableCopy)))
 	object.Set(Index, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 1, HashTableIndex)))
 	object.Set(Assign, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 2, HashTableAssign)))
+	object.Set(Iter, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableIter)))
 
 	object.Set(ToString, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableToString)))
 	object.Set(ToBool, NewFunction(object.SymbolTable(), NewBuiltInClassFunction(object, 0, HashTableToBool)))
@@ -4315,6 +4601,11 @@ func SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set(BoolName,
 		NewType(symbolTable, []*Type{type_},
 			NewBuiltInConstructor(BoolInitialize),
+		),
+	)
+	symbolTable.Set(IteratorName,
+		NewType(symbolTable, []*Type{type_},
+			NewBuiltInConstructor(IteratorInitialize),
 		),
 	)
 	symbolTable.Set(ObjectName,
