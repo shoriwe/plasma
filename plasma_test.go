@@ -21,8 +21,9 @@ const (
 	selectorExpressions = "selector-expressions"
 	lambdaExpressions   = "lambdas"
 
-	statementSamples = "statements"
-	assignStatement  = "assignment"
+	statementSamples   = "statements"
+	assignStatement    = "assignment"
+	functionDefinition = "function-definition"
 )
 
 func test(t *testing.T, directory string) {
@@ -112,4 +113,8 @@ func TestLambdaExpressions(t *testing.T) {
 
 func TestAssignStatement(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, assignStatement))
+}
+
+func TestFunctionDefinitionStatement(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, functionDefinition))
 }

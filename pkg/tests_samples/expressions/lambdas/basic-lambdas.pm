@@ -10,3 +10,4 @@ a = (lambda x, y: (x**2+y**2)**(1/2))
 a.b = 1
 a.c = 1
 a(a.b, a.c)
+(lambda: 1)()

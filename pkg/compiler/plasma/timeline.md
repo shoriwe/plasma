@@ -63,7 +63,7 @@
     - [ ] If - Else - Elif
     - [ ] Switch
     - [ ] Module
-    - [ ] Function Definition
+    - [X] Function Definition
     - [ ] Interface
     - [ ] Class
     - [ ] Raise

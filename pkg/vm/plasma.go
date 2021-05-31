@@ -251,7 +251,7 @@ func (p *Plasma) methodInvocationOP(code Code) *errors.Error {
 	var callError *errors.Error
 	switch function.(type) {
 	case *Function:
-		result, callError = CallFunction(function.(*Function), p, p.PeekSymbolTable(), arguments...)
+		result, callError = CallFunction(function.(*Function), p, function.SymbolTable(), arguments...)
 	default:
 		// ToDo: Add Support for Types too
 		return errors.NewTypeError(function.TypeName(), FunctionName)
@@ -448,6 +448,13 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.assignIndexOP()
 		case ReturnOP:
 			executionError = p.returnOP(code)
+			if executionError != nil {
+				return nil, executionError
+			}
+			if p.MemoryStack.HasNext() {
+				return p.PopObject(), nil
+			}
+			return p.PeekSymbolTable().GetAny(None)
 		// Special Instructions
 		case LoadFunctionArgumentsOP:
 			executionError = p.loadFunctionArgumentsOP(code)

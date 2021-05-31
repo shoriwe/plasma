@@ -4288,9 +4288,7 @@ func NewType(parent *SymbolTable, subclasses []*Type, constructor Constructor) *
 	Array      - (Done)
 	Tuple      - (Done)
 	// Names
-	None 	   - (Done)
-	True	   - (Done)
-	False	   - (Done)
+	None 	   - (Done) // ToDo: Every none object is independent of others
 	// Functions
 	Hash       - ()
 	Id         - ()
@@ -4364,12 +4362,6 @@ func SetDefaultSymbolTable() *SymbolTable {
 	// Names
 	symbolTable.Set(None,
 		NewObject(NoneName, nil, symbolTable),
-	)
-	symbolTable.Set(TrueName,
-		NewBool(symbolTable, true),
-	)
-	symbolTable.Set(FalseName,
-		NewBool(symbolTable, false),
 	)
 	// Functions
 

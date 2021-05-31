@@ -442,11 +442,48 @@ func (c *Compiler) compileAssignStatement(assignStatement *ast.AssignStatement) 
 	return errors.NewUnknownVMOperationError(errors.UnknownLine)
 }
 
+func (c *Compiler) compileFunctionDefinition(functionDefinition *ast.FunctionDefinitionStatement) *errors.Error {
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	functionDefinitionBodyCompilationError := c.compileBody(functionDefinition.Body)
+	if functionDefinitionBodyCompilationError != nil {
+		return functionDefinitionBodyCompilationError
+	}
+	functionCode := c.instructions
+	c.instructions = nil
+	c.instructions = instructionsBackup
+	c.pushInstruction(vm.NewCode(vm.NewFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(functionDefinition.Arguments)}))
+	var arguments []string
+	for _, argument := range functionDefinition.Arguments {
+		arguments = append(arguments, argument.Token.String)
+	}
+	c.pushInstruction(vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
+	c.extendInstructions(functionCode)
+	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
+	c.pushInstruction(vm.NewCode(vm.AssignIdentifierOP, functionDefinition.Name.Token.Line, functionDefinition.Name.Token.String))
+	return nil
+}
+
+func (c *Compiler) compileReturnStatement(returnStatement *ast.ReturnStatement) *errors.Error {
+	numberOfResults := len(returnStatement.Results)
+	for i := numberOfResults - 1; i > -1; i-- {
+		resultCompilationError := c.compileExpression(returnStatement.Results[i])
+		if resultCompilationError != nil {
+			return resultCompilationError
+		}
+	}
+	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, numberOfResults))
+	return nil
+}
+
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	switch statement.(type) {
 	case *ast.AssignStatement:
 		return c.compileAssignStatement(statement.(*ast.AssignStatement))
-
+	case *ast.FunctionDefinitionStatement:
+		return c.compileFunctionDefinition(statement.(*ast.FunctionDefinitionStatement))
+	case *ast.ReturnStatement:
+		return c.compileReturnStatement(statement.(*ast.ReturnStatement))
 	}
 	return nil
 }
