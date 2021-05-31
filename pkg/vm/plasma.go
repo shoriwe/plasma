@@ -2,7 +2,6 @@ package vm
 
 import (
 	"crypto/rand"
-	"fmt"
 	"github.com/shoriwe/gruby/pkg/errors"
 	"hash"
 	"hash/crc32"
@@ -388,7 +387,7 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
 	for ; p.PeekCode().HasNext(); {
 		code := p.PeekCode().Next()
-		fmt.Println(code)
+		// fmt.Println(code)
 		switch code.Instruction.OpCode {
 		// Literals
 		case NewStringOP:

@@ -479,6 +479,7 @@ func (c *Compiler) compileReturnStatement(returnStatement *ast.ReturnStatement) 
 func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) *errors.Error {
 	// Compile If Condition
 	instructionsBackup := c.instructions
+	c.instructions = nil
 	conditionCompilationError := c.compileExpression(ifStatement.Condition)
 	if conditionCompilationError != nil {
 		return conditionCompilationError
@@ -532,11 +533,13 @@ func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) *errors.Erro
 	c.instructions = nil
 	bodyInstructionsLength := len(bodyInstructions)
 	successJump -= bodyInstructionsLength + 1
+	// Add the first condition
 	c.extendInstructions(instructionsBackup)
 	c.extendInstructions(condition)
 	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
 	c.extendInstructions(bodyInstructions)
 	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
+	// Add the elif conditions
 	for _, compiledElifBlock := range compiledElifBlocks {
 		c.extendInstructions(compiledElifBlock[0])
 		compiledElifBlockBodyLength := len(compiledElifBlock[1])
@@ -545,6 +548,7 @@ func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) *errors.Erro
 		c.extendInstructions(compiledElifBlock[1])
 		c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
 	}
+	// Finally add the else condition
 	if elseBody != nil {
 		c.extendInstructions(elseBody)
 	}
@@ -554,14 +558,12 @@ func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) *errors.Erro
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	switch statement.(type) {
 	case *ast.AssignStatement:
-		// ToDo: Fix this, Is compiling the instruction twice
 		return c.compileAssignStatement(statement.(*ast.AssignStatement))
 	case *ast.FunctionDefinitionStatement:
 		return c.compileFunctionDefinition(statement.(*ast.FunctionDefinitionStatement))
 	case *ast.ReturnStatement:
 		return c.compileReturnStatement(statement.(*ast.ReturnStatement))
 	case *ast.IfStatement:
-		// ToDo: Fix this, Is compiling the instruction twice
 		return c.compileIfStatement(statement.(*ast.IfStatement))
 	}
 	return nil
