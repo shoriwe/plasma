@@ -64,4 +64,5 @@ const (
 	NewFunctionOP
 	JumpOP
 	PopOP
+	NOP
 )

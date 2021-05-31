@@ -14,14 +14,15 @@ const (
 )
 
 type Plasma struct {
-	Code        *CodeStack
-	MemoryStack *ObjectStack
-	Context     *SymbolStack
-	Crc32Hash   hash.Hash32
-	seed        uint64
-	stdin       io.Reader
-	stdout      io.Writer
-	stderr      io.Writer
+	programMasterSymbolTable *SymbolTable
+	Code                     *CodeStack
+	MemoryStack              *ObjectStack
+	Context                  *SymbolStack
+	Crc32Hash                hash.Hash32
+	seed                     uint64
+	stdin                    io.Reader
+	stdout                   io.Writer
+	stderr                   io.Writer
 }
 
 func (p *Plasma) PushObject(object IObject) {
@@ -536,6 +537,8 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.continueOP(code)
 		case PopOP:
 			p.MemoryStack.Pop()
+		case NOP:
+			break
 		default:
 			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}
@@ -577,7 +580,8 @@ func (p *Plasma) InitializeByteCode(bytecode *Bytecode) {
 	p.PushCode(bytecode)
 	p.MemoryStack.Clear()
 	p.Context.Clear()
-	p.Context.Push(SetDefaultSymbolTable())
+	p.programMasterSymbolTable = SetDefaultSymbolTable()
+	p.Context.Push(p.programMasterSymbolTable)
 }
 
 func (p *Plasma) PushCode(code *Bytecode) {

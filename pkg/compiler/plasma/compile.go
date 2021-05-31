@@ -694,6 +694,11 @@ func (c *Compiler) compileContinueStatement() *errors.Error {
 	return nil
 }
 
+func (c *Compiler) compilePassStatement() *errors.Error {
+	c.pushInstruction(vm.NewCode(vm.NOP, errors.UnknownLine, nil))
+	return nil
+}
+
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	switch statement.(type) {
 	case *ast.AssignStatement:
@@ -714,6 +719,8 @@ func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 		return c.compileBreakStatement()
 	case *ast.ContinueStatement:
 		return c.compileContinueStatement()
+	case *ast.PassStatement:
+		return c.compilePassStatement()
 	}
 	return nil
 }

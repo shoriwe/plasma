@@ -26,6 +26,10 @@ const (
 	functionDefinition = "function-definition"
 	ifStatement        = "if-statement"
 	doWhileStatement   = "do_while-statement"
+	beginEnd           = "begin-end"
+
+	performance = "performance"
+	fibonacci   = "fibo"
 )
 
 func test(t *testing.T, directory string) {
@@ -66,23 +70,6 @@ func test(t *testing.T, directory string) {
 			t.Fatal(executionError)
 			return
 		}
-		/*
-			resultToString, getError := result.Get(vm.ToString)
-			if getError != nil {
-				t.Fatal(getError)
-				return
-			}
-			if _, ok := resultToString.(*vm.Function); !ok {
-				t.Fatal("Expecting ToString function")
-				return
-			}
-			stringResult, callError := vm.CallFunction(resultToString.(*vm.Function), plasmaVm, result.SymbolTable())
-			if callError != nil {
-				t.Fatal(callError)
-				return
-			}
-			fmt.Println(stringResult.GetString())
-		*/
 		fmt.Println(fmt.Sprintf("[+] %s: SUCCESS", file.Name()))
 	}
 }
@@ -115,6 +102,8 @@ func TestLambdaExpressions(t *testing.T) {
 	test(t, filepath.Join(testsSamples, expressionSamples, lambdaExpressions))
 }
 
+// Statement tests
+
 func TestAssignStatement(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, assignStatement))
 }
@@ -129,4 +118,14 @@ func TestIfStatement(t *testing.T) {
 
 func TestDoWhileStatement(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, doWhileStatement))
+}
+
+func TestBeginEndStatements(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, beginEnd))
+}
+
+// Performance tests
+
+func TestFibonacciPerformanceStatement(t *testing.T) {
+	test(t, filepath.Join(testsSamples, performance, fibonacci))
 }

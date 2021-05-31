@@ -1,3 +1,7 @@
+println("Starting!")
+do
+    println("Printed at least once")
+while False
 a = 0
 do
     b = 0

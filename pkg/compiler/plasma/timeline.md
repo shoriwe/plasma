@@ -81,8 +81,9 @@
     - [ ] Class
     - [ ] Raise
     - [ ] Try - Except
-    - [ ] Begin
-    - [ ] End
-    - [ ] Return
+    - [X] Begin
+    - [X] End
+    - [X] Return
     - [ ] Super
-    - [ ] Pass
+    - [X] Pass
+    - [ ] Yield
