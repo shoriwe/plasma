@@ -411,22 +411,6 @@ func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitio
 	}, nil
 }
 
-func (parser *Parser) parseAsyncFunctionDefinitionStatement() (*ast.AsyncFunctionDefinitionStatement, *errors.Error) {
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	functionDefinition, parsingError := parser.parseFunctionDefinitionStatement()
-	if parsingError != nil {
-		return nil, parsingError
-	}
-	return &ast.AsyncFunctionDefinitionStatement{
-		Name:      functionDefinition.Name,
-		Arguments: functionDefinition.Arguments,
-		Body:      functionDefinition.Body,
-	}, nil
-}
-
 func (parser *Parser) parseClassStatement() (*ast.ClassStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -852,7 +836,6 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, *error
 		return nil, newSyntaxError(parser.currentLine(), InterfaceStatement)
 	}
 	var methods []*ast.FunctionDefinitionStatement
-	var asyncMethods []*ast.AsyncFunctionDefinitionStatement
 	var node ast.Node
 	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
@@ -869,14 +852,7 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, *error
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		if _, ok := node.(*ast.FunctionDefinitionStatement); !ok {
-			if _, ok2 := node.(*ast.AsyncFunctionDefinitionStatement); !ok2 {
-				return nil, newSyntaxError(parser.currentLine(), InterfaceStatement)
-			}
-			asyncMethods = append(asyncMethods, node.(*ast.AsyncFunctionDefinitionStatement))
-		} else {
-			methods = append(methods, node.(*ast.FunctionDefinitionStatement))
-		}
+		methods = append(methods, node.(*ast.FunctionDefinitionStatement))
 	}
 	if !parser.matchDirect(lexer.End) {
 		return nil, newStatementNeverEndedError(parser.currentLine(), InterfaceStatement)
@@ -886,10 +862,9 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, *error
 		return nil, tokenizingError
 	}
 	return &ast.InterfaceStatement{
-		Name:                   name,
-		Bases:                  bases,
-		MethodDefinitions:      methods,
-		AsyncMethodDefinitions: asyncMethods,
+		Name:              name,
+		Bases:             bases,
+		MethodDefinitions: methods,
 	}, nil
 }
 
@@ -1931,8 +1906,6 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 			return parser.parseModuleStatement()
 		case lexer.Def:
 			return parser.parseFunctionDefinitionStatement()
-		case lexer.Async:
-			return parser.parseAsyncFunctionDefinitionStatement()
 		case lexer.Interface:
 			return parser.parseInterfaceStatement()
 		case lexer.Defer:

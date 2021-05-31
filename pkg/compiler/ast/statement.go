@@ -91,19 +91,11 @@ type FunctionDefinitionStatement struct {
 	Body      []Node
 }
 
-type AsyncFunctionDefinitionStatement struct {
-	Statement
-	Name      *Identifier
-	Arguments []*Identifier
-	Body      []Node
-}
-
 type InterfaceStatement struct {
 	Statement
-	Name                   *Identifier
-	Bases                  []Expression
-	MethodDefinitions      []*FunctionDefinitionStatement
-	AsyncMethodDefinitions []*AsyncFunctionDefinitionStatement
+	Name              *Identifier
+	Bases             []Expression
+	MethodDefinitions []*FunctionDefinitionStatement
 }
 
 type ClassStatement struct {

@@ -25,6 +25,7 @@ const (
 	assignStatement    = "assignment"
 	functionDefinition = "function-definition"
 	ifStatement        = "if-statement"
+	doWhileStatement   = "do_while-statement"
 )
 
 func test(t *testing.T, directory string) {
@@ -124,4 +125,8 @@ func TestFunctionDefinitionStatement(t *testing.T) {
 
 func TestIfStatement(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, ifStatement))
+}
+
+func TestDoWhileStatement(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, doWhileStatement))
 }

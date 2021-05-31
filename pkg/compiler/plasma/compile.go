@@ -555,6 +555,145 @@ func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) *errors.Erro
 	return nil
 }
 
+func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) *errors.Error {
+	// Compile If Condition
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	conditionCompilationError := c.compileExpression(unlessStatement.Condition)
+	if conditionCompilationError != nil {
+		return conditionCompilationError
+	}
+	condition := c.instructions
+	// Compile If Body
+	c.instructions = nil
+	bodyCompilationError := c.compileBody(unlessStatement.Body)
+	if bodyCompilationError != nil {
+		return bodyCompilationError
+	}
+	bodyInstructions := c.instructions
+	// Compile Elif blocks
+	var compiledElifBlocks [][2][]vm.Code
+	for _, elif := range unlessStatement.ElifBlocks {
+		// Elif condition
+		c.instructions = nil
+		elifConditionCompilationError := c.compileExpression(elif.Condition)
+		if elifConditionCompilationError != nil {
+			return elifConditionCompilationError
+		}
+		elifCondition := c.instructions
+		// Elif body
+		c.instructions = nil
+		elifBodyCompilationError := c.compileBody(elif.Body)
+		if elifBodyCompilationError != nil {
+			return elifBodyCompilationError
+		}
+		elifBody := c.instructions
+		// Append it
+		compiledElifBlocks = append(compiledElifBlocks, [2][]vm.Code{elifCondition, elifBody})
+	}
+	// Compile Else Block
+	var elseBody []vm.Code
+	if unlessStatement.Else != nil {
+		c.instructions = nil
+		elseBodyCompilationError := c.compileBody(unlessStatement.Else)
+		if elseBodyCompilationError != nil {
+			return elseBodyCompilationError
+		}
+		elseBody = c.instructions
+	}
+	// Sum the length of everything compiled for the on-success JUMP
+	successJump := len(bodyInstructions) + 1
+	for _, compiledElifBlock := range compiledElifBlocks {
+		successJump += len(compiledElifBlock[0]) + len(compiledElifBlock[1]) + 2
+	}
+	if elseBody != nil {
+		successJump += len(elseBody)
+	}
+	c.instructions = nil
+	bodyInstructionsLength := len(bodyInstructions)
+	successJump -= bodyInstructionsLength + 1
+	// Add the first condition
+	c.extendInstructions(instructionsBackup)
+	c.extendInstructions(condition)
+	c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
+	c.extendInstructions(bodyInstructions)
+	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
+	// Add the elif conditions
+	for _, compiledElifBlock := range compiledElifBlocks {
+		c.extendInstructions(compiledElifBlock[0])
+		compiledElifBlockBodyLength := len(compiledElifBlock[1])
+		successJump -= len(compiledElifBlock[0]) + compiledElifBlockBodyLength + 2
+		c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
+		c.extendInstructions(compiledElifBlock[1])
+		c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
+	}
+	// Finally add the else condition
+	if elseBody != nil {
+		c.extendInstructions(elseBody)
+	}
+	return nil
+}
+
+func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatement) *errors.Error {
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	bodyCompilationError := c.compileBody(doWhileStatement.Body)
+	if bodyCompilationError != nil {
+		return bodyCompilationError
+	}
+	doWhileBody := c.instructions
+	c.instructions = nil
+	conditionCompilationError := c.compileExpression(doWhileStatement.Condition)
+	if conditionCompilationError != nil {
+		return conditionCompilationError
+	}
+	condition := c.instructions
+	c.instructions = nil
+
+	completeJump := len(doWhileBody) + len(condition)
+	// Replace the null jump instructions
+	for index, instructions := range doWhileBody {
+		if instructions.Instruction.OpCode == vm.RedoOP {
+			if instructions.Value != nil {
+				continue
+			}
+			doWhileBody[index].Value = -index - 1
+		}
+		if instructions.Instruction.OpCode == vm.BreakOP {
+			if instructions.Value != nil {
+				continue
+			}
+			doWhileBody[index].Value = completeJump - index
+		}
+		if instructions.Instruction.OpCode == vm.ContinueOP {
+			if instructions.Value != nil {
+				continue
+			}
+			doWhileBody[index].Value = completeJump - index - 1
+		}
+	}
+	c.extendInstructions(instructionsBackup)
+	c.extendInstructions(doWhileBody)
+	c.extendInstructions(condition)
+	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
+	return nil
+}
+
+func (c *Compiler) compileRedoStatement() *errors.Error {
+	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, nil))
+	return nil
+}
+
+func (c *Compiler) compileBreakStatement() *errors.Error {
+	c.pushInstruction(vm.NewCode(vm.BreakOP, errors.UnknownLine, nil))
+	return nil
+}
+
+func (c *Compiler) compileContinueStatement() *errors.Error {
+	c.pushInstruction(vm.NewCode(vm.ContinueOP, errors.UnknownLine, nil))
+	return nil
+}
+
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	switch statement.(type) {
 	case *ast.AssignStatement:
@@ -565,6 +704,16 @@ func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 		return c.compileReturnStatement(statement.(*ast.ReturnStatement))
 	case *ast.IfStatement:
 		return c.compileIfStatement(statement.(*ast.IfStatement))
+	case *ast.UnlessStatement:
+		return c.compileUnlessStatement(statement.(*ast.UnlessStatement))
+	case *ast.DoWhileStatement:
+		return c.compileDoWhileStatement(statement.(*ast.DoWhileStatement))
+	case *ast.RedoStatement:
+		return c.compileRedoStatement()
+	case *ast.BreakStatement:
+		return c.compileBreakStatement()
+	case *ast.ContinueStatement:
+		return c.compileContinueStatement()
 	}
 	return nil
 }

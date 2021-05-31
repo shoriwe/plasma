@@ -73,9 +73,6 @@ func (stack *ObjectStack) Peek() IObject {
 }
 
 func (stack *ObjectStack) Push(object IObject) {
-	if stack.length == bits.UintSize {
-		panic("Memory Stack is Full")
-	}
 	stack.length++
 	stack.head = NewStackNode(object, stack.head)
 }

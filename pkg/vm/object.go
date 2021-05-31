@@ -4463,7 +4463,7 @@ func HashTableIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	iterator := NewIterator(vm.PeekSymbolTable())
 	iterator.SetInteger64(0) // This is the index
 	iterator.SetContent(hashKeys.GetContent())
-	iterator.SetLength(self.GetLength())
+	iterator.SetLength(len(hashKeys.GetContent()))
 	iterator.Set(HasNext,
 		NewFunction(iterator.SymbolTable(),
 			NewBuiltInClassFunction(iterator,

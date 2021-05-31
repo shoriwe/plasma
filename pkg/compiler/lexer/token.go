@@ -70,7 +70,6 @@ const (
 	Except
 	Finally
 	IsInstanceOf // This maybe can be a regular identifier
-	Async
 	Await
 	BEGIN
 	END
@@ -216,7 +215,6 @@ var (
 	XorString          = "xor"
 	InString           = "in"
 	IsInstanceOfString = "isinstanceof"
-	AsyncString        = "async"
 	AwaitString        = "await"
 	BEGINString        = "BEGIN"
 	ENDString          = "END"

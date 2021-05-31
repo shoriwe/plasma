@@ -52,6 +52,10 @@ const (
 	AssignSelectorOP
 	AssignIndexOP
 	IfJumpOP
+	UnlessJumpOP
+	BreakOP
+	RedoOP
+	ContinueOP
 
 	ReturnOP
 

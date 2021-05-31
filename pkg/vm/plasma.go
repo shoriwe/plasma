@@ -355,6 +355,25 @@ func (p *Plasma) ifJumpOP(code Code) *errors.Error {
 	return nil
 }
 
+func (p *Plasma) unlessJumpOP(code Code) *errors.Error {
+	condition := p.PopObject()
+	toBool, getError := condition.Get(ToBool)
+	if getError != nil {
+		return getError
+	}
+	if _, ok := toBool.(*Function); !ok {
+		return errors.NewTypeError(toBool.TypeName(), FunctionName)
+	}
+	conditionBool, callError := CallFunction(toBool.(*Function), p, toBool.SymbolTable())
+	if callError != nil {
+		return callError
+	}
+	if conditionBool.GetBool() {
+		p.PeekCode().index += code.Value.(int)
+	}
+	return nil
+}
+
 // Special Instructions
 
 func (p *Plasma) loadFunctionArgumentsOP(code Code) *errors.Error {
@@ -383,11 +402,25 @@ func (p *Plasma) jumpOP(code Code) *errors.Error {
 	return nil
 }
 
+func (p *Plasma) breakOP(code Code) *errors.Error {
+	p.PeekCode().index += code.Value.(int)
+	return nil
+}
+
+func (p *Plasma) redoOP(code Code) *errors.Error {
+	return p.unlessJumpOP(code)
+}
+
+func (p *Plasma) continueOP(code Code) *errors.Error {
+	p.PeekCode().index += code.Value.(int) // This could be positive or negative (positive only for do-while loop)
+	return nil
+}
+
 func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
 	for ; p.PeekCode().HasNext(); {
 		code := p.PeekCode().Next()
-		// fmt.Println(code)
+		// fmt.Println("Exec:", code.Instruction, code.Value)
 		switch code.Instruction.OpCode {
 		// Literals
 		case NewStringOP:
@@ -486,6 +519,8 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			return p.PeekSymbolTable().GetAny(None)
 		case IfJumpOP:
 			executionError = p.ifJumpOP(code)
+		case UnlessJumpOP:
+			executionError = p.unlessJumpOP(code)
 		// Special Instructions
 		case LoadFunctionArgumentsOP:
 			executionError = p.loadFunctionArgumentsOP(code)
@@ -493,6 +528,12 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.newFunctionOP(code)
 		case JumpOP:
 			executionError = p.jumpOP(code)
+		case RedoOP:
+			executionError = p.redoOP(code)
+		case BreakOP:
+			executionError = p.breakOP(code)
+		case ContinueOP:
+			executionError = p.continueOP(code)
 		default:
 			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}

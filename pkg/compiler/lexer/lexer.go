@@ -328,8 +328,6 @@ func guessKind(buffer []rune) (uint8, uint8) {
 		return Comparator, In
 	case IsInstanceOfString: // This is a method like super
 		return Keyboard, IsInstanceOf
-	case AsyncString:
-		return Keyboard, Async
 	case AsString:
 		return Keyboard, As
 	case RaiseString:
