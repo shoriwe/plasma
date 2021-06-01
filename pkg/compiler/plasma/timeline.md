@@ -50,6 +50,8 @@
     - [X] Identifiers
     - [ ] Generators
     - [X] Call
+        - [X] Function
+        - [X] Type
     - [X] Index
     - [X] Parentheses Expressions
     - [X] Selector Expressions

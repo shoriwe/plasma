@@ -329,13 +329,15 @@ func NewNotImplementedCallable(numberOfArguments int) *BuiltInClassFunction {
 type IObject interface {
 	Id() uint
 	TypeName() string
-	Class() (*Type, *errors.Error)
 	SymbolTable() *SymbolTable
 	SubClasses() []*Type
 	Get(string) (IObject, *errors.Error)
 	Set(string, IObject)
 	GetHash() int64
 	SetHash(int64)
+
+	GetClass() *Type
+	SetClass(*Type)
 
 	GetBool() bool
 	GetBytes() []uint8
@@ -455,20 +457,6 @@ func (o *Object) Id() uint {
 	return o.id
 }
 
-func (o *Object) Class() (*Type, *errors.Error) {
-	if o.class == nil {
-		class, getError := o.SymbolTable().GetAny(o.TypeName())
-		if getError != nil {
-			return nil, getError
-		}
-		if _, ok := class.(*Type); !ok {
-			return nil, errors.NewTypeError(class.TypeName(), TypeName)
-		}
-		o.class = class.(*Type)
-	}
-	return o.class, nil
-}
-
 func (o *Object) SubClasses() []*Type {
 	return o.subClasses
 }
@@ -495,6 +483,14 @@ func (o *Object) GetHash() int64 {
 
 func (o *Object) SetHash(newHash int64) {
 	o.hash = newHash
+}
+
+func (o *Object) GetClass() *Type {
+	return o.class
+}
+
+func (o *Object) SetClass(class *Type) {
+	o.class = class
 }
 
 func ObjInitialize(_ VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
@@ -962,7 +958,18 @@ func ObjClass(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 	if getError != nil {
 		return nil, getError
 	}
-	return self.Class()
+	if self.GetClass() == nil { // This should only happen with built-ins
+		var class IObject
+		class, getError = vm.MasterSymbolTable().GetAny(self.TypeName())
+		if getError != nil {
+			return nil, getError
+		}
+		if _, ok := class.(*Type); !ok {
+			return nil, errors.NewTypeError(class.TypeName(), TypeName)
+		}
+		self.SetClass(class.(*Type))
+	}
+	return self.GetClass(), nil
 }
 
 /*
@@ -4551,13 +4558,25 @@ func NewHashTable(parent *SymbolTable, entries map[int64][]*KeyValue, entriesLen
 type Type struct {
 	*Object
 	Constructor Constructor
+	Name        string
 }
 
-func NewType(parent *SymbolTable, subclasses []*Type, constructor Constructor) *Type {
-	return &Type{
+func NewType(typeName string, parent *SymbolTable, subclasses []*Type, constructor Constructor) *Type {
+	result := &Type{
 		Object:      NewObject(TypeName, subclasses, parent),
 		Constructor: constructor,
+		Name:        typeName,
 	}
+	result.Set(ToString,
+		NewFunction(result.symbols,
+			NewBuiltInClassFunction(result, 0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					return NewString(vm.PeekSymbolTable(), "Type@"+typeName), nil
+				},
+			),
+		),
+	)
+	return result
 }
 
 /*
@@ -4594,59 +4613,70 @@ func NewType(parent *SymbolTable, subclasses []*Type, constructor Constructor) *
 func SetDefaultSymbolTable() *SymbolTable {
 	symbolTable := NewSymbolTable(nil)
 	// Types
-	type_ := NewType(symbolTable, nil,
-		NewBuiltInConstructor(ObjectInitialize),
+	type_ := &Type{
+		Object:      NewObject(ObjectName, nil, symbolTable),
+		Constructor: NewBuiltInConstructor(ObjectInitialize),
+		Name:        TypeName,
+	}
+	type_.Set(ToString,
+		NewFunction(type_.symbols,
+			NewBuiltInClassFunction(type_, 0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					return NewString(vm.PeekSymbolTable(), "Type@Object"), nil
+				},
+			),
+		),
 	)
 	symbolTable.Set(TypeName, type_)
 	symbolTable.Set(BoolName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(BoolName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(BoolInitialize),
 		),
 	)
 	symbolTable.Set(IteratorName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(IteratorName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(IteratorInitialize),
 		),
 	)
 	symbolTable.Set(ObjectName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(ObjectName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(ObjectInitialize),
 		),
 	)
 	symbolTable.Set(FunctionName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(FunctionName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(func(machine VirtualMachine, object IObject) *errors.Error {
 				return nil
 			}),
 		),
 	)
 	symbolTable.Set(IntegerName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(IntegerName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(IntegerInitialize),
 		),
 	)
 	symbolTable.Set(StringName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(StringName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(StringInitialize),
 		),
 	)
 	symbolTable.Set(BytesName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(BytesName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(BytesInitialize),
 		),
 	)
 	symbolTable.Set(TupleName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(TupleName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(TupleInitialize),
 		),
 	)
 	symbolTable.Set(ArrayName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(ArrayName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(ArrayInitialize),
 		),
 	)
 	symbolTable.Set(HashName,
-		NewType(symbolTable, []*Type{type_},
+		NewType(HashName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(HashTableInitialize),
 		),
 	)

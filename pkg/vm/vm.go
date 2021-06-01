@@ -8,6 +8,7 @@ import (
 type VirtualMachine interface {
 	Initialize([]Code) *errors.Error
 	Execute() (IObject, *errors.Error)
+	MasterSymbolTable() *SymbolTable
 	PushObject(IObject)
 	PeekObject() IObject
 	PopObject() IObject

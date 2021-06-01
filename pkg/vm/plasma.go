@@ -2,7 +2,6 @@ package vm
 
 import (
 	"crypto/rand"
-	"fmt"
 	"github.com/shoriwe/gruby/pkg/errors"
 	"hash"
 	"hash/crc32"
@@ -258,8 +257,9 @@ func (p *Plasma) methodInvocationOP(code Code) *errors.Error {
 	switch function.(type) {
 	case *Function:
 		result, callError = CallFunction(function.(*Function), p, function.SymbolTable(), arguments...)
+	case *Type:
+		result, callError = ConstructObject(function.(*Type), p, NewSymbolTable(p.PeekSymbolTable()))
 	default:
-		// ToDo: Add Support for Types too
 		return errors.NewTypeError(function.TypeName(), FunctionName)
 	}
 	if callError != nil {
@@ -370,7 +370,6 @@ func (p *Plasma) unlessJumpOP(code Code) *errors.Error {
 	if callError != nil {
 		return callError
 	}
-	fmt.Println(conditionBool.GetBool())
 	if conditionBool.GetBool() {
 		p.PeekCode().index += code.Value.(int)
 	}
@@ -609,6 +608,10 @@ func (p *Plasma) StdOut() io.Writer {
 
 func (p *Plasma) StdErr() io.Writer {
 	return p.stderr
+}
+
+func (p *Plasma) MasterSymbolTable() *SymbolTable {
+	return p.programMasterSymbolTable
 }
 
 func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
