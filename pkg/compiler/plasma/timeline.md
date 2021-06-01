@@ -45,8 +45,8 @@
         - [X] GreaterThanOrEqual
         - [X] LessThanOrEqual
     - [X] Lambda Expressions
-    - [ ] One Line If
-    - [ ] One Line Unless
+    - [X] One Line If
+    - [X] One Line Unless
     - [X] Identifiers
     - [ ] Generators
     - [X] Call

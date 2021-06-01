@@ -20,6 +20,7 @@ const (
 	indexExpressions    = "index-expressions"
 	selectorExpressions = "selector-expressions"
 	lambdaExpressions   = "lambdas"
+	ifUnlessOneLiners   = "if_unless-one-liner"
 
 	statementSamples   = "statements"
 	assignStatement    = "assignment"
@@ -29,9 +30,7 @@ const (
 	beginEnd           = "begin-end"
 	whileStatement     = "while-statement"
 	untilStatement     = "until-statement"
-
-	performance = "performance"
-	fibonacci   = "fibo"
+	forStatement       = "for-statement"
 )
 
 func test(t *testing.T, directory string) {
@@ -104,6 +103,10 @@ func TestLambdaExpressions(t *testing.T) {
 	test(t, filepath.Join(testsSamples, expressionSamples, lambdaExpressions))
 }
 
+func TestIfAndUnlessOneLinersExpressions(t *testing.T) {
+	test(t, filepath.Join(testsSamples, expressionSamples, ifUnlessOneLiners))
+}
+
 // Statement tests
 
 func TestAssignStatement(t *testing.T) {
@@ -134,8 +137,6 @@ func TestUntilStatements(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, untilStatement))
 }
 
-// Performance tests
-
-func TestFibonacciPerformanceStatement(t *testing.T) {
-	test(t, filepath.Join(testsSamples, performance, fibonacci))
+func TestForStatements(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, forStatement))
 }

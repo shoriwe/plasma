@@ -247,10 +247,68 @@ func (c *Compiler) compileParenthesesExpression(parenthesesExpression *ast.Paren
 }
 
 func (c *Compiler) compileIfOneLinerExpression(ifOneLineExpression *ast.IfOneLinerExpression) *errors.Error {
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	conditionCompilationError := c.compileExpression(ifOneLineExpression.Condition)
+	if conditionCompilationError != nil {
+		return conditionCompilationError
+	}
+	condition := c.instructions
+	c.instructions = nil
+	resultCompilationError := c.compileExpression(ifOneLineExpression.Result)
+	if resultCompilationError != nil {
+		return resultCompilationError
+	}
+	result := c.instructions
+	c.instructions = nil
+	elseResult := []vm.Code{vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil)}
+	if ifOneLineExpression.ElseResult != nil {
+		elseResultCompilationError := c.compileExpression(ifOneLineExpression.ElseResult)
+		if elseResultCompilationError != nil {
+			return elseResultCompilationError
+		}
+		elseResult = c.instructions
+		c.instructions = nil
+	}
+	c.extendInstructions(instructionsBackup)
+	c.extendInstructions(condition)
+	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(result)+1))
+	c.extendInstructions(result)
+	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
+	c.extendInstructions(elseResult)
 	return nil
 }
 
 func (c *Compiler) compileUnlessOneLinerExpression(ifOneLineExpression *ast.UnlessOneLinerExpression) *errors.Error {
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	conditionCompilationError := c.compileExpression(ifOneLineExpression.Condition)
+	if conditionCompilationError != nil {
+		return conditionCompilationError
+	}
+	condition := c.instructions
+	c.instructions = nil
+	resultCompilationError := c.compileExpression(ifOneLineExpression.Result)
+	if resultCompilationError != nil {
+		return resultCompilationError
+	}
+	result := c.instructions
+	c.instructions = nil
+	elseResult := []vm.Code{vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil)}
+	if ifOneLineExpression.ElseResult != nil {
+		elseResultCompilationError := c.compileExpression(ifOneLineExpression.ElseResult)
+		if elseResultCompilationError != nil {
+			return elseResultCompilationError
+		}
+		elseResult = c.instructions
+		c.instructions = nil
+	}
+	c.extendInstructions(instructionsBackup)
+	c.extendInstructions(condition)
+	c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(result)+1))
+	c.extendInstructions(result)
+	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
+	c.extendInstructions(elseResult)
 	return nil
 }
 
