@@ -2,6 +2,7 @@ package vm
 
 import (
 	"crypto/rand"
+	"fmt"
 	"github.com/shoriwe/gruby/pkg/errors"
 	"hash"
 	"hash/crc32"
@@ -369,6 +370,7 @@ func (p *Plasma) unlessJumpOP(code Code) *errors.Error {
 	if callError != nil {
 		return callError
 	}
+	fmt.Println(conditionBool.GetBool())
 	if conditionBool.GetBool() {
 		p.PeekCode().index += code.Value.(int)
 	}
@@ -409,7 +411,8 @@ func (p *Plasma) breakOP(code Code) *errors.Error {
 }
 
 func (p *Plasma) redoOP(code Code) *errors.Error {
-	return p.unlessJumpOP(code)
+	p.PeekCode().index += code.Value.(int)
+	return nil
 }
 
 func (p *Plasma) continueOP(code Code) *errors.Error {

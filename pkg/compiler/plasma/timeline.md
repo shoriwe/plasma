@@ -60,14 +60,14 @@
         - [X] Continue
         - [X] Break
         - [X] Redo
-    - [ ] While
-        - [ ] Continue
-        - [ ] Break
-        - [ ] Redo
-    - [ ] Until
-        - [ ] Continue
-        - [ ] Break
-        - [ ] Redo
+    - [X] While
+        - [X] Continue
+        - [X] Break
+        - [X] Redo
+    - [X] Until
+        - [X] Continue
+        - [X] Break
+        - [X] Redo
     - [ ] For Loop
         - [ ] Continue
         - [ ] Break

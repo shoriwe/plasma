@@ -556,7 +556,7 @@ func ObjAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 	if _, ok := leftToBool.(*Function); !ok {
 		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
-	leftBool, transformationError := CallFunction(leftToBool.(*Function), vm, self.SymbolTable(), self)
+	leftBool, transformationError := CallFunction(leftToBool.(*Function), vm, self.SymbolTable())
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -570,7 +570,7 @@ func ObjAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
 	var rightBool IObject
-	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, right.SymbolTable(), right)
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, right.SymbolTable())
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -589,7 +589,7 @@ func ObjRightAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 	if _, ok := rightToBool.(*Function); !ok {
 		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
-	rightBool, transformationError := CallFunction(rightToBool.(*Function), vm, self.SymbolTable(), self)
+	rightBool, transformationError := CallFunction(rightToBool.(*Function), vm, self.SymbolTable())
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -603,7 +603,7 @@ func ObjRightAnd(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Erro
 		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
 	var leftBool IObject
-	leftBool, transformationError = CallFunction(leftToBool.(*Function), vm, left.SymbolTable(), left)
+	leftBool, transformationError = CallFunction(leftToBool.(*Function), vm, left.SymbolTable())
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -622,7 +622,7 @@ func ObjOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 	if _, ok := leftToBool.(*Function); !ok {
 		return nil, errors.NewTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 	}
-	leftBool, transformationError := CallFunction(leftToBool.(*Function), vm, self.SymbolTable(), self)
+	leftBool, transformationError := CallFunction(leftToBool.(*Function), vm, self.SymbolTable())
 	if transformationError != nil {
 		return nil, transformationError
 	}
@@ -637,7 +637,7 @@ func ObjOr(vm VirtualMachine, arguments ...IObject) (IObject, *errors.Error) {
 		return nil, errors.NewTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 	}
 	var rightBool IObject
-	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, right.SymbolTable(), right)
+	rightBool, transformationError = CallFunction(rightToBool.(*Function), vm, right.SymbolTable())
 	if transformationError != nil {
 		return nil, transformationError
 	}

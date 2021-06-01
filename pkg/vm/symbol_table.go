@@ -22,19 +22,13 @@ func (symbolTable *SymbolTable) GetSelf(symbol string) (IObject, *errors.Error) 
 }
 
 func (symbolTable *SymbolTable) GetAny(symbol string) (IObject, *errors.Error) {
-	result, found := symbolTable.Symbols[symbol]
-	if !found {
-		var foundError *errors.Error
-		if symbolTable.Parent != nil {
-			result, foundError = symbolTable.Parent.GetAny(symbol)
-			if foundError != nil {
-				return nil, foundError
-			}
-		} else {
-			return nil, errors.NewNameNotFoundError()
+	for source := symbolTable; source != nil; source = source.Parent {
+		result, found := source.Symbols[symbol]
+		if found {
+			return result, nil
 		}
 	}
-	return result, nil
+	return nil, errors.NewNameNotFoundError()
 }
 
 func (symbolTable *SymbolTable) Update(newEntries map[string]IObject) {

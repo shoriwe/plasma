@@ -27,6 +27,8 @@ const (
 	ifStatement        = "if-statement"
 	doWhileStatement   = "do_while-statement"
 	beginEnd           = "begin-end"
+	whileStatement     = "while-statement"
+	untilStatement     = "until-statement"
 
 	performance = "performance"
 	fibonacci   = "fibo"
@@ -122,6 +124,14 @@ func TestDoWhileStatement(t *testing.T) {
 
 func TestBeginEndStatements(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, beginEnd))
+}
+
+func TestWhileStatements(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, whileStatement))
+}
+
+func TestUntilStatements(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, untilStatement))
 }
 
 // Performance tests

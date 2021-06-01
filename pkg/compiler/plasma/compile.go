@@ -650,7 +650,7 @@ func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatemen
 	condition := c.instructions
 	c.instructions = nil
 
-	completeJump := len(doWhileBody) + len(condition)
+	completeJump := len(doWhileBody) + len(condition) + 2
 	// Replace the null jump instructions
 	for index, instructions := range doWhileBody {
 		if instructions.Instruction.OpCode == vm.RedoOP {
@@ -663,7 +663,7 @@ func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatemen
 			if instructions.Value != nil {
 				continue
 			}
-			doWhileBody[index].Value = completeJump - index
+			doWhileBody[index].Value = completeJump - index - 1
 		}
 		if instructions.Instruction.OpCode == vm.ContinueOP {
 			if instructions.Value != nil {
@@ -675,7 +675,8 @@ func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatemen
 	c.extendInstructions(instructionsBackup)
 	c.extendInstructions(doWhileBody)
 	c.extendInstructions(condition)
-	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
+	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, 1))
+	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump))
 	return nil
 }
 
@@ -696,6 +697,98 @@ func (c *Compiler) compileContinueStatement() *errors.Error {
 
 func (c *Compiler) compilePassStatement() *errors.Error {
 	c.pushInstruction(vm.NewCode(vm.NOP, errors.UnknownLine, nil))
+	return nil
+}
+
+func (c *Compiler) compileWhileLoopStatement(whileStatement *ast.WhileLoopStatement) *errors.Error {
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	bodyCompilationError := c.compileBody(whileStatement.Body)
+	if bodyCompilationError != nil {
+		return bodyCompilationError
+	}
+	whileBody := c.instructions
+	c.instructions = nil
+	conditionCompilationError := c.compileExpression(whileStatement.Condition)
+	if conditionCompilationError != nil {
+		return conditionCompilationError
+	}
+	condition := c.instructions
+	c.instructions = nil
+
+	completeJump := len(whileBody) + len(condition) + 1
+	// Replace the null jump instructions
+	for index, instructions := range whileBody {
+		if instructions.Instruction.OpCode == vm.RedoOP {
+			if instructions.Value != nil {
+				continue
+			}
+			whileBody[index].Value = -index - 1
+		}
+		if instructions.Instruction.OpCode == vm.BreakOP {
+			if instructions.Value != nil {
+				continue
+			}
+			whileBody[index].Value = len(whileBody) - index
+		}
+		if instructions.Instruction.OpCode == vm.ContinueOP {
+			if instructions.Value != nil {
+				continue
+			}
+			whileBody[index].Value = -index - 2 - len(condition)
+		}
+	}
+	c.extendInstructions(instructionsBackup)
+	c.extendInstructions(condition)
+	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(whileBody)+1))
+	c.extendInstructions(whileBody)
+	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
+	return nil
+}
+
+func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) *errors.Error {
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	bodyCompilationError := c.compileBody(untilLoop.Body)
+	if bodyCompilationError != nil {
+		return bodyCompilationError
+	}
+	untilBody := c.instructions
+	c.instructions = nil
+	conditionCompilationError := c.compileExpression(untilLoop.Condition)
+	if conditionCompilationError != nil {
+		return conditionCompilationError
+	}
+	condition := c.instructions
+	c.instructions = nil
+
+	completeJump := len(untilBody) + len(condition) + 1
+	// Replace the null jump instructions
+	for index, instructions := range untilBody {
+		if instructions.Instruction.OpCode == vm.RedoOP {
+			if instructions.Value != nil {
+				continue
+			}
+			untilBody[index].Value = -index - 1
+		}
+		if instructions.Instruction.OpCode == vm.BreakOP {
+			if instructions.Value != nil {
+				continue
+			}
+			untilBody[index].Value = len(untilBody) - index
+		}
+		if instructions.Instruction.OpCode == vm.ContinueOP {
+			if instructions.Value != nil {
+				continue
+			}
+			untilBody[index].Value = -index - 2 - len(condition)
+		}
+	}
+	c.extendInstructions(instructionsBackup)
+	c.extendInstructions(condition)
+	c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(untilBody)+1))
+	c.extendInstructions(untilBody)
+	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
 	return nil
 }
 
@@ -721,6 +814,10 @@ func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 		return c.compileContinueStatement()
 	case *ast.PassStatement:
 		return c.compilePassStatement()
+	case *ast.WhileLoopStatement:
+		return c.compileWhileLoopStatement(statement.(*ast.WhileLoopStatement))
+	case *ast.UntilLoopStatement:
+		return c.compileUntilLoopStatement(statement.(*ast.UntilLoopStatement))
 	}
 	return nil
 }
@@ -768,6 +865,12 @@ func (c *Compiler) CompileToArray() ([]vm.Code, *errors.Error) {
 	if compileError != nil {
 		return nil, compileError
 	}
+	/*
+		for _, i := range c.instructions {
+			fmt.Println(i.Instruction, i.Value)
+		}
+		fmt.Println()
+	*/
 	return c.instructions, nil
 }
 
