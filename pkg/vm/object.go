@@ -3414,7 +3414,6 @@ func ArrayIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 					if funcSelf.GetLength() != self.GetLength() {
 						funcSelf.SetLength(self.GetLength())
 					}
-					fmt.Println(funcSelf.GetContent(), funcSelf.GetInteger64(), funcSelf.GetLength())
 					return NewBool(funcVm.PeekSymbolTable(), int(funcSelf.GetInteger64()) < funcSelf.GetLength()), nil
 				},
 			),
@@ -3887,7 +3886,6 @@ func TupleIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 					if funcGetError != nil {
 						return nil, funcGetError
 					}
-					fmt.Println(funcSelf.GetInteger64(), funcSelf.GetLength())
 					value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
 					funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
 					return value, nil

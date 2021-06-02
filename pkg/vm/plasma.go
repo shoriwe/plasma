@@ -601,7 +601,7 @@ func (p *Plasma) newIteratorOP(code Code) *errors.Error {
 		if getError != nil {
 			return getError
 		}
-		if _, ok := iter.(*Function); !ok {
+		if _, ok = iter.(*Function); !ok {
 			return errors.NewTypeError(iter.TypeName(), FunctionName)
 		}
 		iterSource, callError = CallFunction(iter.(*Function), p, source.SymbolTable())

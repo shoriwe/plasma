@@ -134,7 +134,7 @@ func repl() {
 		if virtualMachine.MemoryStack.HasNext() {
 			virtualMachine.PopObject()
 		}
-		virtualMachine.PopCode()
+		// virtualMachine.PopCode()
 		if executionError != nil {
 			fmt.Printf("[%s] %s\n", color.RedString("-"), color.RedString(executionError.String()))
 			continue

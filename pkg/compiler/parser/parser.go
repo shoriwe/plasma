@@ -453,7 +453,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, *errors.Error)
 			} else if parser.matchDirect(lexer.CloseParentheses) {
 				break
 			} else {
-				fmt.Println(parser.currentToken)
+				
 				return nil, newSyntaxError(parser.currentLine(), ClassStatement)
 			}
 		}
@@ -874,6 +874,7 @@ func (parser *Parser) parseLiteral() (ast.Expression, *errors.Error) {
 		!parser.matchKind(lexer.NoneType) {
 		return nil, newInvalidKindOfTokenError(parser.currentLine())
 	}
+	
 	switch parser.currentToken.DirectValue {
 	case lexer.SingleQuoteString, lexer.DoubleQuoteString, lexer.ByteString,
 		lexer.Integer, lexer.HexadecimalInteger, lexer.BinaryInteger, lexer.OctalInteger,
@@ -926,6 +927,7 @@ func (parser *Parser) parseBinaryExpression(precedence uint8) (ast.Node, *errors
 		if _, ok := rightHandSide.(ast.Expression); !ok {
 			return nil, newNonExpressionReceivedError(line, BinaryExpression)
 		}
+		
 		leftHandSide = &ast.BinaryExpression{
 			LeftHandSide:  leftHandSide.(ast.Expression),
 			Operator:      operator,
@@ -1028,6 +1030,9 @@ func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, *errors.Er
 }
 
 func (parser *Parser) parseParentheses() (ast.Expression, *errors.Error) {
+	/*
+		This should also parse generators
+	 */
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1042,6 +1047,9 @@ func (parser *Parser) parseParentheses() (ast.Expression, *errors.Error) {
 	}
 	if _, ok := firstExpression.(ast.Expression); !ok {
 		return nil, newNonExpressionReceivedError(line, ParenthesesExpression)
+	}
+	if parser.matchDirect(lexer.For) {
+		return parser.parseGeneratorExpression(firstExpression.(ast.Expression))
 	}
 	if parser.matchDirect(lexer.CloseParentheses) {
 		tokenizingError = parser.next()
@@ -1879,6 +1887,7 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 		return parser.parseLiteral()
 	case lexer.IdentifierKind:
 		identifier := parser.currentToken
+		
 		tokenizingError := parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
@@ -2037,45 +2046,6 @@ func (parser *Parser) parseIndexExpression(expression ast.Expression) (*ast.Inde
 		Source:     expression,
 		Index:      index.(ast.Expression),
 	}, nil
-	/*
-		if parser.matchDirect(lexer.Colon) {
-			tokenizationError = parser.next()
-			if tokenizationError != nil {
-				return nil, tokenizationError
-			}
-			line = parser.currentLine()
-			rightIndex, parsingError = parser.parseBinaryExpression(0)
-			if parsingError != nil {
-				return nil, parsingError
-			}
-			if _, ok := leftIndex.(ast.Expression); !ok {
-				return nil, newNonExpressionReceivedError(line, IndexExpression)
-			}
-		}
-		if !parser.matchDirect(lexer.CloseSquareBracket) {
-			return nil, newSyntaxError(parser.currentLine(), IndexExpression)
-		}
-		tokenizationError = parser.next()
-		if tokenizationError != nil {
-			return nil, tokenizationError
-		}
-		if rightIndex == nil {
-			return &ast.IndexExpression{
-				Source: expression,
-				Index: [2]ast.Expression{
-					leftIndex.(ast.Expression),
-					nil,
-				},
-			}, nil
-		}
-		return &ast.IndexExpression{
-			Source: expression,
-			Index: [2]ast.Expression{
-				leftIndex.(ast.Expression),
-				rightIndex.(ast.Expression),
-			},
-		}, nil
-	*/
 }
 
 func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLinerExpression, *errors.Error) {
@@ -2201,6 +2171,14 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (*ast.G
 	if _, ok := source.(ast.Expression); !ok {
 		return nil, newNonExpressionReceivedError(line, GeneratorExpression)
 	}
+	// Finally detect the closing parentheses
+	if !parser.matchDirect(lexer.CloseParentheses) {
+		return nil,  newSyntaxError(line, GeneratorExpression)
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
+	}
 	return &ast.GeneratorExpression{
 		Operation: operation,
 		Receivers: variables,
@@ -2245,8 +2223,6 @@ expressionPendingLoop:
 			parsedNode, parsingError = parser.parseMethodInvocationExpression(parsedNode.(ast.Expression))
 		case lexer.OpenSquareBracket: // Is indexing
 			parsedNode, parsingError = parser.parseIndexExpression(parsedNode.(ast.Expression))
-		case lexer.For: // Generators
-			parsedNode, parsingError = parser.parseGeneratorExpression(parsedNode.(ast.Expression))
 		case lexer.If: // One line If
 			parsedNode, parsingError = parser.parseIfOneLiner(parsedNode.(ast.Expression))
 		case lexer.Unless: // One line Unless
