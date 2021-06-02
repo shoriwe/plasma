@@ -590,6 +590,51 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *errors.Error {
 	return nil
 }
 
+func (p *Plasma) newIteratorOP(code Code) *errors.Error {
+	source := p.PopObject()
+	var iterSource IObject
+	var callError *errors.Error
+	if _, ok := source.(*Iterator); ok {
+		iterSource = source
+	} else {
+		iter, getError := source.Get(Iter)
+		if getError != nil {
+			return getError
+		}
+		if _, ok := iter.(*Function); !ok {
+			return errors.NewTypeError(iter.TypeName(), FunctionName)
+		}
+		iterSource, callError = CallFunction(iter.(*Function), p, source.SymbolTable())
+		if callError != nil {
+			return callError
+		}
+	}
+	generatorIterator := NewIterator(p.PeekSymbolTable())
+	generatorIterator.Set(Source, iterSource)
+
+	hasNextCodeLength, nextCodeLength := code.Value.([2]int)[0], code.Value.([2]int)[1]
+	var hasNextCode []Code
+	for i := 0; i < hasNextCodeLength; i++ {
+		hasNextCode = append(hasNextCode, p.PeekCode().Next())
+	}
+	var nextCode []Code
+	for i := 0; i < nextCodeLength; i++ {
+		nextCode = append(nextCode, p.PeekCode().Next())
+	}
+	generatorIterator.Set(Next,
+		NewFunction(generatorIterator.symbols,
+			NewPlasmaClassFunction(generatorIterator, 0, nextCode),
+		),
+	)
+	generatorIterator.Set(HasNext,
+		NewFunction(generatorIterator.symbols,
+			NewPlasmaClassFunction(generatorIterator, 0, hasNextCode),
+		),
+	)
+	p.PushObject(generatorIterator)
+	return nil
+}
+
 func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
 	for ; p.PeekCode().HasNext(); {
@@ -722,6 +767,8 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			executionError = p.unpackReceiversPeekOP(code)
 		case PopIterOP:
 			p.IterStack.Pop()
+		case NewIteratorOP:
+			executionError = p.newIteratorOP(code)
 		default:
 			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}

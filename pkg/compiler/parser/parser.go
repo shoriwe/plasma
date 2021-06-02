@@ -2197,7 +2197,7 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (*ast.G
 	}
 	return &ast.GeneratorExpression{
 		Operation: operation,
-		Variables: variables,
+		Receivers: variables,
 		Source:    source.(ast.Expression),
 	}, nil
 }

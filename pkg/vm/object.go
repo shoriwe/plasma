@@ -36,6 +36,10 @@ const (
 	IteratorName = "Iterator"
 	ModuleName   = "Module"
 	None         = "None"
+
+	Source            = "0xFFFFFF"
+	TemporalVariable1 = "0xAAAAAA"
+	TemporalVariable2 = "0xBBBBBB"
 )
 
 const (
@@ -227,7 +231,7 @@ func (p *PlasmaClassFunction) NumberOfArguments() int {
 	return p.numberOfArguments
 }
 
-func (p *PlasmaClassFunction) Call() (IObject, IObject, []Code) {
+func (p *PlasmaClassFunction) Call() (IObject, FunctionCallback, []Code) {
 	return p.Self, nil, p.Code
 }
 

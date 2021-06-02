@@ -118,7 +118,7 @@ func walker(node ast.Node) string {
 	case *ast.GeneratorExpression:
 		result := walker(node.(*ast.GeneratorExpression).Operation)
 		result += " for "
-		for index, variable := range node.(*ast.GeneratorExpression).Variables {
+		for index, variable := range node.(*ast.GeneratorExpression).Receivers {
 			if index != 0 {
 				result += ", "
 			}
@@ -320,11 +320,6 @@ func walker(node ast.Node) string {
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		for _, bodyNode := range node.(*ast.InterfaceStatement).AsyncMethodDefinitions {
-			nodeString := walker(bodyNode)
-			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-			result += "\n\t" + nodeString
-		}
 		return result + "\nend"
 	case *ast.FunctionDefinitionStatement:
 		result := "def " + walker(node.(*ast.FunctionDefinitionStatement).Name)
@@ -337,22 +332,6 @@ func walker(node ast.Node) string {
 		}
 		result += ")"
 		for _, bodyNode := range node.(*ast.FunctionDefinitionStatement).Body {
-			nodeString := walker(bodyNode)
-			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-			result += "\n\t" + nodeString
-		}
-		return result + "\nend"
-	case *ast.AsyncFunctionDefinitionStatement:
-		result := "async def " + walker(node.(*ast.AsyncFunctionDefinitionStatement).Name)
-		result += "("
-		for index, argument := range node.(*ast.AsyncFunctionDefinitionStatement).Arguments {
-			if index != 0 {
-				result += ", "
-			}
-			result += walker(argument)
-		}
-		result += ")"
-		for _, bodyNode := range node.(*ast.AsyncFunctionDefinitionStatement).Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString

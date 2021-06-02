@@ -21,6 +21,7 @@ const (
 	selectorExpressions = "selector-expressions"
 	lambdaExpressions   = "lambdas"
 	ifUnlessOneLiners   = "if_unless-one-liner"
+	generatorExpression = "generators"
 
 	statementSamples   = "statements"
 	assignStatement    = "assignment"
@@ -54,7 +55,7 @@ func test(t *testing.T, directory string) {
 			t.Fatal(openError)
 			return
 		}
-		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler))
+		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler), nil)
 		// content, _ := io.ReadAll(fileHandler)
 		// compiler := plasma.NewCompiler(reader.NewStringReader(string(content)))
 		code, compilingError := compiler.Compile()
@@ -105,6 +106,10 @@ func TestLambdaExpressions(t *testing.T) {
 
 func TestIfAndUnlessOneLinersExpressions(t *testing.T) {
 	test(t, filepath.Join(testsSamples, expressionSamples, ifUnlessOneLiners))
+}
+
+func TestGeneratorExpressions(t *testing.T) {
+	test(t, filepath.Join(testsSamples, expressionSamples, generatorExpression))
 }
 
 // Statement tests

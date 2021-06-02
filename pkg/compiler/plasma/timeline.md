@@ -1,4 +1,4 @@
-- [ ] Expressions
+- [X] Expressions
     - [X] Literals
         - [X] Integers
             - [X] Decimal
@@ -48,7 +48,7 @@
     - [X] One Line If
     - [X] One Line Unless
     - [X] Identifiers
-    - [ ] Generators
+    - [X] Generators
     - [X] Call
         - [X] Function
         - [X] Type
@@ -70,10 +70,10 @@
         - [X] Continue
         - [X] Break
         - [X] Redo
-    - [ ] For Loop
-        - [ ] Continue
-        - [ ] Break
-        - [ ] Redo
+    - [X] For Loop
+        - [X] Continue
+        - [X] Break
+        - [X] Redo
     - [X] If - Else - Elif
     - [X] Unless - Else - Elif
     - [ ] Switch

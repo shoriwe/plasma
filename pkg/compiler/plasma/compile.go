@@ -34,7 +34,7 @@ func (c *Compiler) pushInstruction(code vm.Code) {
 	c.length++
 }
 
-func (c *Compiler) extendInstructions(code []vm.Code) {
+func (c *Compiler) restoreInstructions(code []vm.Code) {
 	c.instructions = append(c.instructions, code...)
 }
 
@@ -275,12 +275,12 @@ func (c *Compiler) compileIfOneLinerExpression(ifOneLineExpression *ast.IfOneLin
 		elseResult = c.instructions
 		c.instructions = nil
 	}
-	c.extendInstructions(instructionsBackup)
-	c.extendInstructions(condition)
+	c.restoreInstructions(instructionsBackup)
+	c.restoreInstructions(condition)
 	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(result)+1))
-	c.extendInstructions(result)
+	c.restoreInstructions(result)
 	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
-	c.extendInstructions(elseResult)
+	c.restoreInstructions(elseResult)
 	return nil
 }
 
@@ -308,12 +308,12 @@ func (c *Compiler) compileUnlessOneLinerExpression(ifOneLineExpression *ast.Unle
 		elseResult = c.instructions
 		c.instructions = nil
 	}
-	c.extendInstructions(instructionsBackup)
-	c.extendInstructions(condition)
+	c.restoreInstructions(instructionsBackup)
+	c.restoreInstructions(condition)
 	c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(result)+1))
-	c.extendInstructions(result)
+	c.restoreInstructions(result)
 	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
-	c.extendInstructions(elseResult)
+	c.restoreInstructions(elseResult)
 	return nil
 }
 
@@ -376,8 +376,198 @@ func (c *Compiler) compileLambdaExpression(lambdaExpression *ast.LambdaExpressio
 		arguments = append(arguments, argument.Token.String)
 	}
 	c.pushInstruction(vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
-	c.extendInstructions(functionCode)
+	c.restoreInstructions(functionCode)
 	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
+	return nil
+}
+
+func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.GeneratorExpression) *errors.Error {
+	// Compile the HasNext function
+	hasNextCallCompilationError := c.compileMethodInvocationExpression(
+		&ast.MethodInvocationExpression{
+			Function: &ast.SelectorExpression{
+				X: &ast.SelectorExpression{
+					X: &ast.Identifier{
+						Token: &lexer.Token{
+							String: vm.Self,
+						},
+					},
+					Identifier: &ast.Identifier{
+						Token: &lexer.Token{
+							String: vm.Source,
+						},
+					},
+				},
+				Identifier: &ast.Identifier{
+					Token: &lexer.Token{
+						String: vm.HasNext,
+					},
+				},
+			},
+			Arguments: []ast.Expression{},
+		},
+	)
+	if hasNextCallCompilationError != nil {
+		return hasNextCallCompilationError
+	}
+	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
+	hasNextCode := c.instructions
+	c.instructions = nil
+
+	// Compile the Next function
+	/// First capture the next value
+	temporalVariable1AssignError := c.compileAssignStatement(
+		&ast.AssignStatement{
+			LeftHandSide: &ast.Identifier{
+				Token: &lexer.Token{
+					String: vm.TemporalVariable1,
+				},
+			},
+			AssignOperator: &lexer.Token{
+				String:      "=",
+				DirectValue: lexer.Assign,
+				Kind:        lexer.Assignment,
+			},
+			RightHandSide: &ast.MethodInvocationExpression{
+				Function: &ast.SelectorExpression{
+					X: &ast.SelectorExpression{
+						X: &ast.Identifier{
+							Token: &lexer.Token{
+								String: vm.Self,
+							},
+						},
+						Identifier: &ast.Identifier{
+							Token: &lexer.Token{
+								String: vm.Source,
+							},
+						},
+					},
+					Identifier: &ast.Identifier{
+						Token: &lexer.Token{
+							String: vm.Next,
+						},
+					},
+				},
+				Arguments: []ast.Expression{},
+			},
+		},
+	)
+	if temporalVariable1AssignError != nil {
+		return temporalVariable1AssignError
+	}
+	//// Then Unpack the received value
+	if len(generatorExpression.Receivers) == 1 {
+		receiverAssignError := c.compileAssignStatement(
+			&ast.AssignStatement{
+				LeftHandSide: &ast.Identifier{
+					Token: &lexer.Token{
+						String: generatorExpression.Receivers[0].Token.String,
+					},
+				},
+				AssignOperator: &lexer.Token{
+					String:      "=",
+					DirectValue: lexer.Assign,
+					Kind:        lexer.Assignment,
+				},
+				RightHandSide: &ast.Identifier{
+					Token: &lexer.Token{
+						String: vm.TemporalVariable1,
+					},
+				},
+			},
+		)
+		if receiverAssignError != nil {
+			return receiverAssignError
+		}
+	} else {
+		temporalVariableAssignError := c.compileAssignStatement(
+			&ast.AssignStatement{
+				LeftHandSide: &ast.Identifier{
+					Token: &lexer.Token{
+						String: vm.TemporalVariable2,
+					},
+				},
+				AssignOperator: &lexer.Token{
+					String:      "=",
+					DirectValue: lexer.Assign,
+					Kind:        lexer.Assignment,
+				},
+				RightHandSide: &ast.MethodInvocationExpression{
+					Function: &ast.SelectorExpression{
+						X: &ast.Identifier{
+							Token: &lexer.Token{
+								String: vm.TemporalVariable1,
+							},
+						},
+						Identifier: &ast.Identifier{
+							Token: &lexer.Token{
+								String: vm.Iter,
+							},
+						},
+					},
+					Arguments: []ast.Expression{},
+				},
+			},
+		)
+		if temporalVariableAssignError != nil {
+			return temporalVariableAssignError
+		}
+		for _, receiver := range generatorExpression.Receivers {
+			receiverAssignCompilationError := c.compileAssignStatement(
+				&ast.AssignStatement{
+					LeftHandSide: &ast.Identifier{
+						Token: &lexer.Token{
+							String: receiver.Token.String,
+						},
+					},
+					AssignOperator: &lexer.Token{
+						String:      "=",
+						DirectValue: lexer.Assign,
+						Kind:        lexer.Assignment,
+					},
+					RightHandSide: &ast.MethodInvocationExpression{
+						Function: &ast.SelectorExpression{
+							X: &ast.Identifier{
+								Token: &lexer.Token{
+									String: vm.TemporalVariable2,
+								},
+							},
+							Identifier: &ast.Identifier{
+								Token: &lexer.Token{
+									String: vm.Next,
+								},
+							},
+						},
+						Arguments: []ast.Expression{},
+					},
+				},
+			)
+			if receiverAssignCompilationError != nil {
+				return receiverAssignCompilationError
+			}
+		}
+	}
+	//// Finally Evaluate the operation and return its result
+	operationCompilationError := c.compileExpression(generatorExpression.Operation)
+	if operationCompilationError != nil {
+		return operationCompilationError
+	}
+	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
+	nextCode := c.instructions
+	c.instructions = nil
+
+	// Finally set everything together
+	sourceCompilationError := c.compileExpression(generatorExpression.Source)
+	if sourceCompilationError != nil {
+		return sourceCompilationError
+	}
+	c.pushInstruction(
+		vm.NewCode(vm.NewIteratorOP, errors.UnknownLine,
+			[2]int{len(hasNextCode), len(nextCode)},
+		),
+	)
+	c.restoreInstructions(hasNextCode)
+	c.restoreInstructions(nextCode)
 	return nil
 }
 
@@ -411,6 +601,8 @@ func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 		return c.compileIdentifierExpression(expression.(*ast.Identifier))
 	case *ast.LambdaExpression:
 		return c.compileLambdaExpression(expression.(*ast.LambdaExpression))
+	case *ast.GeneratorExpression:
+		return c.compileGeneratorExpression(expression.(*ast.GeneratorExpression))
 	}
 	return nil
 }
@@ -521,7 +713,7 @@ func (c *Compiler) compileFunctionDefinition(functionDefinition *ast.FunctionDef
 		arguments = append(arguments, argument.Token.String)
 	}
 	c.pushInstruction(vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
-	c.extendInstructions(functionCode)
+	c.restoreInstructions(functionCode)
 	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
 	c.pushInstruction(vm.NewCode(vm.AssignIdentifierOP, functionDefinition.Name.Token.Line, functionDefinition.Name.Token.String))
 	return nil
@@ -597,23 +789,23 @@ func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) *errors.Erro
 	bodyInstructionsLength := len(bodyInstructions)
 	successJump -= bodyInstructionsLength + 1
 	// Add the first condition
-	c.extendInstructions(instructionsBackup)
-	c.extendInstructions(condition)
+	c.restoreInstructions(instructionsBackup)
+	c.restoreInstructions(condition)
 	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
-	c.extendInstructions(bodyInstructions)
+	c.restoreInstructions(bodyInstructions)
 	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
 	// Add the elif conditions
 	for _, compiledElifBlock := range compiledElifBlocks {
-		c.extendInstructions(compiledElifBlock[0])
+		c.restoreInstructions(compiledElifBlock[0])
 		compiledElifBlockBodyLength := len(compiledElifBlock[1])
 		successJump -= len(compiledElifBlock[0]) + compiledElifBlockBodyLength + 2
 		c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
-		c.extendInstructions(compiledElifBlock[1])
+		c.restoreInstructions(compiledElifBlock[1])
 		c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
 	}
 	// Finally add the else condition
 	if elseBody != nil {
-		c.extendInstructions(elseBody)
+		c.restoreInstructions(elseBody)
 	}
 	return nil
 }
@@ -676,23 +868,23 @@ func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) 
 	bodyInstructionsLength := len(bodyInstructions)
 	successJump -= bodyInstructionsLength + 1
 	// Add the first condition
-	c.extendInstructions(instructionsBackup)
-	c.extendInstructions(condition)
+	c.restoreInstructions(instructionsBackup)
+	c.restoreInstructions(condition)
 	c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
-	c.extendInstructions(bodyInstructions)
+	c.restoreInstructions(bodyInstructions)
 	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
 	// Add the elif conditions
 	for _, compiledElifBlock := range compiledElifBlocks {
-		c.extendInstructions(compiledElifBlock[0])
+		c.restoreInstructions(compiledElifBlock[0])
 		compiledElifBlockBodyLength := len(compiledElifBlock[1])
 		successJump -= len(compiledElifBlock[0]) + compiledElifBlockBodyLength + 2
 		c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
-		c.extendInstructions(compiledElifBlock[1])
+		c.restoreInstructions(compiledElifBlock[1])
 		c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
 	}
 	// Finally add the else condition
 	if elseBody != nil {
-		c.extendInstructions(elseBody)
+		c.restoreInstructions(elseBody)
 	}
 	return nil
 }
@@ -735,9 +927,9 @@ func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatemen
 			doWhileBody[index].Value = completeJump - index - 1
 		}
 	}
-	c.extendInstructions(instructionsBackup)
-	c.extendInstructions(doWhileBody)
-	c.extendInstructions(condition)
+	c.restoreInstructions(instructionsBackup)
+	c.restoreInstructions(doWhileBody)
+	c.restoreInstructions(condition)
 	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, 1))
 	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump))
 	return nil
@@ -801,10 +993,10 @@ func (c *Compiler) compileWhileLoopStatement(whileStatement *ast.WhileLoopStatem
 			whileBody[index].Value = -index - 2 - len(condition)
 		}
 	}
-	c.extendInstructions(instructionsBackup)
-	c.extendInstructions(condition)
+	c.restoreInstructions(instructionsBackup)
+	c.restoreInstructions(condition)
 	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(whileBody)+1))
-	c.extendInstructions(whileBody)
+	c.restoreInstructions(whileBody)
 	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
 	return nil
 }
@@ -847,10 +1039,10 @@ func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) 
 			untilBody[index].Value = -index - 2 - len(condition)
 		}
 	}
-	c.extendInstructions(instructionsBackup)
-	c.extendInstructions(condition)
+	c.restoreInstructions(instructionsBackup)
+	c.restoreInstructions(condition)
 	c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(untilBody)+1))
-	c.extendInstructions(untilBody)
+	c.restoreInstructions(untilBody)
 	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
 	return nil
 }
@@ -893,7 +1085,7 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) *
 			forLoopBody[index].Value = - index - 4
 		}
 	}
-	c.extendInstructions(instructionsBackup)
+	c.restoreInstructions(instructionsBackup)
 	var receivers []string
 	for _, receiver := range forStatement.Receivers {
 		receivers = append(receivers, receiver.Token.String)
@@ -901,7 +1093,7 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) *
 	c.pushInstruction(vm.NewCode(vm.HasNextOP, errors.UnknownLine, 4+len(forLoopBody))) // Check if the iterable has a next value, if not exit the loop
 	c.pushInstruction(vm.NewCode(vm.UnpackReceiversPopOP, errors.UnknownLine, nil))
 	c.pushInstruction(vm.NewCode(vm.UnpackReceiversPeekOP, errors.UnknownLine, receivers))
-	c.extendInstructions(forLoopBody)
+	c.restoreInstructions(forLoopBody)
 	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -4-len(forLoopBody)))
 	c.pushInstruction(vm.NewCode(vm.PopIterOP, errors.UnknownLine, nil))
 	return nil
@@ -992,6 +1184,7 @@ func (c *Compiler) CompileToArray() ([]vm.Code, *errors.Error) {
 		}
 		fmt.Println()
 	*/
+
 	return c.instructions, nil
 }
 

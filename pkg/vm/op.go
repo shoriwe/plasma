@@ -70,4 +70,5 @@ const (
 	UnpackReceiversPopOP
 	UnpackReceiversPeekOP
 	PopIterOP
+	NewIteratorOP
 )
