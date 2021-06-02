@@ -585,6 +585,9 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *errors.Error {
 	} else {
 		lastValue = p.IterStack.Peek().LastValue
 	}
+	if len(receivers) != lastValue.GetLength() {
+		return errors.NewInvalidNumberOfArguments(lastValue.GetLength(), len(receivers))
+	}
 	for i, receiver := range receivers {
 		p.PeekSymbolTable().Set(receiver, lastValue.GetContent()[i])
 	}
