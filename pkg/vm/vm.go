@@ -6,7 +6,8 @@ import (
 )
 
 type VirtualMachine interface {
-	Initialize([]Code) *errors.Error
+	Initialize([]Code)
+	InitializeByteCode(*Bytecode)
 	Execute() (IObject, *errors.Error)
 	MasterSymbolTable() *SymbolTable
 	PushObject(IObject)
@@ -20,7 +21,6 @@ type VirtualMachine interface {
 	PopCode() *Bytecode
 	HashString(string) (int64, *errors.Error)
 	HashBytes([]byte) (int64, *errors.Error)
-	InitializeByteCode(*Bytecode)
 	Seed() uint64
 	StdIn() io.Reader
 	StdOut() io.Writer

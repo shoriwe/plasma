@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+const (
+	PopRawExpressions = iota
+)
+
 /*
 	Compile to the Plasma stack VM
 */
@@ -21,6 +25,7 @@ type Compiler struct {
 	instructions []vm.Code
 	index        int
 	length       int
+	options      map[uint8]uint8
 }
 
 func (c *Compiler) pushInstruction(code vm.Code) {
@@ -951,7 +956,11 @@ func (c *Compiler) compileBody(body []ast.Node) *errors.Error {
 			return compileError
 		}
 		if _, ok := node.(ast.Expression); ok {
-			c.pushInstruction(vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
+			if _, ok = c.options[PopRawExpressions]; ok {
+				if c.options[PopRawExpressions] == PopRawExpressions {
+					c.pushInstruction(vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
+				}
+			}
 		}
 	}
 	return nil
@@ -994,11 +1003,15 @@ func (c *Compiler) Compile() (*vm.Bytecode, *errors.Error) {
 	return vm.NewBytecodeFromArray(c.instructions), nil
 }
 
-func NewCompiler(codeReader reader.Reader, ) *Compiler {
+func NewCompiler(
+	codeReader reader.Reader,
+	options map[uint8]uint8,
+) *Compiler {
 	return &Compiler{
 		parser:       parser.NewParser(lexer.NewLexer(codeReader)),
 		instructions: nil,
 		index:        -1,
 		length:       0,
+		options:      options,
 	}
 }

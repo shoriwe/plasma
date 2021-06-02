@@ -1,6 +1,7 @@
 package reader
 
 import (
+	"bytes"
 	"io"
 	"os"
 )
@@ -52,5 +53,9 @@ func NewStringReaderFromFile(file *os.File) *StringReader {
 	if readingError != nil {
 		panic(readingError)
 	}
+	if bytes.Equal(content[:3], []byte{0xef, 0xbb, 0xbf}) {
+		content = content[3:]
+	}
+	content = bytes.ReplaceAll(content, []byte{'\r', '\n'}, []byte{'\n'})
 	return NewStringReader(string(content))
 }

@@ -44,12 +44,8 @@ func (p *Plasma) PopSymbolTable() *SymbolTable {
 	return p.Context.Pop()
 }
 
-func (p *Plasma) Initialize(code []Code) *errors.Error {
-	p.PushCode(NewBytecodeFromArray(code))
-	p.MemoryStack.Clear()
-	p.Context.Clear()
-	p.Context.Push(SetDefaultSymbolTable())
-	return nil
+func (p *Plasma) Initialize(code []Code) {
+	p.InitializeByteCode(NewBytecodeFromArray(code))
 }
 
 func (p *Plasma) PeekSymbolTable() *SymbolTable {
