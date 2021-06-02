@@ -2176,6 +2176,12 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (*ast.G
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
+		if parser.matchDirect(lexer.Comma) {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+		}
 	}
 	if numberOfVariables == 0 {
 		return nil, newSyntaxError(parser.currentLine(), GeneratorExpression)

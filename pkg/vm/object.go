@@ -3406,18 +3406,16 @@ func ArrayIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		NewFunction(iterator.SymbolTable(),
 			NewBuiltInClassFunction(iterator,
 				0,
-				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
-					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+				func(funcVm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := funcVm.PeekSymbolTable().GetSelf(Self)
 					if funcGetError != nil {
 						return nil, funcGetError
 					}
 					if funcSelf.GetLength() != self.GetLength() {
 						funcSelf.SetLength(self.GetLength())
 					}
-					if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
-						return NewBool(vm.PeekSymbolTable(), true), nil
-					}
-					return NewBool(vm.PeekSymbolTable(), false), nil
+					fmt.Println(funcSelf.GetContent(), funcSelf.GetInteger64(), funcSelf.GetLength())
+					return NewBool(funcVm.PeekSymbolTable(), int(funcSelf.GetInteger64()) < funcSelf.GetLength()), nil
 				},
 			),
 		),
@@ -3426,8 +3424,8 @@ func ArrayIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		NewFunction(iterator.SymbolTable(),
 			NewBuiltInClassFunction(iterator,
 				0,
-				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
-					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+				func(funcVm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := funcVm.PeekSymbolTable().GetSelf(Self)
 					if funcGetError != nil {
 						return nil, funcGetError
 					}
@@ -3870,15 +3868,12 @@ func TupleIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		NewFunction(iterator.SymbolTable(),
 			NewBuiltInClassFunction(iterator,
 				0,
-				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
-					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+				func(funcVm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := funcVm.PeekSymbolTable().GetSelf(Self)
 					if funcGetError != nil {
 						return nil, funcGetError
 					}
-					if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
-						return NewBool(vm.PeekSymbolTable(), true), nil
-					}
-					return NewBool(vm.PeekSymbolTable(), false), nil
+					return NewBool(funcVm.PeekSymbolTable(), int(funcSelf.GetInteger64()) < funcSelf.GetLength()), nil
 				},
 			),
 		),
@@ -3887,11 +3882,12 @@ func TupleIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		NewFunction(iterator.SymbolTable(),
 			NewBuiltInClassFunction(iterator,
 				0,
-				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
-					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+				func(funcVm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := funcVm.PeekSymbolTable().GetSelf(Self)
 					if funcGetError != nil {
 						return nil, funcGetError
 					}
+					fmt.Println(funcSelf.GetInteger64(), funcSelf.GetLength())
 					value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
 					funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
 					return value, nil
@@ -4479,15 +4475,12 @@ func HashTableIter(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
 		NewFunction(iterator.SymbolTable(),
 			NewBuiltInClassFunction(iterator,
 				0,
-				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
-					funcSelf, funcGetError := vm.PeekSymbolTable().GetSelf(Self)
+				func(funcVm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					funcSelf, funcGetError := funcVm.PeekSymbolTable().GetSelf(Self)
 					if funcGetError != nil {
 						return nil, funcGetError
 					}
-					if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
-						return NewBool(vm.PeekSymbolTable(), true), nil
-					}
-					return NewBool(vm.PeekSymbolTable(), false), nil
+					return NewBool(vm.PeekSymbolTable(), int(funcSelf.GetInteger64()) < funcSelf.GetLength()), nil
 				},
 			),
 		),

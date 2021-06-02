@@ -55,7 +55,11 @@ func test(t *testing.T, directory string) {
 			t.Fatal(openError)
 			return
 		}
-		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler), nil)
+		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
+			map[uint8]uint8{
+				// plasma.DEBUG: plasma.DEBUG,
+			},
+		)
 		// content, _ := io.ReadAll(fileHandler)
 		// compiler := plasma.NewCompiler(reader.NewStringReader(string(content)))
 		code, compilingError := compiler.Compile()

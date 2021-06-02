@@ -1,6 +1,7 @@
 package plasma
 
 import (
+	"fmt"
 	"github.com/shoriwe/gruby/pkg/cleanup"
 	"github.com/shoriwe/gruby/pkg/compiler/ast"
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
@@ -14,6 +15,7 @@ import (
 
 const (
 	PopRawExpressions = iota
+	DEBUG
 )
 
 /*
@@ -382,6 +384,8 @@ func (c *Compiler) compileLambdaExpression(lambdaExpression *ast.LambdaExpressio
 }
 
 func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.GeneratorExpression) *errors.Error {
+	instructionsBackup := c.instructions
+	c.instructions = nil
 	// Compile the HasNext function
 	hasNextCallCompilationError := c.compileMethodInvocationExpression(
 		&ast.MethodInvocationExpression{
@@ -557,6 +561,7 @@ func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.Generator
 	c.instructions = nil
 
 	// Finally set everything together
+	c.restoreInstructions(instructionsBackup)
 	sourceCompilationError := c.compileExpression(generatorExpression.Source)
 	if sourceCompilationError != nil {
 		return sourceCompilationError
@@ -1090,7 +1095,7 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) *
 	for _, receiver := range forStatement.Receivers {
 		receivers = append(receivers, receiver.Token.String)
 	}
-	c.pushInstruction(vm.NewCode(vm.HasNextOP, errors.UnknownLine, 4+len(forLoopBody))) // Check if the iterable has a next value, if not exit the loop
+	c.pushInstruction(vm.NewCode(vm.HasNextOP, errors.UnknownLine, 3+len(forLoopBody))) // Check if the iterable has a next value, if not exit the loop
 	c.pushInstruction(vm.NewCode(vm.UnpackReceiversPopOP, errors.UnknownLine, nil))
 	c.pushInstruction(vm.NewCode(vm.UnpackReceiversPeekOP, errors.UnknownLine, receivers))
 	c.restoreInstructions(forLoopBody)
@@ -1149,9 +1154,7 @@ func (c *Compiler) compileBody(body []ast.Node) *errors.Error {
 		}
 		if _, ok := node.(ast.Expression); ok {
 			if _, ok = c.options[PopRawExpressions]; ok {
-				if c.options[PopRawExpressions] == PopRawExpressions {
-					c.pushInstruction(vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
-				}
+				c.pushInstruction(vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
 			}
 		}
 	}
@@ -1178,12 +1181,12 @@ func (c *Compiler) CompileToArray() ([]vm.Code, *errors.Error) {
 	if compileError != nil {
 		return nil, compileError
 	}
-	/*
+	if _, ok := c.options[DEBUG]; ok {
 		for _, i := range c.instructions {
 			fmt.Println(i.Instruction, i.Value)
 		}
 		fmt.Println()
-	*/
+	}
 
 	return c.instructions, nil
 }
