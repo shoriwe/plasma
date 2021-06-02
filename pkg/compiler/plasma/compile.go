@@ -850,6 +850,58 @@ func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) 
 	return nil
 }
 
+func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) *errors.Error {
+	sourceCompilationError := c.compileExpression(forStatement.Source)
+	if sourceCompilationError != nil {
+		return sourceCompilationError
+	}
+	c.pushInstruction(vm.NewCode(vm.SetupForLoopOP, errors.UnknownLine, nil)) // Push the iterable to a special stack
+
+	instructionsBackup := c.instructions
+	c.instructions = nil
+
+	// Compile for loop body
+	bodyCompilationError := c.compileBody(forStatement.Body)
+	if bodyCompilationError != nil {
+		return bodyCompilationError
+	}
+	forLoopBody := c.instructions
+	c.instructions = nil
+	// Update values of loop jumps
+	for index, instructions := range forLoopBody {
+		if instructions.Instruction.OpCode == vm.RedoOP {
+			if instructions.Value != nil {
+				continue
+			}
+			forLoopBody[index].Value = - index - 2
+		}
+		if instructions.Instruction.OpCode == vm.BreakOP {
+			if instructions.Value != nil {
+				continue
+			}
+			forLoopBody[index].Value = len(forLoopBody) - index
+		}
+		if instructions.Instruction.OpCode == vm.ContinueOP {
+			if instructions.Value != nil {
+				continue
+			}
+			forLoopBody[index].Value = - index - 4
+		}
+	}
+	c.extendInstructions(instructionsBackup)
+	var receivers []string
+	for _, receiver := range forStatement.Receivers {
+		receivers = append(receivers, receiver.Token.String)
+	}
+	c.pushInstruction(vm.NewCode(vm.HasNextOP, errors.UnknownLine, 4+len(forLoopBody))) // Check if the iterable has a next value, if not exit the loop
+	c.pushInstruction(vm.NewCode(vm.UnpackReceiversPopOP, errors.UnknownLine, nil))
+	c.pushInstruction(vm.NewCode(vm.UnpackReceiversPeekOP, errors.UnknownLine, receivers))
+	c.extendInstructions(forLoopBody)
+	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -4-len(forLoopBody)))
+	c.pushInstruction(vm.NewCode(vm.PopIterOP, errors.UnknownLine, nil))
+	return nil
+}
+
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	switch statement.(type) {
 	case *ast.AssignStatement:
@@ -876,6 +928,8 @@ func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 		return c.compileWhileLoopStatement(statement.(*ast.WhileLoopStatement))
 	case *ast.UntilLoopStatement:
 		return c.compileUntilLoopStatement(statement.(*ast.UntilLoopStatement))
+	case *ast.ForLoopStatement:
+		return c.compileForLoopStatement(statement.(*ast.ForLoopStatement))
 	}
 	return nil
 }

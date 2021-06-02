@@ -10,10 +10,11 @@ import (
 )
 
 const (
-	polySize = 4294967295
+	polySize = 0xffffffff
 )
 
 type Plasma struct {
+	IterStack                *IterStack
 	programMasterSymbolTable *SymbolTable
 	Code                     *CodeStack
 	MemoryStack              *ObjectStack
@@ -419,6 +420,177 @@ func (p *Plasma) continueOP(code Code) *errors.Error {
 	return nil
 }
 
+func (p *Plasma) setupForLoopOP() *errors.Error {
+	// First check if it is a iterator
+	value := p.PopObject()
+	if _, ok := value.(*Iterator); ok {
+		p.IterStack.Push(&IterEntry{
+			Iterable:  value,
+			LastValue: nil,
+		})
+		return nil
+	}
+	// Then check if the type implements iterator
+	_, getError := value.Get(HasNext)
+	if getError == nil {
+		_, getError = value.Get(Next)
+		if getError == nil {
+			p.IterStack.Push(&IterEntry{
+				Iterable:  value,
+				LastValue: nil,
+			})
+			return nil
+		}
+	}
+	// Finally transform it to iterable
+	valueIterFunc, getError := value.Get(Iter)
+	if getError != nil {
+		return getError
+	}
+	if _, ok := valueIterFunc.(*Function); !ok {
+		return errors.NewTypeError(valueIterFunc.TypeName(), FunctionName)
+	}
+	valueIter, callError := CallFunction(valueIterFunc.(*Function), p, value.SymbolTable())
+	if callError != nil {
+		return callError
+	}
+	p.IterStack.Push(&IterEntry{
+		Iterable:  valueIter,
+		LastValue: nil,
+	})
+	return nil
+}
+
+func (p *Plasma) hasNextOP(code Code) *errors.Error {
+	hasNext, getError := p.IterStack.Peek().Iterable.Get("HasNext")
+	if getError != nil {
+		return getError
+	}
+	if _, ok := hasNext.(*Function); !ok {
+		return errors.NewTypeError(hasNext.TypeName(), FunctionName)
+	}
+	result, callError := CallFunction(hasNext.(*Function), p, p.IterStack.Peek().Iterable.SymbolTable())
+	if callError != nil {
+		return callError
+	}
+	if _, ok := result.(*Bool); !ok {
+		var resultToBool IObject
+		resultToBool, getError = hasNext.Get(ToBool)
+		if getError != nil {
+			return getError
+		}
+		if _, ok = resultToBool.(*Function); !ok {
+			return errors.NewTypeError(resultToBool.TypeName(), FunctionName)
+		}
+		var resultBool IObject
+		resultBool, callError = CallFunction(resultToBool.(*Function), p, hasNext.SymbolTable())
+		if callError != nil {
+			return callError
+		}
+		if _, ok = resultBool.(*Bool); !ok {
+			return errors.NewTypeError(resultBool.TypeName(), BoolName)
+		}
+		result = resultBool
+	}
+	if !result.GetBool() {
+		p.PeekCode().index += code.Value.(int)
+	}
+	return nil
+}
+
+func (p *Plasma) unpackReceiversPopOP() *errors.Error {
+	next, getError := p.IterStack.Peek().Iterable.Get(Next)
+	if getError != nil {
+		return getError
+	}
+	if _, ok := next.(*Function); !ok {
+		return errors.NewTypeError(next.TypeName(), FunctionName)
+	}
+	nextValue, callError := CallFunction(next.(*Function), p, p.IterStack.Peek().Iterable.SymbolTable())
+	if callError != nil {
+		return callError
+	}
+	p.IterStack.Peek().LastValue = nextValue
+	return nil
+}
+
+func (p *Plasma) unpackReceiversPeekOP(code Code) *errors.Error {
+	receivers := code.Value.([]string)
+	if len(receivers) == 1 {
+		p.PeekSymbolTable().Set(receivers[0], p.IterStack.Peek().LastValue)
+		return nil
+	}
+	// First try to unpack iterators
+	hasNext, getError := p.IterStack.Peek().LastValue.Get(HasNext)
+	if _, ok := hasNext.(*Function); getError == nil && ok {
+		var next IObject
+		next, getError = p.IterStack.Peek().LastValue.Get(Next)
+		if _, ok = next.(*Function); getError == nil && ok {
+			for _, receiver := range receivers {
+				// First check if there is next value
+				hasNextResult, callError := CallFunction(hasNext.(*Function), p, p.IterStack.Peek().LastValue.SymbolTable())
+				if callError != nil {
+					return callError
+				}
+				var hasNextResultBool IObject
+				if _, ok = hasNextResult.(*Bool); !ok {
+					var hasNextResultToBool IObject
+					hasNextResultToBool, getError = hasNextResult.Get(ToBool)
+					if getError != nil {
+						return getError
+					}
+					if _, ok = hasNextResultToBool.(*Function); !ok {
+						return errors.NewTypeError(hasNextResultToBool.TypeName(), FunctionName)
+					}
+					hasNextResultBool, callError = CallFunction(hasNextResultToBool.(*Function), p, hasNextResult.SymbolTable())
+					if callError != nil {
+						return callError
+					}
+					if _, ok = hasNextResultBool.(*Bool); !ok {
+						return errors.NewTypeError(hasNextResultBool.TypeName(), BoolName)
+					}
+					hasNextResult = hasNextResultBool
+				}
+				if hasNextResult.GetBool() {
+					var value IObject
+					value, callError = CallFunction(next.(*Function), p, p.IterStack.Peek().LastValue.SymbolTable())
+					if callError != nil {
+						return callError
+					}
+					p.PeekSymbolTable().Set(receiver, value)
+				}
+			}
+			return nil
+		}
+	}
+	// Then try to unpack index-ables
+	var lastValue IObject
+	if _, ok := p.IterStack.Peek().LastValue.(*Tuple); !ok {
+		var toTuple IObject
+		toTuple, getError = p.IterStack.Peek().LastValue.Get(ToTuple)
+		if getError != nil {
+			return getError
+		}
+		if _, ok = toTuple.(*Function); !ok {
+			return errors.NewTypeError(toTuple.TypeName(), FunctionName)
+		}
+		var callError *errors.Error
+		lastValue, callError = CallFunction(toTuple.(*Function), p, p.IterStack.Peek().LastValue.SymbolTable())
+		if callError != nil {
+			return callError
+		}
+		if _, ok = lastValue.(*Tuple); !ok {
+			return errors.NewTypeError(lastValue.TypeName(), TupleName)
+		}
+	} else {
+		lastValue = p.IterStack.Peek().LastValue
+	}
+	for i, receiver := range receivers {
+		p.PeekSymbolTable().Set(receiver, lastValue.GetContent()[i])
+	}
+	return nil
+}
+
 func (p *Plasma) Execute() (IObject, *errors.Error) {
 	var executionError *errors.Error
 	for ; p.PeekCode().HasNext(); {
@@ -541,6 +713,16 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			p.MemoryStack.Pop()
 		case NOP:
 			break
+		case SetupForLoopOP:
+			executionError = p.setupForLoopOP()
+		case HasNextOP:
+			executionError = p.hasNextOP(code)
+		case UnpackReceiversPopOP:
+			executionError = p.unpackReceiversPopOP()
+		case UnpackReceiversPeekOP:
+			executionError = p.unpackReceiversPeekOP(code)
+		case PopIterOP:
+			p.IterStack.Pop()
 		default:
 			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
 		}
@@ -620,6 +802,7 @@ func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 		panic(randError)
 	}
 	return &Plasma{
+		IterStack:   NewIterStack(),
 		Code:        NewCodeStack(),
 		MemoryStack: NewObjectStack(),
 		Context:     NewSymbolStack(),

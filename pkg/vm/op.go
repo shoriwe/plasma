@@ -65,4 +65,9 @@ const (
 	JumpOP
 	PopOP
 	NOP
+	SetupForLoopOP
+	HasNextOP
+	UnpackReceiversPopOP
+	UnpackReceiversPeekOP
+	PopIterOP
 )

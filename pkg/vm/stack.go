@@ -12,6 +12,43 @@ func NewStackNode(value interface{}, next *stackNode) *stackNode {
 	}
 }
 
+type IterEntry struct {
+	Iterable  IObject
+	LastValue IObject // Used when redo is called
+}
+
+type IterStack struct {
+	head *stackNode
+}
+
+func (stack *IterStack) Pop() *IterEntry {
+	result := stack.head.value
+	stack.head = stack.head.next
+	return result.(*IterEntry)
+}
+
+func (stack *IterStack) Peek() *IterEntry {
+	return stack.head.value.(*IterEntry)
+}
+
+func (stack *IterStack) Push(iter *IterEntry) {
+	stack.head = NewStackNode(iter, stack.head)
+}
+
+func (stack *IterStack) HasNext() bool {
+	return stack.head != nil
+}
+
+func (stack *IterStack) Clear() {
+	stack.head = nil
+}
+
+func NewIterStack() *IterStack {
+	return &IterStack{
+		head: nil,
+	}
+}
+
 type CodeStack struct {
 	head *stackNode
 }
