@@ -4579,6 +4579,28 @@ func NewType(typeName string, parent *SymbolTable, subclasses []*Type, construct
 	return result
 }
 
+func NoneInitialize(_ VirtualMachine, object IObject) *errors.Error {
+	object.Set(ToString,
+		NewFunction(object.SymbolTable(),
+			NewBuiltInClassFunction(object, 0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					return NewString(vm.PeekSymbolTable(), "None"), nil
+				},
+			),
+		),
+	)
+	object.Set(ToBool,
+		NewFunction(object.SymbolTable(),
+			NewBuiltInClassFunction(object, 0,
+				func(vm VirtualMachine, _ ...IObject) (IObject, *errors.Error) {
+					return NewBool(vm.PeekSymbolTable(), false), nil
+				},
+			),
+		),
+	)
+	return nil
+}
+
 /*
 	SetDefaultSymbolTable
 	// Types
@@ -4592,8 +4614,6 @@ func NewType(typeName string, parent *SymbolTable, subclasses []*Type, construct
 	Integer    - (Done)
 	Array      - (Done)
 	Tuple      - (Done)
-	// Names
-	None 	   - (Done) // ToDo: Every none object is independent of others
 	// Functions
 	Hash       - ()
 	Id         - ()
@@ -4612,6 +4632,8 @@ func NewType(typeName string, parent *SymbolTable, subclasses []*Type, construct
 */
 func SetDefaultSymbolTable() *SymbolTable {
 	symbolTable := NewSymbolTable(nil)
+	noneObject := NewObject(NoneName, nil, symbolTable)
+
 	// Types
 	type_ := &Type{
 		Object:      NewObject(ObjectName, nil, symbolTable),
@@ -4628,6 +4650,11 @@ func SetDefaultSymbolTable() *SymbolTable {
 		),
 	)
 	symbolTable.Set(TypeName, type_)
+	symbolTable.Set(NoneName,
+		NewType(NoneName, symbolTable, []*Type{type_},
+			NewBuiltInConstructor(NoneInitialize),
+		),
+	)
 	symbolTable.Set(BoolName,
 		NewType(BoolName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(BoolInitialize),
@@ -4682,7 +4709,7 @@ func SetDefaultSymbolTable() *SymbolTable {
 	)
 	// Names
 	symbolTable.Set(None,
-		NewObject(NoneName, nil, symbolTable),
+		noneObject,
 	)
 	// Functions
 	symbolTable.Set("print",
