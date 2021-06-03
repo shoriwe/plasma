@@ -1104,6 +1104,48 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) *
 	return nil
 }
 
+func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) *errors.Error {
+	panic("Will only work with a better error system")
+	/*
+		instructionsBackup := c.instructions
+		c.instructions = nil
+
+		// Compile the try body
+		bodyCompilationError := c.compileBody(tryStatement.Body)
+		if bodyCompilationError != nil {
+			return bodyCompilationError
+		}
+		tryBody := c.instructions
+		c.instructions = nil
+
+		// Compile except blocks
+
+		var exceptBlocks struct {
+			length      int
+			captureName string
+			code        []vm.Code
+		}
+		for _, exceptBlock := range tryStatement.ExceptBlocks {
+			c.instructions = nil
+			targetCompilationError := c.compileExpression(
+				&ast.TupleExpression{
+					Values: exceptBlock.Targets,
+				},
+			)
+			if targetCompilationError != nil {
+				return targetCompilationError
+			}
+			c.pushInstruction(vm.NewCode())
+			// Compile Except body
+			c.instructions = nil
+			exceptCompilationError := c.compileBody(exceptBlock.Body)
+			if exceptCompilationError != nil {
+				return exceptCompilationError
+			}
+		}
+	*/
+}
+
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	switch statement.(type) {
 	case *ast.AssignStatement:
@@ -1132,6 +1174,8 @@ func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 		return c.compileUntilLoopStatement(statement.(*ast.UntilLoopStatement))
 	case *ast.ForLoopStatement:
 		return c.compileForLoopStatement(statement.(*ast.ForLoopStatement))
+	case *ast.TryStatement:
+		return c.compileTryStatement(statement.(*ast.TryStatement))
 	}
 	return nil
 }

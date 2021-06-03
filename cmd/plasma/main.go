@@ -69,7 +69,6 @@ func setupVm() {
 		mode = Program
 	}
 	virtualMachine = vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
-	vm.SetDefaultSymbolTable()
 	// Setup from here the other flags
 }
 

@@ -453,7 +453,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, *errors.Error)
 			} else if parser.matchDirect(lexer.CloseParentheses) {
 				break
 			} else {
-				
+
 				return nil, newSyntaxError(parser.currentLine(), ClassStatement)
 			}
 		}
@@ -874,7 +874,7 @@ func (parser *Parser) parseLiteral() (ast.Expression, *errors.Error) {
 		!parser.matchKind(lexer.NoneType) {
 		return nil, newInvalidKindOfTokenError(parser.currentLine())
 	}
-	
+
 	switch parser.currentToken.DirectValue {
 	case lexer.SingleQuoteString, lexer.DoubleQuoteString, lexer.ByteString,
 		lexer.Integer, lexer.HexadecimalInteger, lexer.BinaryInteger, lexer.OctalInteger,
@@ -927,7 +927,7 @@ func (parser *Parser) parseBinaryExpression(precedence uint8) (ast.Node, *errors
 		if _, ok := rightHandSide.(ast.Expression); !ok {
 			return nil, newNonExpressionReceivedError(line, BinaryExpression)
 		}
-		
+
 		leftHandSide = &ast.BinaryExpression{
 			LeftHandSide:  leftHandSide.(ast.Expression),
 			Operator:      operator,
@@ -1032,7 +1032,7 @@ func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, *errors.Er
 func (parser *Parser) parseParentheses() (ast.Expression, *errors.Error) {
 	/*
 		This should also parse generators
-	 */
+	*/
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1887,7 +1887,7 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 		return parser.parseLiteral()
 	case lexer.IdentifierKind:
 		identifier := parser.currentToken
-		
+
 		tokenizingError := parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
@@ -2173,7 +2173,7 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (*ast.G
 	}
 	// Finally detect the closing parentheses
 	if !parser.matchDirect(lexer.CloseParentheses) {
-		return nil,  newSyntaxError(line, GeneratorExpression)
+		return nil, newSyntaxError(line, GeneratorExpression)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
