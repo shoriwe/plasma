@@ -2,7 +2,7 @@ package plasma
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/cleanup"
+	"github.com/shoriwe/gruby/pkg/tools"
 	"github.com/shoriwe/gruby/pkg/compiler/ast"
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
 	"github.com/shoriwe/gruby/pkg/compiler/parser"
@@ -94,7 +94,7 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) *errors.E
 	case lexer.Float, lexer.ScientificFloat:
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
-		number, parsingError := cleanup.ParseFloat(numberString)
+		number, parsingError := tools.ParseFloat(numberString)
 		if parsingError != nil {
 			return errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
 		}
@@ -105,7 +105,7 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) *errors.E
 				vm.NewStringOP, literal.Token.Line,
 
 				string(
-					cleanup.ReplaceEscaped(
+					tools.ReplaceEscaped(
 						[]rune(literal.Token.String[1:len(literal.Token.String)-1])),
 				),
 			),
@@ -115,7 +115,7 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) *errors.E
 			vm.NewCode(vm.NewBytesOP, literal.Token.Line,
 				[]byte(
 					string(
-						cleanup.ReplaceEscaped(
+						tools.ReplaceEscaped(
 							[]rune(literal.Token.String[2:len(literal.Token.String)-1]),
 						),
 					),

@@ -2,8 +2,8 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/cleanup"
 	"github.com/shoriwe/gruby/pkg/errors"
+	"github.com/shoriwe/gruby/pkg/tools"
 	"strings"
 )
 
@@ -58,7 +58,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 					}
 					return p.NewString(
 						p.PeekSymbolTable(),
-						Repeat(self.GetString(), right.GetInteger64()),
+						tools.Repeat(self.GetString(), right.GetInteger64()),
 					), nil
 				},
 			),
@@ -74,7 +74,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 					}
 					return p.NewString(
 						p.PeekSymbolTable(),
-						Repeat(self.GetString(), left.GetInteger64()),
+						tools.Repeat(self.GetString(), left.GetInteger64()),
 					), nil
 				},
 			),
@@ -154,7 +154,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
 					indexObject := arguments[0]
 					if _, ok := indexObject.(*Integer); ok {
-						index, getIndexError := CalcIndex(indexObject, self.GetLength())
+						index, getIndexError := tools.CalcIndex(indexObject.GetInteger64(), self.GetLength())
 						if getIndexError != nil {
 							return nil, getIndexError
 						}
@@ -163,11 +163,11 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 						if len(indexObject.GetContent()) != 2 {
 							return nil, errors.NewInvalidNumberOfArguments(len(indexObject.GetContent()), 2)
 						}
-						startIndex, calcError := CalcIndex(indexObject.GetContent()[0], self.GetLength())
+						startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger64(), self.GetLength())
 						if calcError != nil {
 							return nil, calcError
 						}
-						targetIndex, calcError := CalcIndex(indexObject.GetContent()[1], self.GetLength())
+						targetIndex, calcError := tools.CalcIndex(indexObject.GetContent()[1].GetInteger64(), self.GetLength())
 						if calcError != nil {
 							return nil, calcError
 						}
@@ -229,7 +229,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
-					number, parsingError := ParseInteger(self.GetString())
+					number, parsingError := tools.ParseInteger(self.GetString())
 					if parsingError != nil {
 						return nil, parsingError
 					}
@@ -242,7 +242,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
-					number, parsingError := cleanup.ParseFloat(strings.ReplaceAll(self.GetString(), "_", ""))
+					number, parsingError := tools.ParseFloat(strings.ReplaceAll(self.GetString(), "_", ""))
 					if parsingError != nil {
 						return nil, errors.NewInvalidFloatDefinition(errors.UnknownLine, self.GetString())
 					}

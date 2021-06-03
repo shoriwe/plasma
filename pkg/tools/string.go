@@ -1,4 +1,4 @@
-package cleanup
+package tools
 
 import (
 	"strconv"
@@ -13,6 +13,15 @@ var directCharEscapeValue = map[rune][]rune{
 	'r': {13},
 	't': {9},
 	'?': {'\\', '?'},
+}
+
+func Repeat(s string, times int64) string {
+	result := ""
+	var i int64
+	for i = 0; i < times; i++ {
+		result += s
+	}
+	return result
 }
 
 func ReplaceEscaped(s []rune) []rune {

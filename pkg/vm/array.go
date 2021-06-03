@@ -1,6 +1,9 @@
 package vm
 
-import "github.com/shoriwe/gruby/pkg/errors"
+import (
+	"github.com/shoriwe/gruby/pkg/errors"
+	"github.com/shoriwe/gruby/pkg/tools"
+)
 
 type Array struct {
 	*Object
@@ -281,7 +284,7 @@ func (p *Plasma) ArrayInitialize(object IObject) *errors.Error {
 					indexObject := arguments[0]
 					var ok bool
 					if _, ok = indexObject.(*Integer); ok {
-						index, calcError := CalcIndex(indexObject, self.GetLength())
+						index, calcError := tools.CalcIndex(indexObject.GetInteger64(), self.GetLength())
 						if calcError != nil {
 							return nil, calcError
 						}
@@ -290,11 +293,11 @@ func (p *Plasma) ArrayInitialize(object IObject) *errors.Error {
 						if len(indexObject.GetContent()) != 2 {
 							return nil, errors.NewInvalidNumberOfArguments(len(indexObject.GetContent()), 2)
 						}
-						startIndex, calcError := CalcIndex(indexObject.GetContent()[0], self.GetLength())
+						startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger64(), self.GetLength())
 						if calcError != nil {
 							return nil, calcError
 						}
-						targetIndex, calcError := CalcIndex(indexObject.GetContent()[1], self.GetLength())
+						targetIndex, calcError := tools.CalcIndex(indexObject.GetContent()[1].GetInteger64(), self.GetLength())
 						if calcError != nil {
 							return nil, calcError
 						}
@@ -310,7 +313,7 @@ func (p *Plasma) ArrayInitialize(object IObject) *errors.Error {
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 2,
 				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
-					index, calcError := CalcIndex(arguments[0], self.GetLength())
+					index, calcError := tools.CalcIndex(arguments[0].GetInteger64(), self.GetLength())
 					if calcError != nil {
 						return nil, calcError
 					}

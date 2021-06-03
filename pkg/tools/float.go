@@ -2,7 +2,7 @@
 	Original Author: Felix Yuan
 	URl: https://gist.github.com/yyscamper/5657c360fadd6701580f3c0bcca9f63a#file-parsefloat-go-L10
 */
-package cleanup
+package tools
 
 import (
 	"math"

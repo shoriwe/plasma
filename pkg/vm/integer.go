@@ -3,6 +3,7 @@ package vm
 import (
 	"fmt"
 	"github.com/shoriwe/gruby/pkg/errors"
+	"github.com/shoriwe/gruby/pkg/tools"
 	"math"
 )
 
@@ -117,7 +118,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *errors.Error {
 					case *Float:
 						return p.NewFloat(p.PeekSymbolTable(), float64(self.GetInteger64())*right.GetFloat64()), nil
 					case *String:
-						return p.NewString(p.PeekSymbolTable(), Repeat(right.GetString(), self.GetInteger64())), nil
+						return p.NewString(p.PeekSymbolTable(), tools.Repeat(right.GetString(), self.GetInteger64())), nil
 					case *Tuple:
 						panic(NewNotImplementedCallable(errors.UnknownLine))
 					case *Array:
@@ -140,7 +141,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *errors.Error {
 					case *Float:
 						return p.NewFloat(p.PeekSymbolTable(), left.GetFloat64()*float64(self.GetInteger64())), nil
 					case *String:
-						return p.NewString(p.PeekSymbolTable(), Repeat(left.GetString(), self.GetInteger64())), nil
+						return p.NewString(p.PeekSymbolTable(), tools.Repeat(left.GetString(), self.GetInteger64())), nil
 					case *Tuple:
 						panic(NewNotImplementedCallable(errors.UnknownLine))
 					case *Array:
