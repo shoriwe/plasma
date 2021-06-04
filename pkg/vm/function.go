@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/errors"
 )
 
 type Function struct {
@@ -23,7 +22,7 @@ func (p *Plasma) NewFunction(parentSymbols *SymbolTable, callable Callable) *Fun
 	function.Set(ToString, &Function{
 		Object: nil,
 		Callable: NewBuiltInClassFunction(function, 0,
-			func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+			func(self IObject, _ ...IObject) (IObject, *Object) {
 				return p.NewString(p.PeekSymbolTable(), fmt.Sprintf("Function-%d", function.Id())), nil
 			},
 		),

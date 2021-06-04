@@ -16,12 +16,12 @@ func (p *Plasma) NewIterator(parentSymbols *SymbolTable) *Iterator {
 func (p *Plasma) IteratorInitialize(object IObject) *errors.Error {
 	object.Set(HasNext,
 		p.NewFunction(object.SymbolTable(),
-			NewNotImplementedCallable(0),
+			p.NewNotImplementedCallable(0),
 		),
 	)
 	object.Set(Next,
 		p.NewFunction(object.SymbolTable(),
-			NewNotImplementedCallable(0),
+			p.NewNotImplementedCallable(0),
 		),
 	)
 	return nil

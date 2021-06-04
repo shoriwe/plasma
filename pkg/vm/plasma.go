@@ -64,90 +64,79 @@ func (p *Plasma) PeekSymbolTable() *SymbolTable {
 	return p.Context.Peek()
 }
 
-func (p *Plasma) newStringOP(code Code) *errors.Error {
+func (p *Plasma) newStringOP(code Code) *Object {
 	value := code.Value.(string)
 	stringObject := p.NewString(p.Context.Peek(), value)
 	p.PushObject(stringObject)
 	return nil
 }
 
-func (p *Plasma) newBytesOP(code Code) *errors.Error {
+func (p *Plasma) newBytesOP(code Code) *Object {
 	value := code.Value.([]byte)
 	bytesObject := p.NewBytes(p.Context.Peek(), value)
 	p.PushObject(bytesObject)
 	return nil
 }
 
-func (p *Plasma) newIntegerOP(code Code) *errors.Error {
+func (p *Plasma) newIntegerOP(code Code) *Object {
 	value := code.Value.(int64)
 	integer := p.NewInteger(p.Context.Peek(), value)
 	p.PushObject(integer)
 	return nil
 }
 
-func (p *Plasma) newFloatOP(code Code) *errors.Error {
+func (p *Plasma) newFloatOP(code Code) *Object {
 	value := code.Value.(float64)
 	float := p.NewFloat(p.Context.Peek(), value)
 	p.PushObject(float)
 	return nil
 }
 
-func (p *Plasma) newTrueBoolOP() *errors.Error {
+func (p *Plasma) newTrueBoolOP() *Object {
 	p.PushObject(p.NewBool(p.PeekSymbolTable(), true))
 	return nil
 }
 
-func (p *Plasma) newFalseBoolOP() *errors.Error {
+func (p *Plasma) newFalseBoolOP() *Object {
 	p.PushObject(p.NewBool(p.PeekSymbolTable(), false))
 	return nil
 }
 
-func (p *Plasma) getNoneOP() *errors.Error {
+func (p *Plasma) getNoneOP() *Object {
 	none, getError := p.PeekSymbolTable().GetAny(None)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(None)
 	}
 	p.PushObject(none)
 	return nil
 }
 
-func (p *Plasma) newTupleOP(code Code) *errors.Error {
+func (p *Plasma) newTupleOP(code Code) *Object {
 	numberOfValues := code.Value.(int)
 	var values []IObject
 	for i := 0; i < numberOfValues; i++ {
-		if !p.MemoryStack.HasNext() {
-			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
-		}
 		values = append(values, p.PopObject())
 	}
 	p.PushObject(p.NewTuple(p.PeekSymbolTable(), values))
 	return nil
 }
 
-func (p *Plasma) newArrayOP(code Code) *errors.Error {
+func (p *Plasma) newArrayOP(code Code) *Object {
 	numberOfValues := code.Value.(int)
 	var values []IObject
 	for i := 0; i < numberOfValues; i++ {
-		if !p.MemoryStack.HasNext() {
-			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
-		}
 		values = append(values, p.PopObject())
 	}
 	p.PushObject(p.NewArray(p.PeekSymbolTable(), values))
 	return nil
 }
 
-func (p *Plasma) newHashOP(code Code) *errors.Error {
+func (p *Plasma) newHashOP(code Code) *Object {
 	numberOfValues := code.Value.(int)
 	var keyValues []*KeyValue
 	for i := 0; i < numberOfValues; i++ {
-		if !p.MemoryStack.HasNext() {
-			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
-		}
+
 		key := p.PopObject()
-		if !p.MemoryStack.HasNext() {
-			return errors.NewInvalidNumberOfArguments(i, numberOfValues)
-		}
 		value := p.PopObject()
 		keyValues = append(keyValues, &KeyValue{
 			Key:   key,
@@ -157,7 +146,7 @@ func (p *Plasma) newHashOP(code Code) *errors.Error {
 	hashTable := p.NewHashTable(p.PeekSymbolTable(), map[int64][]*KeyValue{}, numberOfValues)
 	hashTableAssign, getError := hashTable.Get(Assign)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(Assign)
 	}
 	for _, keyValue := range keyValues {
 		_, assignError := p.CallFunction(hashTableAssign.(*Function), hashTable.SymbolTable(), keyValue.Key, keyValue.Value)
@@ -170,14 +159,14 @@ func (p *Plasma) newHashOP(code Code) *errors.Error {
 }
 
 // Useful function to call those built ins that doesn't receive arguments of an object
-func (p *Plasma) noArgsGetAndCall(operationName string) *errors.Error {
+func (p *Plasma) noArgsGetAndCall(operationName string) *Object {
 	object := p.PopObject()
 	operation, getError := object.Get(operationName)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(operationName)
 	}
 	if _, ok := operation.(*Function); !ok {
-		return errors.NewTypeError(operation.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(operation.TypeName(), FunctionName)
 	}
 	result, callError := p.CallFunction(operation.(*Function), object.SymbolTable())
 	if callError != nil {
@@ -188,7 +177,7 @@ func (p *Plasma) noArgsGetAndCall(operationName string) *errors.Error {
 }
 
 // Function useful to cal object built-ins binary expression functions
-func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *errors.Error {
+func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *Object {
 	leftHandSide := p.PopObject()
 	rightHandSide := p.PopObject()
 	operation, getError := leftHandSide.Get(operationName)
@@ -206,13 +195,13 @@ func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *errors.Erro
 	return nil
 }
 
-func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide IObject, rightHandSide IObject, operationName string) *errors.Error {
+func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide IObject, rightHandSide IObject, operationName string) *Object {
 	operation, getError := rightHandSide.Get("Right" + operationName)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError("Right" + operationName)
 	}
 	if _, ok := operation.(*Function); !ok {
-		return errors.NewTypeError(operation.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(operation.TypeName(), FunctionName)
 	}
 	result, callError := p.CallFunction(operation.(*Function), rightHandSide.SymbolTable(), leftHandSide)
 	if callError != nil {
@@ -222,15 +211,15 @@ func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide IObject, rightHandSi
 	return nil
 }
 
-func (p *Plasma) indexOP() *errors.Error {
+func (p *Plasma) indexOP() *Object {
 	index := p.PopObject()
 	source := p.PopObject()
 	indexOperation, getError := source.Get(Index)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(Index)
 	}
 	if _, ok := indexOperation.(*Function); !ok {
-		return errors.NewTypeError(indexOperation.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(indexOperation.TypeName(), FunctionName)
 	}
 	result, callError := p.CallFunction(indexOperation.(*Function), source.SymbolTable(), index)
 	if callError != nil {
@@ -240,36 +229,47 @@ func (p *Plasma) indexOP() *errors.Error {
 	return nil
 }
 
-func (p *Plasma) selectNameFromObjectOP(code Code) *errors.Error {
+func (p *Plasma) selectNameFromObjectOP(code Code) *Object {
 	name := code.Value.(string)
 	source := p.PopObject()
 	value, getError := source.Get(name)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(name)
 	}
 	p.PushObject(value)
 	return nil
 }
 
-func (p *Plasma) methodInvocationOP(code Code) *errors.Error {
+func (p *Plasma) methodInvocationOP(code Code) *Object {
 	numberOfArguments := code.Value.(int)
 	function := p.PopObject()
 	var arguments []IObject
 	for i := 0; i < numberOfArguments; i++ {
 		if !p.MemoryStack.HasNext() {
-			return errors.NewInvalidNumberOfArguments(i, numberOfArguments)
+			return p.NewInvalidNumberOfArgumentsError(i, numberOfArguments)
 		}
 		arguments = append(arguments, p.PopObject())
 	}
 	var result IObject
-	var callError *errors.Error
+	var callError *Object
 	switch function.(type) {
 	case *Function:
 		result, callError = p.CallFunction(function.(*Function), function.SymbolTable(), arguments...)
 	case *Type:
-		result, callError = p.ConstructObject(function.(*Type), p, NewSymbolTable(p.PeekSymbolTable()))
+		result, callError = p.ConstructObject(function.(*Type), NewSymbolTable(p.PeekSymbolTable()))
+		if callError != nil {
+			return callError
+		}
+		resultInitialize, getError := result.Get(Initialize)
+		if getError != nil {
+			return p.NewObjectWithNameNotFoundError(Initialize)
+		}
+		if _, ok := resultInitialize.(*Function); !ok {
+			return p.NewInvalidTypeError(resultInitialize.TypeName(), FunctionName)
+		}
+		_, callError = p.CallFunction(resultInitialize.(*Function), result.SymbolTable(), arguments...)
 	default:
-		return errors.NewTypeError(function.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(function.TypeName(), FunctionName)
 	}
 	if callError != nil {
 		return callError
@@ -278,10 +278,10 @@ func (p *Plasma) methodInvocationOP(code Code) *errors.Error {
 	return nil
 }
 
-func (p *Plasma) getIdentifierOP(code Code) *errors.Error {
+func (p *Plasma) getIdentifierOP(code Code) *Object {
 	value, getError := p.PeekSymbolTable().GetAny(code.Value.(string))
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(code.Value.(string))
 	}
 	p.PushObject(value)
 	return nil
@@ -289,13 +289,13 @@ func (p *Plasma) getIdentifierOP(code Code) *errors.Error {
 
 // Assign Statement
 
-func (p *Plasma) assignIdentifierOP(code Code) *errors.Error {
+func (p *Plasma) assignIdentifierOP(code Code) *Object {
 	identifier := code.Value.(string)
 	p.PeekSymbolTable().Set(identifier, p.PopObject())
 	return nil
 }
 
-func (p *Plasma) assignSelectorOP(code Code) *errors.Error {
+func (p *Plasma) assignSelectorOP(code Code) *Object {
 	target := p.PopObject()
 	value := p.PopObject()
 	identifier := code.Value.(string)
@@ -303,16 +303,16 @@ func (p *Plasma) assignSelectorOP(code Code) *errors.Error {
 	return nil
 }
 
-func (p *Plasma) assignIndexOP() *errors.Error {
+func (p *Plasma) assignIndexOP() *Object {
 	index := p.PopObject()
 	source := p.PopObject()
 	value := p.PopObject()
 	sourceAssign, getError := source.Get(Assign)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(Assign)
 	}
 	if _, ok := sourceAssign.(*Function); !ok {
-		return errors.NewTypeError(sourceAssign.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(sourceAssign.TypeName(), FunctionName)
 	}
 	_, callError := p.CallFunction(sourceAssign.(*Function), p.PeekSymbolTable(), index, value)
 	if callError != nil {
@@ -321,12 +321,12 @@ func (p *Plasma) assignIndexOP() *errors.Error {
 	return nil
 }
 
-func (p *Plasma) returnOP(code Code) *errors.Error {
+func (p *Plasma) returnOP(code Code) *Object {
 	numberOfReturnValues := code.Value.(int)
 	if numberOfReturnValues == 0 {
 		noneValue, getError := p.PeekSymbolTable().GetAny(None)
 		if getError != nil {
-			return getError
+			return p.NewObjectWithNameNotFoundError(None)
 		}
 		p.PushObject(noneValue)
 		return nil
@@ -335,7 +335,7 @@ func (p *Plasma) returnOP(code Code) *errors.Error {
 	var values []IObject
 	for i := 0; i < numberOfReturnValues; i++ {
 		if !p.MemoryStack.HasNext() {
-			return errors.NewInvalidNumberOfArguments(i, numberOfReturnValues)
+			return p.NewInvalidNumberOfArgumentsError(i, numberOfReturnValues)
 		}
 		values = append(values, p.PopObject())
 	}
@@ -347,14 +347,14 @@ func (p *Plasma) returnOP(code Code) *errors.Error {
 	return nil
 }
 
-func (p *Plasma) ifJumpOP(code Code) *errors.Error {
+func (p *Plasma) ifJumpOP(code Code) *Object {
 	condition := p.PopObject()
 	toBool, getError := condition.Get(ToBool)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(ToBool)
 	}
 	if _, ok := toBool.(*Function); !ok {
-		return errors.NewTypeError(toBool.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(toBool.TypeName(), FunctionName)
 	}
 	conditionBool, callError := p.CallFunction(toBool.(*Function), toBool.SymbolTable())
 	if callError != nil {
@@ -366,14 +366,14 @@ func (p *Plasma) ifJumpOP(code Code) *errors.Error {
 	return nil
 }
 
-func (p *Plasma) unlessJumpOP(code Code) *errors.Error {
+func (p *Plasma) unlessJumpOP(code Code) *Object {
 	condition := p.PopObject()
 	toBool, getError := condition.Get(ToBool)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(ToBool)
 	}
 	if _, ok := toBool.(*Function); !ok {
-		return errors.NewTypeError(toBool.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(toBool.TypeName(), FunctionName)
 	}
 	conditionBool, callError := p.CallFunction(toBool.(*Function), toBool.SymbolTable())
 	if callError != nil {
@@ -387,7 +387,7 @@ func (p *Plasma) unlessJumpOP(code Code) *errors.Error {
 
 // Special Instructions
 
-func (p *Plasma) loadFunctionArgumentsOP(code Code) *errors.Error {
+func (p *Plasma) loadFunctionArgumentsOP(code Code) *Object {
 	for _, argument := range code.Value.([]string) {
 		value := p.PopObject()
 		p.PeekSymbolTable().Set(argument, value)
@@ -395,7 +395,7 @@ func (p *Plasma) loadFunctionArgumentsOP(code Code) *errors.Error {
 	return nil
 }
 
-func (p *Plasma) newFunctionOP(code Code) *errors.Error {
+func (p *Plasma) newFunctionOP(code Code) *Object {
 	functionInformation := code.Value.([2]int)
 	codeLength := functionInformation[0]
 	numberOfArguments := functionInformation[1]
@@ -408,27 +408,27 @@ func (p *Plasma) newFunctionOP(code Code) *errors.Error {
 	return nil
 }
 
-func (p *Plasma) jumpOP(code Code) *errors.Error {
+func (p *Plasma) jumpOP(code Code) *Object {
 	p.PeekCode().index += code.Value.(int)
 	return nil
 }
 
-func (p *Plasma) breakOP(code Code) *errors.Error {
+func (p *Plasma) breakOP(code Code) *Object {
 	p.PeekCode().index += code.Value.(int)
 	return nil
 }
 
-func (p *Plasma) redoOP(code Code) *errors.Error {
+func (p *Plasma) redoOP(code Code) *Object {
 	p.PeekCode().index += code.Value.(int)
 	return nil
 }
 
-func (p *Plasma) continueOP(code Code) *errors.Error {
+func (p *Plasma) continueOP(code Code) *Object {
 	p.PeekCode().index += code.Value.(int) // This could be positive or negative (positive only for do-while loop)
 	return nil
 }
 
-func (p *Plasma) setupForLoopOP() *errors.Error {
+func (p *Plasma) setupForLoopOP() *Object {
 	// First check if it is a iterator
 	value := p.PopObject()
 	if _, ok := value.(*Iterator); ok {
@@ -451,12 +451,13 @@ func (p *Plasma) setupForLoopOP() *errors.Error {
 		}
 	}
 	// Finally transform it to iterable
-	valueIterFunc, getError := value.Get(Iter)
+	var valueIterFunc IObject
+	valueIterFunc, getError = value.Get(Iter)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(Iter)
 	}
 	if _, ok := valueIterFunc.(*Function); !ok {
-		return errors.NewTypeError(valueIterFunc.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(valueIterFunc.TypeName(), FunctionName)
 	}
 	valueIter, callError := p.CallFunction(valueIterFunc.(*Function), value.SymbolTable())
 	if callError != nil {
@@ -469,13 +470,13 @@ func (p *Plasma) setupForLoopOP() *errors.Error {
 	return nil
 }
 
-func (p *Plasma) hasNextOP(code Code) *errors.Error {
-	hasNext, getError := p.IterStack.Peek().Iterable.Get("HasNext")
+func (p *Plasma) hasNextOP(code Code) *Object {
+	hasNext, getError := p.IterStack.Peek().Iterable.Get(HasNext)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(HasNext)
 	}
 	if _, ok := hasNext.(*Function); !ok {
-		return errors.NewTypeError(hasNext.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(hasNext.TypeName(), FunctionName)
 	}
 	result, callError := p.CallFunction(hasNext.(*Function), p.IterStack.Peek().Iterable.SymbolTable())
 	if callError != nil {
@@ -485,10 +486,10 @@ func (p *Plasma) hasNextOP(code Code) *errors.Error {
 		var resultToBool IObject
 		resultToBool, getError = hasNext.Get(ToBool)
 		if getError != nil {
-			return getError
+			return p.NewObjectWithNameNotFoundError(ToBool)
 		}
 		if _, ok = resultToBool.(*Function); !ok {
-			return errors.NewTypeError(resultToBool.TypeName(), FunctionName)
+			return p.NewInvalidTypeError(resultToBool.TypeName(), FunctionName)
 		}
 		var resultBool IObject
 		resultBool, callError = p.CallFunction(resultToBool.(*Function), hasNext.SymbolTable())
@@ -496,7 +497,7 @@ func (p *Plasma) hasNextOP(code Code) *errors.Error {
 			return callError
 		}
 		if _, ok = resultBool.(*Bool); !ok {
-			return errors.NewTypeError(resultBool.TypeName(), BoolName)
+			return p.NewInvalidTypeError(resultBool.TypeName(), BoolName)
 		}
 		result = resultBool
 	}
@@ -506,13 +507,13 @@ func (p *Plasma) hasNextOP(code Code) *errors.Error {
 	return nil
 }
 
-func (p *Plasma) unpackReceiversPopOP() *errors.Error {
+func (p *Plasma) unpackReceiversPopOP() *Object {
 	next, getError := p.IterStack.Peek().Iterable.Get(Next)
 	if getError != nil {
-		return getError
+		return p.NewObjectWithNameNotFoundError(Next)
 	}
 	if _, ok := next.(*Function); !ok {
-		return errors.NewTypeError(next.TypeName(), FunctionName)
+		return p.NewInvalidTypeError(next.TypeName(), FunctionName)
 	}
 	nextValue, callError := p.CallFunction(next.(*Function), p.IterStack.Peek().Iterable.SymbolTable())
 	if callError != nil {
@@ -522,7 +523,7 @@ func (p *Plasma) unpackReceiversPopOP() *errors.Error {
 	return nil
 }
 
-func (p *Plasma) unpackReceiversPeekOP(code Code) *errors.Error {
+func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
 	receivers := code.Value.([]string)
 	if len(receivers) == 1 {
 		p.PeekSymbolTable().Set(receivers[0], p.IterStack.Peek().LastValue)
@@ -545,17 +546,17 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *errors.Error {
 					var hasNextResultToBool IObject
 					hasNextResultToBool, getError = hasNextResult.Get(ToBool)
 					if getError != nil {
-						return getError
+						return p.NewObjectWithNameNotFoundError(ToBool)
 					}
 					if _, ok = hasNextResultToBool.(*Function); !ok {
-						return errors.NewTypeError(hasNextResultToBool.TypeName(), FunctionName)
+						return p.NewInvalidTypeError(hasNextResultToBool.TypeName(), FunctionName)
 					}
 					hasNextResultBool, callError = p.CallFunction(hasNextResultToBool.(*Function), hasNextResult.SymbolTable())
 					if callError != nil {
 						return callError
 					}
 					if _, ok = hasNextResultBool.(*Bool); !ok {
-						return errors.NewTypeError(hasNextResultBool.TypeName(), BoolName)
+						return p.NewInvalidTypeError(hasNextResultBool.TypeName(), BoolName)
 					}
 					hasNextResult = hasNextResultBool
 				}
@@ -577,24 +578,24 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *errors.Error {
 		var toTuple IObject
 		toTuple, getError = p.IterStack.Peek().LastValue.Get(ToTuple)
 		if getError != nil {
-			return getError
+			return p.NewObjectWithNameNotFoundError(ToTuple)
 		}
 		if _, ok = toTuple.(*Function); !ok {
-			return errors.NewTypeError(toTuple.TypeName(), FunctionName)
+			return p.NewInvalidTypeError(toTuple.TypeName(), FunctionName)
 		}
-		var callError *errors.Error
+		var callError *Object
 		lastValue, callError = p.CallFunction(toTuple.(*Function), p.IterStack.Peek().LastValue.SymbolTable())
 		if callError != nil {
 			return callError
 		}
 		if _, ok = lastValue.(*Tuple); !ok {
-			return errors.NewTypeError(lastValue.TypeName(), TupleName)
+			return p.NewInvalidTypeError(lastValue.TypeName(), TupleName)
 		}
 	} else {
 		lastValue = p.IterStack.Peek().LastValue
 	}
 	if len(receivers) != lastValue.GetLength() {
-		return errors.NewInvalidNumberOfArguments(lastValue.GetLength(), len(receivers))
+		return p.NewInvalidNumberOfArgumentsError(lastValue.GetLength(), len(receivers))
 	}
 	for i, receiver := range receivers {
 		p.PeekSymbolTable().Set(receiver, lastValue.GetContent()[i])
@@ -602,19 +603,19 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *errors.Error {
 	return nil
 }
 
-func (p *Plasma) newIteratorOP(code Code) *errors.Error {
+func (p *Plasma) newIteratorOP(code Code) *Object {
 	source := p.PopObject()
 	var iterSource IObject
-	var callError *errors.Error
+	var callError *Object
 	if _, ok := source.(*Iterator); ok {
 		iterSource = source
 	} else {
 		iter, getError := source.Get(Iter)
 		if getError != nil {
-			return getError
+			return p.NewObjectWithNameNotFoundError(Iter)
 		}
 		if _, ok = iter.(*Function); !ok {
-			return errors.NewTypeError(iter.TypeName(), FunctionName)
+			return p.NewInvalidTypeError(iter.TypeName(), FunctionName)
 		}
 		iterSource, callError = p.CallFunction(iter.(*Function), source.SymbolTable())
 		if callError != nil {
@@ -647,11 +648,11 @@ func (p *Plasma) newIteratorOP(code Code) *errors.Error {
 	return nil
 }
 
-func (p *Plasma) Execute() (IObject, *errors.Error) {
-	var executionError *errors.Error
+func (p *Plasma) Execute() (IObject, *Object) {
+	var executionError *Object
 	for ; p.PeekCode().HasNext(); {
 		code := p.PeekCode().Next()
-		// fmt.Println("Exec:", code.Instruction, code.Value)
+		fmt.Println("Exec:", code.Instruction, code.Value)
 		switch code.Instruction.OpCode {
 		// Literals
 		case NewStringOP:
@@ -747,7 +748,7 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 			if p.MemoryStack.HasNext() {
 				return p.PopObject(), nil
 			}
-			return p.PeekSymbolTable().GetAny(None)
+			return p.PeekSymbolTable().Symbols[None], nil
 		case IfJumpOP:
 			executionError = p.ifJumpOP(code)
 		case UnlessJumpOP:
@@ -782,7 +783,7 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 		case NewIteratorOP:
 			executionError = p.newIteratorOP(code)
 		default:
-			return nil, errors.NewUnknownVMOperationError(code.Instruction.OpCode)
+			panic(fmt.Sprintf("Unknown VM instruction %d", code.Instruction.OpCode))
 		}
 		if executionError != nil {
 			return nil, executionError
@@ -791,27 +792,27 @@ func (p *Plasma) Execute() (IObject, *errors.Error) {
 	if p.MemoryStack.HasNext() {
 		return p.PopObject(), nil
 	}
-	return p.PeekSymbolTable().GetAny(None)
+	return p.PeekSymbolTable().Symbols[None], nil
 }
 
-func (p *Plasma) HashString(s string) (int64, *errors.Error) {
+func (p *Plasma) HashString(s string) int64 {
 	_, hashingError := p.Crc32Hash.Write([]byte(s))
 	if hashingError != nil {
-		return 0, errors.NewHashingStringError()
+		panic(hashingError)
 	}
 	hashValue := p.Crc32Hash.Sum32()
 	p.Crc32Hash.Reset()
-	return int64(hashValue), nil
+	return int64(hashValue)
 }
 
-func (p *Plasma) HashBytes(s []byte) (int64, *errors.Error) {
+func (p *Plasma) HashBytes(s []byte) int64 {
 	_, hashingError := p.Crc32Hash.Write(s)
 	if hashingError != nil {
-		return 0, errors.NewHashingStringError()
+		panic(hashingError)
 	}
 	hashValue := p.Crc32Hash.Sum32()
 	p.Crc32Hash.Reset()
-	return int64(hashValue), nil
+	return int64(hashValue)
 }
 
 func (p *Plasma) Seed() uint64 {
@@ -854,9 +855,10 @@ func (p *Plasma) MasterSymbolTable() *SymbolTable {
 	return p.programMasterSymbolTable
 }
 
-func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments ...IObject) (IObject, *errors.Error) {
+func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments ...IObject) (IObject, *Object) {
 	if function.Callable.NumberOfArguments() != len(arguments) {
-		return nil, errors.NewInvalidNumberOfArguments(len(arguments), function.Callable.NumberOfArguments())
+		//  Return Here a error related to number of arguments
+		return nil, p.NewInvalidNumberOfArgumentsError(len(arguments), function.Callable.NumberOfArguments())
 	}
 	symbols := NewSymbolTable(parent)
 	self, callback, code := function.Callable.Call()
@@ -865,7 +867,7 @@ func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments
 	}
 	p.PushSymbolTable(symbols)
 	var result IObject
-	var callError *errors.Error
+	var callError *Object
 	if callback != nil {
 		result, callError = callback(self, arguments...)
 	} else if code != nil {
@@ -884,6 +886,14 @@ func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments
 		return nil, callError
 	}
 	return result, nil
+}
+
+func (p *Plasma) GetNone() (IObject, *Object) {
+	noneValue, getError := p.PeekSymbolTable().GetAny(None)
+	if getError != nil {
+		return nil, p.NewObjectWithNameNotFoundError(None)
+	}
+	return noneValue, nil
 }
 
 /*
@@ -926,13 +936,139 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 	type_.Set(ToString,
 		p.NewFunction(type_.symbols,
 			NewBuiltInClassFunction(type_, 0,
-				func(_ IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, _ ...IObject) (IObject, *Object) {
 					return p.NewString(p.PeekSymbolTable(), "Type@Object"), nil
 				},
 			),
 		),
 	)
 	symbolTable.Set(TypeName, type_)
+	//// Default Error Types
+	exception := p.NewType(RuntimeError, symbolTable, []*Type{type_}, NewBuiltInConstructor(p.RuntimeErrorInitialize))
+	symbolTable.Set(InvalidTypeError,
+		p.NewType(InvalidTypeError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *errors.Error {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 2,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									received := arguments[0]
+									if _, ok := received.(*String); !ok {
+										return nil, p.NewInvalidTypeError(received.TypeName(), StringName)
+									}
+									expecting := arguments[1]
+									if _, ok := expecting.(*String); !ok {
+										return nil, p.NewInvalidTypeError(expecting.TypeName(), StringName)
+									}
+									self.SetString(fmt.Sprintf("Expecting %s but received %s", expecting.GetString(), received.GetString()))
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	symbolTable.Set(NotImplementedCallableError,
+		p.NewType(NotImplementedCallableError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *errors.Error {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 0,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									self.SetString("Method not implemented")
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	symbolTable.Set(ObjectConstructionError,
+		p.NewType(ObjectConstructionError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *errors.Error {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 2,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									typeName := arguments[0]
+									if _, ok := typeName.(*String); !ok {
+										return nil, p.NewInvalidTypeError(typeName.TypeName(), StringName)
+									}
+									errorMessage := arguments[1]
+									if _, ok := typeName.(*String); !ok {
+										return nil, p.NewInvalidTypeError(errorMessage.TypeName(), StringName)
+									}
+									self.SetString(fmt.Sprintf("Could not construct object of Type: %s -> %s", typeName.GetString(), errorMessage.GetString()))
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	symbolTable.Set(ObjectWithNameNotFoundError,
+		p.NewType(ObjectWithNameNotFoundError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *errors.Error {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 1,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									name := arguments[0]
+									if _, ok := name.(*String); !ok {
+										return nil, p.NewInvalidTypeError(name.TypeName(), StringName)
+									}
+									self.SetString(fmt.Sprintf("Object with name %s not Found", name.GetString()))
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	symbolTable.Set(InvalidNumberOfArgumentsError,
+		p.NewType(InvalidNumberOfArgumentsError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *errors.Error {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 2,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									received := arguments[0]
+									if _, ok := received.(*Integer); !ok {
+										return nil, p.NewInvalidTypeError(received.TypeName(), IntegerName)
+									}
+									expecting := arguments[0]
+									if _, ok := received.(*Integer); !ok {
+										return nil, p.NewInvalidTypeError(received.TypeName(), IntegerName)
+									}
+									self.SetString(fmt.Sprintf("Received %d but expecting %d expecting", received.GetInteger64(), expecting.GetInteger64()))
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	//// Default Types
 	symbolTable.Set(NoneName,
 		p.NewType(NoneName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(p.NoneInitialize),
@@ -999,14 +1135,14 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set("print",
 		p.NewFunction(symbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, arguments ...IObject) (IObject, *Object) {
 					value := arguments[0]
 					toString, getError := value.Get(ToString)
 					if getError != nil {
-						return nil, getError
+						return nil, p.NewObjectWithNameNotFoundError(ToString)
 					}
 					if _, ok := toString.(*Function); !ok {
-						return nil, errors.NewTypeError(toString.TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toString.TypeName(), FunctionName)
 					}
 					stringValue, callError := p.CallFunction(toString.(*Function), value.SymbolTable())
 					if callError != nil {
@@ -1014,9 +1150,9 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 					}
 					_, writeError := fmt.Fprintf(p.StdOut(), "%s", stringValue.GetString())
 					if writeError != nil {
-						return nil, errors.NewGoRuntimeError(writeError)
+						return nil, p.NewGoRuntimeError(writeError)
 					}
-					return p.PeekSymbolTable().GetAny(None)
+					return p.GetNone()
 				},
 			),
 		),
@@ -1024,14 +1160,14 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set("println",
 		p.NewFunction(symbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, arguments ...IObject) (IObject, *Object) {
 					value := arguments[0]
 					toString, getError := value.Get(ToString)
 					if getError != nil {
-						return nil, getError
+						return nil, p.NewObjectWithNameNotFoundError(ToString)
 					}
 					if _, ok := toString.(*Function); !ok {
-						return nil, errors.NewTypeError(toString.TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toString.TypeName(), FunctionName)
 					}
 					stringValue, callError := p.CallFunction(toString.(*Function), value.SymbolTable())
 					if callError != nil {
@@ -1039,9 +1175,9 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 					}
 					_, writeError := fmt.Fprintf(p.StdOut(), "%s\n", stringValue.GetString())
 					if writeError != nil {
-						return nil, errors.NewGoRuntimeError(writeError)
+						return nil, p.NewGoRuntimeError(writeError)
 					}
-					return p.PeekSymbolTable().GetAny(None)
+					return p.GetNone()
 				},
 			),
 		),
@@ -1050,13 +1186,13 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set(ToFloat,
 		p.NewFunction(symbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, arguments ...IObject) (IObject, *Object) {
 					toFloat, getError := arguments[0].Get(ToFloat)
 					if getError != nil {
-						return nil, getError
+						return nil, p.NewObjectWithNameNotFoundError(ToFloat)
 					}
 					if _, ok := toFloat.(*Function); !ok {
-						return nil, errors.NewTypeError(toFloat.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toFloat.(IObject).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toFloat.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -1066,13 +1202,13 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set(ToString,
 		p.NewFunction(symbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, arguments ...IObject) (IObject, *Object) {
 					toString, getError := arguments[0].Get(ToString)
 					if getError != nil {
-						return nil, getError
+						return nil, p.NewObjectWithNameNotFoundError(ToString)
 					}
 					if _, ok := toString.(*Function); !ok {
-						return nil, errors.NewTypeError(toString.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toString.(IObject).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toString.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -1082,13 +1218,13 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set(ToInteger,
 		p.NewFunction(symbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, arguments ...IObject) (IObject, *Object) {
 					toInteger, getError := arguments[0].Get(ToInteger)
 					if getError != nil {
-						return nil, getError
+						return nil, p.NewObjectWithNameNotFoundError(ToInteger)
 					}
 					if _, ok := toInteger.(*Function); !ok {
-						return nil, errors.NewTypeError(toInteger.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toInteger.(IObject).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toInteger.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -1098,13 +1234,13 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set(ToArray,
 		p.NewFunction(symbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, arguments ...IObject) (IObject, *Object) {
 					toArray, getError := arguments[0].Get(ToArray)
 					if getError != nil {
-						return nil, getError
+						return nil, p.NewObjectWithNameNotFoundError(ToArray)
 					}
 					if _, ok := toArray.(*Function); !ok {
-						return nil, errors.NewTypeError(toArray.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toArray.(IObject).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toArray.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -1114,13 +1250,13 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set(ToTuple,
 		p.NewFunction(symbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, arguments ...IObject) (IObject, *Object) {
 					toTuple, getError := arguments[0].Get(ToTuple)
 					if getError != nil {
-						return nil, getError
+						return nil, p.NewObjectWithNameNotFoundError(ToTuple)
 					}
 					if _, ok := toTuple.(*Function); !ok {
-						return nil, errors.NewTypeError(toTuple.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toTuple.(IObject).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toTuple.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -1130,13 +1266,13 @@ func (p *Plasma) SetDefaultSymbolTable() *SymbolTable {
 	symbolTable.Set(ToBool,
 		p.NewFunction(symbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, arguments ...IObject) (IObject, *Object) {
 					toBool, getError := arguments[0].Get(ToBool)
 					if getError != nil {
-						return nil, getError
+						return nil, p.NewObjectWithNameNotFoundError(ToBool)
 					}
 					if _, ok := toBool.(*Function); !ok {
-						return nil, errors.NewTypeError(toBool.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toBool.(IObject).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toBool.(*Function), arguments[0].SymbolTable().Parent)
 				},

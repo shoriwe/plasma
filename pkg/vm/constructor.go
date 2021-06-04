@@ -3,7 +3,7 @@ package vm
 import "github.com/shoriwe/gruby/pkg/errors"
 
 type Constructor interface {
-	Initialize(VirtualMachine, IObject) *errors.Error
+	Construct(*Plasma, IObject) *errors.Error
 }
 
 type PlasmaConstructor struct {
@@ -11,7 +11,7 @@ type PlasmaConstructor struct {
 	Code []Code
 }
 
-func (c *PlasmaConstructor) Initialize(vm VirtualMachine, object IObject) *errors.Error {
+func (c *PlasmaConstructor) Construct(vm *Plasma, object IObject) *Object {
 	vm.PushCode(NewBytecodeFromArray(c.Code))
 	vm.PushSymbolTable(object.SymbolTable())
 	_, executionError := vm.Execute()
@@ -31,7 +31,7 @@ type BuiltInConstructor struct {
 	callback ConstructorCallBack
 }
 
-func (c *BuiltInConstructor) Initialize(_ VirtualMachine, object IObject) *errors.Error {
+func (c *BuiltInConstructor) Construct(_ *Plasma, object IObject) *errors.Error {
 	return c.callback(object)
 }
 

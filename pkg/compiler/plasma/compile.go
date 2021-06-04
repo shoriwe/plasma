@@ -2,12 +2,12 @@ package plasma
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/tools"
 	"github.com/shoriwe/gruby/pkg/compiler/ast"
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
 	"github.com/shoriwe/gruby/pkg/compiler/parser"
 	"github.com/shoriwe/gruby/pkg/errors"
 	"github.com/shoriwe/gruby/pkg/reader"
+	"github.com/shoriwe/gruby/pkg/tools"
 	"github.com/shoriwe/gruby/pkg/vm"
 	"strconv"
 	"strings"

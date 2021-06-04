@@ -1,13 +1,11 @@
 package vm
 
-import "github.com/shoriwe/gruby/pkg/errors"
+type FunctionCallback func(IObject, ...IObject) (IObject, *Object)
 
-type FunctionCallback func(IObject, ...IObject) (IObject, *errors.Error)
-
-func NewNotImplementedCallable(numberOfArguments int) *BuiltInClassFunction {
+func (p *Plasma) NewNotImplementedCallable(numberOfArguments int) *BuiltInClassFunction {
 	return NewBuiltInClassFunction(nil, numberOfArguments,
-		func(self IObject, _ ...IObject) (IObject, *errors.Error) {
-			return nil, errors.NewNameNotFoundError()
+		func(self IObject, _ ...IObject) (IObject, *Object) {
+			return nil, p.NewNotImplementedCallableError()
 		},
 	)
 }

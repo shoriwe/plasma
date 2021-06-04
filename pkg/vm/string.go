@@ -25,7 +25,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(Add,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					right := arguments[0]
 					return p.NewString(
 						p.PeekSymbolTable(),
@@ -38,7 +38,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(RightAdd,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					left := arguments[0]
 					return p.NewString(
 						p.PeekSymbolTable(),
@@ -51,10 +51,10 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(Mul,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					right := arguments[0]
 					if _, ok := right.(*Integer); !ok {
-						return nil, errors.NewTypeError(right.TypeName(), IntegerName)
+						return nil, p.NewInvalidTypeError(right.TypeName(), IntegerName)
 					}
 					return p.NewString(
 						p.PeekSymbolTable(),
@@ -67,10 +67,10 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(RightMul,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					left := arguments[0]
 					if _, ok := left.(*Integer); !ok {
-						return nil, errors.NewTypeError(left.TypeName(), IntegerName)
+						return nil, p.NewInvalidTypeError(left.TypeName(), IntegerName)
 					}
 					return p.NewString(
 						p.PeekSymbolTable(),
@@ -83,7 +83,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(Equals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					right := arguments[0]
 					return p.NewBool(p.PeekSymbolTable(), self.GetString() == right.GetString()), nil
 				},
@@ -93,7 +93,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(RightEquals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					left := arguments[0]
 					return p.NewBool(p.PeekSymbolTable(), left.GetString() == self.GetString()), nil
 				},
@@ -103,7 +103,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(NotEquals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					right := arguments[0]
 					return p.NewBool(p.PeekSymbolTable(), self.GetString() != right.GetString()), nil
 				},
@@ -113,7 +113,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(RightNotEquals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					left := arguments[0]
 					return p.NewBool(p.PeekSymbolTable(), left.GetString() != self.GetString()), nil
 				},
@@ -123,12 +123,9 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(Hash,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					if self.GetHash() == 0 {
-						stringHash, hashingError := p.HashString(fmt.Sprintf("%s-%s", self.GetString(), StringName))
-						if hashingError != nil {
-							return nil, hashingError
-						}
+						stringHash := p.HashString(fmt.Sprintf("%s-%s", self.GetString(), StringName))
 						self.SetHash(stringHash)
 					}
 					return p.NewInteger(p.PeekSymbolTable(), self.GetHash()), nil
@@ -139,7 +136,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(Copy,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					return p.NewString(
 						p.PeekSymbolTable(),
 						self.GetString(),
@@ -151,29 +148,30 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(Index,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					indexObject := arguments[0]
 					if _, ok := indexObject.(*Integer); ok {
 						index, getIndexError := tools.CalcIndex(indexObject.GetInteger64(), self.GetLength())
 						if getIndexError != nil {
-							return nil, getIndexError
+							return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetInteger64())
 						}
 						return p.NewString(p.PeekSymbolTable(), string(self.GetString()[index])), nil
 					} else if _, ok = indexObject.(*Tuple); ok {
 						if len(indexObject.GetContent()) != 2 {
-							return nil, errors.NewInvalidNumberOfArguments(len(indexObject.GetContent()), 2)
+							return nil, p.NewInvalidNumberOfArgumentsError(len(indexObject.GetContent()), 2)
 						}
 						startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger64(), self.GetLength())
 						if calcError != nil {
-							return nil, calcError
+							return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[0].GetInteger64())
 						}
-						targetIndex, calcError := tools.CalcIndex(indexObject.GetContent()[1].GetInteger64(), self.GetLength())
+						var targetIndex int
+						targetIndex, calcError = tools.CalcIndex(indexObject.GetContent()[1].GetInteger64(), self.GetLength())
 						if calcError != nil {
-							return nil, calcError
+							return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[1].GetInteger64())
 						}
 						return p.NewString(p.PeekSymbolTable(), self.GetString()[startIndex:targetIndex]), nil
 					} else {
-						return nil, errors.NewTypeError(indexObject.TypeName(), IntegerName, TupleName)
+						return nil, p.NewInvalidTypeError(indexObject.TypeName(), IntegerName, TupleName)
 					}
 				},
 			),
@@ -182,7 +180,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(Iter,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					iterator := p.NewIterator(p.PeekSymbolTable())
 					iterator.SetInteger64(0) // This is the index
 					iterator.SetString(self.GetString())
@@ -191,11 +189,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 						p.NewFunction(iterator.SymbolTable(),
 							NewBuiltInClassFunction(iterator,
 								0,
-								func(self IObject, _ ...IObject) (IObject, *errors.Error) {
-									funcSelf, funcGetError := p.PeekSymbolTable().GetSelf(Self)
-									if funcGetError != nil {
-										return nil, funcGetError
-									}
+								func(funcSelf IObject, _ ...IObject) (IObject, *Object) {
 									if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
 										return p.NewBool(p.PeekSymbolTable(), true), nil
 									}
@@ -208,11 +202,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 						p.NewFunction(iterator.SymbolTable(),
 							NewBuiltInClassFunction(iterator,
 								0,
-								func(self IObject, _ ...IObject) (IObject, *errors.Error) {
-									funcSelf, funcGetError := p.PeekSymbolTable().GetSelf(Self)
-									if funcGetError != nil {
-										return nil, funcGetError
-									}
+								func(funcSelf IObject, _ ...IObject) (IObject, *Object) {
 									char := string([]rune(funcSelf.GetString())[int(funcSelf.GetInteger64())])
 									funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
 									return p.NewString(p.PeekSymbolTable(), char), nil
@@ -228,10 +218,10 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(ToInteger,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					number, parsingError := tools.ParseInteger(self.GetString())
 					if parsingError != nil {
-						return nil, parsingError
+						return nil, p.NewIntegerParsingError()
 					}
 					return p.NewInteger(p.PeekSymbolTable(), number), nil
 				},
@@ -241,10 +231,10 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(ToFloat,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					number, parsingError := tools.ParseFloat(strings.ReplaceAll(self.GetString(), "_", ""))
 					if parsingError != nil {
-						return nil, errors.NewInvalidFloatDefinition(errors.UnknownLine, self.GetString())
+						return nil, p.NewFloatParsingError()
 					}
 					return p.NewFloat(p.PeekSymbolTable(), number), nil
 				},
@@ -254,7 +244,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(ToString,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					return p.NewString(
 						p.PeekSymbolTable(),
 						self.GetString(),
@@ -266,7 +256,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(ToBool,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					return p.NewBool(p.PeekSymbolTable(), self.GetLength() != 0), nil
 				},
 			),
@@ -275,7 +265,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(ToArray,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					var content []IObject
 					for _, char := range self.GetString() {
 						content = append(content, p.NewString(
@@ -291,7 +281,7 @@ func (p *Plasma) StringInitialize(object IObject) *errors.Error {
 	object.Set(ToTuple,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					var content []IObject
 					for _, char := range self.GetString() {
 						content = append(content, p.NewString(

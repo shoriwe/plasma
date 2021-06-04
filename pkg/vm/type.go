@@ -1,7 +1,5 @@
 package vm
 
-import "github.com/shoriwe/gruby/pkg/errors"
-
 type Type struct {
 	*Object
 	Constructor Constructor
@@ -17,7 +15,7 @@ func (p *Plasma) NewType(typeName string, parent *SymbolTable, subclasses []*Typ
 	result.Set(ToString,
 		p.NewFunction(result.symbols,
 			NewBuiltInClassFunction(result, 0,
-				func(_ IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(_ IObject, _ ...IObject) (IObject, *Object) {
 					return p.NewString(p.PeekSymbolTable(), "Type@"+typeName), nil
 				},
 			),

@@ -22,7 +22,7 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(Equals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					right := arguments[0]
 					if _, ok := right.(*Bool); !ok {
 						return p.NewBool(p.PeekSymbolTable(), false), nil
@@ -35,7 +35,7 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(RightEquals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					left := arguments[0]
 					if _, ok := left.(*Bool); !ok {
 						return p.NewBool(p.PeekSymbolTable(), false), nil
@@ -48,7 +48,7 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(NotEquals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					right := arguments[0]
 					if _, ok := right.(*Bool); !ok {
 						return p.NewBool(p.PeekSymbolTable(), false), nil
@@ -61,7 +61,7 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(RightNotEquals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *errors.Error) {
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					left := arguments[0]
 					if _, ok := left.(*Bool); !ok {
 						return p.NewBool(p.PeekSymbolTable(), false), nil
@@ -74,13 +74,10 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(Copy,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 
 					if self.GetHash() == 0 {
-						boolHash, hashingError := p.HashString(fmt.Sprintf("%t-%s", self.GetBool(), BoolName))
-						if hashingError != nil {
-							return nil, hashingError
-						}
+						boolHash := p.HashString(fmt.Sprintf("%t-%s", self.GetBool(), BoolName))
 						self.SetHash(boolHash)
 					}
 					return p.NewInteger(p.PeekSymbolTable(), self.GetHash()), nil
@@ -91,7 +88,7 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(Copy,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					return p.NewBool(p.PeekSymbolTable(), self.GetBool()), nil
 				},
 			),
@@ -100,7 +97,7 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(ToInteger,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					if self.GetBool() {
 						return p.NewInteger(p.PeekSymbolTable(), 1), nil
 					}
@@ -112,7 +109,7 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(ToFloat,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 					if self.GetBool() {
 						return p.NewFloat(p.PeekSymbolTable(), 1), nil
 					}
@@ -124,7 +121,7 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(ToString,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 
 					if self.GetBool() {
 						return p.NewString(p.PeekSymbolTable(), TrueName), nil
@@ -137,7 +134,7 @@ func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
 	object.Set(ToBool,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *errors.Error) {
+				func(self IObject, _ ...IObject) (IObject, *Object) {
 
 					return p.NewBool(p.PeekSymbolTable(), self.GetBool()), nil
 				},
