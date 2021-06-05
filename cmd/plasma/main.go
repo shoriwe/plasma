@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/shoriwe/gruby/pkg/compiler/plasma"
@@ -109,53 +108,7 @@ func init() {
 }
 
 func repl() {
-	stdin := bufio.NewReader(os.Stdin)
-	prefix := ">>>"
-	virtualMachine.Initialize(make([]vm.Code, 0))
-	var code string
-	for ; ; {
-		fmt.Print(color.BlueString(prefix))
-		inputLine, readingError := stdin.ReadString('\n')
-		if readingError != nil {
-			panic(readingError)
-		}
-		if inputLine == "\n" {
-			continue
-		}
-		code += inputLine
-		compiler := plasma.NewCompiler(reader.NewStringReader(code), nil)
-		compiledCode, compilationError := compiler.Compile()
-		if compilationError != nil {
-			// ToDo: Do something with the signal received
-		}
-		virtualMachine.PushCode(compiledCode)
-		result, executionError := virtualMachine.Execute()
-		if virtualMachine.MemoryStack.HasNext() {
-			virtualMachine.PopObject()
-		}
-		// virtualMachine.PopCode()
-		if executionError != nil {
-			fmt.Printf("[%s] %s\n", color.RedString("-"), color.RedString(executionError.String()))
-			continue
-		} else if result.TypeName() == vm.NoneName {
-			continue
-		}
-		toString, getError := result.Get(vm.ToString)
-		if getError != nil {
-			fmt.Printf("\n[%s] Object does not implement method %s\n", color.RedString("-"), color.YellowString(vm.ToString))
-			continue
-		}
-		if _, ok := toString.(*vm.Function); !ok {
-			fmt.Printf("\n[%s] Object %s is not a function with 0 arguments\n", color.RedString("-"), color.YellowString(vm.ToString))
-			continue
-		}
-		stringResult, callError := vm.CallFunction(toString.(*vm.Function), virtualMachine, result.SymbolTable())
-		if callError != nil {
-			fmt.Printf("\n[%s] \"%s\"\n", color.RedString("-"), color.RedString(callError.String()))
-			continue
-		}
-		fmt.Println(stringResult.GetString())
-	}
+
 }
 
 func program() {
@@ -180,7 +133,7 @@ func program() {
 		virtualMachine.InitializeByteCode(code)
 		_, executionError := virtualMachine.Execute()
 		if executionError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s", color.RedString("-"), executionError.String())
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s", color.RedString("-"), executionError.GetString())
 			os.Exit(1)
 		}
 	}

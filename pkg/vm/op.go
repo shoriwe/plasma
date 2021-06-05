@@ -71,4 +71,11 @@ const (
 	UnpackReceiversPeekOP
 	PopIterOP
 	NewIteratorOP
+
+	// Try-Except related
+	SetupTryBlockOP
+	SetupTryExceptBlockOP
+	SetupTryElseBlockOP
+	SetupTryFinallyBlockOP
+	ExitTryBlockOP
 )

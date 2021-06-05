@@ -1105,45 +1105,103 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) *
 }
 
 func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) *errors.Error {
-	panic("Will only work with a better error system")
-	/*
-		instructionsBackup := c.instructions
+	instructionsBackup := c.instructions
+	var exceptBlocksCode []vm.Code
+	// Compile the try body
+	for _, exceptBlock := range tryStatement.ExceptBlocks {
 		c.instructions = nil
-
-		// Compile the try body
-		bodyCompilationError := c.compileBody(tryStatement.Body)
-		if bodyCompilationError != nil {
-			return bodyCompilationError
+		// Compile the targets that the exception receives
+		targetCompilationError := c.compileExpression(
+			&ast.TupleExpression{
+				Values: exceptBlock.Targets,
+			},
+		)
+		if targetCompilationError != nil {
+			return targetCompilationError
 		}
-		tryBody := c.instructions
+		targets := c.instructions
 		c.instructions = nil
-
-		// Compile except blocks
-
-		var exceptBlocks struct {
-			length      int
-			captureName string
-			code        []vm.Code
+		// Compile Except body
+		exceptCompilationError := c.compileBody(exceptBlock.Body)
+		if exceptCompilationError != nil {
+			return exceptCompilationError
 		}
-		for _, exceptBlock := range tryStatement.ExceptBlocks {
-			c.instructions = nil
-			targetCompilationError := c.compileExpression(
-				&ast.TupleExpression{
-					Values: exceptBlock.Targets,
-				},
+		exceptionBody := c.instructions
+		c.instructions = nil
+		// Setup the except block all together
+		if exceptBlock.CaptureName != nil {
+			c.pushInstruction(
+				vm.NewCode(
+					vm.SetupTryExceptBlockOP, errors.UnknownLine, vm.ExceptInformation{
+						Receiver:      exceptBlock.CaptureName.Token.String,
+						TargetsLength: len(targets),
+						BodyLength:    len(exceptionBody),
+					},
+				),
 			)
-			if targetCompilationError != nil {
-				return targetCompilationError
-			}
-			c.pushInstruction(vm.NewCode())
-			// Compile Except body
-			c.instructions = nil
-			exceptCompilationError := c.compileBody(exceptBlock.Body)
-			if exceptCompilationError != nil {
-				return exceptCompilationError
-			}
+		} else {
+			c.pushInstruction(
+				vm.NewCode(
+					vm.SetupTryExceptBlockOP, errors.UnknownLine, vm.ExceptInformation{
+						Receiver:      vm.JunkVariable,
+						TargetsLength: len(targets),
+						BodyLength:    len(exceptionBody),
+					},
+				),
+			)
 		}
-	*/
+		c.restoreInstructions(targets)
+		c.restoreInstructions(exceptionBody)
+		exceptBlocksCode = append(exceptBlocksCode, c.instructions...)
+	}
+	if tryStatement.Else != nil {
+		c.instructions = nil
+		elseBodyCompilationError := c.compileBody(tryStatement.Else)
+		if elseBodyCompilationError != nil {
+			return elseBodyCompilationError
+		}
+		elseBody := c.instructions
+		c.instructions = nil
+		c.pushInstruction(vm.NewCode(vm.SetupTryElseBlockOP, errors.UnknownLine, len(elseBody)))
+		c.restoreInstructions(elseBody)
+	} else {
+		c.instructions = nil
+		c.pushInstruction(vm.NewCode(vm.SetupTryElseBlockOP, errors.UnknownLine, 0))
+	}
+	elseBlock := c.instructions
+	if tryStatement.Finally != nil {
+		c.instructions = nil
+		finallyBodyCompilationError := c.compileBody(tryStatement.Finally)
+		if finallyBodyCompilationError != nil {
+			return finallyBodyCompilationError
+		}
+		finallyBody := c.instructions
+		c.instructions = nil
+		c.pushInstruction(vm.NewCode(vm.SetupTryFinallyBlockOP, errors.UnknownLine, len(finallyBody)))
+		c.restoreInstructions(finallyBody)
+	} else {
+		c.instructions = nil
+		c.pushInstruction(vm.NewCode(vm.SetupTryFinallyBlockOP, errors.UnknownLine, 0))
+	}
+	finallyBlock := c.instructions
+	// Compile the real body of the try
+	c.instructions = nil
+	bodyCompilationError := c.compileBody(tryStatement.Body)
+	if bodyCompilationError != nil {
+		return bodyCompilationError
+	}
+	tryBody := c.instructions
+	c.instructions = nil
+	// Put everything together
+	c.restoreInstructions(instructionsBackup)
+	c.pushInstruction(vm.NewCode(vm.SetupTryBlockOP, errors.UnknownLine,
+		len(instructionsBackup)+len(exceptBlocksCode)+len(elseBlock)+len(finallyBlock)+len(tryBody)+2))
+	c.restoreInstructions(exceptBlocksCode)
+	c.restoreInstructions(elseBlock)
+	c.restoreInstructions(finallyBlock)
+	c.restoreInstructions(tryBody)
+	c.pushInstruction(vm.NewCode(vm.ExitTryBlockOP, errors.UnknownLine, nil))
+	return nil
 }
 
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
@@ -1226,8 +1284,8 @@ func (c *Compiler) CompileToArray() ([]vm.Code, *errors.Error) {
 		return nil, compileError
 	}
 	if _, ok := c.options[DEBUG]; ok {
-		for _, i := range c.instructions {
-			fmt.Println(i.Instruction, i.Value)
+		for i, ins := range c.instructions {
+			fmt.Println(i, ins.Instruction, ins.Value)
 		}
 		fmt.Println()
 	}

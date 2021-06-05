@@ -6,6 +6,18 @@ type Type struct {
 	Name        string
 }
 
+func (t *Type) Implements(class *Type) bool {
+	if t == class {
+		return true
+	}
+	for _, subClass := range t.subClasses {
+		if subClass.Implements(class) {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *Plasma) NewType(typeName string, parent *SymbolTable, subclasses []*Type, constructor Constructor) *Type {
 	result := &Type{
 		Object:      p.NewObject(TypeName, subclasses, parent),

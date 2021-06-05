@@ -15,6 +15,8 @@ type IObject interface {
 	GetHash() int64
 	SetHash(int64)
 
+	Implements(*Type) bool // This should check if the object implements a class directly or indirectly
+
 	GetClass() *Type
 	SetClass(*Type)
 
@@ -172,14 +174,41 @@ func (o *Object) SetClass(class *Type) {
 	o.class = class
 }
 
+func (o *Object) Implements(class *Type) bool {
+	if o.class == class {
+		return true
+	}
+	for _, subClass := range o.subClasses {
+		if subClass.Implements(class) {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *Plasma) constructSubClass(subClass *Type, object *Object) *Object {
+	for _, subSubClass := range subClass.subClasses {
+		subSubClassConstructionError := p.constructSubClass(subSubClass, object)
+		if subSubClassConstructionError != nil {
+			return subSubClassConstructionError
+		}
+	}
+	baseInitializationError := subClass.Constructor.Construct(p, object)
+	if baseInitializationError != nil {
+		return p.NewObjectConstructionError(subClass.Name, baseInitializationError.String())
+	}
+	return nil
+}
+
 func (p *Plasma) ConstructObject(type_ *Type, parent *SymbolTable) (IObject, *Object) {
 	object := p.NewObject(type_.Name, type_.subClasses, parent)
 	for _, subclass := range object.subClasses {
-		baseInitializationError := subclass.Constructor.Construct(p, object)
-		if baseInitializationError != nil {
-			return nil, p.NewObjectConstructionError(subclass.Name, baseInitializationError.String())
+		subClassConstructionError := p.constructSubClass(subclass, object)
+		if subClassConstructionError != nil {
+			return nil, subClassConstructionError
 		}
 	}
+	object.class = type_
 	baseInitializationError := type_.Constructor.Construct(p, object)
 	if baseInitializationError != nil {
 		return nil, p.NewObjectConstructionError(type_.Name, baseInitializationError.String())

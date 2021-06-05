@@ -6,13 +6,13 @@ import (
 )
 
 const (
-	RuntimeError                  = "RuntimeError"                 // Done
-	InvalidTypeError              = "InvalidTypeError"             // Done
-	NotImplementedCallableError   = "NotImplementedCallableError"  // Done
-	ObjectConstructionError       = "ObjectConstructionError"      // Done
-	ObjectWithNameNotFoundError   = "ObjectWithNameNotFoundError"  // Done
+	RuntimeError                  = "RuntimeError"                  // Done
+	InvalidTypeError              = "InvalidTypeError"              // Done
+	NotImplementedCallableError   = "NotImplementedCallableError"   // Done
+	ObjectConstructionError       = "ObjectConstructionError"       // Done
+	ObjectWithNameNotFoundError   = "ObjectWithNameNotFoundError"   // Done
 	InvalidNumberOfArgumentsError = "InvalidNumberOfArgumentsError" // Done
-	GoRuntimeError                = "GoRuntimeError"               //
+	GoRuntimeError                = "GoRuntimeError"                //
 
 	UnhashableTypeError  = "UnhashableTypeError"  //
 	IndexOutOfRangeError = "IndexOutOfRangeError" //
@@ -129,7 +129,8 @@ func (p *Plasma) NewInvalidNumberOfArgumentsError(received int, expecting int) *
 	errorType := p.ForceMasterGetAny(InvalidNumberOfArgumentsError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewInteger(p.PeekSymbolTable(), int64(received)), p.NewInteger(p.PeekSymbolTable(), int64(expecting)),
+		p.NewInteger(p.PeekSymbolTable(), int64(received)),
+		p.NewInteger(p.PeekSymbolTable(), int64(expecting)),
 	)
 	return instantiatedError.(*Object)
 }

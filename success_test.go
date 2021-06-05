@@ -32,6 +32,7 @@ const (
 	whileStatement     = "while-statement"
 	untilStatement     = "until-statement"
 	forStatement       = "for-statement"
+	tryStatement       = "try-blocks"
 )
 
 func test(t *testing.T, directory string) {
@@ -57,7 +58,7 @@ func test(t *testing.T, directory string) {
 		}
 		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
 			map[uint8]uint8{
-				// plasma.DEBUG: plasma.DEBUG,
+				plasma.DEBUG: plasma.DEBUG,
 			},
 		)
 		// content, _ := io.ReadAll(fileHandler)
@@ -73,7 +74,8 @@ func test(t *testing.T, directory string) {
 		// result, executionError := plasmaVm.Execute()
 		_, executionError := plasmaVm.Execute()
 		if executionError != nil {
-			t.Fatal(executionError)
+
+			t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.GetString()))
 			return
 		}
 		fmt.Println(fmt.Sprintf("[+] %s: SUCCESS", file.Name()))
@@ -148,4 +150,8 @@ func TestUntilStatements(t *testing.T) {
 
 func TestForStatements(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, forStatement))
+}
+
+func TestTryrStatements(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, tryStatement))
 }

@@ -27,6 +27,7 @@ const (
 	Source            = "0xFFFFFF"
 	TemporalVariable1 = "0xAAAAAA"
 	TemporalVariable2 = "0xBBBBBB"
+	JunkVariable      = "0N-JUNK-VARIABLE"
 )
 
 const (
@@ -109,3 +110,9 @@ const (
 	SetLength               = "SetLength"
 	Contains                = "Contains"
 )
+
+type ExceptInformation struct {
+	Receiver      string
+	TargetsLength int
+	BodyLength    int
+}

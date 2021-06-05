@@ -1849,7 +1849,7 @@ func (parser *Parser) parseSuperStatement() (*ast.SuperInvocationStatement, *err
 	}, nil
 }
 
-func (parser *Parser) parseRetryStatement() (*ast.ContinueStatement, *errors.Error) {
+func (parser *Parser) parseContinueStatement() (*ast.ContinueStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1932,7 +1932,7 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 		case lexer.Super:
 			return parser.parseSuperStatement()
 		case lexer.Continue:
-			return parser.parseRetryStatement()
+			return parser.parseContinueStatement()
 		case lexer.Break:
 			return parser.parseBreakStatement()
 		case lexer.Redo:
