@@ -58,7 +58,7 @@ func test(t *testing.T, directory string) {
 		}
 		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
 			map[uint8]uint8{
-				plasma.DEBUG: plasma.DEBUG,
+				// plasma.DEBUG: plasma.DEBUG,
 			},
 		)
 		// content, _ := io.ReadAll(fileHandler)

@@ -31,3 +31,19 @@ else
 finally
     println("Always the end 2!!!")
 end
+
+try
+    println("Function not defined", 2)
+except ObjectWithNameNotFoundError, RuntimeError, InvalidNumberOfArgumentsError as error
+    try
+        error + 1
+    except
+        println("Nested try-except")
+    finally
+        println("Always the end 3!!!")
+    end
+else
+    print("No error matches the one received")
+finally
+    println("Always the end 4!!!")
+end

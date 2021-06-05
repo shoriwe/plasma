@@ -712,6 +712,20 @@ func (p *Plasma) executeFinally(finallyBody []Code) *Object {
 func (p *Plasma) handleTryExcepts(exception *Object) *Object {
 	entry := p.tryStack.Pop()
 	for _, except := range entry.exceptBlocks {
+		if len(except.targets) == 1 {
+			p.PushCode(NewBytecodeFromArray(except.body))
+			_, executionError := p.Execute()
+			p.PopCode()
+			if executionError != nil {
+				return executionError
+			}
+			finallyExecutionError := p.executeFinally(entry.finallyBody)
+			if finallyExecutionError != nil {
+				return finallyExecutionError
+			}
+			p.PeekCode().index = entry.finalIndex
+			return nil
+		}
 		p.PushCode(NewBytecodeFromArray(except.targets))
 		targetsTuple, executionError := p.Execute()
 		p.PopCode()
@@ -767,7 +781,7 @@ func (p *Plasma) Execute() (IObject, *Object) {
 	var executionError *Object
 	for ; p.PeekCode().HasNext(); {
 		code := p.PeekCode().Next()
-		fmt.Println("Exec:", p.PeekCode().index - 1, code.Instruction, code.Value)
+		// fmt.Println("Exec:", p.PeekCode().index - 1, code.Instruction, code.Value)
 		switch code.Instruction.OpCode {
 		// Literals
 		case NewStringOP:
