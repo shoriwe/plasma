@@ -79,7 +79,7 @@
     - [ ] Switch
     - [X] Module
     - [X] Function Definition
-    - [ ] Interface
+    - [X] Interface
     - [X] Class
     - [X] Raise
     - [X] Try - Except

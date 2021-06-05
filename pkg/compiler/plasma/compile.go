@@ -1295,6 +1295,42 @@ func (c *Compiler) compileClassBody(body []ast.Node) *errors.Error {
 	return nil
 }
 
+func (c *Compiler) compileInterfaceStatement(interfaceStatement *ast.InterfaceStatement) *errors.Error {
+	basesCompilationError := c.compileExpression(
+		&ast.TupleExpression{
+			Values: interfaceStatement.Bases,
+		},
+	)
+	if basesCompilationError != nil {
+		return basesCompilationError
+	}
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	var interfaceMethods []ast.Node
+	for _, functionDefinition := range interfaceStatement.MethodDefinitions {
+		interfaceMethods = append(interfaceMethods, functionDefinition)
+	}
+	bodyCompilationError := c.compileClassBody(
+		interfaceMethods,
+	)
+	if bodyCompilationError != nil {
+		return bodyCompilationError
+	}
+	body := c.instructions
+	c.instructions = nil
+	c.restoreInstructions(instructionsBackup)
+	c.pushInstruction(
+		vm.NewCode(vm.NewClassOP, interfaceStatement.Name.Token.Line,
+			vm.ClassInformation{
+				Name:       interfaceStatement.Name.Token.String,
+				BodyLength: len(body),
+			},
+		),
+	)
+	c.restoreInstructions(body)
+	return nil
+}
+
 func (c *Compiler) compileClassStatement(classStatement *ast.ClassStatement) *errors.Error {
 	basesCompilationError := c.compileExpression(
 		&ast.TupleExpression{
@@ -1361,6 +1397,8 @@ func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 		return c.compileRaiseStatement(statement.(*ast.RaiseStatement))
 	case *ast.ClassStatement:
 		return c.compileClassStatement(statement.(*ast.ClassStatement))
+	case *ast.InterfaceStatement:
+		return c.compileInterfaceStatement(statement.(*ast.InterfaceStatement))
 	}
 	return nil
 }

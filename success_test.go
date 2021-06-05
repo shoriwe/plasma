@@ -35,6 +35,7 @@ const (
 	tryStatement       = "try-blocks"
 	moduleStatement    = "module-statement"
 	classStatement     = "class-statement"
+	interfaceStatement = "interface-statement"
 )
 
 func test(t *testing.T, directory string) {
@@ -164,4 +165,8 @@ func TestModuleStatements(t *testing.T) {
 
 func TestClassStatements(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, classStatement))
+}
+
+func TestInterfaceStatements(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, interfaceStatement))
 }
