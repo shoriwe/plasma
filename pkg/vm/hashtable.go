@@ -1,7 +1,5 @@
 package vm
 
-import "github.com/shoriwe/gruby/pkg/errors"
-
 type KeyValue struct {
 	Key   IObject
 	Value IObject
@@ -21,7 +19,7 @@ func (p *Plasma) NewHashTable(parent *SymbolTable, entries map[int64][]*KeyValue
 	return hashTable
 }
 
-func (p *Plasma) HashTableInitialize(object IObject) *errors.Error {
+func (p *Plasma) HashTableInitialize(object IObject) *Object {
 	object.Set(Equals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,

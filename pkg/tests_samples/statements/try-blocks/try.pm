@@ -47,3 +47,9 @@ else
 finally
     println("Always the end 4!!!")
 end
+
+try
+    raise InvalidNumberOfArgumentsError(0, 10)
+except InvalidNumberOfArgumentsError as error
+    println(error)
+end

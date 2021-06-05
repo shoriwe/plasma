@@ -3,7 +3,6 @@ package vm
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/shoriwe/gruby/pkg/errors"
 	"github.com/shoriwe/gruby/pkg/tools"
 )
 
@@ -21,7 +20,7 @@ func (p *Plasma) NewBytes(parent *SymbolTable, content []uint8) IObject {
 	return bytes_
 }
 
-func (p *Plasma) BytesInitialize(object IObject) *errors.Error {
+func (p *Plasma) BytesInitialize(object IObject) *Object {
 	object.Set(Add,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,

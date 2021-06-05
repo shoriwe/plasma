@@ -195,7 +195,7 @@ func (p *Plasma) constructSubClass(subClass *Type, object *Object) *Object {
 	}
 	baseInitializationError := subClass.Constructor.Construct(p, object)
 	if baseInitializationError != nil {
-		return p.NewObjectConstructionError(subClass.Name, baseInitializationError.String())
+		return baseInitializationError
 	}
 	return nil
 }
@@ -211,12 +211,12 @@ func (p *Plasma) ConstructObject(type_ *Type, parent *SymbolTable) (IObject, *Ob
 	object.class = type_
 	baseInitializationError := type_.Constructor.Construct(p, object)
 	if baseInitializationError != nil {
-		return nil, p.NewObjectConstructionError(type_.Name, baseInitializationError.String())
+		return nil, baseInitializationError
 	}
 	return object, nil
 }
 
-func (p *Plasma) ObjectInitialize(object IObject) *errors.Error {
+func (p *Plasma) ObjectInitialize(object IObject) *Object {
 	object.SymbolTable().Update(map[string]IObject{
 		Initialize: p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,

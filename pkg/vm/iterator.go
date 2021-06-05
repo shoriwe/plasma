@@ -1,7 +1,5 @@
 package vm
 
-import "github.com/shoriwe/gruby/pkg/errors"
-
 type Iterator struct {
 	*Object
 }
@@ -13,7 +11,7 @@ func (p *Plasma) NewIterator(parentSymbols *SymbolTable) *Iterator {
 	return iterator
 }
 
-func (p *Plasma) IteratorInitialize(object IObject) *errors.Error {
+func (p *Plasma) IteratorInitialize(object IObject) *Object {
 	object.Set(HasNext,
 		p.NewFunction(object.SymbolTable(),
 			p.NewNotImplementedCallable(0),

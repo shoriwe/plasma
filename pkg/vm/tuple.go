@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"github.com/shoriwe/gruby/pkg/errors"
 	"github.com/shoriwe/gruby/pkg/tools"
 )
 
@@ -19,7 +18,7 @@ func (p *Plasma) NewTuple(parentSymbols *SymbolTable, content []IObject) *Tuple 
 	return tuple
 }
 
-func (p *Plasma) TupleInitialize(object IObject) *errors.Error {
+func (p *Plasma) TupleInitialize(object IObject) *Object {
 	object.Set(Equals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,

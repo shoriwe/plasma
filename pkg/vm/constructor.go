@@ -1,9 +1,7 @@
 package vm
 
-import "github.com/shoriwe/gruby/pkg/errors"
-
 type Constructor interface {
-	Construct(*Plasma, IObject) *errors.Error
+	Construct(*Plasma, IObject) *Object
 }
 
 type PlasmaConstructor struct {
@@ -14,7 +12,10 @@ type PlasmaConstructor struct {
 func (c *PlasmaConstructor) Construct(vm *Plasma, object IObject) *Object {
 	vm.PushCode(NewBytecodeFromArray(c.Code))
 	vm.PushSymbolTable(object.SymbolTable())
+	vm.PushObject(object)
 	_, executionError := vm.Execute()
+	vm.PopCode()
+	vm.PopSymbolTable()
 	return executionError
 }
 
@@ -24,14 +25,14 @@ func NewPlasmaConstructor(code []Code) *PlasmaConstructor {
 	}
 }
 
-type ConstructorCallBack func(IObject) *errors.Error
+type ConstructorCallBack func(IObject) *Object
 
 type BuiltInConstructor struct {
 	Constructor
 	callback ConstructorCallBack
 }
 
-func (c *BuiltInConstructor) Construct(_ *Plasma, object IObject) *errors.Error {
+func (c *BuiltInConstructor) Construct(_ *Plasma, object IObject) *Object {
 	return c.callback(object)
 }
 

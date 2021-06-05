@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/errors"
 	"github.com/shoriwe/gruby/pkg/tools"
 	"strings"
 )
@@ -21,7 +20,7 @@ func (p *Plasma) NewString(parentSymbols *SymbolTable, value string) *String {
 	return string_
 }
 
-func (p *Plasma) StringInitialize(object IObject) *errors.Error {
+func (p *Plasma) StringInitialize(object IObject) *Object {
 	object.Set(Add,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,

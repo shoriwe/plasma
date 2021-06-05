@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"github.com/shoriwe/gruby/pkg/errors"
 	"github.com/shoriwe/gruby/pkg/tools"
 )
 
@@ -18,7 +17,7 @@ func (p *Plasma) NewArray(parentSymbols *SymbolTable, content []IObject) *Array 
 	p.ArrayInitialize(array)
 	return array
 }
-func (p *Plasma) ArrayInitialize(object IObject) *errors.Error {
+func (p *Plasma) ArrayInitialize(object IObject) *Object {
 	object.Set(Equals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,

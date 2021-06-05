@@ -44,6 +44,7 @@ func (p *Plasma) PushObject(object IObject) {
 func (p *Plasma) PeekObject() IObject {
 	return p.MemoryStack.Peek()
 }
+
 func (p *Plasma) PopObject() IObject {
 	return p.MemoryStack.Pop()
 }
@@ -777,6 +778,83 @@ func (p *Plasma) handleTryExcepts(exception *Object) *Object {
 	return exception
 }
 
+type ModuleInformation struct {
+	Name       string
+	CodeLength int
+}
+
+func (p *Plasma) newModuleOP(code Code) *Object {
+	moduleInformation := code.Value.(ModuleInformation)
+	var moduleBody []Code
+	for i := 0; i < moduleInformation.CodeLength; i++ {
+		moduleBody = append(moduleBody, p.PeekCode().Next())
+	}
+	module := p.NewObject(ModuleName, nil, p.PeekSymbolTable())
+	p.PushSymbolTable(module.SymbolTable())
+	p.PushCode(NewBytecodeFromArray(moduleBody))
+	_, executionError := p.Execute()
+	if executionError != nil {
+		return executionError
+	}
+	p.PopCode()
+	p.PopSymbolTable()
+	p.PeekSymbolTable().Set(moduleInformation.Name, module)
+	return nil
+}
+
+type ClassInformation struct {
+	Name       string
+	BodyLength int
+}
+
+func (p *Plasma) newClassOP(code Code) *Object {
+	classInformation := code.Value.(ClassInformation)
+	rawSubClasses := p.PopObject().GetContent()
+	var subClasses []*Type
+	for _, subClass := range rawSubClasses {
+		if _, ok := subClass.(*Type); !ok {
+			return p.NewInvalidTypeError(subClass.TypeName(), TypeName)
+		}
+		subClasses = append(subClasses, subClass.(*Type))
+	}
+
+	var classBody []Code
+	for i := 0; i < classInformation.BodyLength; i++ {
+		classBody = append(classBody, p.PeekCode().Next())
+	}
+	class := p.NewType(
+		classInformation.Name,
+		p.PeekSymbolTable(),
+		subClasses,
+		NewPlasmaConstructor(classBody),
+	)
+	p.PeekSymbolTable().Set(classInformation.Name, class)
+	return nil
+}
+
+func (p *Plasma) newClassFunctionOP(code Code) *Object {
+	functionInformation := code.Value.([2]int)
+	codeLength := functionInformation[0]
+	numberOfArguments := functionInformation[1]
+	start := p.PeekCode().index
+	p.PeekCode().index += codeLength
+	end := p.PeekCode().index
+	functionCode := make([]Code, codeLength)
+	copy(functionCode, p.PeekCode().instructions[start:end])
+	p.PushObject(p.NewFunction(p.PeekSymbolTable(), NewPlasmaClassFunction(p.PeekObject(), numberOfArguments, functionCode)))
+	return nil
+}
+
+func (p *Plasma) raiseOP() *Object {
+	if _, ok := p.PeekObject().(*Object); !ok {
+		return p.NewInvalidTypeError(p.PeekObject().TypeName(), RuntimeError)
+	}
+	if !p.PeekObject().Implements(p.ForceMasterGetAny(RuntimeError).(*Type)) {
+		return p.NewInvalidTypeError(p.PeekObject().TypeName(), RuntimeError)
+	}
+	return p.PeekObject().(*Object)
+}
+
 func (p *Plasma) Execute() (IObject, *Object) {
 	var executionError *Object
 	for ; p.PeekCode().HasNext(); {
@@ -921,6 +999,14 @@ func (p *Plasma) Execute() (IObject, *Object) {
 			executionError = p.setupTryFinallyBlockOP(code)
 		case ExitTryBlockOP:
 			executionError = p.exitTryBlockOP()
+		case NewModuleOP:
+			executionError = p.newModuleOP(code)
+		case RaiseOP:
+			executionError = p.raiseOP()
+		case NewClassOP:
+			executionError = p.newClassOP(code)
+		case NewClassFunctionOP:
+			executionError = p.newClassFunctionOP(code)
 		default:
 			panic(fmt.Sprintf("Unknown VM instruction %d", code.Instruction.OpCode))
 		}

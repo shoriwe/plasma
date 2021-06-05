@@ -1,8 +1,6 @@
 package vm
 
-import "github.com/shoriwe/gruby/pkg/errors"
-
-func (p *Plasma) NoneInitialize(object IObject) *errors.Error {
+func (p *Plasma) NoneInitialize(object IObject) *Object {
 	object.Set(ToString,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,

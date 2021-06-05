@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/errors"
 )
 
 const (
@@ -172,7 +171,7 @@ func (p *Plasma) NewObjectConstructionError(typeName string, errorMessage string
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) RuntimeErrorInitialize(object IObject) *errors.Error {
+func (p *Plasma) RuntimeErrorInitialize(object IObject) *Object {
 	object.Set(Initialize,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 2,

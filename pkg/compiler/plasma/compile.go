@@ -1204,6 +1204,127 @@ func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) *errors.E
 	return nil
 }
 
+func (c *Compiler) compileModuleStatement(moduleStatement *ast.ModuleStatement) *errors.Error {
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	moduleBodyCompilationError := c.compileBody(moduleStatement.Body)
+	if moduleBodyCompilationError != nil {
+		return moduleBodyCompilationError
+	}
+	moduleBody := c.instructions
+	c.instructions = nil
+	c.restoreInstructions(instructionsBackup)
+	c.pushInstruction(
+		vm.NewCode(vm.NewModuleOP, moduleStatement.Name.Token.Line,
+			vm.ModuleInformation{
+				Name:       moduleStatement.Name.Token.String,
+				CodeLength: len(moduleBody),
+			},
+		),
+	)
+	c.restoreInstructions(moduleBody)
+	return nil
+}
+
+func (c *Compiler) compileRaiseStatement(raise *ast.RaiseStatement) *errors.Error {
+	expressionCompilationError := c.compileExpression(raise.X)
+	if expressionCompilationError != nil {
+		return expressionCompilationError
+	}
+	c.pushInstruction(vm.NewCode(vm.RaiseOP, errors.UnknownLine, nil))
+	return nil
+}
+
+func (c *Compiler) compileClassFunctionDefinition(functionDefinition *ast.FunctionDefinitionStatement) (*errors.Error, bool) {
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	functionDefinitionBodyCompilationError := c.compileBody(functionDefinition.Body)
+	if functionDefinitionBodyCompilationError != nil {
+		return functionDefinitionBodyCompilationError, false
+	}
+	functionCode := c.instructions
+	c.instructions = nil
+	c.instructions = instructionsBackup
+	c.pushInstruction(vm.NewCode(vm.NewClassFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(functionDefinition.Arguments)}))
+	var arguments []string
+	for _, argument := range functionDefinition.Arguments {
+		arguments = append(arguments, argument.Token.String)
+	}
+	c.pushInstruction(vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
+	c.restoreInstructions(functionCode)
+	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
+	c.pushInstruction(vm.NewCode(vm.AssignIdentifierOP, functionDefinition.Name.Token.Line, functionDefinition.Name.Token.String))
+	return nil, functionDefinition.Name.Token.String == vm.Initialize
+}
+
+func (c *Compiler) compileClassBody(body []ast.Node) *errors.Error {
+	foundInitialize := false
+	var isInitialize bool
+	var compilationError *errors.Error
+	for _, node := range body {
+		switch node.(type) {
+		case ast.Expression:
+			compilationError = c.compileExpression(node.(ast.Expression))
+		case ast.Statement:
+			if _, ok := node.(*ast.FunctionDefinitionStatement); ok {
+				compilationError, isInitialize = c.compileClassFunctionDefinition(node.(*ast.FunctionDefinitionStatement))
+				if isInitialize && !foundInitialize {
+					foundInitialize = true
+				}
+			} else {
+				compilationError = c.compileStatement(node.(ast.Statement))
+			}
+		}
+		if compilationError != nil {
+			return compilationError
+		}
+	}
+	if !foundInitialize {
+		c.compileClassFunctionDefinition(
+			&ast.FunctionDefinitionStatement{
+				Name: &ast.Identifier{
+					Token: &lexer.Token{
+						String: vm.Initialize,
+					},
+				},
+				Arguments: nil,
+				Body:      nil,
+			},
+		)
+	}
+	return nil
+}
+
+func (c *Compiler) compileClassStatement(classStatement *ast.ClassStatement) *errors.Error {
+	basesCompilationError := c.compileExpression(
+		&ast.TupleExpression{
+			Values: classStatement.Bases,
+		},
+	)
+	if basesCompilationError != nil {
+		return basesCompilationError
+	}
+	instructionsBackup := c.instructions
+	c.instructions = nil
+	bodyCompilationError := c.compileClassBody(classStatement.Body)
+	if bodyCompilationError != nil {
+		return bodyCompilationError
+	}
+	body := c.instructions
+	c.instructions = nil
+	c.restoreInstructions(instructionsBackup)
+	c.pushInstruction(
+		vm.NewCode(vm.NewClassOP, classStatement.Name.Token.Line,
+			vm.ClassInformation{
+				Name:       classStatement.Name.Token.String,
+				BodyLength: len(body),
+			},
+		),
+	)
+	c.restoreInstructions(body)
+	return nil
+}
+
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	switch statement.(type) {
 	case *ast.AssignStatement:
@@ -1234,6 +1355,12 @@ func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 		return c.compileForLoopStatement(statement.(*ast.ForLoopStatement))
 	case *ast.TryStatement:
 		return c.compileTryStatement(statement.(*ast.TryStatement))
+	case *ast.ModuleStatement:
+		return c.compileModuleStatement(statement.(*ast.ModuleStatement))
+	case *ast.RaiseStatement:
+		return c.compileRaiseStatement(statement.(*ast.RaiseStatement))
+	case *ast.ClassStatement:
+		return c.compileClassStatement(statement.(*ast.ClassStatement))
 	}
 	return nil
 }

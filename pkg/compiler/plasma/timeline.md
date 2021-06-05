@@ -77,12 +77,12 @@
     - [X] If - Else - Elif
     - [X] Unless - Else - Elif
     - [ ] Switch
-    - [ ] Module
+    - [X] Module
     - [X] Function Definition
     - [ ] Interface
-    - [ ] Class
-    - [ ] Raise
-    - [ ] Try - Except
+    - [X] Class
+    - [X] Raise
+    - [X] Try - Except
     - [X] Begin
     - [X] End
     - [X] Return

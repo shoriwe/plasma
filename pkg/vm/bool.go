@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/errors"
 )
 
 type Bool struct {
@@ -18,7 +17,7 @@ func (p *Plasma) NewBool(parentSymbols *SymbolTable, value bool) *Bool {
 	return bool_
 }
 
-func (p *Plasma) BoolInitialize(object IObject) *errors.Error {
+func (p *Plasma) BoolInitialize(object IObject) *Object {
 	object.Set(Equals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,

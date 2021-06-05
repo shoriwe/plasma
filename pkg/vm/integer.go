@@ -20,7 +20,7 @@ func (p *Plasma) NewInteger(parentSymbols *SymbolTable, value int64) *Integer {
 	return integer
 }
 
-func (p *Plasma) IntegerInitialize(object IObject) *errors.Error {
+func (p *Plasma) IntegerInitialize(object IObject) *Object {
 	object.SymbolTable().Set(NegBits,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,

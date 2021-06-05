@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/errors"
 )
 
 /*
@@ -58,7 +57,7 @@ func (p *Plasma) SetDefaultSymbolTable() {
 	symbolTable.Set(InvalidTypeError,
 		p.NewType(InvalidTypeError, symbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *errors.Error {
+				func(object IObject) *Object {
 					object.Set(Initialize,
 						p.NewFunction(object.SymbolTable(),
 							NewBuiltInClassFunction(object, 2,
@@ -85,7 +84,7 @@ func (p *Plasma) SetDefaultSymbolTable() {
 	symbolTable.Set(NotImplementedCallableError,
 		p.NewType(NotImplementedCallableError, symbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *errors.Error {
+				func(object IObject) *Object {
 					object.Set(Initialize,
 						p.NewFunction(object.SymbolTable(),
 							NewBuiltInClassFunction(object, 0,
@@ -104,7 +103,7 @@ func (p *Plasma) SetDefaultSymbolTable() {
 	symbolTable.Set(ObjectConstructionError,
 		p.NewType(ObjectConstructionError, symbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *errors.Error {
+				func(object IObject) *Object {
 					object.Set(Initialize,
 						p.NewFunction(object.SymbolTable(),
 							NewBuiltInClassFunction(object, 2,
@@ -131,7 +130,7 @@ func (p *Plasma) SetDefaultSymbolTable() {
 	symbolTable.Set(ObjectWithNameNotFoundError,
 		p.NewType(ObjectWithNameNotFoundError, symbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *errors.Error {
+				func(object IObject) *Object {
 					object.Set(Initialize,
 						p.NewFunction(object.SymbolTable(),
 							NewBuiltInClassFunction(object, 1,
@@ -154,7 +153,7 @@ func (p *Plasma) SetDefaultSymbolTable() {
 	symbolTable.Set(InvalidNumberOfArgumentsError,
 		p.NewType(InvalidNumberOfArgumentsError, symbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *errors.Error {
+				func(object IObject) *Object {
 					object.Set(Initialize,
 						p.NewFunction(object.SymbolTable(),
 							NewBuiltInClassFunction(object, 2,
@@ -202,7 +201,7 @@ func (p *Plasma) SetDefaultSymbolTable() {
 	symbolTable.Set(FunctionName,
 		p.NewType(FunctionName, symbolTable, []*Type{type_},
 			NewBuiltInConstructor(
-				func(object IObject) *errors.Error {
+				func(object IObject) *Object {
 					return nil
 				}),
 		),

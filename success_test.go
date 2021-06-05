@@ -33,6 +33,8 @@ const (
 	untilStatement     = "until-statement"
 	forStatement       = "for-statement"
 	tryStatement       = "try-blocks"
+	moduleStatement    = "module-statement"
+	classStatement     = "class-statement"
 )
 
 func test(t *testing.T, directory string) {
@@ -152,6 +154,14 @@ func TestForStatements(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, forStatement))
 }
 
-func TestTryrStatements(t *testing.T) {
+func TestTryStatements(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, tryStatement))
+}
+
+func TestModuleStatements(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, moduleStatement))
+}
+
+func TestClassStatements(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, classStatement))
 }

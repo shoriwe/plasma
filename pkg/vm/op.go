@@ -78,4 +78,10 @@ const (
 	SetupTryElseBlockOP
 	SetupTryFinallyBlockOP
 	ExitTryBlockOP
+
+	NewModuleOP
+	NewClassOP
+	NewClassFunctionOP
+
+	RaiseOP
 )
