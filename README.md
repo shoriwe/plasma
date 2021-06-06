@@ -18,7 +18,7 @@ go get github.com/shoriwe/gruby
 2. Then compile it
 
 ```shell
-go build -o plasma github.com/shoriwe/gruby/cmd/plasma
+go install github.com/shoriwe/gruby/cmd/plasma
 ```
 
 ```
