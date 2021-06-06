@@ -9,7 +9,7 @@ a new features like interfaces to work with.
 
 You can have a working interpreter by compiling `cmd/plasma`.
 
-- Then compile it
+- You can compile a binary with
 
 ```shell
 go install github.com/shoriwe/gruby/cmd/plasma
