@@ -9,21 +9,15 @@ a new features like interfaces to work with.
 
 You can have a working interpreter by compiling `cmd/plasma`.
 
-1. Download the repository as a module
-   
-```shell
-go get github.com/shoriwe/gruby
-```
-
-2. Then compile it
+- Then compile it
 
 ```shell
 go install github.com/shoriwe/gruby/cmd/plasma
 ```
 
 ```
-...\Desktop> .\plasma.exe -h
-...\Desktop\plasma.exe [FLAG [FLAG [FLAG]]] [PROGRAM [PROGRAM [PROGRAM]]]
+...> plasma.exe -h
+plasma.exe [FLAG [FLAG [FLAG]]] [PROGRAM [PROGRAM [PROGRAM]]]
 
 [+] Notes
         - No PROGRAM arguments will spawn a REPL
