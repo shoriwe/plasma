@@ -855,6 +855,37 @@ func (p *Plasma) raiseOP() *Object {
 	return p.PeekObject().(*Object)
 }
 
+func (p *Plasma) caseOP(code Code) *Object {
+	references := p.PopObject()
+	contains := p.ForceParentGetSelf(Contains, references.SymbolTable())
+	result, callError := p.CallFunction(contains.(*Function), references.SymbolTable(), p.PeekObject())
+	if callError != nil {
+		return callError
+	}
+	var boolResult IObject
+	if _, ok := result.(*Bool); ok {
+		boolResult = result
+	} else {
+		toBool, getError := result.Get(ToBool)
+		if getError != nil {
+			return p.NewObjectWithNameNotFoundError(ToBool)
+		}
+		if _, ok = toBool.(*Function); !ok {
+			return p.NewInvalidTypeError(toBool.TypeName(), FunctionName)
+		}
+		boolResult, callError = p.CallFunction(toBool.(*Function), result.SymbolTable())
+		if callError != nil {
+			return callError
+		}
+	}
+	if !boolResult.GetBool() {
+		p.PeekCode().index += code.Value.(int)
+		return nil
+	}
+	p.PopObject()
+	return nil
+}
+
 func (p *Plasma) Execute() (IObject, *Object) {
 	var executionError *Object
 	for ; p.PeekCode().HasNext(); {
@@ -1007,6 +1038,8 @@ func (p *Plasma) Execute() (IObject, *Object) {
 			executionError = p.newClassOP(code)
 		case NewClassFunctionOP:
 			executionError = p.newClassFunctionOP(code)
+		case CaseOP:
+			executionError = p.caseOP(code)
 		default:
 			panic(fmt.Sprintf("Unknown VM instruction %d", code.Instruction.OpCode))
 		}

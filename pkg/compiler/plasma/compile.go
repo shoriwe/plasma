@@ -1361,6 +1361,83 @@ func (c *Compiler) compileClassStatement(classStatement *ast.ClassStatement) *er
 	return nil
 }
 
+func (c *Compiler) compileSwitchStatement(switchStatement *ast.SwitchStatement) *errors.Error {
+	instructionsBackup := c.instructions
+
+	c.instructions = nil
+	targetCompilationError := c.compileExpression(switchStatement.Target)
+	if targetCompilationError != nil {
+		return targetCompilationError
+	}
+	target := c.instructions
+	c.instructions = nil
+
+	var cases []struct {
+		references []vm.Code
+		body       []vm.Code
+	}
+	for _, case_ := range switchStatement.CaseBlocks {
+		c.instructions = nil
+		referencesCompilationError := c.compileExpression(
+			&ast.TupleExpression{
+				Values: case_.Cases,
+			},
+		)
+		if referencesCompilationError != nil {
+			return referencesCompilationError
+		}
+		references := c.instructions
+		c.instructions = nil
+		bodyCompilationError := c.compileBody(case_.Body)
+		if bodyCompilationError != nil {
+			return bodyCompilationError
+		}
+		body := c.instructions
+		c.instructions = nil
+		cases = append(cases,
+			struct {
+				references []vm.Code
+				body       []vm.Code
+			}{
+				references: references,
+				body:       body,
+			},
+		)
+	}
+	c.instructions = nil
+	defaultCompilationError := c.compileBody(switchStatement.Default)
+	if defaultCompilationError != nil {
+		return defaultCompilationError
+	}
+	defaultBody := c.instructions
+	c.instructions = nil
+	// Construct the switch
+	totalLength := len(defaultBody) + 1
+	for _, caseBlock := range cases {
+		bodyLength := len(caseBlock.body)
+		referencesLength := len(caseBlock.references)
+		totalLength += referencesLength + 1 + bodyLength + 1
+		c.restoreInstructions(caseBlock.references)
+		c.pushInstruction(vm.NewCode(vm.CaseOP, errors.UnknownLine, bodyLength+1))
+		c.restoreInstructions(caseBlock.body)
+		c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, nil))
+	}
+	c.pushInstruction(vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
+	c.restoreInstructions(defaultBody)
+	switchBody := c.instructions
+	c.instructions = nil
+
+	for index, code := range switchBody {
+		if code.Instruction.OpCode == vm.JumpOP && code.Value == nil {
+			switchBody[index].Value = totalLength - index - 1
+		}
+	}
+	c.restoreInstructions(instructionsBackup)
+	c.restoreInstructions(target)
+	c.restoreInstructions(switchBody)
+	return nil
+}
+
 func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	switch statement.(type) {
 	case *ast.AssignStatement:
@@ -1399,6 +1476,8 @@ func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 		return c.compileClassStatement(statement.(*ast.ClassStatement))
 	case *ast.InterfaceStatement:
 		return c.compileInterfaceStatement(statement.(*ast.InterfaceStatement))
+	case *ast.SwitchStatement:
+		return c.compileSwitchStatement(statement.(*ast.SwitchStatement))
 	}
 	return nil
 }

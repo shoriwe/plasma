@@ -76,7 +76,7 @@
         - [X] Redo
     - [X] If - Else - Elif
     - [X] Unless - Else - Elif
-    - [ ] Switch
+    - [X] Switch
     - [X] Module
     - [X] Function Definition
     - [X] Interface

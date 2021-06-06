@@ -36,6 +36,7 @@ const (
 	moduleStatement    = "module-statement"
 	classStatement     = "class-statement"
 	interfaceStatement = "interface-statement"
+	switchStatement    = "switch-statement"
 )
 
 func test(t *testing.T, directory string) {
@@ -169,4 +170,8 @@ func TestClassStatements(t *testing.T) {
 
 func TestInterfaceStatements(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, interfaceStatement))
+}
+
+func TestSwitchStatements(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, switchStatement))
 }

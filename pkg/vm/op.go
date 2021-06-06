@@ -84,4 +84,5 @@ const (
 	NewClassFunctionOP
 
 	RaiseOP
+	CaseOP
 )
