@@ -110,7 +110,7 @@
 - [X] Defer
 - [X] Go
 - [X] Super Invocation
-- [X] Retry
+- [X] Continue
 - [X] Break
 - [X] Redo
 - [X] Return

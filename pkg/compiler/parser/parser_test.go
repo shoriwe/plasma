@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/shoriwe/gruby/pkg/compiler/ast"
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
+	reader2 "github.com/shoriwe/gruby/pkg/reader"
 	"strings"
 	"testing"
 )
@@ -57,10 +58,7 @@ func walker(node ast.Node) string {
 		return result + ")"
 	case *ast.IndexExpression:
 		result := walker(node.(*ast.IndexExpression).Source) + "["
-		result += walker(node.(*ast.IndexExpression).Index[0])
-		if node.(*ast.IndexExpression).Index[1] != nil {
-			result += ":" + walker(node.(*ast.IndexExpression).Index[1])
-		}
+		result += walker(node.(*ast.IndexExpression).Index)
 		return result + "]"
 	case *ast.LambdaExpression:
 		result := "lambda "
@@ -102,11 +100,11 @@ func walker(node ast.Node) string {
 			result += ": " + walker(value.Value)
 		}
 		return result + "}"
-	case *ast.IfOneLineExpression:
-		result := walker(node.(*ast.IfOneLineExpression).Result)
-		result += " if " + walker(node.(*ast.IfOneLineExpression).Condition)
-		if node.(*ast.IfOneLineExpression).ElseResult != nil {
-			result += " else " + walker(node.(*ast.IfOneLineExpression).ElseResult)
+	case *ast.IfOneLinerExpression:
+		result := walker(node.(*ast.IfOneLinerExpression).Result)
+		result += " if " + walker(node.(*ast.IfOneLinerExpression).Condition)
+		if node.(*ast.IfOneLinerExpression).ElseResult != nil {
+			result += " else " + walker(node.(*ast.IfOneLinerExpression).ElseResult)
 		}
 		return result
 	case *ast.UnlessOneLinerExpression:
@@ -120,7 +118,7 @@ func walker(node ast.Node) string {
 	case *ast.GeneratorExpression:
 		result := walker(node.(*ast.GeneratorExpression).Operation)
 		result += " for "
-		for index, variable := range node.(*ast.GeneratorExpression).Variables {
+		for index, variable := range node.(*ast.GeneratorExpression).Receivers {
 			if index != 0 {
 				result += ", "
 			}
@@ -132,8 +130,8 @@ func walker(node ast.Node) string {
 		result := walker(node.(*ast.AssignStatement).LeftHandSide)
 		result += " " + node.(*ast.AssignStatement).AssignOperator.String + " "
 		return result + walker(node.(*ast.AssignStatement).RightHandSide)
-	case *ast.RetryStatement:
-		return "retry"
+	case *ast.ContinueStatement:
+		return "continue"
 	case *ast.BreakStatement:
 		return "break"
 	case *ast.RedoStatement:
@@ -160,8 +158,6 @@ func walker(node ast.Node) string {
 		return result
 	case *ast.DeferStatement:
 		return "defer " + walker(node.(*ast.DeferStatement).X)
-	case *ast.GoStatement:
-		return "go " + walker(node.(*ast.GoStatement).X)
 	case *ast.SuperInvocationStatement:
 		result := "super("
 		for index, argument := range node.(*ast.SuperInvocationStatement).Arguments {
@@ -223,18 +219,6 @@ func walker(node ast.Node) string {
 			}
 		}
 		return result + "\nend"
-	case *ast.EnumStatement:
-		result := "enum " + walker(node.(*ast.EnumStatement).Name)
-		for _, identifier := range node.(*ast.EnumStatement).EnumIdentifiers {
-			result += "\n\t" + walker(identifier)
-		}
-		return result + "\nend"
-	case *ast.StructStatement:
-		result := "struct " + walker(node.(*ast.StructStatement).Name)
-		for _, identifier := range node.(*ast.StructStatement).Fields {
-			result += "\n\t" + walker(identifier)
-		}
-		return result + "\nend"
 	case *ast.SwitchStatement:
 		result := "switch " + walker(node.(*ast.SwitchStatement).Target)
 		for _, caseBlock := range node.(*ast.SwitchStatement).CaseBlocks {
@@ -276,14 +260,8 @@ func walker(node ast.Node) string {
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
-	case *ast.StarExpression:
-		return "*" + walker(node.(*ast.StarExpression).X)
-	case *ast.PointerExpression:
-		return "&" + walker(node.(*ast.PointerExpression).X)
 	case *ast.AwaitExpression:
 		return "await " + walker(node.(*ast.AwaitExpression).X)
-	case *ast.GoToStatement:
-		return "goto " + walker(node.(*ast.GoToStatement).Name)
 	case *ast.ForLoopStatement:
 		result := "for "
 		for index, receiver := range node.(*ast.ForLoopStatement).Receivers {
@@ -342,11 +320,6 @@ func walker(node ast.Node) string {
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		for _, bodyNode := range node.(*ast.InterfaceStatement).AsyncMethodDefinitions {
-			nodeString := walker(bodyNode)
-			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-			result += "\n\t" + nodeString
-		}
 		return result + "\nend"
 	case *ast.FunctionDefinitionStatement:
 		result := "def " + walker(node.(*ast.FunctionDefinitionStatement).Name)
@@ -359,22 +332,6 @@ func walker(node ast.Node) string {
 		}
 		result += ")"
 		for _, bodyNode := range node.(*ast.FunctionDefinitionStatement).Body {
-			nodeString := walker(bodyNode)
-			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-			result += "\n\t" + nodeString
-		}
-		return result + "\nend"
-	case *ast.AsyncFunctionDefinitionStatement:
-		result := "async def " + walker(node.(*ast.AsyncFunctionDefinitionStatement).Name)
-		result += "("
-		for index, argument := range node.(*ast.AsyncFunctionDefinitionStatement).Arguments {
-			if index != 0 {
-				result += ", "
-			}
-			result += walker(argument)
-		}
-		result += ")"
-		for _, bodyNode := range node.(*ast.AsyncFunctionDefinitionStatement).Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
@@ -457,15 +414,11 @@ func walk(node ast.Node) string {
 
 func test(t *testing.T, samples []string) {
 	for sampleIndex, sample := range samples {
-		lex := lexer.NewLexer(sample)
-		parser, parserCreationError := NewParser(lex)
-		if parserCreationError != nil {
-			t.Error(parserCreationError)
-			return
-		}
+		lex := lexer.NewLexer(reader2.NewStringReader(sample))
+		parser := NewParser(lex)
 		program, parsingError := parser.Parse()
 		if parsingError != nil {
-			t.Error(parsingError)
+			t.Error(parsingError.String())
 			return
 		}
 		result := walk(program)
@@ -517,7 +470,6 @@ var basicSamples = []string{
 	"yield 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
 	"return 1",
 	"return 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
-	"go super_duper()",
 	"defer a()",
 	"super(1)",
 	"super(1, 2)",
@@ -543,23 +495,13 @@ var basicSamples = []string{
 		"\t\tprint(2)\n" +
 		"\tend\n" +
 		"end",
-	"enum Tokens\n" +
-		"\tString\n" +
-		"\tFloat\n" +
-		"\tInteger\n" +
-		"end",
-	"struct ListNode\n" +
-		"\tValue\n" +
-		"\tLeft\n" +
-		"\tRight\n" +
-		"end",
 	"switch Token.Kind\n" +
 		"case Numeric, CommandOutput\n" +
 		"\tbreak\n" +
 		"case String\n" +
 		"\tprint(\"I am a String\")\n" +
 		"default\n" +
-		"\tprint(\"Error\")\n" +
+		"\tprint(\"errors\")\n" +
 		"end",
 	"while True\n" +
 		"\tif a > b\n" +
@@ -568,12 +510,7 @@ var basicSamples = []string{
 		"\ta += 1\n" +
 		"\tb -= 1\n" +
 		"end",
-	"&caller",
-	"*call(1, 2)",
-	"*&(c)",
-	"*(&c + 1)",
 	"await parser().a()",
-	"goto abc",
 	"[]",
 	"for a, b, c in range(10)\n" +
 		"\tprint(\"hello world!\")\n" +
@@ -604,12 +541,12 @@ var basicSamples = []string{
 		"end",
 	"try\n" +
 		"\tprint(variable)\n" +
-		"except UndefinedIdentifier, AnyException as Error\n" +
-		"\tprint(Error)\n" +
-		"except NoToStringException as Error\n" +
-		"\tprint(Error)\n" +
+		"except UndefinedIdentifier, AnyException as errors\n" +
+		"\tprint(errors)\n" +
+		"except NoToStringException as errors\n" +
+		"\tprint(errors)\n" +
 		"else\n" +
-		"\tprint(\"Unknown error\")\n" +
+		"\tprint(\"Unknown *errors\")\n" +
 		"\traise UnknownException()\n" +
 		"finally\n" +
 		"\tprint(\"Done\")\n" +

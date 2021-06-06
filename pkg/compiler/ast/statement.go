@@ -45,10 +45,6 @@ type ForLoopStatement struct {
 	Body      []Node
 }
 
-type GoToStatement struct {
-	Statement
-	Name *Identifier
-}
 type ElifBlock struct {
 	Condition Expression
 	Body      []Node
@@ -95,25 +91,11 @@ type FunctionDefinitionStatement struct {
 	Body      []Node
 }
 
-type AsyncFunctionDefinitionStatement struct {
-	Statement
-	Name      *Identifier
-	Arguments []*Identifier
-	Body      []Node
-}
-
-type StructStatement struct {
-	Statement
-	Name   *Identifier
-	Fields []*Identifier
-}
-
 type InterfaceStatement struct {
 	Statement
-	Name                   *Identifier
-	Bases                  []Expression
-	MethodDefinitions      []*FunctionDefinitionStatement
-	AsyncMethodDefinitions []*AsyncFunctionDefinitionStatement
+	Name              *Identifier
+	Bases             []Expression
+	MethodDefinitions []*FunctionDefinitionStatement
 }
 
 type ClassStatement struct {
@@ -121,12 +103,6 @@ type ClassStatement struct {
 	Name  *Identifier
 	Bases []Expression // Identifiers and selectors
 	Body  []Node
-}
-
-type EnumStatement struct {
-	Statement
-	Name            *Identifier
-	EnumIdentifiers []*Identifier
 }
 
 type ExceptBlock struct {
@@ -157,11 +133,6 @@ type EndStatement struct {
 	Body []Node
 }
 
-type GoStatement struct {
-	Statement
-	X *MethodInvocationExpression
-}
-
 type ReturnStatement struct {
 	Statement
 	Results []Expression
@@ -177,7 +148,7 @@ type SuperInvocationStatement struct {
 	Arguments []Expression
 }
 
-type RetryStatement struct {
+type ContinueStatement struct {
 	Statement
 }
 

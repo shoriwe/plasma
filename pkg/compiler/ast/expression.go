@@ -27,16 +27,6 @@ type HashExpression struct {
 	Values []*KeyValue
 }
 
-type StarExpression struct {
-	Expression
-	X Expression
-}
-
-type PointerExpression struct {
-	Expression
-	X Expression
-}
-
 type Identifier struct {
 	Expression
 	Token *lexer.Token
@@ -76,7 +66,7 @@ type LambdaExpression struct {
 type GeneratorExpression struct {
 	Expression
 	Operation Expression
-	Variables []*Identifier
+	Receivers []*Identifier
 	Source    Expression
 }
 
@@ -95,7 +85,7 @@ type MethodInvocationExpression struct {
 type IndexExpression struct {
 	Expression
 	Source Expression
-	Index  [2]Expression
+	Index  Expression
 }
 
 type AwaitExpression struct {
@@ -103,7 +93,7 @@ type AwaitExpression struct {
 	X *MethodInvocationExpression
 }
 
-type IfOneLineExpression struct {
+type IfOneLinerExpression struct {
 	Expression
 	Result     Expression
 	Condition  Expression

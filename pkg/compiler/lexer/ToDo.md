@@ -44,7 +44,7 @@
 - [X] Case
 - [X] Yield
 - [X] Return
-- [X] Retry
+- [X] Continue
 - [X] Break
 - [X] Redo
 - [X] Module
@@ -116,3 +116,5 @@
 - [X] !=
 - [X] \>=
 - [X] <=
+- [ ] <
+- [ ] \>

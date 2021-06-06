@@ -1,11 +1,82 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 	"github.com/shoriwe/gruby/pkg/compiler/ast"
 	"github.com/shoriwe/gruby/pkg/compiler/lexer"
+	"github.com/shoriwe/gruby/pkg/errors"
 )
+
+const (
+	ForStatement                = "For Statement"
+	UntilStatement              = "Until Statement"
+	ModuleStatement             = "Module Statement"
+	FunctionDefinitionStatement = "Function Definition Statement"
+	ClassStatement              = "Class Statement"
+	RaiseStatement              = "Raise Statement"
+	TryStatement                = "Try Statement"
+	ExceptBlock                 = "Except Block"
+	ElseBlock                   = "Else Block"
+	FinallyBlock                = "Finally Block"
+	BeginStatement              = "Begin Statement"
+	InterfaceStatement          = "Interface Statement"
+	BinaryExpression            = "Binary Expression"
+	PointerExpression           = "Pointer Expression"
+	AwaitExpression             = "Await Expression"
+	LambdaExpression            = "Lambda Expression"
+	ParenthesesExpression       = "Parentheses Expression"
+	TupleExpression             = "Tuple Expression"
+	ArrayExpression             = "Array Expression"
+	HashExpression              = "Hash Expression"
+	WhileStatement              = "While Statement"
+	DoWhileStatement            = "Do-While Statement"
+	IfStatement                 = "If Statement"
+	ElifBlock                   = "Elif Block"
+	UnlessStatement             = "Unless Statement"
+	SwitchStatement             = "Switch Statement"
+	CaseBlock                   = "Case Block"
+	DefaultBlock                = "Default Block"
+	DeferStatement              = "Defer Statement"
+	ReturnStatement             = "Return Statement"
+	YieldStatement              = "Yield Statement"
+	SuperStatement              = "Super Statement"
+	SelectorExpression          = "Selector Expression"
+	MethodInvocationExpression  = "Method Invocation Expression"
+	IndexExpression             = "Index Expression"
+	IfOneLinerExpression        = "If One Liner Expression"
+	UnlessOneLinerExpression    = "Unless One Liner Expression"
+	OneLineElseBlock            = "One Line Else Block"
+	GeneratorExpression         = "Generator Expression"
+	AssignStatement             = "Assign Statement"
+)
+
+func newSyntaxError(line int, nodeType string) *errors.Error {
+	return errors.New(line, fmt.Sprintf("invalid definition of %s", nodeType), errors.SyntaxError)
+}
+
+func newNonExpressionReceivedError(line int, nodeType string) *errors.Error {
+	return errors.New(line, fmt.Sprintf("received a non expression in %s", nodeType), errors.SyntaxError)
+}
+
+func newNonIdentifierReceivedError(line int, nodeType string) *errors.Error {
+	return errors.New(line, fmt.Sprintf("received a non identifier in %s", nodeType), errors.SyntaxError)
+}
+
+func newNonFunctionCallReceivedError(line int, nodeType string) *errors.Error {
+	return errors.New(line, fmt.Sprintf("received a non non function call in %s", nodeType), errors.SyntaxError)
+}
+
+func newStatementNeverEndedError(line int, nodeType string) *errors.Error {
+	return errors.New(line, fmt.Sprintf("%s never ended", nodeType), errors.SyntaxError)
+}
+
+func newInvalidKindOfTokenError(line int) *errors.Error {
+	return errors.New(line, "invalid kind of token", errors.ParsingError)
+}
+
+func newExpressionNeverClosesError(line int, nodeType string) *errors.Error {
+	return errors.New(line, fmt.Sprintf("%s never closed", nodeType), errors.SyntaxError)
+}
 
 type Parser struct {
 	lexer        *lexer.Lexer
@@ -17,7 +88,7 @@ func (parser *Parser) hasNext() bool {
 	return !parser.complete
 }
 
-func (parser *Parser) next() error {
+func (parser *Parser) next() *errors.Error {
 	token, tokenizingError := parser.lexer.Next()
 	if tokenizingError != nil {
 		return tokenizingError
@@ -61,7 +132,7 @@ func (parser *Parser) updateState() {
 	parser.complete = true
 }
 
-func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, error) {
+func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -71,7 +142,7 @@ func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, error) {
 		if parser.matchDirect(lexer.In) {
 			break
 		} else if !parser.matchKind(lexer.IdentifierKind) {
-			return nil, errors.New(fmt.Sprintf("invalid definition of for loop at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), ForStatement)
 		}
 		receivers = append(receivers, &ast.Identifier{
 			Token: parser.currentToken,
@@ -88,11 +159,11 @@ func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, error) {
 		} else if parser.matchDirect(lexer.In) {
 			break
 		} else {
-			return nil, errors.New(fmt.Sprintf("invalid declaration of for loop at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), ForStatement)
 		}
 	}
 	if !parser.matchDirect(lexer.In) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of for loop at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), ForStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -103,10 +174,10 @@ func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, error) {
 		return nil, parsingError
 	}
 	if _, ok := source.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("recevied a non expression as for loop source at line %d", parser.currentLine()))
+		return nil, newNonExpressionReceivedError(parser.currentLine(), ForStatement)
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of for loop at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), ForStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -132,7 +203,7 @@ func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, error) {
 		body = append(body, bodyNode)
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("for loop never ended at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), ForStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -145,7 +216,7 @@ func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseUntilStatement() (*ast.UntilLoopStatement, error) {
+func (parser *Parser) parseUntilStatement() (*ast.UntilLoopStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -155,10 +226,10 @@ func (parser *Parser) parseUntilStatement() (*ast.UntilLoopStatement, error) {
 		return nil, parsingError
 	}
 	if _, ok := condition.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("invalid until loop declaration at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), UntilStatement)
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid until loop declaration at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), UntilStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -184,7 +255,7 @@ func (parser *Parser) parseUntilStatement() (*ast.UntilLoopStatement, error) {
 		body = append(body, untilChild)
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("until statement never closed at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), UntilStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -196,13 +267,13 @@ func (parser *Parser) parseUntilStatement() (*ast.UntilLoopStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseModuleStatement() (*ast.ModuleStatement, error) {
+func (parser *Parser) parseModuleStatement() (*ast.ModuleStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if !parser.matchKind(lexer.IdentifierKind) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of module at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), ModuleStatement)
 	}
 	name := &ast.Identifier{
 		Token: parser.currentToken,
@@ -212,11 +283,11 @@ func (parser *Parser) parseModuleStatement() (*ast.ModuleStatement, error) {
 		return nil, tokenizingError
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of module at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), ModuleStatement)
 	}
 	var body []ast.Node
 	var bodyNode ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
@@ -235,7 +306,7 @@ func (parser *Parser) parseModuleStatement() (*ast.ModuleStatement, error) {
 		body = append(body, bodyNode)
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("Module declaration never closed at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), ModuleStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -247,13 +318,13 @@ func (parser *Parser) parseModuleStatement() (*ast.ModuleStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitionStatement, error) {
+func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitionStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if !parser.matchKind(lexer.IdentifierKind) {
-		return nil, errors.New(fmt.Sprintf("invalid Function definition at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), FunctionDefinitionStatement)
 	}
 	name := &ast.Identifier{
 		Token: parser.currentToken,
@@ -263,7 +334,7 @@ func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitio
 		return nil, tokenizingError
 	}
 	if !parser.matchDirect(lexer.OpenParentheses) {
-		return nil, errors.New(fmt.Sprintf("invalid Function definition at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), FunctionDefinitionStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -275,7 +346,7 @@ func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitio
 			break
 		}
 		if !parser.matchKind(lexer.IdentifierKind) {
-			return nil, errors.New(fmt.Sprintf("invalid Function definition at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), FunctionDefinitionStatement)
 		}
 		argument := &ast.Identifier{
 			Token: parser.currentToken,
@@ -293,22 +364,22 @@ func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitio
 		} else if parser.matchDirect(lexer.CloseParentheses) {
 			break
 		} else {
-			return nil, errors.New(fmt.Sprintf("invalid Function definition at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), FunctionDefinitionStatement)
 		}
 	}
 	if !parser.matchDirect(lexer.CloseParentheses) {
-		return nil, errors.New(fmt.Sprintf("invalid Function definition at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), FunctionDefinitionStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid Function definition at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), FunctionDefinitionStatement)
 	}
 	var body []ast.Node
 	var bodyNode ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
@@ -327,7 +398,7 @@ func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitio
 		body = append(body, bodyNode)
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("function declaration never closed at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), FunctionDefinitionStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -340,29 +411,13 @@ func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitio
 	}, nil
 }
 
-func (parser *Parser) parseAsyncFunctionDefinitionStatement() (*ast.AsyncFunctionDefinitionStatement, error) {
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	functionDefinition, parsingError := parser.parseFunctionDefinitionStatement()
-	if parsingError != nil {
-		return nil, parsingError
-	}
-	return &ast.AsyncFunctionDefinitionStatement{
-		Name:      functionDefinition.Name,
-		Arguments: functionDefinition.Arguments,
-		Body:      functionDefinition.Body,
-	}, nil
-}
-
-func (parser *Parser) parseClassStatement() (*ast.ClassStatement, error) {
+func (parser *Parser) parseClassStatement() (*ast.ClassStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if !parser.matchKind(lexer.IdentifierKind) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of class at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), ClassStatement)
 	}
 	name := &ast.Identifier{
 		Token: parser.currentToken,
@@ -373,7 +428,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, error) {
 	}
 	var bases []ast.Expression
 	var base ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	if parser.matchDirect(lexer.OpenParentheses) {
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
@@ -386,7 +441,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, error) {
 			}
 			if _, ok := base.(*ast.Identifier); !ok {
 				if _, ok2 := base.(*ast.SelectorExpression); !ok2 {
-					return nil, errors.New(fmt.Sprintf("received an invalid expression as class base at line %d", parser.currentLine()))
+					return nil, newNonExpressionReceivedError(parser.currentLine(), ClassStatement)
 				}
 			}
 			bases = append(bases, base.(ast.Expression))
@@ -398,12 +453,12 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, error) {
 			} else if parser.matchDirect(lexer.CloseParentheses) {
 				break
 			} else {
-				fmt.Println(parser.currentToken)
-				return nil, errors.New(fmt.Sprintf("invalid definition of a class at line %d", parser.currentLine()))
+
+				return nil, newSyntaxError(parser.currentLine(), ClassStatement)
 			}
 		}
 		if !parser.matchDirect(lexer.CloseParentheses) {
-			return nil, errors.New(fmt.Sprintf("invalid declaration of class bases at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), ClassStatement)
 		}
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
@@ -411,7 +466,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, error) {
 		}
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of class at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), ClassStatement)
 	}
 	var body []ast.Node
 	var bodyNode ast.Node
@@ -433,7 +488,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, error) {
 		body = append(body, bodyNode)
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("class declaration never closed at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), ClassStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -446,7 +501,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseRaiseStatement() (*ast.RaiseStatement, error) {
+func (parser *Parser) parseRaiseStatement() (*ast.RaiseStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -456,23 +511,23 @@ func (parser *Parser) parseRaiseStatement() (*ast.RaiseStatement, error) {
 		return nil, parsingError
 	}
 	if _, ok := x.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("raise statement must receive an expression not an statement at line %d", parser.currentLine()))
+		return nil, newNonExpressionReceivedError(parser.currentLine(), RaiseStatement)
 	}
 	return &ast.RaiseStatement{
 		X: x.(ast.Expression),
 	}, nil
 }
-func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
+func (parser *Parser) parseTryStatement() (*ast.TryStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid try statement definition at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), TryStatement)
 	}
 	var body []ast.Node
 	var bodyNode ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
@@ -514,7 +569,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
 				return nil, parsingError
 			}
 			if _, ok := target.(ast.Expression); !ok {
-				return nil, errors.New(fmt.Sprintf("invalid definition of try statement exception at line %d", parser.currentLine()))
+				return nil, newSyntaxError(parser.currentLine(), ExceptBlock)
 			}
 			targets = append(targets, target.(ast.Expression))
 			if parser.matchDirect(lexer.Comma) {
@@ -531,7 +586,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
 				return nil, tokenizingError
 			}
 			if !parser.matchKind(lexer.IdentifierKind) {
-				return nil, errors.New(fmt.Sprintf("invalid declaratione of except block at line %d", parser.currentLine()))
+				return nil, newSyntaxError(parser.currentLine(), ExceptBlock)
 			}
 			captureName = &ast.Identifier{
 				Token: parser.currentToken,
@@ -542,7 +597,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
 			}
 		}
 		if !parser.matchDirect(lexer.NewLine) {
-			return nil, errors.New(fmt.Sprintf("invalid declaratione of except block at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), TryStatement)
 		}
 		var exceptBody []ast.Node
 		var exceptBodyNode ast.Node
@@ -580,7 +635,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
 			return nil, tokenizingError
 		}
 		if !parser.matchDirect(lexer.NewLine) {
-			return nil, errors.New(fmt.Sprintf("invalid definition of else block in try statement at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), ElseBlock)
 		}
 		for ; !parser.complete; {
 			if parser.matchKind(lexer.Separator) {
@@ -609,7 +664,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
 			return nil, tokenizingError
 		}
 		if !parser.matchDirect(lexer.NewLine) {
-			return nil, errors.New(fmt.Sprintf("invalid definition of finally block in try statement at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), FinallyBlock)
 		}
 		for ; !parser.complete; {
 			if parser.matchKind(lexer.Separator) {
@@ -630,7 +685,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
 		}
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("invalid declaratione of except block at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), TryStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -644,17 +699,17 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseBeginStatement() (*ast.BeginStatement, error) {
+func (parser *Parser) parseBeginStatement() (*ast.BeginStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid definition of begin statement at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), BeginStatement)
 	}
 	var body []ast.Node
 	var bodyNode ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
@@ -673,7 +728,7 @@ func (parser *Parser) parseBeginStatement() (*ast.BeginStatement, error) {
 		body = append(body, bodyNode)
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("invalid definition of begin statement at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), BeginStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -684,17 +739,17 @@ func (parser *Parser) parseBeginStatement() (*ast.BeginStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseEndStatement() (*ast.EndStatement, error) {
+func (parser *Parser) parseEndStatement() (*ast.EndStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid definition of begin statement at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), BeginStatement)
 	}
 	var body []ast.Node
 	var bodyNode ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
@@ -713,7 +768,7 @@ func (parser *Parser) parseEndStatement() (*ast.EndStatement, error) {
 		body = append(body, bodyNode)
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("invalid definition of begin statement at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), BeginStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -724,13 +779,13 @@ func (parser *Parser) parseEndStatement() (*ast.EndStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, error) {
+func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if !parser.matchKind(lexer.IdentifierKind) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of class at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), InterfaceStatement)
 	}
 	name := &ast.Identifier{
 		Token: parser.currentToken,
@@ -741,7 +796,7 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, error)
 	}
 	var bases []ast.Expression
 	var base ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	if parser.matchDirect(lexer.OpenParentheses) {
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
@@ -754,7 +809,7 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, error)
 			}
 			if _, ok := base.(*ast.Identifier); !ok {
 				if _, ok2 := base.(*ast.SelectorExpression); !ok2 {
-					return nil, errors.New(fmt.Sprintf("received an invalid expression as class base at line %d", parser.currentLine()))
+					return nil, newSyntaxError(parser.currentLine(), InterfaceStatement)
 				}
 			}
 			bases = append(bases, base.(ast.Expression))
@@ -766,11 +821,11 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, error)
 			} else if parser.matchDirect(lexer.CloseParentheses) {
 				break
 			} else {
-				return nil, errors.New(fmt.Sprintf("invalid definition of a class at line %d", parser.currentLine()))
+				return nil, newSyntaxError(parser.currentLine(), InterfaceStatement)
 			}
 		}
 		if !parser.matchDirect(lexer.CloseParentheses) {
-			return nil, errors.New(fmt.Sprintf("invalid declaration of class bases at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), InterfaceStatement)
 		}
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
@@ -778,10 +833,9 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, error)
 		}
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of class at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), InterfaceStatement)
 	}
 	var methods []*ast.FunctionDefinitionStatement
-	var asyncMethods []*ast.AsyncFunctionDefinitionStatement
 	var node ast.Node
 	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
@@ -798,54 +852,29 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, error)
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		if _, ok := node.(*ast.FunctionDefinitionStatement); !ok {
-			if _, ok2 := node.(*ast.AsyncFunctionDefinitionStatement); !ok2 {
-				return nil, errors.New(fmt.Sprintf("received a non function definition in interface at line %d", parser.currentLine()))
-			}
-			asyncMethods = append(asyncMethods, node.(*ast.AsyncFunctionDefinitionStatement))
-		} else {
-			methods = append(methods, node.(*ast.FunctionDefinitionStatement))
-		}
+		methods = append(methods, node.(*ast.FunctionDefinitionStatement))
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("class declaration never closed at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), InterfaceStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	return &ast.InterfaceStatement{
-		Name:                   name,
-		Bases:                  bases,
-		MethodDefinitions:      methods,
-		AsyncMethodDefinitions: asyncMethods,
+		Name:              name,
+		Bases:             bases,
+		MethodDefinitions: methods,
 	}, nil
 }
 
-func (parser *Parser) parseGoToStatement() (*ast.GoToStatement, error) {
-	line := parser.currentLine()
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	identifier, parsingError := parser.parseBinaryExpression(0)
-	if parsingError != nil {
-		return nil, parsingError
-	}
-	if _, ok := identifier.(*ast.Identifier); !ok {
-		return nil, errors.New(fmt.Sprintf("goto statement must receive an identifier at line %d", line))
-	}
-	return &ast.GoToStatement{
-		Name: identifier.(*ast.Identifier),
-	}, nil
-}
-
-func (parser *Parser) parseLiteral() (ast.Expression, error) {
+func (parser *Parser) parseLiteral() (ast.Expression, *errors.Error) {
 	if !parser.matchKind(lexer.Literal) &&
 		!parser.matchKind(lexer.Boolean) &&
 		!parser.matchKind(lexer.NoneType) {
-		return nil, errors.New(fmt.Sprintf("invalid kind of token %s at line %d", parser.currentToken.String, parser.currentLine()))
+		return nil, newInvalidKindOfTokenError(parser.currentLine())
 	}
+
 	switch parser.currentToken.DirectValue {
 	case lexer.SingleQuoteString, lexer.DoubleQuoteString, lexer.ByteString,
 		lexer.Integer, lexer.HexadecimalInteger, lexer.BinaryInteger, lexer.OctalInteger,
@@ -862,13 +891,13 @@ func (parser *Parser) parseLiteral() (ast.Expression, error) {
 			DirectValue: currentToken.DirectValue,
 		}, nil
 	}
-	return nil, errors.New(fmt.Sprintf("could not determine the directValue of token %s at line %d", parser.currentToken.String, parser.currentLine()))
+	return nil, newInvalidKindOfTokenError(parser.currentLine())
 }
 
-func (parser *Parser) parseBinaryExpression(precedence uint8) (ast.Node, error) {
+func (parser *Parser) parseBinaryExpression(precedence uint8) (ast.Node, *errors.Error) {
 	var leftHandSide ast.Node
 	var rightHandSide ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	leftHandSide, parsingError = parser.parseUnaryExpression()
 	if parsingError != nil {
 		return nil, parsingError
@@ -896,8 +925,9 @@ func (parser *Parser) parseBinaryExpression(precedence uint8) (ast.Node, error) 
 			return nil, parsingError
 		}
 		if _, ok := rightHandSide.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression child for binary expression at line %d", line))
+			return nil, newNonExpressionReceivedError(line, BinaryExpression)
 		}
+
 		leftHandSide = &ast.BinaryExpression{
 			LeftHandSide:  leftHandSide.(ast.Expression),
 			Operator:      operator,
@@ -907,7 +937,7 @@ func (parser *Parser) parseBinaryExpression(precedence uint8) (ast.Node, error) 
 	return leftHandSide, nil
 }
 
-func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
+func (parser *Parser) parseUnaryExpression() (ast.Node, *errors.Error) {
 	// Do something to parse Unary
 	if parser.matchKind(lexer.Operator) {
 		switch parser.currentToken.DirectValue {
@@ -923,43 +953,11 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 				return nil, parsingError
 			}
 			if _, ok := x.(ast.Expression); !ok {
-				return nil, errors.New(fmt.Sprintf("received a non expression child for unary expression at line %d", line))
+				return nil, newNonExpressionReceivedError(line, PointerExpression)
 			}
 			return &ast.UnaryExpression{
 				Operator: operator,
 				X:        x.(ast.Expression),
-			}, nil
-		case lexer.BitWiseAnd:
-			tokenizingError := parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
-			line := parser.currentLine()
-			x, parsingError := parser.parseBinaryExpression(0)
-			if parsingError != nil {
-				return nil, parsingError
-			}
-			if _, ok := x.(ast.Expression); !ok {
-				return nil, errors.New(fmt.Sprintf("received a non expression child for pointer expression at line %d", line))
-			}
-			return &ast.PointerExpression{
-				X: x.(ast.Expression),
-			}, nil
-		case lexer.Star:
-			tokenizingError := parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
-			line := parser.currentLine()
-			x, parsingError := parser.parseBinaryExpression(0)
-			if parsingError != nil {
-				return nil, parsingError
-			}
-			if _, ok := x.(ast.Expression); !ok {
-				return nil, errors.New(fmt.Sprintf("received a non expression child for star expression at line %d", line))
-			}
-			return &ast.StarExpression{
-				X: x.(ast.Expression),
 			}, nil
 		}
 	} else if parser.matchKind(lexer.AwaitKeyboard) {
@@ -973,7 +971,7 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 			return nil, parsingError
 		}
 		if _, ok := x.(*ast.MethodInvocationExpression); !ok {
-			return nil, errors.New(fmt.Sprintf("await must receive a method invocation at line %d", line))
+			return nil, newNonExpressionReceivedError(line, AwaitExpression)
 		}
 		return &ast.AwaitExpression{
 			X: x.(*ast.MethodInvocationExpression),
@@ -982,7 +980,7 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 	return parser.parsePrimaryExpression()
 }
 
-func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, error) {
+func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, *errors.Error) {
 	var arguments []*ast.Identifier
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -998,7 +996,7 @@ func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, error) {
 			return nil, parsingError
 		}
 		if _, ok := identifier.(*ast.Identifier); !ok {
-			return nil, errors.New(fmt.Sprintf("recevied a non identifier value in lambda arguments at line %d", line))
+			return nil, newNonIdentifierReceivedError(line, LambdaExpression)
 		}
 		arguments = append(arguments, identifier.(*ast.Identifier))
 		if parser.matchDirect(lexer.Comma) {
@@ -1007,11 +1005,11 @@ func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, error) {
 				return nil, tokenizingError
 			}
 		} else if !parser.matchDirect(lexer.Colon) {
-			return nil, errors.New(fmt.Sprintf("invalid lambda definition at line %d", parser.currentLine()))
+			return nil, newSyntaxError(line, LambdaExpression)
 		}
 	}
 	if !parser.matchDirect(lexer.Colon) {
-		return nil, errors.New(fmt.Sprintf("invalid lambda definition at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), LambdaExpression)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1023,7 +1021,7 @@ func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, error) {
 		return nil, parsingError
 	}
 	if _, ok := code.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("recevied a non expression in lambda body at line %d", line))
+		return nil, newNonExpressionReceivedError(line, LambdaExpression)
 	}
 	return &ast.LambdaExpression{
 		Arguments: arguments,
@@ -1031,13 +1029,16 @@ func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, error) {
 	}, nil
 }
 
-func (parser *Parser) parseParentheses() (ast.Expression, error) {
+func (parser *Parser) parseParentheses() (ast.Expression, *errors.Error) {
+	/*
+		This should also parse generators
+	*/
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if parser.matchDirect(lexer.CloseParentheses) {
-		return nil, errors.New(fmt.Sprintf("syntax error: empty parentheses expression at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), ParenthesesExpression)
 	}
 	line := parser.currentLine()
 	firstExpression, parsingError := parser.parseBinaryExpression(0)
@@ -1045,7 +1046,10 @@ func (parser *Parser) parseParentheses() (ast.Expression, error) {
 		return nil, parsingError
 	}
 	if _, ok := firstExpression.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("received a non expression as parentheses body at line %d", line))
+		return nil, newNonExpressionReceivedError(line, ParenthesesExpression)
+	}
+	if parser.matchDirect(lexer.For) {
+		return parser.parseGeneratorExpression(firstExpression.(ast.Expression))
 	}
 	if parser.matchDirect(lexer.CloseParentheses) {
 		tokenizingError = parser.next()
@@ -1057,7 +1061,7 @@ func (parser *Parser) parseParentheses() (ast.Expression, error) {
 		}, nil
 	}
 	if !parser.matchDirect(lexer.Comma) {
-		return nil, errors.New(fmt.Sprintf("syntax error: empty parentheses expression at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), ParenthesesExpression)
 	}
 	var values []ast.Expression
 	values = append(values, firstExpression.(ast.Expression))
@@ -1076,7 +1080,7 @@ func (parser *Parser) parseParentheses() (ast.Expression, error) {
 			return nil, parsingError
 		}
 		if _, ok := nextValue.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression as parentheses body at line %d", line))
+			return nil, newNonExpressionReceivedError(parser.currentLine(), ParenthesesExpression)
 		}
 		values = append(values, nextValue.(ast.Expression))
 		if parser.matchDirect(lexer.Comma) {
@@ -1085,11 +1089,11 @@ func (parser *Parser) parseParentheses() (ast.Expression, error) {
 				return nil, tokenizingError
 			}
 		} else if !parser.matchDirect(lexer.CloseParentheses) {
-			return nil, errors.New(fmt.Sprintf("syntax error: invalid tuple definition line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), TupleExpression)
 		}
 	}
 	if !parser.matchDirect(lexer.CloseParentheses) {
-		return nil, errors.New(fmt.Sprintf("syntax error: tuple expression never closed%d", parser.currentLine()))
+		return nil, newExpressionNeverClosesError(parser.currentLine(), TupleExpression)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1099,7 +1103,7 @@ func (parser *Parser) parseParentheses() (ast.Expression, error) {
 		Values: values,
 	}, nil
 }
-func (parser *Parser) parseArrayExpression() (*ast.ArrayExpression, error) {
+func (parser *Parser) parseArrayExpression() (*ast.ArrayExpression, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1115,7 +1119,7 @@ func (parser *Parser) parseArrayExpression() (*ast.ArrayExpression, error) {
 			return nil, parsingError
 		}
 		if _, ok := value.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression as array element at line %d", line))
+			return nil, newNonExpressionReceivedError(line, ArrayExpression)
 		}
 		values = append(values, value.(ast.Expression))
 		if parser.matchDirect(lexer.Comma) {
@@ -1124,7 +1128,7 @@ func (parser *Parser) parseArrayExpression() (*ast.ArrayExpression, error) {
 				return nil, tokenizingError
 			}
 		} else if !parser.matchDirect(lexer.CloseSquareBracket) {
-			return nil, errors.New(fmt.Sprintf("invalid array definition at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), ArrayExpression)
 		}
 	}
 	tokenizingError = parser.next()
@@ -1136,7 +1140,7 @@ func (parser *Parser) parseArrayExpression() (*ast.ArrayExpression, error) {
 	}, nil
 }
 
-func (parser *Parser) parseHashExpression() (*ast.HashExpression, error) {
+func (parser *Parser) parseHashExpression() (*ast.HashExpression, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1144,7 +1148,7 @@ func (parser *Parser) parseHashExpression() (*ast.HashExpression, error) {
 	var values []*ast.KeyValue
 	var leftHandSide ast.Node
 	var rightHandSide ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	for ; !parser.complete; {
 		if parser.matchDirect(lexer.CloseBrace) {
 			break
@@ -1155,10 +1159,10 @@ func (parser *Parser) parseHashExpression() (*ast.HashExpression, error) {
 			return nil, parsingError
 		}
 		if _, ok := leftHandSide.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression as a key in hash expression at line %d", line))
+			return nil, newNonExpressionReceivedError(line, HashExpression)
 		}
 		if !parser.matchDirect(lexer.Colon) {
-			return nil, errors.New(fmt.Sprintf("syntax error: invalid hash definition at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), HashExpression)
 		}
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
@@ -1170,7 +1174,7 @@ func (parser *Parser) parseHashExpression() (*ast.HashExpression, error) {
 			return nil, parsingError
 		}
 		if _, ok := rightHandSide.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression as a value in hash expression at line %d", line))
+			return nil, newNonExpressionReceivedError(parser.currentLine(), HashExpression)
 		}
 		values = append(values, &ast.KeyValue{
 			Key:   leftHandSide.(ast.Expression),
@@ -1192,7 +1196,7 @@ func (parser *Parser) parseHashExpression() (*ast.HashExpression, error) {
 	}, nil
 }
 
-func (parser *Parser) parseWhileStatement() (*ast.WhileLoopStatement, error) {
+func (parser *Parser) parseWhileStatement() (*ast.WhileLoopStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1202,10 +1206,10 @@ func (parser *Parser) parseWhileStatement() (*ast.WhileLoopStatement, error) {
 		return nil, parsingError
 	}
 	if _, ok := condition.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("invalid while loop declaration at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), WhileStatement)
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid while loop declaration at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), WhileStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1231,7 +1235,7 @@ func (parser *Parser) parseWhileStatement() (*ast.WhileLoopStatement, error) {
 		body = append(body, whileChild)
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("while statement never closed at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), WhileStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1243,16 +1247,16 @@ func (parser *Parser) parseWhileStatement() (*ast.WhileLoopStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseDoWhileStatement() (*ast.DoWhileStatement, error) {
+func (parser *Parser) parseDoWhileStatement() (*ast.DoWhileStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	var body []ast.Node
 	var bodyNode ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of do-while statement at line  %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), DoWhileStatement)
 	}
 	// Parse Body
 	for ; !parser.complete; {
@@ -1274,7 +1278,7 @@ func (parser *Parser) parseDoWhileStatement() (*ast.DoWhileStatement, error) {
 	}
 	// Parse Condition
 	if !parser.matchDirect(lexer.While) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of do-while statement at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), DoWhileStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1287,7 +1291,7 @@ func (parser *Parser) parseDoWhileStatement() (*ast.DoWhileStatement, error) {
 		return nil, parsingError
 	}
 	if _, ok := condition.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("do-while condition must be a string at line %d", line))
+		return nil, newNonExpressionReceivedError(line, WhileStatement)
 	}
 	return &ast.DoWhileStatement{
 		Condition: condition.(ast.Expression),
@@ -1295,7 +1299,7 @@ func (parser *Parser) parseDoWhileStatement() (*ast.DoWhileStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseIfStatement() (*ast.IfStatement, error) {
+func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1306,10 +1310,10 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, error) {
 		return nil, parsingError
 	}
 	if _, ok := condition.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("recevied a non expression condition for if statement at line %d", line))
+		return nil, newNonExpressionReceivedError(line, IfStatement)
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid if statement declaration at line %d", parser.currentLine()))
+		return nil, newSyntaxError(line, IfStatement)
 	}
 	// Parse If
 	var body []ast.Node
@@ -1350,7 +1354,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, error) {
 				continue
 			}
 			if !parser.matchDirect(lexer.Elif) {
-				return nil, errors.New(fmt.Sprintf("invalid declaration of elif block at line %d", parser.currentLine()))
+				return nil, newSyntaxError(line, ElifBlock)
 			}
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -1362,10 +1366,10 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, error) {
 				return nil, parsingError
 			}
 			if _, ok := elifCondition.(ast.Expression); !ok {
-				return nil, errors.New(fmt.Sprintf("invalid declaration of elif block at line %d", parser.currentLine()))
+				return nil, newSyntaxError(line, ElifBlock)
 			}
 			if !parser.matchDirect(lexer.NewLine) {
-				return nil, errors.New(fmt.Sprintf("invalid declaration of elif block at line %d", parser.currentLine()))
+				return nil, newSyntaxError(line, ElifBlock)
 			}
 			var elifBody []ast.Node
 			var elifBodyNode ast.Node
@@ -1406,7 +1410,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, error) {
 		}
 		var elseBodyNode ast.Node
 		if !parser.matchDirect(lexer.NewLine) {
-			return nil, errors.New(fmt.Sprintf("invalid definition of else block at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), ElseBlock)
 		}
 		for ; !parser.complete; {
 			if parser.matchKind(lexer.Separator) {
@@ -1427,7 +1431,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, error) {
 		}
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("never closed if statement at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), IfStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1441,7 +1445,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
+func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1452,10 +1456,10 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 		return nil, parsingError
 	}
 	if _, ok := condition.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("recevied a non expression condition for if statement at line %d", line))
+		return nil, newNonExpressionReceivedError(line, UnlessStatement)
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid if statement declaration at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), UnlessStatement)
 	}
 	// Parse If
 	var body []ast.Node
@@ -1496,7 +1500,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 				continue
 			}
 			if !parser.matchDirect(lexer.Elif) {
-				return nil, errors.New(fmt.Sprintf("invalid declaration of elif block at line %d", parser.currentLine()))
+				return nil, newSyntaxError(parser.currentLine(), ElifBlock)
 			}
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -1508,10 +1512,10 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 				return nil, parsingError
 			}
 			if _, ok := elifCondition.(ast.Expression); !ok {
-				return nil, errors.New(fmt.Sprintf("invalid declaration of elif block at line %d", parser.currentLine()))
+				return nil, newSyntaxError(parser.currentLine(), ElifBlock)
 			}
 			if !parser.matchDirect(lexer.NewLine) {
-				return nil, errors.New(fmt.Sprintf("invalid declaration of elif block at line %d", parser.currentLine()))
+				return nil, newSyntaxError(parser.currentLine(), ElifBlock)
 			}
 			var elifBody []ast.Node
 			var elifBodyNode ast.Node
@@ -1552,7 +1556,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 		}
 		var elseBodyNode ast.Node
 		if !parser.matchDirect(lexer.NewLine) {
-			return nil, errors.New(fmt.Sprintf("invalid definition of else block at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), ElseBlock)
 		}
 		for ; !parser.complete; {
 			if parser.matchKind(lexer.Separator) {
@@ -1573,7 +1577,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 		}
 	}
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("never closed if statement at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), UnlessStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1587,7 +1591,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
+func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1598,10 +1602,10 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
 		return nil, parsingError
 	}
 	if _, ok := target.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("received a non expression as switch target at line %d", line))
+		return nil, newNonExpressionReceivedError(line, SwitchStatement)
 	}
 	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid switch statement at line %d", parser.currentLine()))
+		return nil, newSyntaxError(line, SwitchStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1627,7 +1631,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
 					return nil, parsingError
 				}
 				if _, ok := caseTarget.(ast.Expression); !ok {
-					return nil, errors.New(fmt.Sprintf("recevied a non expression as case target at line %d", parser.currentLine()))
+					return nil, newNonExpressionReceivedError(line, CaseBlock)
 				}
 				cases = append(cases, caseTarget.(ast.Expression))
 				if parser.matchDirect(lexer.NewLine) {
@@ -1638,11 +1642,11 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
 						return nil, tokenizingError
 					}
 				} else {
-					return nil, errors.New(fmt.Sprintf("invalid case block definition at line %d", parser.currentLine()))
+					return nil, newSyntaxError(line, CaseBlock)
 				}
 			}
 			if !parser.matchDirect(lexer.NewLine) {
-				return nil, errors.New(fmt.Sprintf("invalid case block definition at line %d", parser.currentLine()))
+				return nil, newSyntaxError(parser.currentLine(), CaseBlock)
 			}
 			// Case Body
 			var caseBody []ast.Node
@@ -1681,7 +1685,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
 			return nil, tokenizingError
 		}
 		if !parser.matchDirect(lexer.NewLine) {
-			return nil, errors.New(fmt.Sprintf("invalid definition of default block at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), DefaultBlock)
 		}
 		var defaultBodyNode ast.Node
 		for ; !parser.complete; {
@@ -1704,7 +1708,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
 	}
 	// Finally detect valid end
 	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("Switch declaration never ended at line %d", parser.currentLine()))
+		return nil, newStatementNeverEndedError(parser.currentLine(), SwitchStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1717,63 +1721,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseStructStatement() (*ast.StructStatement, error) {
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	if !parser.matchKind(lexer.IdentifierKind) {
-		return nil, errors.New(fmt.Sprintf("invalid struct definition at line %d", parser.currentLine()))
-	}
-	name := &ast.Identifier{
-		Token: parser.currentToken,
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid struct definition at line %d", parser.currentLine()))
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	var fields []*ast.Identifier
-	for ; !parser.complete; {
-		if parser.matchDirect(lexer.End) {
-			break
-		} else if parser.matchKind(lexer.Separator) {
-			tokenizingError = parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
-			continue
-		} else if !parser.matchKind(lexer.IdentifierKind) {
-			return nil, errors.New(fmt.Sprintf("invalid struct definition at line %d", parser.currentLine()))
-		}
-		fields = append(fields, &ast.Identifier{
-			Token: parser.currentToken,
-		})
-		tokenizingError = parser.next()
-		if tokenizingError != nil {
-			return nil, tokenizingError
-		}
-	}
-	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("invalid struct definition at line %d", parser.currentLine()))
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	return &ast.StructStatement{
-		Name:   name,
-		Fields: fields,
-	}, nil
-}
-
-func (parser *Parser) parseDeferStatement() (*ast.DeferStatement, error) {
+func (parser *Parser) parseDeferStatement() (*ast.DeferStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1788,30 +1736,11 @@ func (parser *Parser) parseDeferStatement() (*ast.DeferStatement, error) {
 			X: methodInvocation.(*ast.MethodInvocationExpression),
 		}, nil
 	default:
-		return nil, errors.New(fmt.Sprintf("no function call passed to go statement at line %d", parser.currentLine()))
+		return nil, newNonFunctionCallReceivedError(parser.currentLine(), DeferStatement)
 	}
 }
 
-func (parser *Parser) parseGoStatement() (*ast.GoStatement, error) {
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	methodInvocation, parsingError := parser.parseBinaryExpression(0)
-	if parsingError != nil {
-		return nil, parsingError
-	}
-	switch methodInvocation.(type) {
-	case *ast.MethodInvocationExpression:
-		return &ast.GoStatement{
-			X: methodInvocation.(*ast.MethodInvocationExpression),
-		}, nil
-	default:
-		return nil, errors.New(fmt.Sprintf("no function call passed to go statement at line %d", parser.currentLine()))
-	}
-}
-
-func (parser *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
+func (parser *Parser) parseReturnStatement() (*ast.ReturnStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1827,7 +1756,7 @@ func (parser *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
 			return nil, parsingError
 		}
 		if _, ok := result.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression as return value at line %d", line))
+			return nil, newNonExpressionReceivedError(line, ReturnStatement)
 		}
 		results = append(results, result.(ast.Expression))
 		if parser.matchDirect(lexer.Comma) {
@@ -1836,7 +1765,7 @@ func (parser *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
 				return nil, tokenizingError
 			}
 		} else if !(parser.matchKind(lexer.Separator) || parser.matchKind(lexer.EOF)) {
-			return nil, errors.New(fmt.Sprintf("invalid return statement at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), ReturnStatement)
 		}
 	}
 	return &ast.ReturnStatement{
@@ -1844,7 +1773,7 @@ func (parser *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseYieldStatement() (*ast.YieldStatement, error) {
+func (parser *Parser) parseYieldStatement() (*ast.YieldStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1860,7 +1789,7 @@ func (parser *Parser) parseYieldStatement() (*ast.YieldStatement, error) {
 			return nil, parsingError
 		}
 		if _, ok := result.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression as return value at line %d", line))
+			return nil, newNonExpressionReceivedError(line, YieldStatement)
 		}
 		results = append(results, result.(ast.Expression))
 		if parser.matchDirect(lexer.Comma) {
@@ -1869,7 +1798,7 @@ func (parser *Parser) parseYieldStatement() (*ast.YieldStatement, error) {
 				return nil, tokenizingError
 			}
 		} else if !(parser.matchKind(lexer.Separator) || parser.matchKind(lexer.EOF)) {
-			return nil, errors.New(fmt.Sprintf("invalid return statement at line %d", parser.currentLine()))
+			return nil, newSyntaxError(parser.currentLine(), YieldStatement)
 		}
 	}
 	return &ast.YieldStatement{
@@ -1877,13 +1806,13 @@ func (parser *Parser) parseYieldStatement() (*ast.YieldStatement, error) {
 	}, nil
 }
 
-func (parser *Parser) parseSuperStatement() (*ast.SuperInvocationStatement, error) {
+func (parser *Parser) parseSuperStatement() (*ast.SuperInvocationStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
 	if !parser.matchDirect(lexer.OpenParentheses) {
-		return nil, errors.New(fmt.Sprintf("invalid super call at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), SuperStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -1900,7 +1829,7 @@ func (parser *Parser) parseSuperStatement() (*ast.SuperInvocationStatement, erro
 			return nil, parsingError
 		}
 		if _, ok := argument.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression for super as argument at line %d", line))
+			return nil, newNonExpressionReceivedError(line, SuperStatement)
 		}
 		arguments = append(arguments, argument.(ast.Expression))
 		if !parser.matchDirect(lexer.Comma) {
@@ -1920,15 +1849,15 @@ func (parser *Parser) parseSuperStatement() (*ast.SuperInvocationStatement, erro
 	}, nil
 }
 
-func (parser *Parser) parseRetryStatement() (*ast.RetryStatement, error) {
+func (parser *Parser) parseContinueStatement() (*ast.ContinueStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	return &ast.RetryStatement{}, nil
+	return &ast.ContinueStatement{}, nil
 }
 
-func (parser *Parser) parseBreakStatement() (*ast.BreakStatement, error) {
+func (parser *Parser) parseBreakStatement() (*ast.BreakStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1936,7 +1865,7 @@ func (parser *Parser) parseBreakStatement() (*ast.BreakStatement, error) {
 	return &ast.BreakStatement{}, nil
 }
 
-func (parser *Parser) parseRedoStatement() (*ast.RedoStatement, error) {
+func (parser *Parser) parseRedoStatement() (*ast.RedoStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1944,7 +1873,7 @@ func (parser *Parser) parseRedoStatement() (*ast.RedoStatement, error) {
 	return &ast.RedoStatement{}, nil
 }
 
-func (parser *Parser) parsePassStatement() (*ast.PassStatement, error) {
+func (parser *Parser) parsePassStatement() (*ast.PassStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -1952,68 +1881,13 @@ func (parser *Parser) parsePassStatement() (*ast.PassStatement, error) {
 	return &ast.PassStatement{}, nil
 }
 
-func (parser *Parser) parseEnumStatement() (*ast.EnumStatement, error) { // What about initializing it's identifiers with an specific value?
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	if !parser.matchKind(lexer.IdentifierKind) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of enum statement at line %d", parser.currentLine()))
-	}
-	namespace := &ast.Identifier{
-		Token: parser.currentToken,
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	if !parser.matchDirect(lexer.NewLine) {
-		return nil, errors.New(fmt.Sprintf("invalid declaration of enum statement at line %d", parser.currentLine()))
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	var identifiers []*ast.Identifier
-	for ; !parser.complete; {
-		if parser.matchDirect(lexer.End) {
-			break
-		} else if parser.matchKind(lexer.Separator) {
-			tokenizingError = parser.next()
-			if tokenizingError != nil {
-				return nil, tokenizingError
-			}
-			continue
-		} else if !parser.matchKind(lexer.IdentifierKind) {
-			return nil, errors.New(fmt.Sprintf("invalid declaration of enum statement at line %d", parser.currentLine()))
-		}
-		identifiers = append(identifiers, &ast.Identifier{
-			Token: parser.currentToken,
-		})
-		tokenizingError = parser.next()
-		if tokenizingError != nil {
-			return nil, tokenizingError
-		}
-	}
-	if !parser.matchDirect(lexer.End) {
-		return nil, errors.New(fmt.Sprintf("enum never ended at line %d", parser.currentLine()))
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	return &ast.EnumStatement{
-		Name:            namespace,
-		EnumIdentifiers: identifiers,
-	}, nil
-}
-
-func (parser *Parser) parseOperand() (ast.Node, error) {
+func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 	switch parser.currentToken.Kind {
 	case lexer.Literal, lexer.Boolean, lexer.NoneType:
 		return parser.parseLiteral()
 	case lexer.IdentifierKind:
 		identifier := parser.currentToken
+
 		tokenizingError := parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
@@ -2041,10 +1915,6 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseModuleStatement()
 		case lexer.Def:
 			return parser.parseFunctionDefinitionStatement()
-		case lexer.Async:
-			return parser.parseAsyncFunctionDefinitionStatement()
-		case lexer.Struct:
-			return parser.parseStructStatement()
 		case lexer.Interface:
 			return parser.parseInterfaceStatement()
 		case lexer.Defer:
@@ -2055,26 +1925,20 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseRaiseStatement()
 		case lexer.Try:
 			return parser.parseTryStatement()
-		case lexer.Go:
-			return parser.parseGoStatement()
 		case lexer.Return:
 			return parser.parseReturnStatement()
 		case lexer.Yield:
 			return parser.parseYieldStatement()
 		case lexer.Super:
 			return parser.parseSuperStatement()
-		case lexer.Retry:
-			return parser.parseRetryStatement()
+		case lexer.Continue:
+			return parser.parseContinueStatement()
 		case lexer.Break:
 			return parser.parseBreakStatement()
 		case lexer.Redo:
 			return parser.parseRedoStatement()
 		case lexer.Pass:
 			return parser.parsePassStatement()
-		case lexer.Enum:
-			return parser.parseEnumStatement()
-		case lexer.GoTo:
-			return parser.parseGoToStatement()
 		case lexer.Do:
 			return parser.parseDoWhileStatement()
 		}
@@ -2088,10 +1952,10 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseHashExpression()
 		}
 	}
-	return nil, errors.New(fmt.Sprintf("unknown expression with token at line %d", parser.currentLine()))
+	return nil, errors.New(parser.currentLine(), "Unknown Token", errors.ParsingError)
 }
 
-func (parser *Parser) parseSelectorExpression(expression ast.Expression) (*ast.SelectorExpression, error) {
+func (parser *Parser) parseSelectorExpression(expression ast.Expression) (*ast.SelectorExpression, *errors.Error) {
 	selector := expression
 	for ; !parser.complete; {
 		if !parser.matchDirect(lexer.Dot) {
@@ -2103,7 +1967,7 @@ func (parser *Parser) parseSelectorExpression(expression ast.Expression) (*ast.S
 		}
 		identifier := parser.currentToken
 		if identifier.Kind != lexer.IdentifierKind {
-			return nil, errors.New(fmt.Sprintf("invalid selector at token in line %d", identifier.Line))
+			return nil, newSyntaxError(parser.currentLine(), SelectorExpression)
 		}
 		selector = &ast.SelectorExpression{
 			X: selector,
@@ -2119,7 +1983,7 @@ func (parser *Parser) parseSelectorExpression(expression ast.Expression) (*ast.S
 	return selector.(*ast.SelectorExpression), nil
 }
 
-func (parser *Parser) parseMethodInvocationExpression(expression ast.Expression) (*ast.MethodInvocationExpression, error) {
+func (parser *Parser) parseMethodInvocationExpression(expression ast.Expression) (*ast.MethodInvocationExpression, *errors.Error) {
 	var arguments []ast.Expression
 	// The first token is open parentheses
 	tokenizingError := parser.next()
@@ -2136,7 +2000,7 @@ func (parser *Parser) parseMethodInvocationExpression(expression ast.Expression)
 			return nil, parsingError
 		}
 		if _, ok := argument.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression as method call at line %d", line))
+			return nil, newNonExpressionReceivedError(line, MethodInvocationExpression)
 		}
 		arguments = append(arguments, argument.(ast.Expression))
 		if parser.matchDirect(lexer.Comma) {
@@ -2156,57 +2020,35 @@ func (parser *Parser) parseMethodInvocationExpression(expression ast.Expression)
 	}, nil
 }
 
-func (parser *Parser) parseIndexExpression(expression ast.Expression) (*ast.IndexExpression, error) {
+func (parser *Parser) parseIndexExpression(expression ast.Expression) (*ast.IndexExpression, *errors.Error) {
 	tokenizationError := parser.next()
 	if tokenizationError != nil {
 		return nil, tokenizationError
 	}
-	var rightIndex ast.Node
+	// var rightIndex ast.Node
 	line := parser.currentLine()
-	leftIndex, parsingError := parser.parseBinaryExpression(0)
+	index, parsingError := parser.parseBinaryExpression(0)
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := leftIndex.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("received a non expression index at line %d", line))
+	if _, ok := index.(ast.Expression); !ok {
+		return nil, newNonExpressionReceivedError(line, IndexExpression)
 	}
-	if parser.matchDirect(lexer.Colon) {
-		tokenizationError = parser.next()
-		if tokenizationError != nil {
-			return nil, tokenizationError
-		}
-		line = parser.currentLine()
-		rightIndex, parsingError = parser.parseBinaryExpression(0)
-		if parsingError != nil {
-			return nil, parsingError
-		}
-		if _, ok := leftIndex.(ast.Expression); !ok {
-			return nil, errors.New(fmt.Sprintf("received a non expression index at line %d", line))
-		}
+	if !parser.matchDirect(lexer.CloseSquareBracket) {
+		return nil, newSyntaxError(parser.currentLine(), IndexExpression)
 	}
 	tokenizationError = parser.next()
 	if tokenizationError != nil {
 		return nil, tokenizationError
 	}
-	if rightIndex == nil {
-		return &ast.IndexExpression{
-			Source: expression,
-			Index: [2]ast.Expression{
-				leftIndex.(ast.Expression),
-				nil,
-			},
-		}, nil
-	}
 	return &ast.IndexExpression{
-		Source: expression,
-		Index: [2]ast.Expression{
-			leftIndex.(ast.Expression),
-			rightIndex.(ast.Expression),
-		},
+		Expression: nil,
+		Source:     expression,
+		Index:      index.(ast.Expression),
 	}, nil
 }
 
-func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLineExpression, error) {
+func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLinerExpression, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -2217,10 +2059,10 @@ func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLineExpr
 		return nil, parsingError
 	}
 	if _, ok := condition.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("received a non expression as one liner if expression condition at line %d", line))
+		return nil, newNonExpressionReceivedError(line, IfOneLinerExpression)
 	}
 	if !parser.matchDirect(lexer.Else) {
-		return &ast.IfOneLineExpression{
+		return &ast.IfOneLinerExpression{
 			Result:     result,
 			Condition:  condition.(ast.Expression),
 			ElseResult: nil,
@@ -2236,16 +2078,16 @@ func (parser *Parser) parseIfOneLiner(result ast.Expression) (*ast.IfOneLineExpr
 		return nil, parsingError
 	}
 	if _, ok := elseResult.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("received a non expression as else result at line %d", line))
+		return nil, newNonExpressionReceivedError(line, OneLineElseBlock)
 	}
-	return &ast.IfOneLineExpression{
+	return &ast.IfOneLinerExpression{
 		Result:     result,
 		Condition:  condition.(ast.Expression),
 		ElseResult: elseResult.(ast.Expression),
 	}, nil
 }
 
-func (parser *Parser) parseUnlessOneLiner(result ast.Expression) (*ast.UnlessOneLinerExpression, error) {
+func (parser *Parser) parseUnlessOneLiner(result ast.Expression) (*ast.UnlessOneLinerExpression, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -2256,7 +2098,7 @@ func (parser *Parser) parseUnlessOneLiner(result ast.Expression) (*ast.UnlessOne
 		return nil, parsingError
 	}
 	if _, ok := condition.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("received a non expression for unless condition at line %d", line))
+		return nil, newNonExpressionReceivedError(line, UnlessOneLinerExpression)
 	}
 	if !parser.matchDirect(lexer.Else) {
 		return &ast.UnlessOneLinerExpression{
@@ -2276,7 +2118,7 @@ func (parser *Parser) parseUnlessOneLiner(result ast.Expression) (*ast.UnlessOne
 		return nil, parsingError
 	}
 	if _, ok := condition.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("received a non expression output for else at line %d", line))
+		return nil, newNonExpressionReceivedError(line, OneLineElseBlock)
 	}
 	return &ast.UnlessOneLinerExpression{
 		Result:     result,
@@ -2285,7 +2127,7 @@ func (parser *Parser) parseUnlessOneLiner(result ast.Expression) (*ast.UnlessOne
 	}, nil
 }
 
-func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (*ast.GeneratorExpression, error) {
+func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (*ast.GeneratorExpression, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -2304,12 +2146,18 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (*ast.G
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
+		if parser.matchDirect(lexer.Comma) {
+			tokenizingError = parser.next()
+			if tokenizingError != nil {
+				return nil, tokenizingError
+			}
+		}
 	}
 	if numberOfVariables == 0 {
-		return nil, errors.New(fmt.Sprintf("syntax error: no receivers in generator defined at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), GeneratorExpression)
 	}
 	if !parser.matchDirect(lexer.In) {
-		return nil, errors.New(fmt.Sprintf("syntax error: invalid generator syntax at line %d", parser.currentLine()))
+		return nil, newSyntaxError(parser.currentLine(), GeneratorExpression)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
@@ -2321,16 +2169,24 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (*ast.G
 		return nil, parsingError
 	}
 	if _, ok := source.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("received a non expression as source in generator at line %d", line))
+		return nil, newNonExpressionReceivedError(line, GeneratorExpression)
+	}
+	// Finally detect the closing parentheses
+	if !parser.matchDirect(lexer.CloseParentheses) {
+		return nil, newSyntaxError(line, GeneratorExpression)
+	}
+	tokenizingError = parser.next()
+	if tokenizingError != nil {
+		return nil, tokenizingError
 	}
 	return &ast.GeneratorExpression{
 		Operation: operation,
-		Variables: variables,
+		Receivers: variables,
 		Source:    source.(ast.Expression),
 	}, nil
 }
 
-func (parser *Parser) parseAssignmentStatement(leftHandSide ast.Expression) (*ast.AssignStatement, error) {
+func (parser *Parser) parseAssignmentStatement(leftHandSide ast.Expression) (*ast.AssignStatement, *errors.Error) {
 	assignmentToken := parser.currentToken
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -2342,7 +2198,7 @@ func (parser *Parser) parseAssignmentStatement(leftHandSide ast.Expression) (*as
 		return nil, parsingError
 	}
 	if _, ok := rightHandSide.(ast.Expression); !ok {
-		return nil, errors.New(fmt.Sprintf("received a non expression as right hand side of assign statement at line %d", line))
+		return nil, newNonExpressionReceivedError(line, AssignStatement)
 	}
 	return &ast.AssignStatement{
 		LeftHandSide:   leftHandSide,
@@ -2351,9 +2207,9 @@ func (parser *Parser) parseAssignmentStatement(leftHandSide ast.Expression) (*as
 	}, nil
 }
 
-func (parser *Parser) parsePrimaryExpression() (ast.Node, error) {
+func (parser *Parser) parsePrimaryExpression() (ast.Node, *errors.Error) {
 	var parsedNode ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	parsedNode, parsingError = parser.parseOperand()
 	if parsingError != nil {
 		return nil, parsingError
@@ -2367,8 +2223,6 @@ expressionPendingLoop:
 			parsedNode, parsingError = parser.parseMethodInvocationExpression(parsedNode.(ast.Expression))
 		case lexer.OpenSquareBracket: // Is indexing
 			parsedNode, parsingError = parser.parseIndexExpression(parsedNode.(ast.Expression))
-		case lexer.For: // Generators
-			parsedNode, parsingError = parser.parseGeneratorExpression(parsedNode.(ast.Expression))
 		case lexer.If: // One line If
 			parsedNode, parsingError = parser.parseIfOneLiner(parsedNode.(ast.Expression))
 		case lexer.Unless: // One line Unless
@@ -2386,7 +2240,7 @@ expressionPendingLoop:
 	return parsedNode, nil
 }
 
-func (parser *Parser) Parse() (*ast.Program, error) {
+func (parser *Parser) Parse() (*ast.Program, *errors.Error) {
 	result := &ast.Program{
 		Begin: nil,
 		End:   nil,
@@ -2399,7 +2253,7 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 	var beginStatement *ast.BeginStatement
 	var endStatement *ast.EndStatement
 	var parsedExpression ast.Node
-	var parsingError error
+	var parsingError *errors.Error
 	for ; !parser.complete; {
 		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
@@ -2411,13 +2265,13 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 		if parser.matchDirect(lexer.BEGIN) {
 			beginStatement, parsingError = parser.parseBeginStatement()
 			if result.Begin != nil {
-				return nil, errors.New("multiple declarations of BEGIN statement at line")
+				return nil, errors.New(parser.currentLine(), "multiple declarations of BEGIN statement at line", errors.ParsingError)
 			}
 			result.Begin = beginStatement
 		} else if parser.matchDirect(lexer.END) {
 			endStatement, parsingError = parser.parseEndStatement()
 			if result.End != nil {
-				return nil, errors.New("multiple declarations of END statement at line")
+				return nil, errors.New(parser.currentLine(), "multiple declarations of END statement at line", errors.ParsingError)
 			}
 			result.End = endStatement
 		} else {
@@ -2432,11 +2286,10 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 	return result, nil
 }
 
-func NewParser(lexer_ *lexer.Lexer) (*Parser, error) {
-	parser := &Parser{
+func NewParser(lexer_ *lexer.Lexer) *Parser {
+	return &Parser{
 		lexer:        lexer_,
 		complete:     false,
 		currentToken: nil,
 	}
-	return parser, nil
 }

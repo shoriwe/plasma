@@ -12,6 +12,7 @@ const (
 	Literal
 	Tab
 	IdentifierKind
+	JunkKind
 	Separator
 	Punctuation
 	Assignment
@@ -33,12 +34,11 @@ const (
 	NoneType
 	EOF
 
-	// Punctuation
 	Comma
 	Colon
 	SemiColon
 	NewLine
-	// Reserved Keyboards
+
 	Pass
 	Super
 	End
@@ -57,30 +57,24 @@ const (
 	Default
 	Yield
 	Return
-	Retry
+	Continue
 	Break
 	Redo
 	Defer
 	Module
 	Def
 	Lambda
-	Struct
 	Interface
-	Go
 	Class
 	Try
 	Except
 	Finally
 	IsInstanceOf // This maybe can be a regular identifier
-	Async
 	Await
 	BEGIN
 	END
-	Enum
-	GoTo
 	Context
 
-	// Assigns
 	Assign
 	NegateBitsAssign
 	BitwiseOrAssign
@@ -95,30 +89,29 @@ const (
 	FloorDivAssign
 	ModulusAssign
 	PowerOfAssign
-	// Unary Operators
+
 	Not
 	SignNot
 	NegateBits
-	// Binary Operators
-	//// Logical operators
+
 	And
 	Or
 	Xor
 	In
-	////
+
 	Equals
 	NotEqual
 	GreaterThan
 	GreaterOrEqualThan
 	LessThan
 	LessOrEqualThan
-	//// Bitwise Operations
+
 	BitwiseOr
 	BitwiseXor
 	BitWiseAnd
 	BitwiseLeft
 	BitwiseRight
-	//// Basic Binary expressions
+
 	Add // This is also an unary operator
 	Sub // This is also an unary operator
 	Star
@@ -126,7 +119,7 @@ const (
 	FloorDiv
 	Modulus
 	PowerOf
-	// Reserved Literals
+
 	True
 	False
 	None
@@ -159,42 +152,36 @@ type Token struct {
 */
 
 var (
-	// Chars
-	CommaChar              uint8 = ','
-	ColonChar              uint8 = ':'
-	SemiColonChar          uint8 = ';'
-	NewLineChar            uint8 = '\n'
-	OpenParenthesesChar    uint8 = '('
-	CloseParenthesesChar   uint8 = ')'
-	OpenSquareBracketChar  uint8 = '['
-	CloseSquareBracketChar uint8 = ']'
-	OpenBraceChar          uint8 = '{'
-	CloseBraceChar         uint8 = '}'
-	DollarSignChar         uint8 = '$'
-	DotChar                uint8 = '.'
-	BitwiseOrChar          uint8 = '|'
-	BitwiseXorChar         uint8 = '^'
-	BitWiseAndChar         uint8 = '&'
-	AddChar                uint8 = '+'
-	SubChar                uint8 = '-'
-	StarChar               uint8 = '*'
-	DivChar                uint8 = '/'
-	ModulusChar            uint8 = '%'
-	LessThanChar           uint8 = '<'
-	GreatThanChar          uint8 = '>'
-	NegateBitsChar         uint8 = '~'
-	SignNotChar            uint8 = '!'
-	EqualsChar             uint8 = '='
-	WhiteSpaceChar         uint8 = ' '
-	TabChar                uint8 = '\t'
-	CommentChar            uint8 = '#'
-	BackSlashChar          uint8 = '\\'
+	CommaChar              = ','
+	ColonChar              = ':'
+	SemiColonChar          = ';'
+	NewLineChar            = '\n'
+	OpenParenthesesChar    = '('
+	CloseParenthesesChar   = ')'
+	OpenSquareBracketChar  = '['
+	CloseSquareBracketChar = ']'
+	OpenBraceChar          = '{'
+	CloseBraceChar         = '}'
+	DollarSignChar         = '$'
+	DotChar                = '.'
+	BitwiseOrChar          = '|'
+	BitwiseXorChar         = '^'
+	BitWiseAndChar         = '&'
+	AddChar                = '+'
+	SubChar                = '-'
+	StarChar               = '*'
+	DivChar                = '/'
+	ModulusChar            = '%'
+	LessThanChar           = '<'
+	GreatThanChar          = '>'
+	NegateBitsChar         = '~'
+	SignNotChar            = '!'
+	EqualsChar             = '='
+	WhiteSpaceChar         = ' '
+	TabChar                = '\t'
+	CommentChar            = '#'
+	BackSlashChar          = '\\'
 
-	// Complex Patterns
-	BitwiseLeftString  = "<<"
-	BitwiseRightString = ">>"
-	PowerOfString      = "**"
-	FloorDivString     = "//"
 	PassString         = "pass"
 	SuperString        = "super"
 	EndString          = "end"
@@ -211,16 +198,14 @@ var (
 	DefaultString      = "default"
 	YieldString        = "yield"
 	ReturnString       = "return"
-	RetryString        = "retry"
+	ContinueString     = "continue"
 	BreakString        = "break"
 	RedoString         = "redo"
 	DeferString        = "defer"
 	ModuleString       = "module"
 	DefString          = "def"
 	LambdaString       = "lambda"
-	StructString       = "struct"
 	InterfaceString    = "interface"
-	GoString           = "go"
 	ClassString        = "class"
 	TryString          = "try"
 	ExceptString       = "except"
@@ -230,16 +215,13 @@ var (
 	XorString          = "xor"
 	InString           = "in"
 	IsInstanceOfString = "isinstanceof"
-	AsyncString        = "async"
 	AwaitString        = "await"
 	BEGINString        = "BEGIN"
 	ENDString          = "END"
-	EnumString         = "enum"
 	NotString          = "not"
 	TrueString         = "True"
 	FalseString        = "False"
 	NoneString         = "None"
-	GoToString         = "goto"
 	ContextString      = "context"
 	RaiseString        = "raise"
 	AsString           = "as"
