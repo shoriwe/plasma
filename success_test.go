@@ -1,10 +1,10 @@
-package gruby
+package plasma
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/compiler/plasma"
-	"github.com/shoriwe/gruby/pkg/reader"
-	"github.com/shoriwe/gruby/pkg/vm"
+	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
+	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
 	"path/filepath"
 	"testing"

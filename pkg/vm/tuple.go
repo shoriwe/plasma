@@ -1,7 +1,7 @@
 package vm
 
 import (
-	"github.com/shoriwe/gruby/pkg/tools"
+	"github.com/shoriwe/gplasma/pkg/tools"
 )
 
 type Tuple struct {

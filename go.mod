@@ -1,4 +1,4 @@
-module github.com/shoriwe/gruby
+module github.com/shoriwe/gplasma
 
 go 1.16
 

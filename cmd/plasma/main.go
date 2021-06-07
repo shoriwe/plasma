@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"github.com/fatih/color"
-	"github.com/shoriwe/gruby/pkg/compiler/plasma"
-	"github.com/shoriwe/gruby/pkg/reader"
-	"github.com/shoriwe/gruby/pkg/vm"
+	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
+	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
 )
 

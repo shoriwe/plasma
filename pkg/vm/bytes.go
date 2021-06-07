@@ -3,7 +3,7 @@ package vm
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/shoriwe/gruby/pkg/tools"
+	"github.com/shoriwe/gplasma/pkg/tools"
 )
 
 type Bytes struct {

@@ -1,6 +1,6 @@
 package tools
 
-import "github.com/shoriwe/gruby/pkg/errors"
+import "github.com/shoriwe/gplasma/pkg/errors"
 
 func CalcIndex(index64 int64, length int) (int, *errors.Error) {
 	index := int(index64)

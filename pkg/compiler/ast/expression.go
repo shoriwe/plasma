@@ -1,6 +1,6 @@
 package ast
 
-import "github.com/shoriwe/gruby/pkg/compiler/lexer"
+import "github.com/shoriwe/gplasma/pkg/compiler/lexer"
 
 type Expression interface {
 	E()

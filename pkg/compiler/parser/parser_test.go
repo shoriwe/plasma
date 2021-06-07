@@ -2,9 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/compiler/ast"
-	"github.com/shoriwe/gruby/pkg/compiler/lexer"
-	reader2 "github.com/shoriwe/gruby/pkg/reader"
+	"github.com/shoriwe/gplasma/pkg/compiler/ast"
+	"github.com/shoriwe/gplasma/pkg/compiler/lexer"
+	reader2 "github.com/shoriwe/gplasma/pkg/reader"
 	"strings"
 	"testing"
 )

@@ -2,9 +2,9 @@ package parser
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/compiler/ast"
-	"github.com/shoriwe/gruby/pkg/compiler/lexer"
-	"github.com/shoriwe/gruby/pkg/errors"
+	"github.com/shoriwe/gplasma/pkg/compiler/ast"
+	"github.com/shoriwe/gplasma/pkg/compiler/lexer"
+	"github.com/shoriwe/gplasma/pkg/errors"
 )
 
 const (

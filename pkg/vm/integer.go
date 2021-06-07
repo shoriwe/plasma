@@ -2,8 +2,8 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/errors"
-	"github.com/shoriwe/gruby/pkg/tools"
+	"github.com/shoriwe/gplasma/pkg/errors"
+	"github.com/shoriwe/gplasma/pkg/tools"
 	"math"
 )
 

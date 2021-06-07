@@ -2,7 +2,7 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/tools"
+	"github.com/shoriwe/gplasma/pkg/tools"
 	"strings"
 )
 

@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	reader2 "github.com/shoriwe/gruby/pkg/reader"
+	reader2 "github.com/shoriwe/gplasma/pkg/reader"
 	"testing"
 )
 

@@ -1,9 +1,9 @@
-# gruby
+# plasma
 
 ## Description
 
-**`gruby`** is a programming language made for the love and respect of the amazing **`ruby`** syntax and semantics with
-a new features like interfaces to work with.
+**`plasma`** is a dynamic programming language highly inspired in **`ruby`** syntax and semantics with
+a new features like interfaces and design focused in application embedding.
 
 ## Try it
 
@@ -12,7 +12,7 @@ You can have a working interpreter by compiling `cmd/plasma`.
 - You can compile a binary with
 
 ```shell
-go install github.com/shoriwe/gruby/cmd/plasma
+go install github.com/shoriwe/gplasma/cmd/plasma
 ```
 
 ```
@@ -33,16 +33,16 @@ plasma.exe [FLAG [FLAG [FLAG]]] [PROGRAM [PROGRAM [PROGRAM]]]
 
 ### Embedding
 
-**`gruby`** was designed to be embedded in other go applications, you should do it like:
+**`plasma`** was designed to be embedded in other go applications, you should do it like:
 
 ```go
 package main
 
 import (
 	"fmt"
-	"github.com/shoriwe/gruby/pkg/compiler/plasma"
-	"github.com/shoriwe/gruby/pkg/reader"
-	"github.com/shoriwe/gruby/pkg/vm"
+	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
+	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
 )
 
@@ -70,7 +70,7 @@ before.
 
 ### Language
 
-This are the expressions and statements that **`gruby`** currently supports:
+This are the expressions and statements that **`plasma`** currently supports:
 
 - [X] Expressions
     - [X] Literals
@@ -166,8 +166,8 @@ This are the expressions and statements that **`gruby`** currently supports:
 
 ## Notable Differences
 
-The major difference between **`ruby`** and **`gruby`** is that in the first the last expression in a function will be
-returned without specifying the keyboard `return` but in **`gruby`** you should.
+The major difference between **`ruby`** and **`plasma`** is that in the first the last expression in a function will be
+returned without specifying the keyboard `return` but in **`plasma`** you should.
 
 Another one will be that function calls, will always need parentheses to be executed, other way their will be evaluated
 as objects.
@@ -184,7 +184,7 @@ end
 puts hello
 ```
 
-But in **`gruby`** you should code it something like:
+But in **`plasma`** you should code it something like:
 
 ```ruby
 def hello()
@@ -196,9 +196,9 @@ println(hello())
 
 ## Important
 
-- **`gruby`** is not a replacement for **`ruby`**, there are many missing features that are required to make **`ruby`**
-  code run properly in **`gruby`**, of course there is the chance that some simpler scripts will run just fine
-  in **`gruby`**.
+- **`plasma`** is not a replacement for **`ruby`**, there are many missing features that are required to make **`ruby`**
+  code run properly in **`plasma`**, of course there is the chance that some simpler scripts will run just fine
+  in **`plasma`**.
 
 - Also notice that this software has passed only by one iteration, so you should expect some bugs and performance
   issues, which will be of course corrected in the future.

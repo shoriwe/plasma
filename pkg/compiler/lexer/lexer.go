@@ -1,8 +1,8 @@
 package lexer
 
 import (
-	"github.com/shoriwe/gruby/pkg/errors"
-	"github.com/shoriwe/gruby/pkg/reader"
+	"github.com/shoriwe/gplasma/pkg/errors"
+	"github.com/shoriwe/gplasma/pkg/reader"
 	"regexp"
 )
 

@@ -1,7 +1,7 @@
 package tools
 
 import (
-	"github.com/shoriwe/gruby/pkg/errors"
+	"github.com/shoriwe/gplasma/pkg/errors"
 	"strconv"
 	"strings"
 )
