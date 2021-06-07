@@ -9,10 +9,10 @@ a new features like interfaces and design focused in application embedding.
 
 You can have a working interpreter by compiling `cmd/plasma`.
 
-- You can compile a binary with
+- You can compile a binary with (using **`Go-1.16`**)
 
 ```shell
-go install github.com/shoriwe/gplasma/cmd/plasma
+go install github.com/shoriwe/gplasma/cmd/plasma@latest
 ```
 
 ```
