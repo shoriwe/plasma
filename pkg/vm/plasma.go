@@ -962,6 +962,12 @@ func (p *Plasma) Execute() (IObject, *Object) {
 			executionError = p.leftBinaryExpressionFuncCall(GreaterThanOrEqual)
 		case LessThanOrEqualOP:
 			executionError = p.leftBinaryExpressionFuncCall(LessThanOrEqual)
+		case ContainsOP:
+			leftHandSide := p.PopObject()
+			rightHandSide := p.PopObject()
+			p.PushObject(leftHandSide)
+			p.PushObject(rightHandSide)
+			executionError = p.leftBinaryExpressionFuncCall(Contains)
 		// Other Expressions
 		case GetIdentifierOP:
 			executionError = p.getIdentifierOP(code)

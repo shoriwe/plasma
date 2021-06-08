@@ -242,8 +242,10 @@ func (c *Compiler) compileBinaryExpression(binaryExpression *ast.BinaryExpressio
 		operation = vm.GreaterThanOrEqualOP
 	case lexer.LessOrEqualThan:
 		operation = vm.LessThanOrEqualOP
+	case lexer.In:
+		operation = vm.ContainsOP
 	default:
-		panic(errors.NewUnknownVMOperationError(operation))
+		panic(errors.NewUnknownVMOperationError(binaryExpression.Operator.DirectValue))
 	}
 	c.pushInstruction(vm.NewCode(operation, binaryExpression.Operator.Line, nil))
 	return nil

@@ -8,3 +8,12 @@ def help()
 end
 
 println(help())
+
+def
+a
+(b,
+c
+,
+d)
+    println(b + c + d)
+end

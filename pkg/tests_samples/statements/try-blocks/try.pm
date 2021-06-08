@@ -53,3 +53,10 @@ try
 except InvalidNumberOfArgumentsError as error
     println(error)
 end
+
+try
+    raise InvalidNumberOfArgumentsError(0, 10)
+except InvalidNumberOfArgumentsError as
+        error
+    println(error)
+end

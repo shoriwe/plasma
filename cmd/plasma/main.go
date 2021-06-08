@@ -49,7 +49,7 @@ func noColor() {
 func help() {
 	fmt.Printf("%s [FLAG [FLAG [FLAG]]] [PROGRAM [PROGRAM [PROGRAM]]]\n", color.BlueString("%s", os.Args[0]))
 	fmt.Printf("\n[%s] Notes\n", color.BlueString("+"))
-	fmt.Printf("\t%s No %s arguments will spawn a %s\n", color.BlueString("-"), color.YellowString("PROGRAM"), color.YellowString("REPL"))
+	// fmt.Printf("\t%s No %s arguments will spawn a %s\n", color.BlueString("-"), color.YellowString("PROGRAM"), color.YellowString("REPL"))
 	fmt.Printf("\n[%s] Flags\n", color.BlueString("+"))
 	for option, information := range flagOptions {
 		fmt.Printf("\t%s, %s\t\t%s\n", color.RedString("%s", information.extra), color.RedString("%s", option), information.description)
@@ -108,7 +108,7 @@ func init() {
 }
 
 func repl() {
-
+	help()
 }
 
 func program() {

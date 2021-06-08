@@ -20,13 +20,12 @@ go install github.com/shoriwe/gplasma/cmd/plasma@latest
 plasma.exe [FLAG [FLAG [FLAG]]] [PROGRAM [PROGRAM [PROGRAM]]]
 
 [+] Notes
-        - No PROGRAM arguments will spawn a REPL
 
 [+] Flags
-        -h, --help              Show this help message
+	-h, --help		Show this help message
 
 [+] Environment Variables
-        NoColor -> TRUE or FALSE                Disable color printing for this CLI
+	NoColor -> TRUE or FALSE		Disable color printing for this CLI
 ```
 
 ## Features
