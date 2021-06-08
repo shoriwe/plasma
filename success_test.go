@@ -10,6 +10,9 @@ import (
 	"testing"
 )
 
+/*
+	Bunch of samples that should only compile and execute (no result checking)
+*/
 const (
 	testsSamples        = "tests_samples"
 	expressionSamples   = "expressions"
