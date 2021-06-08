@@ -329,7 +329,7 @@ func (c *Compiler) compileMethodInvocationExpression(methodInvocationExpression 
 		if argumentCompilationError != nil {
 			return nil, argumentCompilationError
 		}
-		result = append(result, argument...)
+		result = append(argument, result...)
 	}
 	function, functionCompilationError := c.compileExpression(methodInvocationExpression.Function)
 	if functionCompilationError != nil {
@@ -1201,9 +1201,14 @@ func (c *Compiler) compileClassBody(body []ast.Node) ([]vm.Code, *errors.Error) 
 }
 
 func (c *Compiler) compileInterfaceStatement(interfaceStatement *ast.InterfaceStatement) ([]vm.Code, *errors.Error) {
+	bases := make([]ast.Expression, len(interfaceStatement.Bases))
+	copy(bases, interfaceStatement.Bases)
+	for i, j := 0, len(bases)-1; i < j; i, j = i+1, j-1 {
+		bases[i], bases[j] = bases[j], bases[i]
+	}
 	result, basesCompilationError := c.compileExpression(
 		&ast.TupleExpression{
-			Values: interfaceStatement.Bases,
+			Values: bases,
 		},
 	)
 	if basesCompilationError != nil {
@@ -1232,9 +1237,14 @@ func (c *Compiler) compileInterfaceStatement(interfaceStatement *ast.InterfaceSt
 }
 
 func (c *Compiler) compileClassStatement(classStatement *ast.ClassStatement) ([]vm.Code, *errors.Error) {
+	bases := make([]ast.Expression, len(classStatement.Bases))
+	copy(bases, classStatement.Bases)
+	for i, j := 0, len(bases)-1; i < j; i, j = i+1, j-1 {
+		bases[i], bases[j] = bases[j], bases[i]
+	}
 	result, basesCompilationError := c.compileExpression(
 		&ast.TupleExpression{
-			Values: classStatement.Bases,
+			Values: bases,
 		},
 	)
 	if basesCompilationError != nil {
