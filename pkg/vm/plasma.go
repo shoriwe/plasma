@@ -255,9 +255,9 @@ func (p *Plasma) methodInvocationOP(code Code) *Object {
 	var callError *Object
 	switch function.(type) {
 	case *Function:
-		result, callError = p.CallFunction(function.(*Function), function.SymbolTable(), arguments...)
+		result, callError = p.CallFunction(function.(*Function), NewSymbolTable(function.SymbolTable().Parent), arguments...)
 	case *Type:
-		result, callError = p.ConstructObject(function.(*Type), NewSymbolTable(p.PeekSymbolTable()))
+		result, callError = p.ConstructObject(function.(*Type), NewSymbolTable(function.SymbolTable().Parent))
 		if callError != nil {
 			return callError
 		}
@@ -270,7 +270,15 @@ func (p *Plasma) methodInvocationOP(code Code) *Object {
 		}
 		_, callError = p.CallFunction(resultInitialize.(*Function), result.SymbolTable(), arguments...)
 	default:
-		return p.NewInvalidTypeError(function.TypeName(), FunctionName)
+		// Try getting the method Call
+		call, getError := function.Get(Call)
+		if getError != nil {
+			return p.NewObjectWithNameNotFoundError(Call)
+		}
+		if _, ok := call.(*Function); !ok {
+			return p.NewInvalidTypeError(call.TypeName(), FunctionName)
+		}
+		result, callError = p.CallFunction(call.(*Function), NewSymbolTable(function.SymbolTable().Parent))
 	}
 	if callError != nil {
 		return callError
@@ -1136,6 +1144,8 @@ func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments
 	self, callback, code := function.Callable.Call()
 	if self != nil {
 		symbols.Set(Self, self)
+	} else {
+		symbols.Set(Self, function)
 	}
 	p.PushSymbolTable(symbols)
 	var result IObject

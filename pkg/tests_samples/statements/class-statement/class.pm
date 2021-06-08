@@ -10,5 +10,8 @@ module Business
     end
 end
 
+class Person
+end
+
 antonio = Business.Person("Antonio")
 println(antonio)

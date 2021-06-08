@@ -478,10 +478,6 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, *errors.Error)
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	newLinesRemoveError = parser.removeNewLines()
-	if newLinesRemoveError != nil {
-		return nil, newLinesRemoveError
-	}
 	var bases []ast.Expression
 	var base ast.Node
 	var parsingError *errors.Error
@@ -491,7 +487,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, *errors.Error)
 			return nil, tokenizingError
 		}
 		for ; !parser.complete; {
-			newLinesRemoveError := parser.removeNewLines()
+			newLinesRemoveError = parser.removeNewLines()
 			if newLinesRemoveError != nil {
 				return nil, newLinesRemoveError
 			}
