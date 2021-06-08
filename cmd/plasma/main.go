@@ -118,8 +118,9 @@ func program() {
 			panic(readingError)
 		}
 		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
-			map[uint8]uint8{
-				plasma.PopRawExpressions: plasma.PopRawExpressions,
+			plasma.Options{
+				Debug:             false,
+				PopRawExpressions: true,
 			},
 		)
 		code, compilationError := compiler.Compile()

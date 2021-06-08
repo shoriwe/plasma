@@ -652,7 +652,7 @@ func (p *Plasma) newIteratorOP(code Code) *Object {
 func (p *Plasma) setupTryBlockOP(code Code) *Object {
 	p.tryStack.Push(
 		&tryStackEntry{
-			finalIndex:   code.Value.(int),
+			finalIndex:   p.PeekCode().index + code.Value.(int) -1,
 			exceptBlocks: nil,
 			elseBlock:    nil,
 			finallyBody:  nil,
