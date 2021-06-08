@@ -9,196 +9,185 @@ import (
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/tools"
 	"github.com/shoriwe/gplasma/pkg/vm"
+	"reflect"
 	"strconv"
 	"strings"
-)
-
-const (
-	PopRawExpressions = iota
-	DEBUG
 )
 
 /*
 	Compile to the Plasma stack VM
 */
 
+type Options struct {
+	Debug             bool
+	PopRawExpressions bool
+}
+
 type Compiler struct {
-	parser       *parser.Parser
-	instructions []vm.Code
-	index        int
-	length       int
-	options      map[uint8]uint8
+	parser  *parser.Parser
+	index   int
+	length  int
+	options Options
 }
 
-func (c *Compiler) pushInstruction(code vm.Code) {
-	c.instructions = append(c.instructions, code)
-	c.index++
-	c.length++
+func (c *Compiler) compileBegin(begin *ast.BeginStatement) ([]vm.Code, *errors.Error) {
+	return c.compileBody(begin.Body)
 }
 
-func (c *Compiler) restoreInstructions(code []vm.Code) {
-	c.instructions = append(c.instructions, code...)
+func (c *Compiler) compileEnd(end *ast.EndStatement) ([]vm.Code, *errors.Error) {
+	return c.compileBody(end.Body)
 }
 
-func (c *Compiler) compileBegin(begin *ast.BeginStatement) *errors.Error {
-	if begin != nil {
-		return c.compileBody(begin.Body)
-	}
-	return nil
-}
-
-func (c *Compiler) compileEnd(end *ast.EndStatement) *errors.Error {
-	if end != nil {
-		return c.compileBody(end.Body)
-	}
-	return nil
-}
-
-func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) *errors.Error {
+func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) ([]vm.Code, *errors.Error) {
 	switch literal.DirectValue {
 	case lexer.Integer:
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		number, parsingError := strconv.ParseInt(numberString, 10, 64)
 		if parsingError != nil {
-			return errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
+			return nil, errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
 		}
-		c.pushInstruction(vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number))
+		return []vm.Code{vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number)}, nil
 	case lexer.HexadecimalInteger:
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		numberString = numberString[2:]
 		number, parsingError := strconv.ParseInt(numberString, 16, 64)
 		if parsingError != nil {
-			return errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
+			return nil, errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
 		}
-		c.pushInstruction(vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number))
+		return []vm.Code{vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number)}, nil
 	case lexer.OctalInteger:
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		numberString = numberString[2:]
 		number, parsingError := strconv.ParseInt(numberString, 8, 64)
 		if parsingError != nil {
-			return errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
+			return nil, errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
 		}
-		c.pushInstruction(vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number))
+		return []vm.Code{vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number)}, nil
 	case lexer.BinaryInteger:
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		numberString = numberString[2:]
 		number, parsingError := strconv.ParseInt(numberString, 2, 64)
 		if parsingError != nil {
-			return errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
+			return nil, errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
 		}
-		c.pushInstruction(vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number))
+		return []vm.Code{vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number)}, nil
 	case lexer.Float, lexer.ScientificFloat:
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		number, parsingError := tools.ParseFloat(numberString)
 		if parsingError != nil {
-			return errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
+			return nil, errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
 		}
-		c.pushInstruction(vm.NewCode(vm.NewFloatOP, literal.Token.Line, number))
+		return []vm.Code{vm.NewCode(vm.NewFloatOP, literal.Token.Line, number)}, nil
 	case lexer.SingleQuoteString, lexer.DoubleQuoteString:
-		c.pushInstruction(
-			vm.NewCode(
-				vm.NewStringOP, literal.Token.Line,
+		return []vm.Code{vm.NewCode(
+			vm.NewStringOP, literal.Token.Line,
 
+			string(
+				tools.ReplaceEscaped(
+					[]rune(literal.Token.String[1:len(literal.Token.String)-1])),
+			),
+		),
+		}, nil
+	case lexer.ByteString:
+		return []vm.Code{vm.NewCode(vm.NewBytesOP, literal.Token.Line,
+			[]byte(
 				string(
 					tools.ReplaceEscaped(
-						[]rune(literal.Token.String[1:len(literal.Token.String)-1])),
-				),
-			),
-		)
-	case lexer.ByteString:
-		c.pushInstruction(
-			vm.NewCode(vm.NewBytesOP, literal.Token.Line,
-				[]byte(
-					string(
-						tools.ReplaceEscaped(
-							[]rune(literal.Token.String[2:len(literal.Token.String)-1]),
-						),
+						[]rune(literal.Token.String[2:len(literal.Token.String)-1]),
 					),
 				),
 			),
-		)
+		),
+		}, nil
 	case lexer.True:
-		c.pushInstruction(vm.NewCode(vm.NewTrueBoolOP, literal.Token.Line, nil))
+		return []vm.Code{vm.NewCode(vm.NewTrueBoolOP, literal.Token.Line, nil)}, nil
 	case lexer.False:
-		c.pushInstruction(vm.NewCode(vm.NewFalseBoolOP, literal.Token.Line, nil))
+		return []vm.Code{vm.NewCode(vm.NewFalseBoolOP, literal.Token.Line, nil)}, nil
 	case lexer.None:
-		c.pushInstruction(vm.NewCode(vm.GetNoneOP, literal.Token.Line, nil))
+		return []vm.Code{vm.NewCode(vm.GetNoneOP, literal.Token.Line, nil)}, nil
 	}
-	return nil
+	panic(errors.NewUnknownVMOperationError(literal.Token.DirectValue))
 }
 
-func (c *Compiler) compileTuple(tuple *ast.TupleExpression) *errors.Error {
+func (c *Compiler) compileTuple(tuple *ast.TupleExpression) ([]vm.Code, *errors.Error) {
 	valuesLength := len(tuple.Values)
+	var result []vm.Code
 	for i := valuesLength - 1; i > -1; i-- {
-		valueCompilationError := c.compileExpression(tuple.Values[i])
+		childExpression, valueCompilationError := c.compileExpression(tuple.Values[i])
 		if valueCompilationError != nil {
-			return valueCompilationError
+			return nil, valueCompilationError
 		}
+		result = append(result, childExpression...)
 	}
-	c.instructions = append(c.instructions, vm.NewCode(vm.NewTupleOP, errors.UnknownLine, len(tuple.Values)))
-	return nil
+	return append(result, vm.NewCode(vm.NewTupleOP, errors.UnknownLine, len(tuple.Values))), nil
 }
 
-func (c *Compiler) compileArray(array *ast.ArrayExpression) *errors.Error {
+func (c *Compiler) compileArray(array *ast.ArrayExpression) ([]vm.Code, *errors.Error) {
 	valuesLength := len(array.Values)
+	var result []vm.Code
 	for i := valuesLength - 1; i > -1; i-- {
-		valueCompilationError := c.compileExpression(array.Values[i])
+		childExpression, valueCompilationError := c.compileExpression(array.Values[i])
 		if valueCompilationError != nil {
-			return valueCompilationError
+			return nil, valueCompilationError
 		}
+		result = append(result, childExpression...)
 	}
-	c.instructions = append(c.instructions, vm.NewCode(vm.NewArrayOP, errors.UnknownLine, len(array.Values)))
-	return nil
+	return append(result, vm.NewCode(vm.NewArrayOP, errors.UnknownLine, len(array.Values))), nil
 }
 
-func (c *Compiler) compileHash(hash *ast.HashExpression) *errors.Error {
+func (c *Compiler) compileHash(hash *ast.HashExpression) ([]vm.Code, *errors.Error) {
 	valuesLength := len(hash.Values)
+	var result []vm.Code
 	for i := valuesLength - 1; i > -1; i-- {
-		valueCompilationError := c.compileExpression(hash.Values[i].Value)
+		key, valueCompilationError := c.compileExpression(hash.Values[i].Value)
 		if valueCompilationError != nil {
-			return valueCompilationError
+			return nil, valueCompilationError
 		}
-		keyCompilationError := c.compileExpression(hash.Values[i].Key)
+		result = append(result, key...)
+		value, keyCompilationError := c.compileExpression(hash.Values[i].Key)
 		if keyCompilationError != nil {
-			return keyCompilationError
+			return nil, keyCompilationError
 		}
+		result = append(result, value...)
 	}
-	c.instructions = append(c.instructions, vm.NewCode(vm.NewHashOP, errors.UnknownLine, len(hash.Values)))
-	return nil
+	return append(result, vm.NewCode(vm.NewHashOP, errors.UnknownLine, len(hash.Values))), nil
 }
 
-func (c *Compiler) compileUnaryExpression(unaryExpression *ast.UnaryExpression) *errors.Error {
-	expressionCompileError := c.compileExpression(unaryExpression.X)
+func (c *Compiler) compileUnaryExpression(unaryExpression *ast.UnaryExpression) ([]vm.Code, *errors.Error) {
+	result, expressionCompileError := c.compileExpression(unaryExpression.X)
 	if expressionCompileError != nil {
-		return expressionCompileError
+		return nil, expressionCompileError
 	}
 	switch unaryExpression.Operator.DirectValue {
 	case lexer.NegateBits:
-		c.pushInstruction(vm.NewCode(vm.NegateBitsOP, unaryExpression.Operator.Line, nil))
+		result = append(result, vm.NewCode(vm.NegateBitsOP, unaryExpression.Operator.Line, nil))
 	case lexer.Not, lexer.SignNot:
-		c.pushInstruction(vm.NewCode(vm.BoolNegateOP, unaryExpression.Operator.Line, nil))
+		result = append(result, vm.NewCode(vm.BoolNegateOP, unaryExpression.Operator.Line, nil))
 	case lexer.Sub:
-		c.pushInstruction(vm.NewCode(vm.NegativeOP, unaryExpression.Operator.Line, nil))
+		result = append(result, vm.NewCode(vm.NegativeOP, unaryExpression.Operator.Line, nil))
 	}
-	return nil
+	return result, nil
 }
 
-func (c *Compiler) compileBinaryExpression(binaryExpression *ast.BinaryExpression) *errors.Error {
+func (c *Compiler) compileBinaryExpression(binaryExpression *ast.BinaryExpression) ([]vm.Code, *errors.Error) {
+	var result []vm.Code
 	// Compile first right hand side
-	rightHandSideCompileError := c.compileExpression(binaryExpression.RightHandSide)
+	right, rightHandSideCompileError := c.compileExpression(binaryExpression.RightHandSide)
 	if rightHandSideCompileError != nil {
-		return rightHandSideCompileError
+		return nil, rightHandSideCompileError
 	}
+	result = append(result, right...)
 	// Then left hand side
-	leftHandSideCompileError := c.compileExpression(binaryExpression.LeftHandSide)
+	left, leftHandSideCompileError := c.compileExpression(binaryExpression.LeftHandSide)
 	if leftHandSideCompileError != nil {
-		return leftHandSideCompileError
+		return nil, leftHandSideCompileError
 	}
+	result = append(result, left...)
 	var operation uint8
 	// Finally decide the instruction to use
 	switch binaryExpression.Operator.DirectValue {
@@ -242,152 +231,138 @@ func (c *Compiler) compileBinaryExpression(binaryExpression *ast.BinaryExpressio
 		operation = vm.GreaterThanOrEqualOP
 	case lexer.LessOrEqualThan:
 		operation = vm.LessThanOrEqualOP
+	case lexer.In:
+		operation = vm.ContainsOP
 	default:
-		panic(errors.NewUnknownVMOperationError(operation))
+		panic(errors.NewUnknownVMOperationError(binaryExpression.Operator.DirectValue))
 	}
-	c.pushInstruction(vm.NewCode(operation, binaryExpression.Operator.Line, nil))
-	return nil
+	return append(result, vm.NewCode(operation, binaryExpression.Operator.Line, nil)), nil
 }
 
-func (c *Compiler) compileParenthesesExpression(parenthesesExpression *ast.ParenthesesExpression) *errors.Error {
+func (c *Compiler) compileParenthesesExpression(parenthesesExpression *ast.ParenthesesExpression) ([]vm.Code, *errors.Error) {
 	return c.compileExpression(parenthesesExpression.X)
 }
 
-func (c *Compiler) compileIfOneLinerExpression(ifOneLineExpression *ast.IfOneLinerExpression) *errors.Error {
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	conditionCompilationError := c.compileExpression(ifOneLineExpression.Condition)
+func (c *Compiler) compileIfOneLinerExpression(ifOneLineExpression *ast.IfOneLinerExpression) ([]vm.Code, *errors.Error) {
+	condition, conditionCompilationError := c.compileExpression(ifOneLineExpression.Condition)
 	if conditionCompilationError != nil {
-		return conditionCompilationError
+		return nil, conditionCompilationError
 	}
-	condition := c.instructions
-	c.instructions = nil
-	resultCompilationError := c.compileExpression(ifOneLineExpression.Result)
+
+	ifResult, resultCompilationError := c.compileExpression(ifOneLineExpression.Result)
 	if resultCompilationError != nil {
-		return resultCompilationError
+		return nil, resultCompilationError
 	}
-	result := c.instructions
-	c.instructions = nil
+
 	elseResult := []vm.Code{vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil)}
 	if ifOneLineExpression.ElseResult != nil {
-		elseResultCompilationError := c.compileExpression(ifOneLineExpression.ElseResult)
+		var elseResultCompilationError *errors.Error
+		elseResult, elseResultCompilationError = c.compileExpression(ifOneLineExpression.ElseResult)
 		if elseResultCompilationError != nil {
-			return elseResultCompilationError
+			return nil, elseResultCompilationError
 		}
-		elseResult = c.instructions
-		c.instructions = nil
 	}
-	c.restoreInstructions(instructionsBackup)
-	c.restoreInstructions(condition)
-	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(result)+1))
-	c.restoreInstructions(result)
-	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
-	c.restoreInstructions(elseResult)
-	return nil
+	result := condition
+	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(ifResult)+1))
+	result = append(result, ifResult...)
+	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
+	result = append(result, elseResult...)
+	return result, nil
 }
 
-func (c *Compiler) compileUnlessOneLinerExpression(ifOneLineExpression *ast.UnlessOneLinerExpression) *errors.Error {
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	conditionCompilationError := c.compileExpression(ifOneLineExpression.Condition)
+func (c *Compiler) compileUnlessOneLinerExpression(ifOneLineExpression *ast.UnlessOneLinerExpression) ([]vm.Code, *errors.Error) {
+
+	condition, conditionCompilationError := c.compileExpression(ifOneLineExpression.Condition)
 	if conditionCompilationError != nil {
-		return conditionCompilationError
+		return nil, conditionCompilationError
 	}
-	condition := c.instructions
-	c.instructions = nil
-	resultCompilationError := c.compileExpression(ifOneLineExpression.Result)
+
+	unlessResult, resultCompilationError := c.compileExpression(ifOneLineExpression.Result)
 	if resultCompilationError != nil {
-		return resultCompilationError
+		return nil, resultCompilationError
 	}
-	result := c.instructions
-	c.instructions = nil
+
 	elseResult := []vm.Code{vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil)}
 	if ifOneLineExpression.ElseResult != nil {
-		elseResultCompilationError := c.compileExpression(ifOneLineExpression.ElseResult)
+		var elseResultCompilationError *errors.Error
+		elseResult, elseResultCompilationError = c.compileExpression(ifOneLineExpression.ElseResult)
 		if elseResultCompilationError != nil {
-			return elseResultCompilationError
+			return nil, elseResultCompilationError
 		}
-		elseResult = c.instructions
-		c.instructions = nil
+
 	}
-	c.restoreInstructions(instructionsBackup)
-	c.restoreInstructions(condition)
-	c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(result)+1))
-	c.restoreInstructions(result)
-	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
-	c.restoreInstructions(elseResult)
-	return nil
+	result := condition
+	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(unlessResult)+1))
+	result = append(result, unlessResult...)
+	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
+	result = append(result, elseResult...)
+	return result, nil
 }
 
-func (c *Compiler) compileIndexExpression(indexExpression *ast.IndexExpression) *errors.Error {
-	sourceCompilationError := c.compileExpression(indexExpression.Source)
+func (c *Compiler) compileIndexExpression(indexExpression *ast.IndexExpression) ([]vm.Code, *errors.Error) {
+	source, sourceCompilationError := c.compileExpression(indexExpression.Source)
 	if sourceCompilationError != nil {
-		return sourceCompilationError
+		return nil, sourceCompilationError
 	}
-	indexCompilationError := c.compileExpression(indexExpression.Index)
+	index, indexCompilationError := c.compileExpression(indexExpression.Index)
 	if indexCompilationError != nil {
-		return indexCompilationError
+		return nil, indexCompilationError
 	}
-	c.pushInstruction(vm.NewCode(vm.IndexOP, errors.UnknownLine, nil))
-	return nil
+	result := source
+	result = append(result, index...)
+	return append(result, vm.NewCode(vm.IndexOP, errors.UnknownLine, nil)), nil
 }
 
-func (c *Compiler) compileSelectorExpression(selectorExpression *ast.SelectorExpression) *errors.Error {
-	sourceCompilationError := c.compileExpression(selectorExpression.X)
+func (c *Compiler) compileSelectorExpression(selectorExpression *ast.SelectorExpression) ([]vm.Code, *errors.Error) {
+	source, sourceCompilationError := c.compileExpression(selectorExpression.X)
 	if sourceCompilationError != nil {
-		return sourceCompilationError
+		return nil, sourceCompilationError
 	}
-	c.pushInstruction(vm.NewCode(vm.SelectNameFromObjectOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String))
-	return nil
+	return append(source, vm.NewCode(vm.SelectNameFromObjectOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String)), nil
 }
 
-func (c *Compiler) compileMethodInvocationExpression(methodInvocationExpression *ast.MethodInvocationExpression) *errors.Error {
+func (c *Compiler) compileMethodInvocationExpression(methodInvocationExpression *ast.MethodInvocationExpression) ([]vm.Code, *errors.Error) {
 	numberOfArguments := len(methodInvocationExpression.Arguments)
+	var result []vm.Code
 	for i := numberOfArguments - 1; i > -1; i-- {
-		argumentCompilationError := c.compileExpression(methodInvocationExpression.Arguments[i])
+		argument, argumentCompilationError := c.compileExpression(methodInvocationExpression.Arguments[i])
 		if argumentCompilationError != nil {
-			return argumentCompilationError
+			return nil, argumentCompilationError
 		}
+		result = append(result, argument...)
 	}
-	functionCompilationError := c.compileExpression(methodInvocationExpression.Function)
+	function, functionCompilationError := c.compileExpression(methodInvocationExpression.Function)
 	if functionCompilationError != nil {
-		return functionCompilationError
+		return nil, functionCompilationError
 	}
-	c.pushInstruction(vm.NewCode(vm.MethodInvocationOP, errors.UnknownLine, len(methodInvocationExpression.Arguments)))
-	return nil
+	result = append(result, function...)
+	return append(result, vm.NewCode(vm.MethodInvocationOP, errors.UnknownLine, len(methodInvocationExpression.Arguments))), nil
 }
 
-func (c *Compiler) compileIdentifierExpression(identifier *ast.Identifier) *errors.Error {
-	c.pushInstruction(vm.NewCode(vm.GetIdentifierOP, identifier.Token.Line, identifier.Token.String))
-	return nil
+func (c *Compiler) compileIdentifierExpression(identifier *ast.Identifier) ([]vm.Code, *errors.Error) {
+	return []vm.Code{vm.NewCode(vm.GetIdentifierOP, identifier.Token.Line, identifier.Token.String)}, nil
 }
 
-func (c *Compiler) compileLambdaExpression(lambdaExpression *ast.LambdaExpression) *errors.Error {
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	lambdaCodeCompilationError := c.compileExpression(lambdaExpression.Code)
+func (c *Compiler) compileLambdaExpression(lambdaExpression *ast.LambdaExpression) ([]vm.Code, *errors.Error) {
+	var result []vm.Code
+	functionCode, lambdaCodeCompilationError := c.compileExpression(lambdaExpression.Code)
 	if lambdaCodeCompilationError != nil {
-		return lambdaCodeCompilationError
+		return nil, lambdaCodeCompilationError
 	}
-	functionCode := c.instructions
-	c.instructions = nil
-	c.instructions = instructionsBackup
-	c.pushInstruction(vm.NewCode(vm.NewFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(lambdaExpression.Arguments)}))
+	result = append(result, vm.NewCode(vm.NewFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(lambdaExpression.Arguments)}))
 	var arguments []string
 	for _, argument := range lambdaExpression.Arguments {
 		arguments = append(arguments, argument.Token.String)
 	}
-	c.pushInstruction(vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
-	c.restoreInstructions(functionCode)
-	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
-	return nil
+	result = append(result, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
+	result = append(result, functionCode...)
+	result = append(result, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
+	return result, nil
 }
 
-func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.GeneratorExpression) *errors.Error {
-	instructionsBackup := c.instructions
-	c.instructions = nil
+func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.GeneratorExpression) ([]vm.Code, *errors.Error) {
 	// Compile the HasNext function
-	hasNextCallCompilationError := c.compileMethodInvocationExpression(
+	hasNextCode, hasNextCallCompilationError := c.compileMethodInvocationExpression(
 		&ast.MethodInvocationExpression{
 			Function: &ast.SelectorExpression{
 				X: &ast.SelectorExpression{
@@ -412,15 +387,13 @@ func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.Generator
 		},
 	)
 	if hasNextCallCompilationError != nil {
-		return hasNextCallCompilationError
+		return nil, hasNextCallCompilationError
 	}
-	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
-	hasNextCode := c.instructions
-	c.instructions = nil
+	hasNextCode = append(hasNextCode, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
 
 	// Compile the Next function
 	/// First capture the next value
-	temporalVariable1AssignError := c.compileAssignStatement(
+	nextCode, temporalVariable1AssignError := c.compileAssignStatement(
 		&ast.AssignStatement{
 			LeftHandSide: &ast.Identifier{
 				Token: &lexer.Token{
@@ -457,11 +430,11 @@ func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.Generator
 		},
 	)
 	if temporalVariable1AssignError != nil {
-		return temporalVariable1AssignError
+		return nil, temporalVariable1AssignError
 	}
 	//// Then Unpack the received value
 	if len(generatorExpression.Receivers) == 1 {
-		receiverAssignError := c.compileAssignStatement(
+		unpacked, receiverAssignError := c.compileAssignStatement(
 			&ast.AssignStatement{
 				LeftHandSide: &ast.Identifier{
 					Token: &lexer.Token{
@@ -481,10 +454,11 @@ func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.Generator
 			},
 		)
 		if receiverAssignError != nil {
-			return receiverAssignError
+			return nil, receiverAssignError
 		}
+		nextCode = append(nextCode, unpacked...)
 	} else {
-		temporalVariableAssignError := c.compileAssignStatement(
+		unpacked, temporalVariableAssignError := c.compileAssignStatement(
 			&ast.AssignStatement{
 				LeftHandSide: &ast.Identifier{
 					Token: &lexer.Token{
@@ -514,10 +488,11 @@ func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.Generator
 			},
 		)
 		if temporalVariableAssignError != nil {
-			return temporalVariableAssignError
+			return nil, temporalVariableAssignError
 		}
+		nextCode = append(nextCode, unpacked...)
 		for _, receiver := range generatorExpression.Receivers {
-			receiverAssignCompilationError := c.compileAssignStatement(
+			compiledReceiver, receiverAssignCompilationError := c.compileAssignStatement(
 				&ast.AssignStatement{
 					LeftHandSide: &ast.Identifier{
 						Token: &lexer.Token{
@@ -547,36 +522,36 @@ func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.Generator
 				},
 			)
 			if receiverAssignCompilationError != nil {
-				return receiverAssignCompilationError
+				return nil, receiverAssignCompilationError
 			}
+			nextCode = append(nextCode, compiledReceiver...)
 		}
 	}
-	//// Finally Evaluate the operation and return its result
-	operationCompilationError := c.compileExpression(generatorExpression.Operation)
+	//// Then Evaluate the operation and return its result
+	evaluateOperand, operationCompilationError := c.compileExpression(generatorExpression.Operation)
 	if operationCompilationError != nil {
-		return operationCompilationError
+		return nil, operationCompilationError
 	}
-	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
-	nextCode := c.instructions
-	c.instructions = nil
+	nextCode = append(nextCode, evaluateOperand...)
+	nextCode = append(nextCode, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
 
 	// Finally set everything together
-	c.restoreInstructions(instructionsBackup)
-	sourceCompilationError := c.compileExpression(generatorExpression.Source)
+	source, sourceCompilationError := c.compileExpression(generatorExpression.Source)
 	if sourceCompilationError != nil {
-		return sourceCompilationError
+		return nil, sourceCompilationError
 	}
-	c.pushInstruction(
+	result := source
+	result = append(result,
 		vm.NewCode(vm.NewIteratorOP, errors.UnknownLine,
 			[2]int{len(hasNextCode), len(nextCode)},
 		),
 	)
-	c.restoreInstructions(hasNextCode)
-	c.restoreInstructions(nextCode)
-	return nil
+	result = append(result, hasNextCode...)
+	result = append(result, nextCode...)
+	return result, nil
 }
 
-func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
+func (c *Compiler) compileExpression(expression ast.Expression) ([]vm.Code, *errors.Error) {
 	switch expression.(type) {
 	case *ast.BasicLiteralExpression:
 		return c.compileLiteral(expression.(*ast.BasicLiteralExpression))
@@ -609,15 +584,15 @@ func (c *Compiler) compileExpression(expression ast.Expression) *errors.Error {
 	case *ast.GeneratorExpression:
 		return c.compileGeneratorExpression(expression.(*ast.GeneratorExpression))
 	}
-	return nil
+	panic(reflect.TypeOf(expression))
 }
 
 // Statement compilation functions
 
-func (c *Compiler) compileAssignStatementMiddleBinaryExpression(leftHandSide ast.Expression, assignOperator *lexer.Token) *errors.Error {
-	leftHandSideCompilationError := c.compileExpression(leftHandSide)
+func (c *Compiler) compileAssignStatementMiddleBinaryExpression(leftHandSide ast.Expression, assignOperator *lexer.Token) ([]vm.Code, *errors.Error) {
+	result, leftHandSideCompilationError := c.compileExpression(leftHandSide)
 	if leftHandSideCompilationError != nil {
-		return leftHandSideCompilationError
+		return nil, leftHandSideCompilationError
 	}
 	// Finally decide the instruction to use
 	var operation uint8
@@ -647,140 +622,130 @@ func (c *Compiler) compileAssignStatementMiddleBinaryExpression(leftHandSide ast
 	default:
 		panic(errors.NewUnknownVMOperationError(operation))
 	}
-	c.pushInstruction(vm.NewCode(operation, assignOperator.Line, nil))
-	return nil
+	return append(result, vm.NewCode(operation, assignOperator.Line, nil)), nil
 }
 
-func (c *Compiler) compileIdentifierAssign(identifier *ast.Identifier) *errors.Error {
-	c.pushInstruction(vm.NewCode(vm.AssignIdentifierOP, identifier.Token.Line, identifier.Token.String))
-	return nil
+func (c *Compiler) compileIdentifierAssign(identifier *ast.Identifier) ([]vm.Code, *errors.Error) {
+	return []vm.Code{vm.NewCode(vm.AssignIdentifierOP, identifier.Token.Line, identifier.Token.String)}, nil
 }
 
-func (c *Compiler) compileSelectorAssign(selectorExpression *ast.SelectorExpression) *errors.Error {
-	sourceCompilationError := c.compileExpression(selectorExpression.X)
+func (c *Compiler) compileSelectorAssign(selectorExpression *ast.SelectorExpression) ([]vm.Code, *errors.Error) {
+	result, sourceCompilationError := c.compileExpression(selectorExpression.X)
 	if sourceCompilationError != nil {
-		return sourceCompilationError
+		return nil, sourceCompilationError
 	}
-	c.pushInstruction(vm.NewCode(vm.AssignSelectorOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String))
-	return nil
+	return append(result, vm.NewCode(vm.AssignSelectorOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String)), nil
 }
 
-func (c *Compiler) compileIndexAssign(indexExpression *ast.IndexExpression) *errors.Error {
-	sourceCompilationError := c.compileExpression(indexExpression.Source)
+func (c *Compiler) compileIndexAssign(indexExpression *ast.IndexExpression) ([]vm.Code, *errors.Error) {
+	result, sourceCompilationError := c.compileExpression(indexExpression.Source)
 	if sourceCompilationError != nil {
-		return sourceCompilationError
+		return nil, sourceCompilationError
 	}
-	indexCompilationError := c.compileExpression(indexExpression.Index)
+	index, indexCompilationError := c.compileExpression(indexExpression.Index)
 	if indexCompilationError != nil {
-		return indexCompilationError
+		return nil, indexCompilationError
 	}
-	c.pushInstruction(vm.NewCode(vm.AssignIndexOP, errors.UnknownLine, nil))
-	return nil
+	result = append(result, index...)
+	return append(result, vm.NewCode(vm.AssignIndexOP, errors.UnknownLine, nil)), nil
 }
 
-func (c *Compiler) compileAssignStatement(assignStatement *ast.AssignStatement) *errors.Error {
-	valueCompilationError := c.compileExpression(assignStatement.RightHandSide)
+func (c *Compiler) compileAssignStatement(assignStatement *ast.AssignStatement) ([]vm.Code, *errors.Error) {
+	result, valueCompilationError := c.compileExpression(assignStatement.RightHandSide)
 	if valueCompilationError != nil {
-		return valueCompilationError
+		return nil, valueCompilationError
 	}
 	if assignStatement.AssignOperator.DirectValue != lexer.Assign {
 		// Do something here to evaluate the operation
-		middleOperationCompilationError := c.compileAssignStatementMiddleBinaryExpression(assignStatement.LeftHandSide, assignStatement.AssignOperator)
+		assignOperation, middleOperationCompilationError := c.compileAssignStatementMiddleBinaryExpression(assignStatement.LeftHandSide, assignStatement.AssignOperator)
 		if middleOperationCompilationError != nil {
-			return middleOperationCompilationError
+			return nil, middleOperationCompilationError
 		}
+		result = append(result, assignOperation...)
 	}
+	var leftHandSide []vm.Code
+	var leftHandSideCompilationError *errors.Error
 	switch assignStatement.LeftHandSide.(type) {
 	case *ast.Identifier:
-		return c.compileIdentifierAssign(assignStatement.LeftHandSide.(*ast.Identifier))
+		leftHandSide, leftHandSideCompilationError = c.compileIdentifierAssign(assignStatement.LeftHandSide.(*ast.Identifier))
 	case *ast.SelectorExpression:
-		return c.compileSelectorAssign(assignStatement.LeftHandSide.(*ast.SelectorExpression))
+		leftHandSide, leftHandSideCompilationError = c.compileSelectorAssign(assignStatement.LeftHandSide.(*ast.SelectorExpression))
 	case *ast.IndexExpression:
-		return c.compileIndexAssign(assignStatement.LeftHandSide.(*ast.IndexExpression))
+		leftHandSide, leftHandSideCompilationError = c.compileIndexAssign(assignStatement.LeftHandSide.(*ast.IndexExpression))
+	default:
+		panic(reflect.TypeOf(assignStatement.LeftHandSide))
 	}
-	// ToDo: Fix this return a better error
-	return errors.NewUnknownVMOperationError(errors.UnknownLine)
+	if leftHandSideCompilationError != nil {
+		return nil, leftHandSideCompilationError
+	}
+	return append(result, leftHandSide...), nil
 }
 
-func (c *Compiler) compileFunctionDefinition(functionDefinition *ast.FunctionDefinitionStatement) *errors.Error {
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	functionDefinitionBodyCompilationError := c.compileBody(functionDefinition.Body)
+func (c *Compiler) compileFunctionDefinition(functionDefinition *ast.FunctionDefinitionStatement) ([]vm.Code, *errors.Error) {
+	functionCode, functionDefinitionBodyCompilationError := c.compileBody(functionDefinition.Body)
 	if functionDefinitionBodyCompilationError != nil {
-		return functionDefinitionBodyCompilationError
+		return nil, functionDefinitionBodyCompilationError
 	}
-	functionCode := c.instructions
-	c.instructions = nil
-	c.instructions = instructionsBackup
-	c.pushInstruction(vm.NewCode(vm.NewFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(functionDefinition.Arguments)}))
+	var result []vm.Code
+	result = append(result, vm.NewCode(vm.NewFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(functionDefinition.Arguments)}))
 	var arguments []string
 	for _, argument := range functionDefinition.Arguments {
 		arguments = append(arguments, argument.Token.String)
 	}
-	c.pushInstruction(vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
-	c.restoreInstructions(functionCode)
-	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
-	c.pushInstruction(vm.NewCode(vm.AssignIdentifierOP, functionDefinition.Name.Token.Line, functionDefinition.Name.Token.String))
-	return nil
+	result = append(result, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
+	result = append(result, functionCode...)
+	result = append(result, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
+	return append(result, vm.NewCode(vm.AssignIdentifierOP, functionDefinition.Name.Token.Line, functionDefinition.Name.Token.String)), nil
 }
 
-func (c *Compiler) compileReturnStatement(returnStatement *ast.ReturnStatement) *errors.Error {
+func (c *Compiler) compileReturnStatement(returnStatement *ast.ReturnStatement) ([]vm.Code, *errors.Error) {
 	numberOfResults := len(returnStatement.Results)
+	var result []vm.Code
 	for i := numberOfResults - 1; i > -1; i-- {
-		resultCompilationError := c.compileExpression(returnStatement.Results[i])
+		returnResult, resultCompilationError := c.compileExpression(returnStatement.Results[i])
 		if resultCompilationError != nil {
-			return resultCompilationError
+			return nil, resultCompilationError
 		}
+		result = append(result, returnResult...)
 	}
-	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, numberOfResults))
-	return nil
+	return append(result, vm.NewCode(vm.ReturnOP, errors.UnknownLine, numberOfResults)), nil
 }
 
-func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) *errors.Error {
+func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) ([]vm.Code, *errors.Error) {
 	// Compile If Condition
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	conditionCompilationError := c.compileExpression(ifStatement.Condition)
+	condition, conditionCompilationError := c.compileExpression(ifStatement.Condition)
 	if conditionCompilationError != nil {
-		return conditionCompilationError
+		return nil, conditionCompilationError
 	}
-	condition := c.instructions
 	// Compile If Body
-	c.instructions = nil
-	bodyCompilationError := c.compileBody(ifStatement.Body)
+	bodyInstructions, bodyCompilationError := c.compileBody(ifStatement.Body)
 	if bodyCompilationError != nil {
-		return bodyCompilationError
+		return nil, bodyCompilationError
 	}
-	bodyInstructions := c.instructions
 	// Compile Elif blocks
 	var compiledElifBlocks [][2][]vm.Code
 	for _, elif := range ifStatement.ElifBlocks {
 		// Elif condition
-		c.instructions = nil
-		elifConditionCompilationError := c.compileExpression(elif.Condition)
+		elifCondition, elifConditionCompilationError := c.compileExpression(elif.Condition)
 		if elifConditionCompilationError != nil {
-			return elifConditionCompilationError
+			return nil, elifConditionCompilationError
 		}
-		elifCondition := c.instructions
 		// Elif body
-		c.instructions = nil
-		elifBodyCompilationError := c.compileBody(elif.Body)
+		elifBody, elifBodyCompilationError := c.compileBody(elif.Body)
 		if elifBodyCompilationError != nil {
-			return elifBodyCompilationError
+			return nil, elifBodyCompilationError
 		}
-		elifBody := c.instructions
 		// Append it
 		compiledElifBlocks = append(compiledElifBlocks, [2][]vm.Code{elifCondition, elifBody})
 	}
 	// Compile Else Block
 	var elseBody []vm.Code
 	if ifStatement.Else != nil {
-		c.instructions = nil
-		elseBodyCompilationError := c.compileBody(ifStatement.Else)
+		var elseBodyCompilationError *errors.Error
+		elseBody, elseBodyCompilationError = c.compileBody(ifStatement.Else)
 		if elseBodyCompilationError != nil {
-			return elseBodyCompilationError
+			return nil, elseBodyCompilationError
 		}
-		elseBody = c.instructions
 	}
 	// Sum the length of everything compiled for the on-success JUMP
 	successJump := len(bodyInstructions) + 1
@@ -790,76 +755,65 @@ func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) *errors.Erro
 	if elseBody != nil {
 		successJump += len(elseBody)
 	}
-	c.instructions = nil
 	bodyInstructionsLength := len(bodyInstructions)
 	successJump -= bodyInstructionsLength + 1
 	// Add the first condition
-	c.restoreInstructions(instructionsBackup)
-	c.restoreInstructions(condition)
-	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
-	c.restoreInstructions(bodyInstructions)
-	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
+	var result []vm.Code
+	result = append(result, condition...)
+	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
+	result = append(result, bodyInstructions...)
+	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
 	// Add the elif conditions
 	for _, compiledElifBlock := range compiledElifBlocks {
-		c.restoreInstructions(compiledElifBlock[0])
+		result = append(result, compiledElifBlock[0]...)
 		compiledElifBlockBodyLength := len(compiledElifBlock[1])
 		successJump -= len(compiledElifBlock[0]) + compiledElifBlockBodyLength + 2
-		c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
-		c.restoreInstructions(compiledElifBlock[1])
-		c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
+		result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
+		result = append(result, compiledElifBlock[1]...)
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
 	}
 	// Finally add the else condition
 	if elseBody != nil {
-		c.restoreInstructions(elseBody)
+		result = append(result, elseBody...)
 	}
-	return nil
+	return result, nil
 }
 
-func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) *errors.Error {
+func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) ([]vm.Code, *errors.Error) {
 	// Compile If Condition
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	conditionCompilationError := c.compileExpression(unlessStatement.Condition)
+	condition, conditionCompilationError := c.compileExpression(unlessStatement.Condition)
 	if conditionCompilationError != nil {
-		return conditionCompilationError
+		return nil, conditionCompilationError
 	}
-	condition := c.instructions
 	// Compile If Body
-	c.instructions = nil
-	bodyCompilationError := c.compileBody(unlessStatement.Body)
+	bodyInstructions, bodyCompilationError := c.compileBody(unlessStatement.Body)
 	if bodyCompilationError != nil {
-		return bodyCompilationError
+		return nil, bodyCompilationError
 	}
-	bodyInstructions := c.instructions
 	// Compile Elif blocks
 	var compiledElifBlocks [][2][]vm.Code
 	for _, elif := range unlessStatement.ElifBlocks {
 		// Elif condition
-		c.instructions = nil
-		elifConditionCompilationError := c.compileExpression(elif.Condition)
+		elifCondition, elifConditionCompilationError := c.compileExpression(elif.Condition)
 		if elifConditionCompilationError != nil {
-			return elifConditionCompilationError
+			return nil, elifConditionCompilationError
 		}
-		elifCondition := c.instructions
 		// Elif body
-		c.instructions = nil
-		elifBodyCompilationError := c.compileBody(elif.Body)
+		elifBody, elifBodyCompilationError := c.compileBody(elif.Body)
 		if elifBodyCompilationError != nil {
-			return elifBodyCompilationError
+			return nil, elifBodyCompilationError
 		}
-		elifBody := c.instructions
 		// Append it
 		compiledElifBlocks = append(compiledElifBlocks, [2][]vm.Code{elifCondition, elifBody})
 	}
 	// Compile Else Block
 	var elseBody []vm.Code
 	if unlessStatement.Else != nil {
-		c.instructions = nil
-		elseBodyCompilationError := c.compileBody(unlessStatement.Else)
+		var elseBodyCompilationError *errors.Error
+		elseBody, elseBodyCompilationError = c.compileBody(unlessStatement.Else)
 		if elseBodyCompilationError != nil {
-			return elseBodyCompilationError
+			return nil, elseBodyCompilationError
 		}
-		elseBody = c.instructions
 	}
 	// Sum the length of everything compiled for the on-success JUMP
 	successJump := len(bodyInstructions) + 1
@@ -869,46 +823,38 @@ func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) 
 	if elseBody != nil {
 		successJump += len(elseBody)
 	}
-	c.instructions = nil
 	bodyInstructionsLength := len(bodyInstructions)
 	successJump -= bodyInstructionsLength + 1
 	// Add the first condition
-	c.restoreInstructions(instructionsBackup)
-	c.restoreInstructions(condition)
-	c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
-	c.restoreInstructions(bodyInstructions)
-	c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
+	result := condition
+	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
+	result = append(result, bodyInstructions...)
+	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
 	// Add the elif conditions
 	for _, compiledElifBlock := range compiledElifBlocks {
-		c.restoreInstructions(compiledElifBlock[0])
+		result = append(result, compiledElifBlock[0]...)
 		compiledElifBlockBodyLength := len(compiledElifBlock[1])
 		successJump -= len(compiledElifBlock[0]) + compiledElifBlockBodyLength + 2
-		c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
-		c.restoreInstructions(compiledElifBlock[1])
-		c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
+		result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
+		result = append(result, compiledElifBlock[1]...)
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
 	}
 	// Finally add the else condition
 	if elseBody != nil {
-		c.restoreInstructions(elseBody)
+		result = append(result, elseBody...)
 	}
-	return nil
+	return result, nil
 }
 
-func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatement) *errors.Error {
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	bodyCompilationError := c.compileBody(doWhileStatement.Body)
+func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatement) ([]vm.Code, *errors.Error) {
+	doWhileBody, bodyCompilationError := c.compileBody(doWhileStatement.Body)
 	if bodyCompilationError != nil {
-		return bodyCompilationError
+		return nil, bodyCompilationError
 	}
-	doWhileBody := c.instructions
-	c.instructions = nil
-	conditionCompilationError := c.compileExpression(doWhileStatement.Condition)
+	condition, conditionCompilationError := c.compileExpression(doWhileStatement.Condition)
 	if conditionCompilationError != nil {
-		return conditionCompilationError
+		return nil, conditionCompilationError
 	}
-	condition := c.instructions
-	c.instructions = nil
 
 	completeJump := len(doWhileBody) + len(condition) + 2
 	// Replace the null jump instructions
@@ -932,49 +878,39 @@ func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatemen
 			doWhileBody[index].Value = completeJump - index - 1
 		}
 	}
-	c.restoreInstructions(instructionsBackup)
-	c.restoreInstructions(doWhileBody)
-	c.restoreInstructions(condition)
-	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, 1))
-	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump))
-	return nil
+	result := doWhileBody
+	result = append(result, condition...)
+	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, 1))
+	result = append(result, vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump))
+	return result, nil
 }
 
-func (c *Compiler) compileRedoStatement() *errors.Error {
-	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, nil))
-	return nil
+func (c *Compiler) compileRedoStatement() ([]vm.Code, *errors.Error) {
+	return []vm.Code{vm.NewCode(vm.RedoOP, errors.UnknownLine, nil)}, nil
 }
 
-func (c *Compiler) compileBreakStatement() *errors.Error {
-	c.pushInstruction(vm.NewCode(vm.BreakOP, errors.UnknownLine, nil))
-	return nil
+func (c *Compiler) compileBreakStatement() ([]vm.Code, *errors.Error) {
+	return []vm.Code{vm.NewCode(vm.BreakOP, errors.UnknownLine, nil)}, nil
 }
 
-func (c *Compiler) compileContinueStatement() *errors.Error {
-	c.pushInstruction(vm.NewCode(vm.ContinueOP, errors.UnknownLine, nil))
-	return nil
+func (c *Compiler) compileContinueStatement() ([]vm.Code, *errors.Error) {
+	return []vm.Code{vm.NewCode(vm.ContinueOP, errors.UnknownLine, nil)}, nil
 }
 
-func (c *Compiler) compilePassStatement() *errors.Error {
-	c.pushInstruction(vm.NewCode(vm.NOP, errors.UnknownLine, nil))
-	return nil
+func (c *Compiler) compilePassStatement() ([]vm.Code, *errors.Error) {
+	return []vm.Code{vm.NewCode(vm.NOP, errors.UnknownLine, nil)}, nil
 }
 
-func (c *Compiler) compileWhileLoopStatement(whileStatement *ast.WhileLoopStatement) *errors.Error {
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	bodyCompilationError := c.compileBody(whileStatement.Body)
+func (c *Compiler) compileWhileLoopStatement(whileStatement *ast.WhileLoopStatement) ([]vm.Code, *errors.Error) {
+	whileBody, bodyCompilationError := c.compileBody(whileStatement.Body)
 	if bodyCompilationError != nil {
-		return bodyCompilationError
+		return nil, bodyCompilationError
 	}
-	whileBody := c.instructions
-	c.instructions = nil
-	conditionCompilationError := c.compileExpression(whileStatement.Condition)
+
+	condition, conditionCompilationError := c.compileExpression(whileStatement.Condition)
 	if conditionCompilationError != nil {
-		return conditionCompilationError
+		return nil, conditionCompilationError
 	}
-	condition := c.instructions
-	c.instructions = nil
 
 	completeJump := len(whileBody) + len(condition) + 1
 	// Replace the null jump instructions
@@ -998,29 +934,22 @@ func (c *Compiler) compileWhileLoopStatement(whileStatement *ast.WhileLoopStatem
 			whileBody[index].Value = -index - 2 - len(condition)
 		}
 	}
-	c.restoreInstructions(instructionsBackup)
-	c.restoreInstructions(condition)
-	c.pushInstruction(vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(whileBody)+1))
-	c.restoreInstructions(whileBody)
-	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
-	return nil
+	result := condition
+	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(whileBody)+1))
+	result = append(result, whileBody...)
+	result = append(result, vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
+	return result, nil
 }
 
-func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) *errors.Error {
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	bodyCompilationError := c.compileBody(untilLoop.Body)
+func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) ([]vm.Code, *errors.Error) {
+	untilBody, bodyCompilationError := c.compileBody(untilLoop.Body)
 	if bodyCompilationError != nil {
-		return bodyCompilationError
+		return nil, bodyCompilationError
 	}
-	untilBody := c.instructions
-	c.instructions = nil
-	conditionCompilationError := c.compileExpression(untilLoop.Condition)
+	condition, conditionCompilationError := c.compileExpression(untilLoop.Condition)
 	if conditionCompilationError != nil {
-		return conditionCompilationError
+		return nil, conditionCompilationError
 	}
-	condition := c.instructions
-	c.instructions = nil
 
 	completeJump := len(untilBody) + len(condition) + 1
 	// Replace the null jump instructions
@@ -1044,31 +973,25 @@ func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) 
 			untilBody[index].Value = -index - 2 - len(condition)
 		}
 	}
-	c.restoreInstructions(instructionsBackup)
-	c.restoreInstructions(condition)
-	c.pushInstruction(vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(untilBody)+1))
-	c.restoreInstructions(untilBody)
-	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
-	return nil
+	result := condition
+	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(untilBody)+1))
+	result = append(result, untilBody...)
+	result = append(result, vm.NewCode(vm.RedoOP, errors.UnknownLine, -completeJump-1))
+	return result, nil
 }
 
-func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) *errors.Error {
-	sourceCompilationError := c.compileExpression(forStatement.Source)
+func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) ([]vm.Code, *errors.Error) {
+	source, sourceCompilationError := c.compileExpression(forStatement.Source)
 	if sourceCompilationError != nil {
-		return sourceCompilationError
+		return nil, sourceCompilationError
 	}
-	c.pushInstruction(vm.NewCode(vm.SetupForLoopOP, errors.UnknownLine, nil)) // Push the iterable to a special stack
-
-	instructionsBackup := c.instructions
-	c.instructions = nil
+	source = append(source, vm.NewCode(vm.SetupForLoopOP, errors.UnknownLine, nil)) // Push the iterable to a special stack
 
 	// Compile for loop body
-	bodyCompilationError := c.compileBody(forStatement.Body)
+	forLoopBody, bodyCompilationError := c.compileBody(forStatement.Body)
 	if bodyCompilationError != nil {
-		return bodyCompilationError
+		return nil, bodyCompilationError
 	}
-	forLoopBody := c.instructions
-	c.instructions = nil
 	// Update values of loop jumps
 	for index, instructions := range forLoopBody {
 		if instructions.Instruction.OpCode == vm.RedoOP {
@@ -1090,47 +1013,41 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) *
 			forLoopBody[index].Value = - index - 4
 		}
 	}
-	c.restoreInstructions(instructionsBackup)
 	var receivers []string
 	for _, receiver := range forStatement.Receivers {
 		receivers = append(receivers, receiver.Token.String)
 	}
-	c.pushInstruction(vm.NewCode(vm.HasNextOP, errors.UnknownLine, 3+len(forLoopBody))) // Check if the iterable has a next value, if not exit the loop
-	c.pushInstruction(vm.NewCode(vm.UnpackReceiversPopOP, errors.UnknownLine, nil))
-	c.pushInstruction(vm.NewCode(vm.UnpackReceiversPeekOP, errors.UnknownLine, receivers))
-	c.restoreInstructions(forLoopBody)
-	c.pushInstruction(vm.NewCode(vm.RedoOP, errors.UnknownLine, -4-len(forLoopBody)))
-	c.pushInstruction(vm.NewCode(vm.PopIterOP, errors.UnknownLine, nil))
-	return nil
+	result := source
+	result = append(result, vm.NewCode(vm.HasNextOP, errors.UnknownLine, 3+len(forLoopBody))) // Check if the iterable has a next value, if not exit the loop
+	result = append(result, vm.NewCode(vm.UnpackReceiversPopOP, errors.UnknownLine, nil))
+	result = append(result, vm.NewCode(vm.UnpackReceiversPeekOP, errors.UnknownLine, receivers))
+	result = append(result, forLoopBody...)
+	result = append(result, vm.NewCode(vm.RedoOP, errors.UnknownLine, -4-len(forLoopBody)))
+	result = append(result, vm.NewCode(vm.PopIterOP, errors.UnknownLine, nil))
+	return result, nil
 }
 
-func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) *errors.Error {
-	instructionsBackup := c.instructions
+func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) ([]vm.Code, *errors.Error) {
 	var exceptBlocksCode []vm.Code
 	// Compile the try body
 	for _, exceptBlock := range tryStatement.ExceptBlocks {
-		c.instructions = nil
 		// Compile the targets that the exception receives
-		targetCompilationError := c.compileExpression(
+		targets, targetCompilationError := c.compileExpression(
 			&ast.TupleExpression{
 				Values: exceptBlock.Targets,
 			},
 		)
 		if targetCompilationError != nil {
-			return targetCompilationError
+			return nil, targetCompilationError
 		}
-		targets := c.instructions
-		c.instructions = nil
 		// Compile Except body
-		exceptCompilationError := c.compileBody(exceptBlock.Body)
+		exceptionBody, exceptCompilationError := c.compileBody(exceptBlock.Body)
 		if exceptCompilationError != nil {
-			return exceptCompilationError
+			return nil, exceptCompilationError
 		}
-		exceptionBody := c.instructions
-		c.instructions = nil
 		// Setup the except block all together
 		if exceptBlock.CaptureName != nil {
-			c.pushInstruction(
+			exceptBlocksCode = append(exceptBlocksCode,
 				vm.NewCode(
 					vm.SetupTryExceptBlockOP, errors.UnknownLine, vm.ExceptInformation{
 						Receiver:      exceptBlock.CaptureName.Token.String,
@@ -1140,7 +1057,7 @@ func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) *errors.E
 				),
 			)
 		} else {
-			c.pushInstruction(
+			exceptBlocksCode = append(exceptBlocksCode,
 				vm.NewCode(
 					vm.SetupTryExceptBlockOP, errors.UnknownLine, vm.ExceptInformation{
 						Receiver:      vm.JunkVariable,
@@ -1150,71 +1067,59 @@ func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) *errors.E
 				),
 			)
 		}
-		c.restoreInstructions(targets)
-		c.restoreInstructions(exceptionBody)
-		exceptBlocksCode = append(exceptBlocksCode, c.instructions...)
+		exceptBlocksCode = append(exceptBlocksCode, targets...)
+		exceptBlocksCode = append(exceptBlocksCode, exceptionBody...)
 	}
+	var elseBlock []vm.Code
 	if tryStatement.Else != nil {
-		c.instructions = nil
-		elseBodyCompilationError := c.compileBody(tryStatement.Else)
+		elseBody, elseBodyCompilationError := c.compileBody(tryStatement.Else)
 		if elseBodyCompilationError != nil {
-			return elseBodyCompilationError
+			return nil, elseBodyCompilationError
 		}
-		elseBody := c.instructions
-		c.instructions = nil
-		c.pushInstruction(vm.NewCode(vm.SetupTryElseBlockOP, errors.UnknownLine, len(elseBody)))
-		c.restoreInstructions(elseBody)
+		elseBlock = append(elseBlock, vm.NewCode(vm.SetupTryElseBlockOP, errors.UnknownLine, len(elseBody)))
+		elseBlock = append(elseBlock, elseBody...)
 	} else {
-		c.instructions = nil
-		c.pushInstruction(vm.NewCode(vm.SetupTryElseBlockOP, errors.UnknownLine, 0))
+		elseBlock = append(elseBlock, vm.NewCode(vm.SetupTryElseBlockOP, errors.UnknownLine, 0))
 	}
-	elseBlock := c.instructions
+	var finallyBlock []vm.Code
 	if tryStatement.Finally != nil {
-		c.instructions = nil
-		finallyBodyCompilationError := c.compileBody(tryStatement.Finally)
+		finallyBody, finallyBodyCompilationError := c.compileBody(tryStatement.Finally)
 		if finallyBodyCompilationError != nil {
-			return finallyBodyCompilationError
+			return nil, finallyBodyCompilationError
 		}
-		finallyBody := c.instructions
-		c.instructions = nil
-		c.pushInstruction(vm.NewCode(vm.SetupTryFinallyBlockOP, errors.UnknownLine, len(finallyBody)))
-		c.restoreInstructions(finallyBody)
+		finallyBlock = append(finallyBlock, vm.NewCode(vm.SetupTryFinallyBlockOP, errors.UnknownLine, len(finallyBody)))
+		finallyBlock = append(finallyBlock, finallyBody...)
 	} else {
-		c.instructions = nil
-		c.pushInstruction(vm.NewCode(vm.SetupTryFinallyBlockOP, errors.UnknownLine, 0))
+		finallyBlock = append(finallyBlock, vm.NewCode(vm.SetupTryFinallyBlockOP, errors.UnknownLine, 0))
 	}
-	finallyBlock := c.instructions
 	// Compile the real body of the try
-	c.instructions = nil
-	bodyCompilationError := c.compileBody(tryStatement.Body)
+	tryBody, bodyCompilationError := c.compileBody(tryStatement.Body)
 	if bodyCompilationError != nil {
-		return bodyCompilationError
+		return nil, bodyCompilationError
 	}
-	tryBody := c.instructions
-	c.instructions = nil
 	// Put everything together
-	c.restoreInstructions(instructionsBackup)
-	c.pushInstruction(vm.NewCode(vm.SetupTryBlockOP, errors.UnknownLine,
-		len(instructionsBackup)+len(exceptBlocksCode)+len(elseBlock)+len(finallyBlock)+len(tryBody)+2))
-	c.restoreInstructions(exceptBlocksCode)
-	c.restoreInstructions(elseBlock)
-	c.restoreInstructions(finallyBlock)
-	c.restoreInstructions(tryBody)
-	c.pushInstruction(vm.NewCode(vm.ExitTryBlockOP, errors.UnknownLine, nil))
-	return nil
+	result := []vm.Code{
+		vm.NewCode(
+			vm.SetupTryBlockOP,
+			errors.UnknownLine,
+			len(exceptBlocksCode)+len(elseBlock)+len(finallyBlock)+len(tryBody)+2,
+		),
+	}
+	result = append(result, exceptBlocksCode...)
+	result = append(result, elseBlock...)
+	result = append(result, finallyBlock...)
+	result = append(result, tryBody...)
+	result = append(result, vm.NewCode(vm.ExitTryBlockOP, errors.UnknownLine, nil))
+	return result, nil
 }
 
-func (c *Compiler) compileModuleStatement(moduleStatement *ast.ModuleStatement) *errors.Error {
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	moduleBodyCompilationError := c.compileBody(moduleStatement.Body)
+func (c *Compiler) compileModuleStatement(moduleStatement *ast.ModuleStatement) ([]vm.Code, *errors.Error) {
+	moduleBody, moduleBodyCompilationError := c.compileBody(moduleStatement.Body)
 	if moduleBodyCompilationError != nil {
-		return moduleBodyCompilationError
+		return nil, moduleBodyCompilationError
 	}
-	moduleBody := c.instructions
-	c.instructions = nil
-	c.restoreInstructions(instructionsBackup)
-	c.pushInstruction(
+	var result []vm.Code
+	result = append(result,
 		vm.NewCode(vm.NewModuleOP, moduleStatement.Name.Token.Line,
 			vm.ModuleInformation{
 				Name:       moduleStatement.Name.Token.String,
@@ -1222,65 +1127,64 @@ func (c *Compiler) compileModuleStatement(moduleStatement *ast.ModuleStatement) 
 			},
 		),
 	)
-	c.restoreInstructions(moduleBody)
-	return nil
+	result = append(result, moduleBody...)
+	return result, nil
 }
 
-func (c *Compiler) compileRaiseStatement(raise *ast.RaiseStatement) *errors.Error {
-	expressionCompilationError := c.compileExpression(raise.X)
+func (c *Compiler) compileRaiseStatement(raise *ast.RaiseStatement) ([]vm.Code, *errors.Error) {
+	result, expressionCompilationError := c.compileExpression(raise.X)
 	if expressionCompilationError != nil {
-		return expressionCompilationError
+		return nil, expressionCompilationError
 	}
-	c.pushInstruction(vm.NewCode(vm.RaiseOP, errors.UnknownLine, nil))
-	return nil
+	result = append(result, vm.NewCode(vm.RaiseOP, errors.UnknownLine, nil))
+	return result, nil
 }
 
-func (c *Compiler) compileClassFunctionDefinition(functionDefinition *ast.FunctionDefinitionStatement) (*errors.Error, bool) {
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	functionDefinitionBodyCompilationError := c.compileBody(functionDefinition.Body)
+func (c *Compiler) compileClassFunctionDefinition(functionDefinition *ast.FunctionDefinitionStatement) ([]vm.Code, *errors.Error, bool) {
+	functionCode, functionDefinitionBodyCompilationError := c.compileBody(functionDefinition.Body)
 	if functionDefinitionBodyCompilationError != nil {
-		return functionDefinitionBodyCompilationError, false
+		return nil, functionDefinitionBodyCompilationError, false
 	}
-	functionCode := c.instructions
-	c.instructions = nil
-	c.instructions = instructionsBackup
-	c.pushInstruction(vm.NewCode(vm.NewClassFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(functionDefinition.Arguments)}))
+	var result []vm.Code
+	result = append(result, vm.NewCode(vm.NewClassFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(functionDefinition.Arguments)}))
 	var arguments []string
 	for _, argument := range functionDefinition.Arguments {
 		arguments = append(arguments, argument.Token.String)
 	}
-	c.pushInstruction(vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
-	c.restoreInstructions(functionCode)
-	c.pushInstruction(vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
-	c.pushInstruction(vm.NewCode(vm.AssignIdentifierOP, functionDefinition.Name.Token.Line, functionDefinition.Name.Token.String))
-	return nil, functionDefinition.Name.Token.String == vm.Initialize
+	result = append(result, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
+	result = append(result, functionCode...)
+	result = append(result, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
+	result = append(result, vm.NewCode(vm.AssignIdentifierOP, functionDefinition.Name.Token.Line, functionDefinition.Name.Token.String))
+	return result, nil, functionDefinition.Name.Token.String == vm.Initialize
 }
 
-func (c *Compiler) compileClassBody(body []ast.Node) *errors.Error {
+func (c *Compiler) compileClassBody(body []ast.Node) ([]vm.Code, *errors.Error) {
 	foundInitialize := false
 	var isInitialize bool
+	var nodeCode []vm.Code
 	var compilationError *errors.Error
+	var result []vm.Code
 	for _, node := range body {
 		switch node.(type) {
 		case ast.Expression:
-			compilationError = c.compileExpression(node.(ast.Expression))
+			nodeCode, compilationError = c.compileExpression(node.(ast.Expression))
 		case ast.Statement:
 			if _, ok := node.(*ast.FunctionDefinitionStatement); ok {
-				compilationError, isInitialize = c.compileClassFunctionDefinition(node.(*ast.FunctionDefinitionStatement))
+				nodeCode, compilationError, isInitialize = c.compileClassFunctionDefinition(node.(*ast.FunctionDefinitionStatement))
 				if isInitialize && !foundInitialize {
 					foundInitialize = true
 				}
 			} else {
-				compilationError = c.compileStatement(node.(ast.Statement))
+				nodeCode, compilationError = c.compileStatement(node.(ast.Statement))
 			}
 		}
 		if compilationError != nil {
-			return compilationError
+			return nil, compilationError
 		}
+		result = append(result, nodeCode...)
 	}
 	if !foundInitialize {
-		c.compileClassFunctionDefinition(
+		nodeCode, _, _ = c.compileClassFunctionDefinition(
 			&ast.FunctionDefinitionStatement{
 				Name: &ast.Identifier{
 					Token: &lexer.Token{
@@ -1291,35 +1195,31 @@ func (c *Compiler) compileClassBody(body []ast.Node) *errors.Error {
 				Body:      nil,
 			},
 		)
+		result = append(result, nodeCode...)
 	}
-	return nil
+	return result, nil
 }
 
-func (c *Compiler) compileInterfaceStatement(interfaceStatement *ast.InterfaceStatement) *errors.Error {
-	basesCompilationError := c.compileExpression(
+func (c *Compiler) compileInterfaceStatement(interfaceStatement *ast.InterfaceStatement) ([]vm.Code, *errors.Error) {
+	result, basesCompilationError := c.compileExpression(
 		&ast.TupleExpression{
 			Values: interfaceStatement.Bases,
 		},
 	)
 	if basesCompilationError != nil {
-		return basesCompilationError
+		return nil, basesCompilationError
 	}
-	instructionsBackup := c.instructions
-	c.instructions = nil
 	var interfaceMethods []ast.Node
 	for _, functionDefinition := range interfaceStatement.MethodDefinitions {
 		interfaceMethods = append(interfaceMethods, functionDefinition)
 	}
-	bodyCompilationError := c.compileClassBody(
+	body, bodyCompilationError := c.compileClassBody(
 		interfaceMethods,
 	)
 	if bodyCompilationError != nil {
-		return bodyCompilationError
+		return nil, bodyCompilationError
 	}
-	body := c.instructions
-	c.instructions = nil
-	c.restoreInstructions(instructionsBackup)
-	c.pushInstruction(
+	result = append(result,
 		vm.NewCode(vm.NewClassOP, interfaceStatement.Name.Token.Line,
 			vm.ClassInformation{
 				Name:       interfaceStatement.Name.Token.String,
@@ -1327,29 +1227,24 @@ func (c *Compiler) compileInterfaceStatement(interfaceStatement *ast.InterfaceSt
 			},
 		),
 	)
-	c.restoreInstructions(body)
-	return nil
+	result = append(result, body...)
+	return result, nil
 }
 
-func (c *Compiler) compileClassStatement(classStatement *ast.ClassStatement) *errors.Error {
-	basesCompilationError := c.compileExpression(
+func (c *Compiler) compileClassStatement(classStatement *ast.ClassStatement) ([]vm.Code, *errors.Error) {
+	result, basesCompilationError := c.compileExpression(
 		&ast.TupleExpression{
 			Values: classStatement.Bases,
 		},
 	)
 	if basesCompilationError != nil {
-		return basesCompilationError
+		return nil, basesCompilationError
 	}
-	instructionsBackup := c.instructions
-	c.instructions = nil
-	bodyCompilationError := c.compileClassBody(classStatement.Body)
+	body, bodyCompilationError := c.compileClassBody(classStatement.Body)
 	if bodyCompilationError != nil {
-		return bodyCompilationError
+		return nil, bodyCompilationError
 	}
-	body := c.instructions
-	c.instructions = nil
-	c.restoreInstructions(instructionsBackup)
-	c.pushInstruction(
+	result = append(result,
 		vm.NewCode(vm.NewClassOP, classStatement.Name.Token.Line,
 			vm.ClassInformation{
 				Name:       classStatement.Name.Token.String,
@@ -1357,43 +1252,33 @@ func (c *Compiler) compileClassStatement(classStatement *ast.ClassStatement) *er
 			},
 		),
 	)
-	c.restoreInstructions(body)
-	return nil
+	result = append(result, body...)
+	return result, nil
 }
 
-func (c *Compiler) compileSwitchStatement(switchStatement *ast.SwitchStatement) *errors.Error {
-	instructionsBackup := c.instructions
-
-	c.instructions = nil
-	targetCompilationError := c.compileExpression(switchStatement.Target)
+func (c *Compiler) compileSwitchStatement(switchStatement *ast.SwitchStatement) ([]vm.Code, *errors.Error) {
+	target, targetCompilationError := c.compileExpression(switchStatement.Target)
 	if targetCompilationError != nil {
-		return targetCompilationError
+		return nil, targetCompilationError
 	}
-	target := c.instructions
-	c.instructions = nil
 
 	var cases []struct {
 		references []vm.Code
 		body       []vm.Code
 	}
 	for _, case_ := range switchStatement.CaseBlocks {
-		c.instructions = nil
-		referencesCompilationError := c.compileExpression(
+		references, referencesCompilationError := c.compileExpression(
 			&ast.TupleExpression{
 				Values: case_.Cases,
 			},
 		)
 		if referencesCompilationError != nil {
-			return referencesCompilationError
+			return nil, referencesCompilationError
 		}
-		references := c.instructions
-		c.instructions = nil
-		bodyCompilationError := c.compileBody(case_.Body)
+		body, bodyCompilationError := c.compileBody(case_.Body)
 		if bodyCompilationError != nil {
-			return bodyCompilationError
+			return nil, bodyCompilationError
 		}
-		body := c.instructions
-		c.instructions = nil
 		cases = append(cases,
 			struct {
 				references []vm.Code
@@ -1404,41 +1289,36 @@ func (c *Compiler) compileSwitchStatement(switchStatement *ast.SwitchStatement) 
 			},
 		)
 	}
-	c.instructions = nil
-	defaultCompilationError := c.compileBody(switchStatement.Default)
+	defaultBody, defaultCompilationError := c.compileBody(switchStatement.Default)
 	if defaultCompilationError != nil {
-		return defaultCompilationError
+		return nil, defaultCompilationError
 	}
-	defaultBody := c.instructions
-	c.instructions = nil
+	var switchBody []vm.Code
 	// Construct the switch
 	totalLength := len(defaultBody) + 1
 	for _, caseBlock := range cases {
 		bodyLength := len(caseBlock.body)
 		referencesLength := len(caseBlock.references)
 		totalLength += referencesLength + 1 + bodyLength + 1
-		c.restoreInstructions(caseBlock.references)
-		c.pushInstruction(vm.NewCode(vm.CaseOP, errors.UnknownLine, bodyLength+1))
-		c.restoreInstructions(caseBlock.body)
-		c.pushInstruction(vm.NewCode(vm.JumpOP, errors.UnknownLine, nil))
+		switchBody = append(switchBody, caseBlock.references...)
+		switchBody = append(switchBody, vm.NewCode(vm.CaseOP, errors.UnknownLine, bodyLength+1))
+		switchBody = append(switchBody, caseBlock.body...)
+		switchBody = append(switchBody, vm.NewCode(vm.JumpOP, errors.UnknownLine, nil))
 	}
-	c.pushInstruction(vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
-	c.restoreInstructions(defaultBody)
-	switchBody := c.instructions
-	c.instructions = nil
+	switchBody = append(switchBody, vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
+	switchBody = append(switchBody, defaultBody...)
 
 	for index, code := range switchBody {
 		if code.Instruction.OpCode == vm.JumpOP && code.Value == nil {
 			switchBody[index].Value = totalLength - index - 1
 		}
 	}
-	c.restoreInstructions(instructionsBackup)
-	c.restoreInstructions(target)
-	c.restoreInstructions(switchBody)
-	return nil
+	result := target
+	result = append(result, switchBody...)
+	return result, nil
 }
 
-func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
+func (c *Compiler) compileStatement(statement ast.Statement) ([]vm.Code, *errors.Error) {
 	switch statement.(type) {
 	case *ast.AssignStatement:
 		return c.compileAssignStatement(statement.(*ast.AssignStatement))
@@ -1479,32 +1359,34 @@ func (c *Compiler) compileStatement(statement ast.Statement) *errors.Error {
 	case *ast.SwitchStatement:
 		return c.compileSwitchStatement(statement.(*ast.SwitchStatement))
 	}
-	return nil
+	panic(reflect.TypeOf(statement))
 }
 
-func (c *Compiler) compile(node ast.Node) *errors.Error {
+func (c *Compiler) compile(node ast.Node) ([]vm.Code, *errors.Error) {
 	switch node.(type) {
 	case ast.Expression:
 		return c.compileExpression(node.(ast.Expression))
 	case ast.Statement:
 		return c.compileStatement(node.(ast.Statement))
 	}
-	return nil
+	panic(reflect.TypeOf(node))
 }
 
-func (c *Compiler) compileBody(body []ast.Node) *errors.Error {
+func (c *Compiler) compileBody(body []ast.Node) ([]vm.Code, *errors.Error) {
+	var result []vm.Code
 	for _, node := range body {
-		compileError := c.compile(node)
+		nodeCode, compileError := c.compile(node)
 		if compileError != nil {
-			return compileError
+			return nil, compileError
 		}
+		result = append(result, nodeCode...)
 		if _, ok := node.(ast.Expression); ok {
-			if _, ok = c.options[PopRawExpressions]; ok {
-				c.pushInstruction(vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
+			if c.options.PopRawExpressions {
+				result = append(result, vm.NewCode(vm.PopOP, errors.UnknownLine, nil))
 			}
 		}
 	}
-	return nil
+	return result, nil
 }
 
 func (c *Compiler) CompileToArray() ([]vm.Code, *errors.Error) {
@@ -1512,48 +1394,53 @@ func (c *Compiler) CompileToArray() ([]vm.Code, *errors.Error) {
 	if parsingError != nil {
 		return nil, parsingError
 	}
-
-	compileError := c.compileBegin(codeAst.Begin)
+	var result []vm.Code
+	if codeAst.Begin != nil {
+		begin, compileError := c.compileBegin(codeAst.Begin)
+		if compileError != nil {
+			return nil, compileError
+		}
+		result = append(result, begin...)
+	}
+	body, compileError := c.compileBody(codeAst.Body)
 	if compileError != nil {
 		return nil, compileError
 	}
+	result = append(result, body...)
 
-	compileError = c.compileBody(codeAst.Body)
-	if compileError != nil {
-		return nil, compileError
+	if codeAst.End != nil {
+		var end []vm.Code
+		end, compileError = c.compileEnd(codeAst.End)
+		if compileError != nil {
+			return nil, compileError
+		}
+		result = append(result, end...)
 	}
-
-	compileError = c.compileEnd(codeAst.End)
-	if compileError != nil {
-		return nil, compileError
-	}
-	if _, ok := c.options[DEBUG]; ok {
-		for i, ins := range c.instructions {
+	if c.options.Debug {
+		for i, ins := range result {
 			fmt.Println(i, ins.Instruction, ins.Value)
 		}
 		fmt.Println()
 	}
-
-	return c.instructions, nil
+	return result, nil
 }
 
 func (c *Compiler) Compile() (*vm.Bytecode, *errors.Error) {
-	_, compilationError := c.CompileToArray()
+	result, compilationError := c.CompileToArray()
 	if compilationError != nil {
 		return nil, compilationError
 	}
-	return vm.NewBytecodeFromArray(c.instructions), nil
+	return vm.NewBytecodeFromArray(result), nil
 }
 
 func NewCompiler(
 	codeReader reader.Reader,
-	options map[uint8]uint8,
+	options Options,
 ) *Compiler {
 	return &Compiler{
-		parser:       parser.NewParser(lexer.NewLexer(codeReader)),
-		instructions: nil,
-		index:        -1,
-		length:       0,
-		options:      options,
+		parser:  parser.NewParser(lexer.NewLexer(codeReader)),
+		index:   -1,
+		length:  0,
+		options: options,
 	}
 }

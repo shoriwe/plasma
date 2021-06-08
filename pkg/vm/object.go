@@ -399,7 +399,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 					if _, ok := rightToBool.(*Function); !ok {
 						return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 					}
-					rightBool, transformationError := p.CallFunction(rightToBool.(*Function), self.SymbolTable(), self)
+					rightBool, transformationError := p.CallFunction(rightToBool.(*Function), self.SymbolTable())
 					if transformationError != nil {
 						return nil, transformationError
 					}
@@ -413,7 +413,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 						return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 					}
 					var leftBool IObject
-					leftBool, transformationError = p.CallFunction(leftToBool.(*Function), left.SymbolTable(), left)
+					leftBool, transformationError = p.CallFunction(leftToBool.(*Function), left.SymbolTable())
 					if transformationError != nil {
 						return nil, transformationError
 					}
@@ -431,7 +431,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 					if _, ok := leftToBool.(*Function); !ok {
 						return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 					}
-					leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable(), self)
+					leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
 					if transformationError != nil {
 						return nil, transformationError
 					}
@@ -446,7 +446,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 						return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 					}
 					var rightBool IObject
-					rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable(), right)
+					rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
 					if transformationError != nil {
 						return nil, transformationError
 					}
@@ -464,7 +464,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 					if _, ok := leftToBool.(*Function); !ok {
 						return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
 					}
-					leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable(), self)
+					leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
 					if transformationError != nil {
 						return nil, transformationError
 					}
@@ -479,7 +479,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 						return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
 					}
 					var rightBool IObject
-					rightBool, transformationError = p.CallFunction(rightToBool.(*Function), left.SymbolTable(), left)
+					rightBool, transformationError = p.CallFunction(rightToBool.(*Function), left.SymbolTable())
 					if transformationError != nil {
 						return nil, transformationError
 					}

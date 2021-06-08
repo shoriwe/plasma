@@ -41,6 +41,7 @@ const (
 	LessThanOP
 	GreaterThanOrEqualOP
 	LessThanOrEqualOP
+	ContainsOP
 	// Other expressions
 	GetIdentifierOP
 	IndexOP

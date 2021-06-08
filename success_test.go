@@ -10,6 +10,9 @@ import (
 	"testing"
 )
 
+/*
+	Bunch of samples that should only compile and execute (no result checking)
+*/
 const (
 	testsSamples        = "tests_samples"
 	expressionSamples   = "expressions"
@@ -61,12 +64,11 @@ func test(t *testing.T, directory string) {
 			return
 		}
 		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
-			map[uint8]uint8{
-				// plasma.DEBUG: plasma.DEBUG,
+			plasma.Options{
+				Debug:             false,
+				PopRawExpressions: true,
 			},
 		)
-		// content, _ := io.ReadAll(fileHandler)
-		// compiler := plasma.NewCompiler(reader.NewStringReader(string(content)))
 		code, compilingError := compiler.Compile()
 		if compilingError != nil {
 			t.Fatal(compilingError)

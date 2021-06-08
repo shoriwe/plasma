@@ -27,7 +27,7 @@ try
 except ObjectWithNameNotFoundError, RuntimeError, ObjectConstructionError as error
     println(error)
 else
-    print("No error matches the one received")
+    println("No error matches the one received")
 finally
     println("Always the end 2!!!")
 end
@@ -43,7 +43,7 @@ except ObjectWithNameNotFoundError, RuntimeError, InvalidNumberOfArgumentsError 
         println("Always the end 3!!!")
     end
 else
-    print("No error matches the one received")
+    println("No error matches the one received")
 finally
     println("Always the end 4!!!")
 end
@@ -51,5 +51,12 @@ end
 try
     raise InvalidNumberOfArgumentsError(0, 10)
 except InvalidNumberOfArgumentsError as error
+    println(error)
+end
+
+try
+    raise InvalidNumberOfArgumentsError(0, 10)
+except InvalidNumberOfArgumentsError as
+        error
     println(error)
 end

@@ -125,7 +125,7 @@ func walker(node ast.Node) string {
 			result += walker(variable)
 		}
 		result += " in "
-		return result + walker(node.(*ast.GeneratorExpression).Source)
+		return "(" + result + walker(node.(*ast.GeneratorExpression).Source) + ")"
 	case *ast.AssignStatement:
 		result := walker(node.(*ast.AssignStatement).LeftHandSide)
 		result += " " + node.(*ast.AssignStatement).AssignOperator.String + " "
@@ -418,7 +418,7 @@ func test(t *testing.T, samples []string) {
 		parser := NewParser(lex)
 		program, parsingError := parser.Parse()
 		if parsingError != nil {
-			t.Error(parsingError.String())
+			t.Error(fmt.Sprintf("%s in sample %d", parsingError.String(), sampleIndex))
 			return
 		}
 		result := walk(program)
@@ -444,7 +444,7 @@ var basicSamples = []string{
 	"1.4.hello.world()",
 	"hello(1)",
 	"'Hello world'.index(str(12345)[010])",
-	"'Hello world'.index(str(12345)[0:10])",
+	"'Hello world'.index(str(12345)[(0, 10)])",
 	"lambda x, y, z: print(x, y - z)",
 	"lambda x: print((1 + 2) * 3)",
 	"(1, 2, (3, (4, (((4 + 1))))))",
@@ -457,7 +457,7 @@ var basicSamples = []string{
 	"!True",
 	"1 unless False",
 	"1 in (1, 2, 3)",
-	"(1 for 2 in (3, 4))",
+	"(1 for a in (3, 4))",
 	"1\n2\n3\n[4, 5 + 6 != 11]",
 	"a = 234",
 	"a[1] ~= 234",
@@ -531,7 +531,7 @@ var basicSamples = []string{
 		"\t\tdef SayHello()\n" +
 		"\t\t\tprint(\"Hello\")\n" +
 		"\t\tend\n" +
-		"\t\tasync def SayHello()\n" +
+		"\t\tdef SayHello()\n" +
 		"\t\t\tprint(\"Hello\")\n" +
 		"\t\tend\n" +
 		"\tend\n" +
