@@ -19,6 +19,44 @@ func (p *Plasma) NewTuple(parentSymbols *SymbolTable, content []IObject) *Tuple 
 }
 
 func (p *Plasma) TupleInitialize(object IObject) *Object {
+	object.SymbolTable().Set(Mul,
+		p.NewFunction(object.SymbolTable(),
+			NewBuiltInClassFunction(object, 1,
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
+					right := arguments[0]
+					switch right.(type) {
+					case *Integer:
+						content, repetitionError := p.Repeat(self.GetContent(), int(right.GetInteger64()))
+						if repetitionError != nil {
+							return nil, repetitionError
+						}
+						return p.NewTuple(p.PeekSymbolTable(), content), nil
+					default:
+						return nil, p.NewInvalidTypeError(right.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
+					}
+				},
+			),
+		),
+	)
+	object.SymbolTable().Set(RightMul,
+		p.NewFunction(object.SymbolTable(),
+			NewBuiltInClassFunction(object, 1,
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
+					left := arguments[0]
+					switch left.(type) {
+					case *Integer:
+						content, repetitionError := p.Repeat(self.GetContent(), int(left.GetInteger64()))
+						if repetitionError != nil {
+							return nil, repetitionError
+						}
+						return p.NewTuple(p.PeekSymbolTable(), content), nil
+					default:
+						return nil, p.NewInvalidTypeError(left.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
+					}
+				},
+			),
+		),
+	)
 	object.Set(Equals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,

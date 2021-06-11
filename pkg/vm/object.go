@@ -548,8 +548,6 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 				},
 			),
 		),
-		Copy: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
 		Index: p.NewFunction(object.SymbolTable(),
 			p.NewNotImplementedCallable(1)),
 		Assign: p.NewFunction(object.SymbolTable(),

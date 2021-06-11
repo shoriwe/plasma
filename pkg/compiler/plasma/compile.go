@@ -199,6 +199,8 @@ func (c *Compiler) compileBinaryExpression(binaryExpression *ast.BinaryExpressio
 		operation = vm.MulOP
 	case lexer.Div:
 		operation = vm.DivOP
+	case lexer.FloorDiv:
+		operation = vm.FloorDivOP
 	case lexer.Modulus:
 		operation = vm.ModOP
 	case lexer.PowerOf:
