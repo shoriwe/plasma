@@ -132,10 +132,6 @@ func (parser *Parser) matchString(value string) bool {
 	return parser.currentToken.String == value
 }
 
-func (parser *Parser) updateState() {
-	parser.complete = true
-}
-
 func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {

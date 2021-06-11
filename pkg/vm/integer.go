@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/errors"
 	"github.com/shoriwe/gplasma/pkg/tools"
 	"math"
 )
@@ -120,9 +119,17 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 					case *String:
 						return p.NewString(p.PeekSymbolTable(), tools.Repeat(right.GetString(), self.GetInteger64())), nil
 					case *Tuple:
-						panic(p.NewNotImplementedCallable(errors.UnknownLine))
+						content, repetitionError := p.Repeat(right.GetContent(), int(self.GetInteger64()))
+						if repetitionError != nil {
+							return nil, repetitionError
+						}
+						return p.NewTuple(p.PeekSymbolTable(), content), nil
 					case *Array:
-						panic(p.NewNotImplementedCallable(errors.UnknownLine))
+						content, repetitionError := p.Repeat(right.GetContent(), int(self.GetInteger64()))
+						if repetitionError != nil {
+							return nil, repetitionError
+						}
+						return p.NewArray(p.PeekSymbolTable(), content), nil
 					default:
 						return nil, p.NewInvalidTypeError(right.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
 					}
@@ -143,9 +150,17 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 					case *String:
 						return p.NewString(p.PeekSymbolTable(), tools.Repeat(left.GetString(), self.GetInteger64())), nil
 					case *Tuple:
-						panic(p.NewNotImplementedCallable(errors.UnknownLine))
+						content, repetitionError := p.Repeat(left.GetContent(), int(self.GetInteger64()))
+						if repetitionError != nil {
+							return nil, repetitionError
+						}
+						return p.NewTuple(p.PeekSymbolTable(), content), nil
 					case *Array:
-						panic(p.NewNotImplementedCallable(errors.UnknownLine))
+						content, repetitionError := p.Repeat(left.GetContent(), int(self.GetInteger64()))
+						if repetitionError != nil {
+							return nil, repetitionError
+						}
+						return p.NewArray(p.PeekSymbolTable(), content), nil
 					default:
 						return nil, p.NewInvalidTypeError(left.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
 					}
@@ -180,6 +195,40 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 						return p.NewFloat(p.PeekSymbolTable(), float64(left.GetInteger64())/float64(self.GetInteger64())), nil
 					case *Float:
 						return p.NewFloat(p.PeekSymbolTable(), left.GetFloat64()/float64(self.GetInteger64())), nil
+					default:
+						return nil, p.NewInvalidTypeError(left.TypeName(), IntegerName, FloatName)
+					}
+				},
+			),
+		),
+	)
+	object.SymbolTable().Set(FloorDiv,
+		p.NewFunction(object.SymbolTable(),
+			NewBuiltInClassFunction(object, 1,
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
+					right := arguments[0]
+					switch right.(type) {
+					case *Integer:
+						return p.NewInteger(p.PeekSymbolTable(), self.GetInteger64()/right.GetInteger64()), nil
+					case *Float:
+						return p.NewInteger(p.PeekSymbolTable(), self.GetInteger64()/int64(right.GetFloat64())), nil
+					default:
+						return nil, p.NewInvalidTypeError(right.TypeName(), IntegerName, FloatName)
+					}
+				},
+			),
+		),
+	)
+	object.SymbolTable().Set(RightFloorDiv,
+		p.NewFunction(object.SymbolTable(),
+			NewBuiltInClassFunction(object, 1,
+				func(self IObject, arguments ...IObject) (IObject, *Object) {
+					left := arguments[0]
+					switch left.(type) {
+					case *Integer:
+						return p.NewInteger(p.PeekSymbolTable(), left.GetInteger64()/self.GetInteger64()), nil
+					case *Float:
+						return p.NewInteger(p.PeekSymbolTable(), int64(left.GetFloat64())/self.GetInteger64()), nil
 					default:
 						return nil, p.NewInvalidTypeError(left.TypeName(), IntegerName, FloatName)
 					}

@@ -11,12 +11,12 @@ const (
 	ObjectConstructionError       = "ObjectConstructionError"       // Done
 	ObjectWithNameNotFoundError   = "ObjectWithNameNotFoundError"   // Done
 	InvalidNumberOfArgumentsError = "InvalidNumberOfArgumentsError" // Done
-	GoRuntimeError                = "GoRuntimeError"                //
+	GoRuntimeError                = "GoRuntimeError"                // Done
 
-	UnhashableTypeError  = "UnhashableTypeError"  //
-	IndexOutOfRangeError = "IndexOutOfRangeError" //
-	KeyNotFoundError     = "KeyNotFoundError"     //
-	IntegerParsingError  = "IntegerParsingError"  //
+	UnhashableTypeError  = "UnhashableTypeError"  // Done
+	IndexOutOfRangeError = "IndexOutOfRangeError" // Done
+	KeyNotFoundError     = "KeyNotFoundError"     // Done
+	IntegerParsingError  = "IntegerParsingError"  // Done
 	FloatParsingError    = "FloatParsingError"    //
 )
 
@@ -101,10 +101,12 @@ func (p *Plasma) NewIndexOutOfRange(length int, index int64) *Object {
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewUnhashableTypeError() *Object {
+func (p *Plasma) NewUnhashableTypeError(objectType *Type) *Object {
 	errorType := p.ForceMasterGetAny(UnhashableTypeError)
 	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError)
+	p.ForceInitialization(instantiatedError,
+		objectType,
+	)
 	return instantiatedError.(*Object)
 }
 

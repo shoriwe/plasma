@@ -25,6 +25,7 @@ const (
 	SubOP
 	MulOP
 	DivOP
+	FloorDivOP
 	ModOP
 	PowOP
 	BitXorOP

@@ -204,7 +204,7 @@ func (p *Plasma) HashTableInitialize(object IObject) *Object {
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(_ IObject, _ ...IObject) (IObject, *Object) {
-					return nil, p.NewUnhashableTypeError()
+					return nil, p.NewUnhashableTypeError(object.GetClass())
 				},
 			),
 		),

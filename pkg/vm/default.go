@@ -177,6 +177,151 @@ func (p *Plasma) SetDefaultSymbolTable() {
 			),
 		),
 	)
+	symbolTable.Set(GoRuntimeError,
+		p.NewType(GoRuntimeError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *Object {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 1,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									runtimeError := arguments[0]
+									if _, ok := runtimeError.(*String); !ok {
+										return nil, p.NewInvalidTypeError(runtimeError.TypeName(), StringName)
+									}
+									self.SetString(runtimeError.GetString())
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	symbolTable.Set(UnhashableTypeError,
+		p.NewType(UnhashableTypeError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *Object {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 1,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									objectType := arguments[0]
+									if _, ok := objectType.(*Type); !ok {
+										return nil, p.NewInvalidTypeError(objectType.TypeName(), TypeName)
+									}
+									self.SetString(fmt.Sprintf("Object of type: %s is unhasable", objectType.(*Type).Name))
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	symbolTable.Set(IndexOutOfRangeError,
+		p.NewType(IndexOutOfRangeError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *Object {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 2,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									length := arguments[0]
+									if _, ok := length.(*Integer); !ok {
+										return nil, p.NewInvalidTypeError(length.TypeName(), IntegerName)
+									}
+									index := arguments[1]
+									if _, ok := length.(*Integer); !ok {
+										return nil, p.NewInvalidTypeError(index.TypeName(), IntegerName)
+									}
+									self.SetString(fmt.Sprintf("Index: %d, out of range (Length=%d)", index.GetInteger64(), length.GetInteger64()))
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	symbolTable.Set(KeyNotFoundError,
+		p.NewType(KeyNotFoundError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *Object {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 1,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									key := arguments[0]
+									keyToString, getError := key.Get(ToString)
+									if getError != nil {
+										return nil, p.NewObjectWithNameNotFoundError(ToString)
+									}
+									if _, ok := keyToString.(*Function); !ok {
+										return nil, p.NewInvalidTypeError(keyToString.TypeName(), FunctionName)
+									}
+									keyString, callError := p.CallFunction(keyToString.(*Function), p.PeekSymbolTable())
+									if callError != nil {
+										return nil, callError
+									}
+									if _, ok := keyString.(*String); !ok {
+										return nil, p.NewInvalidTypeError(keyString.TypeName(), StringName)
+									}
+									self.SetString(fmt.Sprintf("Key %s not found", keyString.GetString()))
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	symbolTable.Set(IntegerParsingError,
+		p.NewType(IntegerParsingError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *Object {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 0,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									self.SetString("Integer parsing error")
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
+	symbolTable.Set(FloatParsingError,
+		p.NewType(FloatParsingError, symbolTable, []*Type{exception},
+			NewBuiltInConstructor(
+				func(object IObject) *Object {
+					object.Set(Initialize,
+						p.NewFunction(object.SymbolTable(),
+							NewBuiltInClassFunction(object, 0,
+								func(self IObject, arguments ...IObject) (IObject, *Object) {
+									self.SetString("Float parsing error")
+									return p.GetNone()
+								},
+							),
+						),
+					)
+					return nil
+				},
+			),
+		),
+	)
 	//// Default Types
 	symbolTable.Set(NoneName,
 		p.NewType(NoneName, symbolTable, []*Type{type_},

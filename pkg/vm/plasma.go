@@ -660,7 +660,7 @@ func (p *Plasma) newIteratorOP(code Code) *Object {
 func (p *Plasma) setupTryBlockOP(code Code) *Object {
 	p.tryStack.Push(
 		&tryStackEntry{
-			finalIndex:   p.PeekCode().index + code.Value.(int) -1,
+			finalIndex:   p.PeekCode().index + code.Value.(int) - 1,
 			exceptBlocks: nil,
 			elseBlock:    nil,
 			finallyBody:  nil,
@@ -938,6 +938,8 @@ func (p *Plasma) Execute() (IObject, *Object) {
 			executionError = p.leftBinaryExpressionFuncCall(Mul)
 		case DivOP:
 			executionError = p.leftBinaryExpressionFuncCall(Div)
+		case FloorDivOP:
+			executionError = p.leftBinaryExpressionFuncCall(FloorDiv)
 		case ModOP:
 			executionError = p.leftBinaryExpressionFuncCall(Mod)
 		case PowOP:

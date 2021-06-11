@@ -44,6 +44,8 @@ const (
 	RightMul                = "RightMul"
 	Div                     = "Div"
 	RightDiv                = "RightDiv"
+	FloorDiv                = "FloorDiv"
+	RightFloorDiv           = "RightFloorDiv"
 	Mod                     = "Mod"
 	RightMod                = "RightMod"
 	Pow                     = "Pow"
