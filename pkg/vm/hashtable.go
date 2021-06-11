@@ -281,7 +281,7 @@ func (p *Plasma) HashTableInitialize(object IObject) *Object {
 							Key:   indexObject,
 							Value: newValue,
 						})
-						return p.GetNone()
+						return p.NewNone(), nil
 					}
 					var indexObjectEquals IObject
 					indexObjectEquals, getError = indexObject.Get(Equals)
@@ -299,7 +299,7 @@ func (p *Plasma) HashTableInitialize(object IObject) *Object {
 						}
 						if equals.GetBool() {
 							self.GetKeyValues()[indexHash.GetInteger64()][index].Value = newValue
-							return p.GetNone()
+							return p.NewNone(), nil
 						}
 					}
 					self.IncreaseLength()
@@ -310,7 +310,7 @@ func (p *Plasma) HashTableInitialize(object IObject) *Object {
 							Value: newValue,
 						},
 					)
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),

@@ -1,21 +1,23 @@
+a = 0
 
 until False
-    println("1 Time")
+    a += 1
     break
 end
-println("Done - 1")
+
+println(a == 1)
 
 a = 0
 until a > 100
     if a == 10
         break
     elif a != 0 and a % 3 == 0
-        println(a)
+        a += 2
     else
-        println("a not yet")
         a += 1
         continue
     end
     a += 1
 end
-println("Done - 2")
+
+println(a == 102)

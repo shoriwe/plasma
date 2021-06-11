@@ -19,6 +19,14 @@ func (p *Plasma) NewFunction(parentSymbols *SymbolTable, callable Callable) *Fun
 		},
 		Callable: callable,
 	}
+	function.Set(Hash, &Function{
+		Object: nil,
+		Callable: NewBuiltInClassFunction(function, 0,
+			func(self IObject, _ ...IObject) (IObject, *Object) {
+				return p.NewInteger(p.PeekSymbolTable(), int64(self.Id())), nil
+			},
+		),
+	})
 	function.Set(ToString, &Function{
 		Object: nil,
 		Callable: NewBuiltInClassFunction(function, 0,

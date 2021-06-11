@@ -1,17 +1,16 @@
 # Single Quote Strings
-println('Hello World')
+println('Hello World' == "Hello World")
 println('Hello
-World')
+World' == "Hello\nWorld")
 # Double Quote Strings
-println("Hello World")
+println("Hello World" == 'Hello World')
 println("Hello
-World")
+World" == 'Hello\nWorld')
 # Byte Strings
-println(b"Hello world")
+println(b"Hello world"[2] == 108)
 # Escaped chars
-println("Hello\nWorld")
-println("Hello\x41World")
-println("\u0041ntonio")
-println("Hello\\x41World")
-println("500\u20ac")
-println("500\\u20ac")
+println("Hello\x41World" == "HelloAWorld")
+println("\u0041ntonio" == "Antonio")
+println("Hello\\x41World" == "Hello" + "\\" + "x41World")
+println("500\u20ac" == "500€")
+println("500\\u20ac" == "500" + "\\" + "u20ac")

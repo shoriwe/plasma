@@ -20,7 +20,7 @@ func (p *Plasma) NewInteger(parentSymbols *SymbolTable, value int64) *Integer {
 }
 
 func (p *Plasma) IntegerInitialize(object IObject) *Object {
-	object.SymbolTable().Set(NegBits,
+	object.Set(NegBits,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -29,7 +29,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Negative,
+	object.Set(Negative,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -38,7 +38,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Add,
+	object.Set(Add,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -55,7 +55,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightAdd,
+	object.Set(RightAdd,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -72,7 +72,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Sub,
+	object.Set(Sub,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -89,7 +89,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightSub,
+	object.Set(RightSub,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -106,7 +106,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Mul,
+	object.Set(Mul,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -137,7 +137,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightMul,
+	object.Set(RightMul,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -168,7 +168,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Div,
+	object.Set(Div,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -185,7 +185,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightDiv,
+	object.Set(RightDiv,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -202,7 +202,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(FloorDiv,
+	object.Set(FloorDiv,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -219,7 +219,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightFloorDiv,
+	object.Set(RightFloorDiv,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -236,7 +236,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Mod,
+	object.Set(Mod,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -253,7 +253,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightMod,
+	object.Set(RightMod,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -270,7 +270,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Pow,
+	object.Set(Pow,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -287,7 +287,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightPow,
+	object.Set(RightPow,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -304,7 +304,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(BitXor,
+	object.Set(BitXor,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -317,7 +317,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightBitXor,
+	object.Set(RightBitXor,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -330,7 +330,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(BitAnd,
+	object.Set(BitAnd,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -343,7 +343,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightBitAnd,
+	object.Set(RightBitAnd,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -356,7 +356,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(BitOr,
+	object.Set(BitOr,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -369,7 +369,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightBitOr,
+	object.Set(RightBitOr,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -382,7 +382,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(BitLeft,
+	object.Set(BitLeft,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -395,7 +395,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightBitLeft,
+	object.Set(RightBitLeft,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -408,7 +408,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(BitRight,
+	object.Set(BitRight,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -421,7 +421,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightBitRight,
+	object.Set(RightBitRight,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -434,7 +434,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Equals,
+	object.Set(Equals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -453,7 +453,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightEquals,
+	object.Set(RightEquals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -472,7 +472,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(NotEquals,
+	object.Set(NotEquals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -491,7 +491,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightNotEquals,
+	object.Set(RightNotEquals,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -510,7 +510,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(GreaterThan,
+	object.Set(GreaterThan,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -529,7 +529,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightGreaterThan,
+	object.Set(RightGreaterThan,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -548,7 +548,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(LessThan,
+	object.Set(LessThan,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -567,7 +567,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightLessThan,
+	object.Set(RightLessThan,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -586,7 +586,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(GreaterThanOrEqual,
+	object.Set(GreaterThanOrEqual,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -605,7 +605,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightGreaterThanOrEqual,
+	object.Set(RightGreaterThanOrEqual,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -624,7 +624,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(LessThanOrEqual,
+	object.Set(LessThanOrEqual,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -643,7 +643,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(RightLessThanOrEqual,
+	object.Set(RightLessThanOrEqual,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -662,7 +662,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Hash,
+	object.Set(Hash,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -671,7 +671,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(Copy,
+	object.Set(Copy,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -680,7 +680,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(ToInteger,
+	object.Set(ToInteger,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -689,7 +689,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(ToFloat,
+	object.Set(ToFloat,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -698,7 +698,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(ToString,
+	object.Set(ToString,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -707,7 +707,7 @@ func (p *Plasma) IntegerInitialize(object IObject) *Object {
 			),
 		),
 	)
-	object.SymbolTable().Set(ToBool,
+	object.Set(ToBool,
 		p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {

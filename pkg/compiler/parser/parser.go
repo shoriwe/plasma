@@ -1030,7 +1030,7 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, *errors.Error) {
 				return nil, tokenizingError
 			}
 			line := parser.currentLine()
-			x, parsingError := parser.parseBinaryExpression(0)
+			x, parsingError := parser.parseUnaryExpression()
 			if parsingError != nil {
 				return nil, parsingError
 			}

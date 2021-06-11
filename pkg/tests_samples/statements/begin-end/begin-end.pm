@@ -1,7 +1,8 @@
 END
-    println("Program closing")
+    println(a == 2)
 end
-println("Middle")
+println(a == 1)
+a = 2
 BEGIN
-    println("Starting your program")
+    a = 1
 end

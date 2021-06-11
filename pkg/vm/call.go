@@ -1,11 +1,46 @@
 package vm
 
+func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments ...IObject) (IObject, *Object) {
+	if function.Callable.NumberOfArguments() != len(arguments) {
+		//  Return Here a error related to number of arguments
+		return nil, p.NewInvalidNumberOfArgumentsError(len(arguments), function.Callable.NumberOfArguments())
+	}
+	symbols := NewSymbolTable(parent)
+	self, callback, code := function.Callable.Call()
+	if self != nil {
+		symbols.Set(Self, self)
+	} else {
+		symbols.Set(Self, function)
+	}
+	p.PushSymbolTable(symbols)
+	var result IObject
+	var callError *Object
+	if callback != nil {
+		result, callError = callback(self, arguments...)
+	} else if code != nil {
+		// Load the arguments
+		for i := len(arguments) - 1; i > -1; i-- {
+			p.PushObject(arguments[i])
+		}
+		p.PushCode(NewBytecodeFromArray(code))
+		result, callError = p.Execute()
+		p.PopCode()
+	} else {
+		panic("callback and code are nil")
+	}
+	p.PopSymbolTable()
+	if callError != nil {
+		return nil, callError
+	}
+	return result, nil
+}
+
 type FunctionCallback func(IObject, ...IObject) (IObject, *Object)
 
-func (p *Plasma) NewNotImplementedCallable(numberOfArguments int) *BuiltInClassFunction {
+func (p *Plasma) NewNotImplementedCallable(methodName string, numberOfArguments int) *BuiltInClassFunction {
 	return NewBuiltInClassFunction(nil, numberOfArguments,
 		func(self IObject, _ ...IObject) (IObject, *Object) {
-			return nil, p.NewNotImplementedCallableError()
+			return nil, p.NewNotImplementedCallableError(methodName)
 		},
 	)
 }

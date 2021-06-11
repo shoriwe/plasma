@@ -5,4 +5,4 @@ else
 end
 
 
-println(a)
+println(a == "Goodbye")

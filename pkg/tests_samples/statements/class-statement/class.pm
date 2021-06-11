@@ -14,4 +14,4 @@ class Person
 end
 
 antonio = Business.Person("Antonio")
-println(antonio)
+println(antonio.ToString() == "Antonio")
