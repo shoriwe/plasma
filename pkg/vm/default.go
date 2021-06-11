@@ -531,7 +531,7 @@ func (p *Plasma) SetDefaultSymbolTable() {
 		p.NewFunction(symbolTable,
 			NewBuiltInFunction(1,
 				func(_ IObject, arguments ...IObject) (IObject, *Object) {
-					object := arguments[1]
+					object := arguments[0]
 					getLength, getError := object.Get(GetLength)
 					if getError != nil {
 						return nil, p.NewObjectWithNameNotFoundError(GetLength)
