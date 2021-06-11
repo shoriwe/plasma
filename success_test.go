@@ -1,12 +1,14 @@
 package plasma
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -74,14 +76,19 @@ func test(t *testing.T, directory string) {
 			t.Fatal(compilingError)
 			return
 		}
-		output := os.Stdout
+		output := bytes.NewBuffer(make([]byte, 0))
 		plasmaVm := vm.NewPlasmaVM(nil, output, output)
 		plasmaVm.InitializeByteCode(code)
 		// result, executionError := plasmaVm.Execute()
 		_, executionError := plasmaVm.Execute()
 		if executionError != nil {
-
+			t.Errorf("[+] %s: FAIL", file.Name())
 			t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.GetString()))
+			return
+		}
+		if strings.Contains(output.String(), "False\n") {
+			t.Errorf("[+] %s: FAIL", file.Name())
+			t.Logf("Output:\n%s", output.String())
 			return
 		}
 		fmt.Println(fmt.Sprintf("[+] %s: SUCCESS", file.Name()))

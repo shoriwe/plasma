@@ -15,5 +15,14 @@ class Engineer(Person)
     end
 end
 
-antonio = Engineer("Bob")
-println(antonio)
+found = False
+antonio = Engineer("Antonio")
+
+for subClass in antonio.SubClasses()
+    if subClass == Person
+        found = True
+        break
+    end
+end
+
+println(found)

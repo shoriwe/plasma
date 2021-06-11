@@ -5,4 +5,4 @@ while a < 100
     map[a.ToString()] = a
     a += 1
 end
-println(map.ToTuple().GetLength())
+println(map["1"] == 1)

@@ -41,10 +41,11 @@ func (s *StringReader) Char() rune {
 }
 
 func NewStringReader(code string) *StringReader {
+	runeCode := []rune(code)
 	return &StringReader{
-		content: []rune(code),
+		content: runeCode,
 		index:   0,
-		length:  len(code),
+		length:  len(runeCode),
 	}
 }
 

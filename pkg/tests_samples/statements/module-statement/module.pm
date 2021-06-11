@@ -1,7 +1,7 @@
 module Caller
-    def hello(name)
-        println("Hello " + name + "!")
+    def hello(message)
+        return message
     end
 end
 
-Caller.hello("Antonio")
+println(Caller.hello("Hello John") == "Hello John")

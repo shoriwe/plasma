@@ -1,62 +1,70 @@
 try
     Fail("Function not defined")
 except ObjectWithNameNotFoundError
-    println("Could Not find \"Fail\"")
+    println(True)
 end
 
 try
-    println("Function not defined", 2)
+    println("Invalid Number of arguments", 2)
 except ObjectWithNameNotFoundError as Error
-    println("Not here")
+    println(False)
 except InvalidNumberOfArgumentsError as error
-    println(error)
+    println(True)
 end
 
+a = 0
 try
-    println("Function not defined", 2)
+    println("Invalid Number of arguments", 2)
 except ObjectWithNameNotFoundError as Error
-    println("Not here")
+    println(False)
 except InvalidNumberOfArgumentsError as error
-    println(error)
+    a = 2
+    println(True)
 finally
-    println("Always the end!!!")
+    println(a == 2)
 end
 
+a = 0
 try
-    println("Function not defined", 2)
+    println("Invalid Number of arguments", 2)
 except ObjectWithNameNotFoundError, RuntimeError, ObjectConstructionError as error
-    println(error)
+    println(False)
 else
-    println("No error matches the one received")
+    a = 2
+    println(True)
 finally
-    println("Always the end 2!!!")
+    println(a == 2)
 end
 
+a = 0
 try
-    println("Function not defined", 2)
+    println("Invalid Number of arguments", 2)
 except ObjectWithNameNotFoundError, RuntimeError, InvalidNumberOfArgumentsError as error
+    a += 1
     try
         error + 1
     except
-        println("Nested try-except")
+        a += 1
+        println(True)
     finally
-        println("Always the end 3!!!")
+        println(a == 2)
+        a += 1
     end
 else
-    println("No error matches the one received")
+    println(False)
 finally
-    println("Always the end 4!!!")
+    println(a == 3)
 end
 
 try
     raise InvalidNumberOfArgumentsError(0, 10)
 except InvalidNumberOfArgumentsError as error
-    println(error)
+    println(True)
 end
 
 try
     raise InvalidNumberOfArgumentsError(0, 10)
 except InvalidNumberOfArgumentsError as
         error
-    println(error)
+    println(True)
 end

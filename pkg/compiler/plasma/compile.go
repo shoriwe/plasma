@@ -331,7 +331,7 @@ func (c *Compiler) compileMethodInvocationExpression(methodInvocationExpression 
 		if argumentCompilationError != nil {
 			return nil, argumentCompilationError
 		}
-		result = append(argument, result...)
+		result = append(result, argument...)
 	}
 	function, functionCompilationError := c.compileExpression(methodInvocationExpression.Function)
 	if functionCompilationError != nil {

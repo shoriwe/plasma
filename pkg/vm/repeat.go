@@ -1,7 +1,7 @@
 package vm
 
 func (p *Plasma) Repeat(content []IObject, times int) ([]IObject, *Object) {
-	copyFunctions := map[uint64]*Function{}
+	copyFunctions := map[int64]*Function{}
 	var result []IObject
 	if times > 0 {
 		for _, object := range content {

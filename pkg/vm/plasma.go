@@ -15,7 +15,7 @@ const (
 )
 
 type Plasma struct {
-	currentId                uint64
+	currentId                int64
 	mutex                    *sync.Mutex
 	IterStack                *IterStack
 	programMasterSymbolTable *SymbolTable
@@ -30,7 +30,7 @@ type Plasma struct {
 	stderr                   io.Writer
 }
 
-func (p *Plasma) NextId() uint64 {
+func (p *Plasma) NextId() int64 {
 	p.mutex.Lock()
 	result := p.currentId
 	p.currentId++
@@ -104,11 +104,7 @@ func (p *Plasma) newFalseBoolOP() *Object {
 }
 
 func (p *Plasma) getNoneOP() *Object {
-	none, getError := p.PeekSymbolTable().GetAny(None)
-	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(None)
-	}
-	p.PushObject(none)
+	p.PushObject(p.NewNone())
 	return nil
 }
 
@@ -333,11 +329,7 @@ func (p *Plasma) assignIndexOP() *Object {
 func (p *Plasma) returnOP(code Code) *Object {
 	numberOfReturnValues := code.Value.(int)
 	if numberOfReturnValues == 0 {
-		noneValue, getError := p.PeekSymbolTable().GetAny(None)
-		if getError != nil {
-			return p.NewObjectWithNameNotFoundError(None)
-		}
-		p.PushObject(noneValue)
+		p.PushObject(p.NewNone())
 		return nil
 	}
 
@@ -1074,7 +1066,7 @@ func (p *Plasma) Execute() (IObject, *Object) {
 	if p.MemoryStack.HasNext() {
 		return p.PopObject(), nil
 	}
-	return p.PeekSymbolTable().Symbols[None], nil
+	return p.NewNone(), nil
 }
 
 func (p *Plasma) HashString(s string) int64 {
@@ -1135,49 +1127,6 @@ func (p *Plasma) StdErr() io.Writer {
 
 func (p *Plasma) MasterSymbolTable() *SymbolTable {
 	return p.programMasterSymbolTable
-}
-
-func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments ...IObject) (IObject, *Object) {
-	if function.Callable.NumberOfArguments() != len(arguments) {
-		//  Return Here a error related to number of arguments
-		return nil, p.NewInvalidNumberOfArgumentsError(len(arguments), function.Callable.NumberOfArguments())
-	}
-	symbols := NewSymbolTable(parent)
-	self, callback, code := function.Callable.Call()
-	if self != nil {
-		symbols.Set(Self, self)
-	} else {
-		symbols.Set(Self, function)
-	}
-	p.PushSymbolTable(symbols)
-	var result IObject
-	var callError *Object
-	if callback != nil {
-		result, callError = callback(self, arguments...)
-	} else if code != nil {
-		// Load the arguments
-		for _, argument := range arguments {
-			p.PushObject(argument)
-		}
-		p.PushCode(NewBytecodeFromArray(code))
-		result, callError = p.Execute()
-		p.PopCode()
-	} else {
-		panic("callback and code are nil")
-	}
-	p.PopSymbolTable()
-	if callError != nil {
-		return nil, callError
-	}
-	return result, nil
-}
-
-func (p *Plasma) GetNone() (IObject, *Object) {
-	noneValue, getError := p.PeekSymbolTable().GetAny(None)
-	if getError != nil {
-		return nil, p.NewObjectWithNameNotFoundError(None)
-	}
-	return noneValue, nil
 }
 
 func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {

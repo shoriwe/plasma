@@ -2,23 +2,23 @@ number = 2
 
 switch number
 case 1
-    println("Number 1")
+    println(False)
 case 2
-    println("Number 2")
+    println(True)
 default
-    println("Invalid number")
+    println(False)
 end
 
 switch number
 case 1
-    println("Number 1")
+    println(False)
 case 2
     switch number + 1
     case 3
-        println("Number 2 + 1 = 3")
+        println(True)
     case 4
-        println("Number 2 + 1 = 4")
+        println(False)
     end
 default
-    println("Invalid number --")
+    println(False)
 end

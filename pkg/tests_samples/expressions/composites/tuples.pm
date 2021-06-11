@@ -1,8 +1,10 @@
-# Tuples of integers
-println((1, 2, 3))
-println((1, 2, 3))
-# Nested tuples of integers
-println((1, 2, 3, (4, 5, (6, 7))))
+# Simple Tuple
+array = (1, 2, 3, 4)
+println(array.ToString() == "(1, 2, 3, 4)")
+println(array[0] == 1)
+println(array[-1] == 4)
+# Nested Tuples
+println((1, ((((1, 2, 3),),),)).ToString() == "(1, ((((1, 2, 3)))))")
 
 a = (
 1, 2,
@@ -12,4 +14,4 @@ a = (
                    6
 )
 
-println(a)
+println(a.ToString() == "(1, 2, 3, 4, 5, 6)")

@@ -356,7 +356,7 @@ func (p *Plasma) ArrayInitialize(object IObject) *Object {
 						return nil, p.NewIndexOutOfRange(self.GetLength(), arguments[0].GetInteger64())
 					}
 					self.GetContent()[index] = arguments[1]
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),

@@ -6,7 +6,7 @@ import (
 )
 
 type IObject interface {
-	Id() uint64
+	Id() int64
 	TypeName() string
 	SymbolTable() *SymbolTable
 	SubClasses() []*Type
@@ -42,7 +42,7 @@ type IObject interface {
 }
 
 type Object struct {
-	id         uint64
+	id         int64
 	typeName   string
 	class      *Type
 	subClasses []*Type
@@ -130,7 +130,7 @@ func (o *Object) SetBytes(b []uint8) {
 	o.Bytes = b
 }
 
-func (o *Object) Id() uint64 {
+func (o *Object) Id() int64 {
 	return o.id
 }
 
@@ -186,39 +186,6 @@ func (o *Object) Implements(class *Type) bool {
 	return false
 }
 
-func (p *Plasma) constructSubClass(subClass *Type, object IObject) *Object {
-	for _, subSubClass := range subClass.subClasses {
-		object.SymbolTable().Parent = subSubClass.symbols.Parent
-		subSubClassConstructionError := p.constructSubClass(subSubClass, object)
-		if subSubClassConstructionError != nil {
-			return subSubClassConstructionError
-		}
-	}
-	object.SymbolTable().Parent = subClass.symbols.Parent
-	baseInitializationError := subClass.Constructor.Construct(p, object)
-	if baseInitializationError != nil {
-		return baseInitializationError
-	}
-	return nil
-}
-
-func (p *Plasma) ConstructObject(type_ *Type, parent *SymbolTable) (IObject, *Object) {
-	object := p.NewObject(type_.Name, type_.subClasses, parent)
-	for _, subclass := range object.subClasses {
-		subClassConstructionError := p.constructSubClass(subclass, object)
-		if subClassConstructionError != nil {
-			return nil, subClassConstructionError
-		}
-	}
-	object.SymbolTable().Parent = parent
-	object.class = type_
-	baseInitializationError := type_.Constructor.Construct(p, object)
-	if baseInitializationError != nil {
-		return nil, baseInitializationError
-	}
-	return object, nil
-}
-
 func (p *Plasma) ObjectInitialize(object IObject) *Object {
 	object.SymbolTable().Update(map[string]IObject{
 		Initialize: p.NewFunction(object.SymbolTable(),
@@ -229,7 +196,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			),
 		),
 		NegBits: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
+			p.NewNotImplementedCallable(NegBits, 0)),
 		Negate: p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -249,51 +216,51 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			),
 		),
 		Negative: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
+			p.NewNotImplementedCallable(Negative, 0)),
 		Add: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(Add, 1)),
 		RightAdd: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightAdd, 1)),
 		Sub: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(Sub, 1)),
 		RightSub: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightSub, 1)),
 		Mul: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(Mul, 1)),
 		RightMul: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightMul, 1)),
 		Div: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(Div, 1)),
 		RightDiv: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightDiv, 1)),
 		Mod: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(Mod, 1)),
 		RightMod: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightMod, 1)),
 		Pow: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(Pow, 1)),
 		RightPow: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightPow, 1)),
 		BitXor: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(BitXor, 1)),
 		RightBitXor: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightBitXor, 1)),
 		BitAnd: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(BitAnd, 1)),
 		RightBitAnd: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightBitAnd, 1)),
 		BitOr: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(BitOr, 1)),
 		RightBitOr: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightBitOr, 1)),
 		BitLeft: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(BitLeft, 1)),
 		RightBitLeft: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightBitLeft, 1)),
 		BitRight: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(BitRight, 1)),
 		RightBitRight: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightBitRight, 1)),
 		And: p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
@@ -522,21 +489,21 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			),
 		),
 		GreaterThan: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(GreaterThan, 1)),
 		RightGreaterThan: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightGreaterThan, 1)),
 		LessThan: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(LessThan, 1)),
 		RightLessThan: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightLessThan, 1)),
 		GreaterThanOrEqual: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(GreaterThanOrEqual, 1)),
 		RightGreaterThanOrEqual: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightGreaterThanOrEqual, 1)),
 		LessThanOrEqual: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(LessThanOrEqual, 1)),
 		RightLessThanOrEqual: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(RightLessThanOrEqual, 1)),
 		Hash: p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -549,13 +516,13 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			),
 		),
 		Index: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(1)),
+			p.NewNotImplementedCallable(Index, 1)),
 		Assign: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(2)),
+			p.NewNotImplementedCallable(Assign, 2)),
 		Call: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
+			p.NewNotImplementedCallable(Call, 0)),
 		Iter: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
+			p.NewNotImplementedCallable(Iter, 0)),
 		Class: p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -570,19 +537,29 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 						self.SetClass(class.(*Type))
 					}
 					return self.GetClass(), nil
-				}),
+				},
+			),
 		),
 		SubClasses: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
+			NewBuiltInClassFunction(object, 0,
+				func(self IObject, _ ...IObject) (IObject, *Object) {
+					var subClassesCopy []IObject
+					for _, class := range self.SubClasses() {
+						subClassesCopy = append(subClassesCopy, class)
+					}
+					return p.NewTuple(p.PeekSymbolTable(), subClassesCopy), nil
+				},
+			),
+		),
 		ToInteger: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
+			p.NewNotImplementedCallable(ToInteger, 0)),
 		ToFloat: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
+			p.NewNotImplementedCallable(ToFloat, 0)),
 		ToString: p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
 					return p.NewString(p.PeekSymbolTable(),
-						fmt.Sprintf("%s-%d", self.TypeName(), self.Id())), nil
+						fmt.Sprintf("%s{%s}-%X", ObjectName, self.TypeName(), self.Id())), nil
 				},
 			),
 		),
@@ -594,9 +571,9 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			),
 		),
 		ToArray: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
+			p.NewNotImplementedCallable(ToArray, 0)),
 		ToTuple: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(0)),
+			p.NewNotImplementedCallable(ToTuple, 0)),
 		GetInteger64: p.NewFunction(object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
@@ -657,7 +634,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					self.SetBool(arguments[0].GetBool())
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),
@@ -666,7 +643,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					self.SetBytes(arguments[0].GetBytes())
 					self.SetLength(arguments[0].GetLength())
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),
@@ -675,7 +652,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					self.SetString(arguments[0].GetString())
 					self.SetLength(arguments[0].GetLength())
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),
@@ -683,7 +660,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					self.SetInteger64(arguments[0].GetInteger64())
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),
@@ -691,7 +668,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					self.SetFloat64(arguments[0].GetFloat64())
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),
@@ -700,7 +677,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					self.SetContent(arguments[0].GetContent())
 					self.SetLength(arguments[0].GetLength())
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),
@@ -709,7 +686,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					self.SetKeyValues(arguments[0].GetKeyValues())
 					self.SetLength(arguments[0].GetLength())
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),
@@ -717,7 +694,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			NewBuiltInClassFunction(object, 1,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					self.SetLength(arguments[0].GetLength())
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),

@@ -1,3 +1,3 @@
-println("Hello"[(0, 4)])
-println("Hello"[0])
-println("AAAAA"[0])
+println("ABCDE"[(0, 4)] == "ABCD")
+println("ABCDE"[0] == "A")
+println("ABCDE"[(1, 4)][2] == "D")

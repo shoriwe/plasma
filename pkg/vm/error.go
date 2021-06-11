@@ -110,10 +110,12 @@ func (p *Plasma) NewUnhashableTypeError(objectType *Type) *Object {
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewNotImplementedCallableError() *Object {
+func (p *Plasma) NewNotImplementedCallableError(methodName string) *Object {
 	errorType := p.ForceMasterGetAny(NotImplementedCallableError)
 	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError)
+	p.ForceInitialization(instantiatedError,
+		p.NewString(p.PeekSymbolTable(), methodName),
+	)
 	return instantiatedError.(*Object)
 }
 
@@ -183,7 +185,7 @@ func (p *Plasma) RuntimeErrorInitialize(object IObject) *Object {
 						return nil, p.NewInvalidTypeError(message.TypeName(), StringName)
 					}
 					self.SetString(message.GetString())
-					return p.GetNone()
+					return p.NewNone(), nil
 				},
 			),
 		),
