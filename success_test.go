@@ -78,7 +78,7 @@ func test(t *testing.T, directory string) {
 		}
 		output := bytes.NewBuffer(make([]byte, 0))
 		plasmaVm := vm.NewPlasmaVM(nil, output, output)
-		plasmaVm.InitializeByteCode(code)
+		plasmaVm.InitializeBytecode(code)
 		// result, executionError := plasmaVm.Execute()
 		_, executionError := plasmaVm.Execute()
 		if executionError != nil {

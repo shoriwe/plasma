@@ -131,10 +131,10 @@ func program() {
 		/*
 			ToDo: Do intermediate stuff with other flags
 		*/
-		virtualMachine.InitializeByteCode(code)
+		virtualMachine.InitializeBytecode(code)
 		_, executionError := virtualMachine.Execute()
 		if executionError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s", color.RedString("-"), executionError.GetString())
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s", color.RedString("-"), executionError.TypeName(), executionError.GetString())
 			os.Exit(1)
 		}
 	}
