@@ -12,12 +12,12 @@ const (
 	ObjectWithNameNotFoundError   = "ObjectWithNameNotFoundError"   // Done
 	InvalidNumberOfArgumentsError = "InvalidNumberOfArgumentsError" // Done
 	GoRuntimeError                = "GoRuntimeError"                // Done
-
-	UnhashableTypeError  = "UnhashableTypeError"  // Done
-	IndexOutOfRangeError = "IndexOutOfRangeError" // Done
-	KeyNotFoundError     = "KeyNotFoundError"     // Done
-	IntegerParsingError  = "IntegerParsingError"  // Done
-	FloatParsingError    = "FloatParsingError"    //
+	UnhashableTypeError           = "UnhashableTypeError"           // Done
+	IndexOutOfRangeError          = "IndexOutOfRangeError"          // Done
+	KeyNotFoundError              = "KeyNotFoundError"              // Done
+	IntegerParsingError           = "IntegerParsingError"           // Done
+	FloatParsingError             = "FloatParsingError"             // Done
+	BuiltInSymbolProtectionError  = "BuiltInSymbolProtectionError"  // Done
 )
 
 func (p *Plasma) ForceParentGetSelf(name string, parent *SymbolTable) IObject {
@@ -37,7 +37,7 @@ func (p *Plasma) ForceAnyGetAny(name string) IObject {
 }
 
 func (p *Plasma) ForceMasterGetAny(name string) IObject {
-	object, getError := p.programMasterSymbolTable.GetAny(name)
+	object, getError := p.builtInSymbolTable.GetAny(name)
 	if getError != nil {
 		panic(getError.String())
 	}
@@ -171,6 +171,15 @@ func (p *Plasma) NewObjectConstructionError(typeName string, errorMessage string
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
 		p.NewString(p.PeekSymbolTable(), typeName), p.NewString(p.PeekSymbolTable(), errorMessage),
+	)
+	return instantiatedError.(*Object)
+}
+
+func (p *Plasma) NewBuiltInSymbolProtectionError(symbolName string) *Object {
+	errorType := p.ForceMasterGetAny(BuiltInSymbolProtectionError)
+	instantiatedError := p.ForceConstruction(errorType)
+	p.ForceInitialization(instantiatedError,
+		p.NewString(p.PeekSymbolTable(), symbolName),
 	)
 	return instantiatedError.(*Object)
 }

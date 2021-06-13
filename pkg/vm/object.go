@@ -527,7 +527,7 @@ func (p *Plasma) ObjectInitialize(object IObject) *Object {
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
 					if self.GetClass() == nil { // This should only happen with built-ins
-						class, getError := p.MasterSymbolTable().GetAny(self.TypeName())
+						class, getError := p.BuiltInSymbols().GetAny(self.TypeName())
 						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(self.TypeName())
 						}
