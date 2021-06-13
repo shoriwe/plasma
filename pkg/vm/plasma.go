@@ -75,6 +75,20 @@ func (p *Plasma) Seed() uint64 {
 }
 
 /*
+	LoadBuiltInObject
+	This function should be used to load custom object in the built-in symbol table
+*/
+func (p *Plasma) LoadBuiltInObject(symbolName string, object IObject) {
+	p.builtInSymbolTable.Set(symbolName, object)
+}
+
+func (p *Plasma) LoadBuiltInSymbols(symbols map[string]IObject) {
+	for symbol, object := range symbols {
+		p.builtInSymbolTable.Set(symbol, object)
+	}
+}
+
+/*
 	InitializeBytecode
 	Loads the bytecode and clears the stack
 */
