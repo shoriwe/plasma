@@ -17,7 +17,7 @@ func (p *Plasma) constructSubClass(subClass *Type, object IObject) *Object {
 }
 
 func (p *Plasma) ConstructObject(type_ *Type, parent *SymbolTable) (IObject, *Object) {
-	object := p.NewObject(type_.Name, type_.subClasses, parent)
+	object := p.NewObject(false, type_.Name, type_.subClasses, parent)
 	for _, subclass := range object.subClasses {
 		subClassConstructionError := p.constructSubClass(subclass, object)
 		if subClassConstructionError != nil {

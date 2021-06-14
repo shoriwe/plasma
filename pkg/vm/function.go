@@ -9,13 +9,14 @@ type Function struct {
 	Callable Callable
 }
 
-func (p *Plasma) NewFunction(parentSymbols *SymbolTable, callable Callable) *Function {
+func (p *Plasma) NewFunction(isBuiltIn bool, parentSymbols *SymbolTable, callable Callable) *Function {
 	function := &Function{
 		Object: &Object{
 			id:         p.NextId(),
 			typeName:   FunctionName,
 			subClasses: nil,
 			symbols:    NewSymbolTable(parentSymbols),
+			isBuiltIn:  isBuiltIn,
 		},
 		Callable: callable,
 	}
@@ -23,7 +24,7 @@ func (p *Plasma) NewFunction(parentSymbols *SymbolTable, callable Callable) *Fun
 		Object: nil,
 		Callable: NewBuiltInClassFunction(function, 0,
 			func(self IObject, _ ...IObject) (IObject, *Object) {
-				return p.NewInteger(p.PeekSymbolTable(), int64(self.Id())), nil
+				return p.NewInteger(false, p.PeekSymbolTable(), int64(self.Id())), nil
 			},
 		),
 	})
@@ -31,7 +32,7 @@ func (p *Plasma) NewFunction(parentSymbols *SymbolTable, callable Callable) *Fun
 		Object: nil,
 		Callable: NewBuiltInClassFunction(function, 0,
 			func(self IObject, _ ...IObject) (IObject, *Object) {
-				return p.NewString(p.PeekSymbolTable(), fmt.Sprintf("Function-%d", function.Id())), nil
+				return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("Function-%d", function.Id())), nil
 			},
 		),
 	})

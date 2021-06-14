@@ -18,17 +18,23 @@ func (t *Type) Implements(class *Type) bool {
 	return false
 }
 
-func (p *Plasma) NewType(typeName string, parent *SymbolTable, subclasses []*Type, constructor Constructor) *Type {
+func (p *Plasma) NewType(
+	isBuiltIn bool,
+	typeName string,
+	parent *SymbolTable,
+	subclasses []*Type,
+	constructor Constructor,
+) *Type {
 	result := &Type{
-		Object:      p.NewObject(TypeName, subclasses, parent),
+		Object:      p.NewObject(isBuiltIn, TypeName, subclasses, parent),
 		Constructor: constructor,
 		Name:        typeName,
 	}
 	result.Set(ToString,
-		p.NewFunction(result.symbols,
+		p.NewFunction(isBuiltIn, result.symbols,
 			NewBuiltInClassFunction(result, 0,
 				func(_ IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewString(p.PeekSymbolTable(), "Type@"+typeName), nil
+					return p.NewString(false, p.PeekSymbolTable(), "Type@"+typeName), nil
 				},
 			),
 		),

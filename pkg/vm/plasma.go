@@ -14,6 +14,8 @@ const (
 	polySize = 0xffffffff
 )
 
+type ObjectLoader func(*Plasma) IObject
+
 type Plasma struct {
 	currentId          int64
 	mutex              *sync.Mutex
@@ -78,13 +80,13 @@ func (p *Plasma) Seed() uint64 {
 	LoadBuiltInObject
 	This function should be used to load custom object in the built-in symbol table
 */
-func (p *Plasma) LoadBuiltInObject(symbolName string, object IObject) {
-	p.builtInSymbolTable.Set(symbolName, object)
+func (p *Plasma) LoadBuiltInObject(symbolName string, loader ObjectLoader) {
+	p.builtInSymbolTable.Set(symbolName, loader(p))
 }
 
-func (p *Plasma) LoadBuiltInSymbols(symbols map[string]IObject) {
-	for symbol, object := range symbols {
-		p.builtInSymbolTable.Set(symbol, object)
+func (p *Plasma) LoadBuiltInSymbols(symbolMap map[string]ObjectLoader) {
+	for symbol, loader := range symbolMap {
+		p.builtInSymbolTable.Set(symbol, loader(p))
 	}
 }
 
