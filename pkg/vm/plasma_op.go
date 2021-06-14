@@ -186,39 +186,39 @@ func (p *Plasma) Execute() (IObject, *Object) {
 
 func (p *Plasma) newStringOP(code Code) *Object {
 	value := code.Value.(string)
-	stringObject := p.NewString(p.SymbolTableStack.Peek(), value)
+	stringObject := p.NewString(false, p.SymbolTableStack.Peek(), value)
 	p.PushObject(stringObject)
 	return nil
 }
 
 func (p *Plasma) newBytesOP(code Code) *Object {
 	value := code.Value.([]byte)
-	bytesObject := p.NewBytes(p.SymbolTableStack.Peek(), value)
+	bytesObject := p.NewBytes(false, p.SymbolTableStack.Peek(), value)
 	p.PushObject(bytesObject)
 	return nil
 }
 
 func (p *Plasma) newIntegerOP(code Code) *Object {
 	value := code.Value.(int64)
-	integer := p.NewInteger(p.SymbolTableStack.Peek(), value)
+	integer := p.NewInteger(false, p.SymbolTableStack.Peek(), value)
 	p.PushObject(integer)
 	return nil
 }
 
 func (p *Plasma) newFloatOP(code Code) *Object {
 	value := code.Value.(float64)
-	float := p.NewFloat(p.SymbolTableStack.Peek(), value)
+	float := p.NewFloat(false, p.SymbolTableStack.Peek(), value)
 	p.PushObject(float)
 	return nil
 }
 
 func (p *Plasma) newTrueBoolOP() *Object {
-	p.PushObject(p.NewBool(p.PeekSymbolTable(), true))
+	p.PushObject(p.NewBool(false, p.PeekSymbolTable(), true))
 	return nil
 }
 
 func (p *Plasma) newFalseBoolOP() *Object {
-	p.PushObject(p.NewBool(p.PeekSymbolTable(), false))
+	p.PushObject(p.NewBool(false, p.PeekSymbolTable(), false))
 	return nil
 }
 
@@ -233,7 +233,7 @@ func (p *Plasma) newTupleOP(code Code) *Object {
 	for i := 0; i < numberOfValues; i++ {
 		values = append(values, p.PopObject())
 	}
-	p.PushObject(p.NewTuple(p.PeekSymbolTable(), values))
+	p.PushObject(p.NewTuple(false, p.PeekSymbolTable(), values))
 	return nil
 }
 
@@ -243,7 +243,7 @@ func (p *Plasma) newArrayOP(code Code) *Object {
 	for i := 0; i < numberOfValues; i++ {
 		values = append(values, p.PopObject())
 	}
-	p.PushObject(p.NewArray(p.PeekSymbolTable(), values))
+	p.PushObject(p.NewArray(false, p.PeekSymbolTable(), values))
 	return nil
 }
 
@@ -259,7 +259,7 @@ func (p *Plasma) newHashOP(code Code) *Object {
 			Value: value,
 		})
 	}
-	hashTable := p.NewHashTable(p.PeekSymbolTable(), map[int64][]*KeyValue{}, numberOfValues)
+	hashTable := p.NewHashTable(false, p.PeekSymbolTable(), map[int64][]*KeyValue{}, numberOfValues)
 	hashTableAssign, getError := hashTable.Get(Assign)
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(Assign)
@@ -423,6 +423,9 @@ func (p *Plasma) assignSelectorOP(code Code) *Object {
 	target := p.PopObject()
 	value := p.PopObject()
 	identifier := code.Value.(string)
+	if target.IsBuiltIn() {
+		return p.NewBuiltInSymbolProtectionError(identifier)
+	}
 	target.Set(identifier, value)
 	return nil
 }
@@ -462,7 +465,7 @@ func (p *Plasma) returnOP(code Code) *Object {
 	if len(values) == 1 {
 		p.PushObject(values[0])
 	} else {
-		p.PushObject(p.NewTuple(p.PeekSymbolTable(), values))
+		p.PushObject(p.NewTuple(false, p.PeekSymbolTable(), values))
 	}
 	return nil
 }
@@ -524,7 +527,7 @@ func (p *Plasma) newFunctionOP(code Code) *Object {
 	end := p.PeekBytecode().index
 	functionCode := make([]Code, codeLength)
 	copy(functionCode, p.PeekBytecode().instructions[start:end])
-	p.PushObject(p.NewFunction(p.PeekSymbolTable(), NewPlasmaFunction(numberOfArguments, functionCode)))
+	p.PushObject(p.NewFunction(false, p.PeekSymbolTable(), NewPlasmaFunction(numberOfArguments, functionCode)))
 	return nil
 }
 
@@ -742,7 +745,7 @@ func (p *Plasma) newIteratorOP(code Code) *Object {
 			return callError
 		}
 	}
-	generatorIterator := p.NewIterator(p.PeekSymbolTable())
+	generatorIterator := p.NewIterator(false, p.PeekSymbolTable())
 	generatorIterator.Set(Source, iterSource)
 
 	hasNextCodeLength, nextCodeLength := code.Value.([2]int)[0], code.Value.([2]int)[1]
@@ -755,12 +758,12 @@ func (p *Plasma) newIteratorOP(code Code) *Object {
 		nextCode = append(nextCode, p.PeekBytecode().Next())
 	}
 	generatorIterator.Set(Next,
-		p.NewFunction(generatorIterator.symbols,
+		p.NewFunction(false, generatorIterator.symbols,
 			NewPlasmaClassFunction(generatorIterator, 0, nextCode),
 		),
 	)
 	generatorIterator.Set(HasNext,
-		p.NewFunction(generatorIterator.symbols,
+		p.NewFunction(false, generatorIterator.symbols,
 			NewPlasmaClassFunction(generatorIterator, 0, hasNextCode),
 		),
 	)
@@ -908,7 +911,7 @@ func (p *Plasma) newModuleOP(code Code) *Object {
 	for i := 0; i < moduleInformation.CodeLength; i++ {
 		moduleBody = append(moduleBody, p.PeekBytecode().Next())
 	}
-	module := p.NewObject(ModuleName, nil, p.PeekSymbolTable())
+	module := p.NewObject(false, ModuleName, nil, p.PeekSymbolTable())
 	p.PushSymbolTable(module.SymbolTable())
 	p.PushBytecode(NewBytecodeFromArray(moduleBody))
 	_, executionError := p.Execute()
@@ -942,6 +945,7 @@ func (p *Plasma) newClassOP(code Code) *Object {
 		classBody = append(classBody, p.PeekBytecode().Next())
 	}
 	class := p.NewType(
+		false,
 		classInformation.Name,
 		p.PeekSymbolTable(),
 		subClasses,
@@ -960,7 +964,7 @@ func (p *Plasma) newClassFunctionOP(code Code) *Object {
 	end := p.PeekBytecode().index
 	functionCode := make([]Code, codeLength)
 	copy(functionCode, p.PeekBytecode().instructions[start:end])
-	p.PushObject(p.NewFunction(p.PeekSymbolTable(), NewPlasmaClassFunction(p.PeekObject(), numberOfArguments, functionCode)))
+	p.PushObject(p.NewFunction(false, p.PeekSymbolTable(), NewPlasmaClassFunction(p.PeekObject(), numberOfArguments, functionCode)))
 	return nil
 }
 

@@ -6,6 +6,7 @@ import (
 )
 
 type IObject interface {
+	IsBuiltIn() bool
 	Id() int64
 	TypeName() string
 	SymbolTable() *SymbolTable
@@ -42,6 +43,7 @@ type IObject interface {
 }
 
 type Object struct {
+	isBuiltIn  bool
 	id         int64
 	typeName   string
 	class      *Type
@@ -56,6 +58,10 @@ type Object struct {
 	Content    []IObject
 	KeyValues  map[int64][]*KeyValue
 	Length     int
+}
+
+func (o *Object) IsBuiltIn() bool {
+	return o.isBuiltIn
 }
 
 func (o *Object) IncreaseLength() {
@@ -186,523 +192,525 @@ func (o *Object) Implements(class *Type) bool {
 	return false
 }
 
-func (p *Plasma) ObjectInitialize(object IObject) *Object {
-	object.SymbolTable().Update(map[string]IObject{
-		Initialize: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(_ IObject, _ ...IObject) (IObject, *Object) {
-					return nil, nil
-				},
+func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
+	return func(object IObject) *Object {
+		object.SymbolTable().Update(map[string]IObject{
+			Initialize: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(_ IObject, _ ...IObject) (IObject, *Object) {
+						return nil, nil
+					},
+				),
 			),
-		),
-		NegBits: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(NegBits, 0)),
-		Negate: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					selfToBool, foundError := self.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := selfToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(selfToBool.(IObject).TypeName(), FunctionName)
-					}
-					selfBool, transformationError := p.CallFunction(selfToBool.(*Function), self.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					return p.NewBool(p.PeekSymbolTable(), !selfBool.GetBool()), nil
-				},
-			),
-		),
-		Negative: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Negative, 0)),
-		Add: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Add, 1)),
-		RightAdd: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightAdd, 1)),
-		Sub: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Sub, 1)),
-		RightSub: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightSub, 1)),
-		Mul: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Mul, 1)),
-		RightMul: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightMul, 1)),
-		Div: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Div, 1)),
-		RightDiv: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightDiv, 1)),
-		Mod: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Mod, 1)),
-		RightMod: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightMod, 1)),
-		Pow: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Pow, 1)),
-		RightPow: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightPow, 1)),
-		BitXor: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(BitXor, 1)),
-		RightBitXor: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightBitXor, 1)),
-		BitAnd: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(BitAnd, 1)),
-		RightBitAnd: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightBitAnd, 1)),
-		BitOr: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(BitOr, 1)),
-		RightBitOr: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightBitOr, 1)),
-		BitLeft: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(BitLeft, 1)),
-		RightBitLeft: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightBitLeft, 1)),
-		BitRight: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(BitRight, 1)),
-		RightBitRight: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightBitRight, 1)),
-		And: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-
-					leftToBool, foundError := self.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := leftToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
-					}
-					leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					right := arguments[0]
-					var rightToBool interface{}
-					rightToBool, foundError = right.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := rightToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
-					}
-					var rightBool IObject
-					rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					return p.NewBool(p.PeekSymbolTable(), leftBool.GetBool() && rightBool.GetBool()), nil
-				},
-			),
-		),
-		RightAnd: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					rightToBool, foundError := self.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := rightToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
-					}
-					rightBool, transformationError := p.CallFunction(rightToBool.(*Function), self.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					left := arguments[0]
-					var leftToBool interface{}
-					leftToBool, foundError = left.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := leftToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
-					}
-					var leftBool IObject
-					leftBool, transformationError = p.CallFunction(leftToBool.(*Function), left.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					return p.NewBool(p.PeekSymbolTable(), leftBool.GetBool() && rightBool.GetBool()), nil
-				},
-			),
-		),
-		Or: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					leftToBool, foundError := self.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := leftToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
-					}
-					leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-
-					right := arguments[0]
-					var rightToBool interface{}
-					rightToBool, foundError = right.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := rightToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
-					}
-					var rightBool IObject
-					rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					return p.NewBool(p.PeekSymbolTable(), leftBool.GetBool() || rightBool.GetBool()), nil
-				},
-			),
-		),
-		RightOr: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					rightToBool, foundError := self.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := rightToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
-					}
-					rightBool, transformationError := p.CallFunction(rightToBool.(*Function), self.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					left := arguments[0]
-					var leftToBool interface{}
-					leftToBool, foundError = left.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := leftToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
-					}
-					var leftBool IObject
-					leftBool, transformationError = p.CallFunction(leftToBool.(*Function), left.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					return p.NewBool(p.PeekSymbolTable(), leftBool.GetBool() || rightBool.GetBool()), nil
-				},
-			),
-		),
-		Xor: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					leftToBool, foundError := self.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := leftToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
-					}
-					leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-
-					right := arguments[0]
-					var rightToBool interface{}
-					rightToBool, foundError = right.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := rightToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
-					}
-					var rightBool IObject
-					rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					return p.NewBool(p.PeekSymbolTable(), leftBool.GetBool() != rightBool.GetBool()), nil
-				},
-			),
-		),
-		RightXor: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					leftToBool, foundError := self.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := leftToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
-					}
-					leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-
-					left := arguments[0]
-					var rightToBool interface{}
-					rightToBool, foundError = left.Get(ToBool)
-					if foundError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					if _, ok := rightToBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
-					}
-					var rightBool IObject
-					rightBool, transformationError = p.CallFunction(rightToBool.(*Function), left.SymbolTable())
-					if transformationError != nil {
-						return nil, transformationError
-					}
-					return p.NewBool(p.PeekSymbolTable(), rightBool.GetBool() != leftBool.GetBool()), nil
-				},
-			),
-		),
-		Equals: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1, func(self IObject, arguments ...IObject) (IObject, *Object) {
-				right := arguments[0]
-				return p.NewBool(p.PeekSymbolTable(), self.Id() == right.Id()), nil
-			},
-			),
-		),
-		RightEquals: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					left := arguments[0]
-					return p.NewBool(p.PeekSymbolTable(), left.Id() == self.Id()), nil
-				},
-			),
-		),
-		NotEquals: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					right := arguments[0]
-					return p.NewBool(p.PeekSymbolTable(), self.Id() != right.Id()), nil
-				},
-			),
-		),
-		RightNotEquals: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					left := arguments[0]
-					return p.NewBool(p.PeekSymbolTable(), left.Id() != self.Id()), nil
-				},
-			),
-		),
-		GreaterThan: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(GreaterThan, 1)),
-		RightGreaterThan: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightGreaterThan, 1)),
-		LessThan: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(LessThan, 1)),
-		RightLessThan: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightLessThan, 1)),
-		GreaterThanOrEqual: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(GreaterThanOrEqual, 1)),
-		RightGreaterThanOrEqual: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightGreaterThanOrEqual, 1)),
-		LessThanOrEqual: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(LessThanOrEqual, 1)),
-		RightLessThanOrEqual: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(RightLessThanOrEqual, 1)),
-		Hash: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					if self.GetHash() == 0 {
-						objectHash := p.HashString(fmt.Sprintf("%v-%s-%d", self, self.TypeName(), self.Id()))
-						self.SetHash(objectHash)
-					}
-					return p.NewInteger(p.PeekSymbolTable(), self.GetHash()), nil
-				},
-			),
-		),
-		Index: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Index, 1)),
-		Assign: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Assign, 2)),
-		Call: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Call, 0)),
-		Iter: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Iter, 0)),
-		Class: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					if self.GetClass() == nil { // This should only happen with built-ins
-						class, getError := p.BuiltInSymbols().GetAny(self.TypeName())
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(self.TypeName())
+			NegBits: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(NegBits, 0)),
+			Negate: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						selfToBool, foundError := self.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := class.(*Type); !ok {
-							return nil, p.NewInvalidTypeError(class.TypeName(), TypeName)
+						if _, ok := selfToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(selfToBool.(IObject).TypeName(), FunctionName)
 						}
-						self.SetClass(class.(*Type))
-					}
-					return self.GetClass(), nil
-				},
+						selfBool, transformationError := p.CallFunction(selfToBool.(*Function), self.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						return p.NewBool(false, p.PeekSymbolTable(), !selfBool.GetBool()), nil
+					},
+				),
 			),
-		),
-		SubClasses: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					var subClassesCopy []IObject
-					for _, class := range self.SubClasses() {
-						subClassesCopy = append(subClassesCopy, class)
-					}
-					return p.NewTuple(p.PeekSymbolTable(), subClassesCopy), nil
-				},
+			Negative: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Negative, 0)),
+			Add: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Add, 1)),
+			RightAdd: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightAdd, 1)),
+			Sub: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Sub, 1)),
+			RightSub: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightSub, 1)),
+			Mul: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Mul, 1)),
+			RightMul: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightMul, 1)),
+			Div: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Div, 1)),
+			RightDiv: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightDiv, 1)),
+			Mod: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Mod, 1)),
+			RightMod: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightMod, 1)),
+			Pow: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Pow, 1)),
+			RightPow: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightPow, 1)),
+			BitXor: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(BitXor, 1)),
+			RightBitXor: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightBitXor, 1)),
+			BitAnd: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(BitAnd, 1)),
+			RightBitAnd: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightBitAnd, 1)),
+			BitOr: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(BitOr, 1)),
+			RightBitOr: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightBitOr, 1)),
+			BitLeft: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(BitLeft, 1)),
+			RightBitLeft: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightBitLeft, 1)),
+			BitRight: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(BitRight, 1)),
+			RightBitRight: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightBitRight, 1)),
+			And: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+
+						leftToBool, foundError := self.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := leftToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
+						}
+						leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						right := arguments[0]
+						var rightToBool interface{}
+						rightToBool, foundError = right.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := rightToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
+						}
+						var rightBool IObject
+						rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() && rightBool.GetBool()), nil
+					},
+				),
 			),
-		),
-		ToInteger: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(ToInteger, 0)),
-		ToFloat: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(ToFloat, 0)),
-		ToString: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewString(p.PeekSymbolTable(),
-						fmt.Sprintf("%s{%s}-%X", ObjectName, self.TypeName(), self.Id())), nil
-				},
+			RightAnd: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						rightToBool, foundError := self.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := rightToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
+						}
+						rightBool, transformationError := p.CallFunction(rightToBool.(*Function), self.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						left := arguments[0]
+						var leftToBool interface{}
+						leftToBool, foundError = left.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := leftToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
+						}
+						var leftBool IObject
+						leftBool, transformationError = p.CallFunction(leftToBool.(*Function), left.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() && rightBool.GetBool()), nil
+					},
+				),
 			),
-		),
-		ToBool: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(_ IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewBool(p.PeekSymbolTable(), true), nil
-				},
+			Or: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						leftToBool, foundError := self.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := leftToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
+						}
+						leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+
+						right := arguments[0]
+						var rightToBool interface{}
+						rightToBool, foundError = right.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := rightToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
+						}
+						var rightBool IObject
+						rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() || rightBool.GetBool()), nil
+					},
+				),
 			),
-		),
-		ToArray: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(ToArray, 0)),
-		ToTuple: p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(ToTuple, 0)),
-		GetInteger64: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewInteger(p.PeekSymbolTable(), self.GetInteger64()), nil
-				},
+			RightOr: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						rightToBool, foundError := self.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := rightToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
+						}
+						rightBool, transformationError := p.CallFunction(rightToBool.(*Function), self.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						left := arguments[0]
+						var leftToBool interface{}
+						leftToBool, foundError = left.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := leftToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
+						}
+						var leftBool IObject
+						leftBool, transformationError = p.CallFunction(leftToBool.(*Function), left.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() || rightBool.GetBool()), nil
+					},
+				),
 			),
-		),
-		GetBool: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewBool(p.PeekSymbolTable(), self.GetBool()), nil
-				},
+			Xor: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						leftToBool, foundError := self.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := leftToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
+						}
+						leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+
+						right := arguments[0]
+						var rightToBool interface{}
+						rightToBool, foundError = right.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := rightToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
+						}
+						var rightBool IObject
+						rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() != rightBool.GetBool()), nil
+					},
+				),
 			),
-		),
-		GetBytes: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewBytes(p.PeekSymbolTable(), self.GetBytes()), nil
-				},
+			RightXor: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						leftToBool, foundError := self.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := leftToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(leftToBool.(IObject).TypeName(), FunctionName)
+						}
+						leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+
+						left := arguments[0]
+						var rightToBool interface{}
+						rightToBool, foundError = left.Get(ToBool)
+						if foundError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						}
+						if _, ok := rightToBool.(*Function); !ok {
+							return nil, p.NewInvalidTypeError(rightToBool.(IObject).TypeName(), FunctionName)
+						}
+						var rightBool IObject
+						rightBool, transformationError = p.CallFunction(rightToBool.(*Function), left.SymbolTable())
+						if transformationError != nil {
+							return nil, transformationError
+						}
+						return p.NewBool(false, p.PeekSymbolTable(), rightBool.GetBool() != leftBool.GetBool()), nil
+					},
+				),
 			),
-		),
-		GetString: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewString(p.PeekSymbolTable(), self.GetString()), nil
+			Equals: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1, func(self IObject, arguments ...IObject) (IObject, *Object) {
+					right := arguments[0]
+					return p.NewBool(false, p.PeekSymbolTable(), self.Id() == right.Id()), nil
 				},
+				),
 			),
-		),
-		GetFloat64: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewFloat(p.PeekSymbolTable(), self.GetFloat64()), nil
-				},
+			RightEquals: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						left := arguments[0]
+						return p.NewBool(false, p.PeekSymbolTable(), left.Id() == self.Id()), nil
+					},
+				),
 			),
-		),
-		GetContent: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewArray(p.PeekSymbolTable(), self.GetContent()), nil
-				},
+			NotEquals: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						right := arguments[0]
+						return p.NewBool(false, p.PeekSymbolTable(), self.Id() != right.Id()), nil
+					},
+				),
 			),
-		),
-		GetKeyValues: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewHashTable(p.PeekSymbolTable(), self.GetKeyValues(), self.GetLength()), nil
-				},
+			RightNotEquals: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						left := arguments[0]
+						return p.NewBool(false, p.PeekSymbolTable(), left.Id() != self.Id()), nil
+					},
+				),
 			),
-		),
-		GetLength: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewInteger(p.PeekSymbolTable(), int64(self.GetLength())), nil
-				},
+			GreaterThan: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(GreaterThan, 1)),
+			RightGreaterThan: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightGreaterThan, 1)),
+			LessThan: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(LessThan, 1)),
+			RightLessThan: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightLessThan, 1)),
+			GreaterThanOrEqual: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(GreaterThanOrEqual, 1)),
+			RightGreaterThanOrEqual: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightGreaterThanOrEqual, 1)),
+			LessThanOrEqual: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(LessThanOrEqual, 1)),
+			RightLessThanOrEqual: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(RightLessThanOrEqual, 1)),
+			Hash: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						if self.GetHash() == 0 {
+							objectHash := p.HashString(fmt.Sprintf("%v-%s-%d", self, self.TypeName(), self.Id()))
+							self.SetHash(objectHash)
+						}
+						return p.NewInteger(false, p.PeekSymbolTable(), self.GetHash()), nil
+					},
+				),
 			),
-		),
-		SetBool: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					self.SetBool(arguments[0].GetBool())
-					return p.NewNone(), nil
-				},
+			Index: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Index, 1)),
+			Assign: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Assign, 2)),
+			Call: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Call, 0)),
+			Iter: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Iter, 0)),
+			Class: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						if self.GetClass() == nil { // This should only happen with built-ins
+							class, getError := p.BuiltInSymbols().GetAny(self.TypeName())
+							if getError != nil {
+								return nil, p.NewObjectWithNameNotFoundError(self.TypeName())
+							}
+							if _, ok := class.(*Type); !ok {
+								return nil, p.NewInvalidTypeError(class.TypeName(), TypeName)
+							}
+							self.SetClass(class.(*Type))
+						}
+						return self.GetClass(), nil
+					},
+				),
 			),
-		),
-		SetBytes: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					self.SetBytes(arguments[0].GetBytes())
-					self.SetLength(arguments[0].GetLength())
-					return p.NewNone(), nil
-				},
+			SubClasses: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						var subClassesCopy []IObject
+						for _, class := range self.SubClasses() {
+							subClassesCopy = append(subClassesCopy, class)
+						}
+						return p.NewTuple(false, p.PeekSymbolTable(), subClassesCopy), nil
+					},
+				),
 			),
-		),
-		SetString: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					self.SetString(arguments[0].GetString())
-					self.SetLength(arguments[0].GetLength())
-					return p.NewNone(), nil
-				},
+			ToInteger: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(ToInteger, 0)),
+			ToFloat: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(ToFloat, 0)),
+			ToString: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewString(false, p.PeekSymbolTable(),
+							fmt.Sprintf("%s{%s}-%X", ObjectName, self.TypeName(), self.Id())), nil
+					},
+				),
 			),
-		),
-		SetInteger64: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					self.SetInteger64(arguments[0].GetInteger64())
-					return p.NewNone(), nil
-				},
+			ToBool: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(_ IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewBool(false, p.PeekSymbolTable(), true), nil
+					},
+				),
 			),
-		),
-		SetFloat64: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					self.SetFloat64(arguments[0].GetFloat64())
-					return p.NewNone(), nil
-				},
+			ToArray: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(ToArray, 0)),
+			ToTuple: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(ToTuple, 0)),
+			GetInteger64: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewInteger(false, p.PeekSymbolTable(), self.GetInteger64()), nil
+					},
+				),
 			),
-		),
-		SetContent: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					self.SetContent(arguments[0].GetContent())
-					self.SetLength(arguments[0].GetLength())
-					return p.NewNone(), nil
-				},
+			GetBool: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewBool(false, p.PeekSymbolTable(), self.GetBool()), nil
+					},
+				),
 			),
-		),
-		SetKeyValues: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					self.SetKeyValues(arguments[0].GetKeyValues())
-					self.SetLength(arguments[0].GetLength())
-					return p.NewNone(), nil
-				},
+			GetBytes: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewBytes(false, p.PeekSymbolTable(), self.GetBytes()), nil
+					},
+				),
 			),
-		),
-		SetLength: p.NewFunction(object.SymbolTable(),
-			NewBuiltInClassFunction(object, 1,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
-					self.SetLength(arguments[0].GetLength())
-					return p.NewNone(), nil
-				},
+			GetString: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewString(false, p.PeekSymbolTable(), self.GetString()), nil
+					},
+				),
 			),
-		),
-	})
-	return nil
+			GetFloat64: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewFloat(false, p.PeekSymbolTable(), self.GetFloat64()), nil
+					},
+				),
+			),
+			GetContent: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewArray(false, p.PeekSymbolTable(), self.GetContent()), nil
+					},
+				),
+			),
+			GetKeyValues: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewHashTable(false, p.PeekSymbolTable(), self.GetKeyValues(), self.GetLength()), nil
+					},
+				),
+			),
+			GetLength: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self IObject, _ ...IObject) (IObject, *Object) {
+						return p.NewInteger(false, p.PeekSymbolTable(), int64(self.GetLength())), nil
+					},
+				),
+			),
+			SetBool: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						self.SetBool(arguments[0].GetBool())
+						return p.NewNone(), nil
+					},
+				),
+			),
+			SetBytes: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						self.SetBytes(arguments[0].GetBytes())
+						self.SetLength(arguments[0].GetLength())
+						return p.NewNone(), nil
+					},
+				),
+			),
+			SetString: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						self.SetString(arguments[0].GetString())
+						self.SetLength(arguments[0].GetLength())
+						return p.NewNone(), nil
+					},
+				),
+			),
+			SetInteger64: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						self.SetInteger64(arguments[0].GetInteger64())
+						return p.NewNone(), nil
+					},
+				),
+			),
+			SetFloat64: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						self.SetFloat64(arguments[0].GetFloat64())
+						return p.NewNone(), nil
+					},
+				),
+			),
+			SetContent: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						self.SetContent(arguments[0].GetContent())
+						self.SetLength(arguments[0].GetLength())
+						return p.NewNone(), nil
+					},
+				),
+			),
+			SetKeyValues: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						self.SetKeyValues(arguments[0].GetKeyValues())
+						self.SetLength(arguments[0].GetLength())
+						return p.NewNone(), nil
+					},
+				),
+			),
+			SetLength: p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self IObject, arguments ...IObject) (IObject, *Object) {
+						self.SetLength(arguments[0].GetLength())
+						return p.NewNone(), nil
+					},
+				),
+			),
+		})
+		return nil
+	}
 }
-
 func (p *Plasma) NewObject(
+	isBuiltIn bool,
 	typeName string,
 	subClasses []*Type,
 	parentSymbols *SymbolTable,
@@ -712,6 +720,7 @@ func (p *Plasma) NewObject(
 		typeName:   typeName,
 		subClasses: subClasses,
 		symbols:    NewSymbolTable(parentSymbols),
+		isBuiltIn:  isBuiltIn,
 	}
 	result.Length = 0
 	result.Bool = true
@@ -721,6 +730,6 @@ func (p *Plasma) NewObject(
 	result.Content = []IObject{}
 	result.KeyValues = map[int64][]*KeyValue{}
 	result.Bytes = []uint8{}
-	p.ObjectInitialize(result)
+	p.ObjectInitialize(isBuiltIn)(result)
 	return result
 }
