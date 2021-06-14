@@ -164,14 +164,14 @@ func repl() {
 		fmt.Print(color.GreenString(">>>"))
 		bytecode, compilationError := compileCode(stdinScanner)
 		if compilationError != nil {
-			fmt.Printf("[%s] %s: %s", color.RedString("-"), compilationError.Type(), compilationError.Message())
+			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), compilationError.Type(), compilationError.Message())
 			continue
 		}
 		virtualMachine.PushBytecode(vm.NewBytecodeFromArray(bytecode))
 		result, executionError := virtualMachine.Execute()
 		virtualMachine.PopBytecode()
 		if executionError != nil {
-			fmt.Printf("[%s] %s: %s", color.RedString("-"), executionError.TypeName(), executionError.GetString())
+			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), executionError.TypeName(), executionError.GetString())
 			continue
 		}
 		if result.TypeName() == vm.NoneName {
@@ -210,7 +210,7 @@ func program() {
 		)
 		code, compilationError := compiler.Compile()
 		if compilationError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s", color.RedString("-"), compilationError.String())
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), compilationError.String())
 			os.Exit(1)
 		}
 		/*
@@ -219,7 +219,7 @@ func program() {
 		virtualMachine.InitializeBytecode(code)
 		_, executionError := virtualMachine.Execute()
 		if executionError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s", color.RedString("-"), executionError.TypeName(), executionError.GetString())
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), executionError.TypeName(), executionError.GetString())
 			os.Exit(1)
 		}
 	}
