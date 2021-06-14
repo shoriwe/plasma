@@ -96,7 +96,12 @@ func (p *Plasma) NewIndexOutOfRange(length int, index int64) *Object {
 	errorType := p.ForceMasterGetAny(IndexOutOfRangeError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewInteger(p.PeekSymbolTable(), int64(length)), p.NewInteger(p.PeekSymbolTable(), index),
+		p.NewInteger(
+			false,
+			p.PeekSymbolTable(),
+			int64(length),
+		),
+		p.NewInteger(false, p.PeekSymbolTable(), index),
 	)
 	return instantiatedError.(*Object)
 }
@@ -114,7 +119,7 @@ func (p *Plasma) NewNotImplementedCallableError(methodName string) *Object {
 	errorType := p.ForceMasterGetAny(NotImplementedCallableError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewString(p.PeekSymbolTable(), methodName),
+		p.NewString(false, p.PeekSymbolTable(), methodName),
 	)
 	return instantiatedError.(*Object)
 }
@@ -123,7 +128,7 @@ func (p *Plasma) NewGoRuntimeError(er error) *Object {
 	errorType := p.ForceMasterGetAny(GoRuntimeError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewString(p.PeekSymbolTable(), er.Error()),
+		p.NewString(false, p.PeekSymbolTable(), er.Error()),
 	)
 	return instantiatedError.(*Object)
 }
@@ -132,8 +137,8 @@ func (p *Plasma) NewInvalidNumberOfArgumentsError(received int, expecting int) *
 	errorType := p.ForceMasterGetAny(InvalidNumberOfArgumentsError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewInteger(p.PeekSymbolTable(), int64(received)),
-		p.NewInteger(p.PeekSymbolTable(), int64(expecting)),
+		p.NewInteger(false, p.PeekSymbolTable(), int64(received)),
+		p.NewInteger(false, p.PeekSymbolTable(), int64(expecting)),
 	)
 	return instantiatedError.(*Object)
 }
@@ -142,7 +147,7 @@ func (p *Plasma) NewObjectWithNameNotFoundError(name string) *Object {
 	errorType := p.ForceMasterGetAny(ObjectWithNameNotFoundError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewString(p.PeekSymbolTable(), name),
+		p.NewString(false, p.PeekSymbolTable(), name),
 	)
 	return instantiatedError.(*Object)
 }
@@ -160,8 +165,8 @@ func (p *Plasma) NewInvalidTypeError(received string, expecting ...string) *Obje
 	}
 	_, _ = p.CallFunction(
 		instantiatedErrorInitialize.(*Function), instantiatedError.SymbolTable(),
-		p.NewString(p.PeekSymbolTable(), received),
-		p.NewString(p.PeekSymbolTable(), expectingSum),
+		p.NewString(false, p.PeekSymbolTable(), received),
+		p.NewString(false, p.PeekSymbolTable(), expectingSum),
 	)
 	return instantiatedError.(*Object)
 }
@@ -170,7 +175,7 @@ func (p *Plasma) NewObjectConstructionError(typeName string, errorMessage string
 	errorType := p.ForceMasterGetAny(ObjectConstructionError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewString(p.PeekSymbolTable(), typeName), p.NewString(p.PeekSymbolTable(), errorMessage),
+		p.NewString(false, p.PeekSymbolTable(), typeName), p.NewString(false, p.PeekSymbolTable(), errorMessage),
 	)
 	return instantiatedError.(*Object)
 }
@@ -179,14 +184,14 @@ func (p *Plasma) NewBuiltInSymbolProtectionError(symbolName string) *Object {
 	errorType := p.ForceMasterGetAny(BuiltInSymbolProtectionError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewString(p.PeekSymbolTable(), symbolName),
+		p.NewString(false, p.PeekSymbolTable(), symbolName),
 	)
 	return instantiatedError.(*Object)
 }
 
 func (p *Plasma) RuntimeErrorInitialize(object IObject) *Object {
 	object.Set(Initialize,
-		p.NewFunction(object.SymbolTable(),
+		p.NewFunction(false, object.SymbolTable(),
 			NewBuiltInClassFunction(object, 2,
 				func(self IObject, arguments ...IObject) (IObject, *Object) {
 					message := arguments[0]
@@ -200,10 +205,10 @@ func (p *Plasma) RuntimeErrorInitialize(object IObject) *Object {
 		),
 	)
 	object.Set(ToString,
-		p.NewFunction(object.SymbolTable(),
+		p.NewFunction(false, object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
 				func(self IObject, _ ...IObject) (IObject, *Object) {
-					return p.NewString(p.PeekSymbolTable(), fmt.Sprintf("%s: %s", self.TypeName(), self.GetString())), nil
+					return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("%s: %s", self.TypeName(), self.GetString())), nil
 				},
 			),
 		),

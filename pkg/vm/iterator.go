@@ -4,23 +4,26 @@ type Iterator struct {
 	*Object
 }
 
-func (p *Plasma) NewIterator(parentSymbols *SymbolTable) *Iterator {
+func (p *Plasma) NewIterator(isBuiltIn bool, parentSymbols *SymbolTable) *Iterator {
 	iterator := &Iterator{
-		Object: p.NewObject(IteratorName, nil, parentSymbols),
+		Object: p.NewObject(isBuiltIn, IteratorName, nil, parentSymbols),
 	}
+	p.IteratorInitialize(isBuiltIn)(iterator)
 	return iterator
 }
 
-func (p *Plasma) IteratorInitialize(object IObject) *Object {
-	object.Set(HasNext,
-		p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(HasNext, 0),
-		),
-	)
-	object.Set(Next,
-		p.NewFunction(object.SymbolTable(),
-			p.NewNotImplementedCallable(Next, 0),
-		),
-	)
-	return nil
+func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
+	return func(object IObject) *Object {
+		object.Set(HasNext,
+			p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(HasNext, 0),
+			),
+		)
+		object.Set(Next,
+			p.NewFunction(isBuiltIn, object.SymbolTable(),
+				p.NewNotImplementedCallable(Next, 0),
+			),
+		)
+		return nil
+	}
 }
