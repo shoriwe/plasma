@@ -350,7 +350,7 @@ func (p *Plasma) setBuiltInSymbols() {
 									if _, ok := symbolName.(*String); !ok {
 										return nil, p.NewInvalidTypeError(symbolName.TypeName(), StringName)
 									}
-									self.SetString(fmt.Sprintf("cannot delete built-in symbol %s", symbolName.GetString()))
+									self.SetString(fmt.Sprintf("cannot assign/delete built-in symbol %s", symbolName.GetString()))
 									return p.NewNone(), nil
 								},
 							),

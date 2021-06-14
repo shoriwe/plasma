@@ -108,6 +108,7 @@ func (p *Plasma) InitializeBytecode(bytecode *Bytecode) {
 			typeName:   ObjectName,
 			class:      nil,
 			subClasses: nil,
+			isBuiltIn:  true,
 			symbols:    p.builtInSymbolTable,
 		},
 	)
