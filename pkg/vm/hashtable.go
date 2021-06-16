@@ -1,8 +1,8 @@
 package vm
 
 type KeyValue struct {
-	Key   IObject
-	Value IObject
+	Key   Value
+	Value Value
 }
 
 type HashTable struct {
@@ -16,15 +16,16 @@ func (p *Plasma) NewHashTable(isBuiltIn bool, parent *SymbolTable, entries map[i
 	hashTable.SetKeyValues(entries)
 	hashTable.SetLength(entriesLength)
 	p.HashTableInitialize(isBuiltIn)(hashTable)
+	hashTable.Set(Self, hashTable)
 	return hashTable
 }
 
 func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object IObject) *Object {
+	return func(object Value) *Object {
 		object.Set(Equals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 
 						rawRight := arguments[0]
 						if _, ok := rawRight.(*HashTable); !ok {
@@ -67,7 +68,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 
 						rawLeft := arguments[0]
 						if _, ok := rawLeft.(*HashTable); !ok {
@@ -110,7 +111,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(NotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						rawRight := arguments[0]
 						if _, ok := rawRight.(*HashTable); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), true), nil
@@ -152,7 +153,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightNotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						rawLeft := arguments[0]
 						if _, ok := rawLeft.(*HashTable); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), true), nil
@@ -195,7 +196,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Hash,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(_ IObject, _ ...IObject) (IObject, *Object) {
+					func(_ Value, _ ...Value) (Value, *Object) {
 						panic("Implement me!!!")
 					},
 				),
@@ -204,7 +205,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Copy,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(_ IObject, _ ...IObject) (IObject, *Object) {
+					func(_ Value, _ ...Value) (Value, *Object) {
 						return nil, p.NewUnhashableTypeError(object.GetClass())
 					},
 				),
@@ -213,7 +214,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Index,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						indexObject := arguments[0]
 						indexObjectHash, getError := indexObject.Get(Hash)
 						if getError != nil {
@@ -233,12 +234,12 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						if !found {
 							return nil, p.NewKeyNotFoundError(indexObject)
 						}
-						var indexObjectEquals IObject
+						var indexObjectEquals Value
 						indexObjectEquals, getError = indexObject.Get(Equals)
 						if _, ok := indexObjectEquals.(*Function); !ok {
 							return nil, p.NewInvalidTypeError(indexObjectEquals.TypeName(), FunctionName)
 						}
-						var equals IObject
+						var equals Value
 						for _, keyValue := range keyValues {
 							equals, callError = p.CallFunction(indexObjectEquals.(*Function), indexObject.SymbolTable(), keyValue.Key)
 							if callError != nil {
@@ -259,7 +260,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Assign,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 2,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						indexObject := arguments[0]
 						newValue := arguments[1]
 						indexObjectHash, getError := indexObject.Get(Hash)
@@ -284,12 +285,12 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							})
 							return p.NewNone(), nil
 						}
-						var indexObjectEquals IObject
+						var indexObjectEquals Value
 						indexObjectEquals, getError = indexObject.Get(Equals)
 						if _, ok := indexObjectEquals.(*Function); !ok {
 							return nil, p.NewInvalidTypeError(indexObjectEquals.TypeName(), FunctionName)
 						}
-						var equals IObject
+						var equals Value
 						for index, keyValue := range keyValues {
 							equals, callError = p.CallFunction(indexObjectEquals.(*Function), indexObject.SymbolTable(), keyValue.Key)
 							if callError != nil {
@@ -319,7 +320,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Iter,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						toTuple, getError := self.Get(ToTuple)
 						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToTuple)
@@ -339,7 +340,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							p.NewFunction(isBuiltIn, iterator.SymbolTable(),
 								NewBuiltInClassFunction(iterator,
 									0,
-									func(funcSelf IObject, _ ...IObject) (IObject, *Object) {
+									func(funcSelf Value, _ ...Value) (Value, *Object) {
 										return p.NewBool(false, p.PeekSymbolTable(), int(funcSelf.GetInteger64()) < funcSelf.GetLength()), nil
 									},
 								),
@@ -349,7 +350,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							p.NewFunction(isBuiltIn, iterator.SymbolTable(),
 								NewBuiltInClassFunction(iterator,
 									0,
-									func(funcSelf IObject, _ ...IObject) (IObject, *Object) {
+									func(funcSelf Value, _ ...Value) (Value, *Object) {
 										value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
 										funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
 										return value, nil
@@ -366,12 +367,12 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToString,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						result := "{"
 						var (
-							keyString     IObject
-							valueToString IObject
-							valueString   IObject
+							keyString     Value
+							valueToString Value
+							valueString   Value
 							callError     *Object
 						)
 						for _, keyValues := range self.GetKeyValues() {
@@ -407,7 +408,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToBool,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						if self.GetLength() > 0 {
 							return p.NewBool(false, p.PeekSymbolTable(), true), nil
 						}
@@ -419,8 +420,8 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToArray,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
-						var keys []IObject
+					func(self Value, _ ...Value) (Value, *Object) {
+						var keys []Value
 						for _, keyValues := range self.GetKeyValues() {
 							for _, keyValue := range keyValues {
 								keys = append(keys, keyValue.Key)
@@ -434,8 +435,8 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToTuple,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
-						var keys []IObject
+					func(self Value, _ ...Value) (Value, *Object) {
+						var keys []Value
 						for _, keyValues := range self.GetKeyValues() {
 							for _, keyValue := range keyValues {
 								keys = append(keys, keyValue.Key)

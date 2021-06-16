@@ -1,6 +1,6 @@
 package vm
 
-func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments ...IObject) (IObject, *Object) {
+func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments ...Value) (Value, *Object) {
 	if function.Callable.NumberOfArguments() != len(arguments) {
 		//  Return Here a error related to number of arguments
 		return nil, p.NewInvalidNumberOfArgumentsError(len(arguments), function.Callable.NumberOfArguments())
@@ -13,7 +13,7 @@ func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments
 		symbols.Set(Self, function)
 	}
 	p.PushSymbolTable(symbols)
-	var result IObject
+	var result Value
 	var callError *Object
 	if callback != nil {
 		result, callError = callback(self, arguments...)
@@ -35,11 +35,11 @@ func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments
 	return result, nil
 }
 
-type FunctionCallback func(IObject, ...IObject) (IObject, *Object)
+type FunctionCallback func(Value, ...Value) (Value, *Object)
 
 func (p *Plasma) NewNotImplementedCallable(methodName string, numberOfArguments int) *BuiltInClassFunction {
 	return NewBuiltInClassFunction(nil, numberOfArguments,
-		func(self IObject, _ ...IObject) (IObject, *Object) {
+		func(self Value, _ ...Value) (Value, *Object) {
 			return nil, p.NewNotImplementedCallableError(methodName)
 		},
 	)
@@ -47,7 +47,7 @@ func (p *Plasma) NewNotImplementedCallable(methodName string, numberOfArguments 
 
 type Callable interface {
 	NumberOfArguments() int
-	Call() (IObject, FunctionCallback, []Code) // self should return directly the object or the code of the function
+	Call() (Value, FunctionCallback, []Code) // self should return directly the object or the code of the function
 }
 
 type PlasmaFunction struct {
@@ -59,7 +59,7 @@ func (p *PlasmaFunction) NumberOfArguments() int {
 	return p.numberOfArguments
 }
 
-func (p *PlasmaFunction) Call() (IObject, FunctionCallback, []Code) {
+func (p *PlasmaFunction) Call() (Value, FunctionCallback, []Code) {
 	return nil, nil, p.Code
 }
 
@@ -73,18 +73,18 @@ func NewPlasmaFunction(numberOfArguments int, code []Code) *PlasmaFunction {
 type PlasmaClassFunction struct {
 	numberOfArguments int
 	Code              []Code
-	Self              IObject
+	Self              Value
 }
 
 func (p *PlasmaClassFunction) NumberOfArguments() int {
 	return p.numberOfArguments
 }
 
-func (p *PlasmaClassFunction) Call() (IObject, FunctionCallback, []Code) {
+func (p *PlasmaClassFunction) Call() (Value, FunctionCallback, []Code) {
 	return p.Self, nil, p.Code
 }
 
-func NewPlasmaClassFunction(self IObject, numberOfArguments int, code []Code) *PlasmaClassFunction {
+func NewPlasmaClassFunction(self Value, numberOfArguments int, code []Code) *PlasmaClassFunction {
 	return &PlasmaClassFunction{
 		numberOfArguments: numberOfArguments,
 		Code:              code,
@@ -101,7 +101,7 @@ func (g *BuiltInFunction) NumberOfArguments() int {
 	return g.numberOfArguments
 }
 
-func (g *BuiltInFunction) Call() (IObject, FunctionCallback, []Code) {
+func (g *BuiltInFunction) Call() (Value, FunctionCallback, []Code) {
 	return nil, g.callback, nil
 }
 
@@ -115,18 +115,18 @@ func NewBuiltInFunction(numberOfArguments int, callback FunctionCallback) *Built
 type BuiltInClassFunction struct {
 	numberOfArguments int
 	callback          FunctionCallback
-	Self              IObject
+	Self              Value
 }
 
 func (g *BuiltInClassFunction) NumberOfArguments() int {
 	return g.numberOfArguments
 }
 
-func (g *BuiltInClassFunction) Call() (IObject, FunctionCallback, []Code) {
+func (g *BuiltInClassFunction) Call() (Value, FunctionCallback, []Code) {
 	return g.Self, g.callback, nil
 }
 
-func NewBuiltInClassFunction(self IObject, numberOfArguments int, callback FunctionCallback) *BuiltInClassFunction {
+func NewBuiltInClassFunction(self Value, numberOfArguments int, callback FunctionCallback) *BuiltInClassFunction {
 	return &BuiltInClassFunction{
 		numberOfArguments: numberOfArguments,
 		callback:          callback,

@@ -20,7 +20,7 @@ const (
 	BuiltInSymbolProtectionError  = "BuiltInSymbolProtectionError"  // Done
 )
 
-func (p *Plasma) ForceParentGetSelf(name string, parent *SymbolTable) IObject {
+func (p *Plasma) ForceParentGetSelf(name string, parent *SymbolTable) Value {
 	object, getError := parent.GetSelf(name)
 	if getError != nil {
 		panic(getError.String())
@@ -28,7 +28,7 @@ func (p *Plasma) ForceParentGetSelf(name string, parent *SymbolTable) IObject {
 	return object
 }
 
-func (p *Plasma) ForceAnyGetAny(name string) IObject {
+func (p *Plasma) ForceAnyGetAny(name string) Value {
 	object, getError := p.PeekSymbolTable().GetAny(name)
 	if getError != nil {
 		panic(getError.String())
@@ -36,7 +36,7 @@ func (p *Plasma) ForceAnyGetAny(name string) IObject {
 	return object
 }
 
-func (p *Plasma) ForceMasterGetAny(name string) IObject {
+func (p *Plasma) ForceMasterGetAny(name string) Value {
 	object, getError := p.builtInSymbolTable.GetAny(name)
 	if getError != nil {
 		panic(getError.String())
@@ -44,7 +44,7 @@ func (p *Plasma) ForceMasterGetAny(name string) IObject {
 	return object
 }
 
-func (p *Plasma) ForceConstruction(type_ IObject) IObject {
+func (p *Plasma) ForceConstruction(type_ Value) Value {
 	if _, ok := type_.(*Type); !ok {
 		panic("don't modify built-ins, or fatal errors like this one will ocurr")
 	}
@@ -55,7 +55,7 @@ func (p *Plasma) ForceConstruction(type_ IObject) IObject {
 	return result
 }
 
-func (p *Plasma) ForceInitialization(object IObject, arguments ...IObject) {
+func (p *Plasma) ForceInitialization(object Value, arguments ...Value) {
 	initialize, getError := object.Get(Initialize)
 	if getError != nil {
 		panic(getError.String())
@@ -83,7 +83,7 @@ func (p *Plasma) NewIntegerParsingError() *Object {
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewKeyNotFoundError(key IObject) *Object {
+func (p *Plasma) NewKeyNotFoundError(key Value) *Object {
 	errorType := p.ForceMasterGetAny(KeyNotFoundError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
@@ -189,11 +189,11 @@ func (p *Plasma) NewBuiltInSymbolProtectionError(symbolName string) *Object {
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) RuntimeErrorInitialize(object IObject) *Object {
+func (p *Plasma) RuntimeErrorInitialize(object Value) *Object {
 	object.Set(Initialize,
 		p.NewFunction(false, object.SymbolTable(),
 			NewBuiltInClassFunction(object, 2,
-				func(self IObject, arguments ...IObject) (IObject, *Object) {
+				func(self Value, arguments ...Value) (Value, *Object) {
 					message := arguments[0]
 					if _, ok := message.(*String); !ok {
 						return nil, p.NewInvalidTypeError(message.TypeName(), StringName)
@@ -207,7 +207,7 @@ func (p *Plasma) RuntimeErrorInitialize(object IObject) *Object {
 	object.Set(ToString,
 		p.NewFunction(false, object.SymbolTable(),
 			NewBuiltInClassFunction(object, 0,
-				func(self IObject, _ ...IObject) (IObject, *Object) {
+				func(self Value, _ ...Value) (Value, *Object) {
 					return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("%s: %s", self.TypeName(), self.GetString())), nil
 				},
 			),

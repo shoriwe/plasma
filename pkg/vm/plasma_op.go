@@ -2,7 +2,7 @@ package vm
 
 import "fmt"
 
-func (p *Plasma) Execute() (IObject, *Object) {
+func (p *Plasma) Execute() (Value, *Object) {
 	var executionError *Object
 	for ; p.PeekBytecode().HasNext(); {
 		code := p.PeekBytecode().Next()
@@ -229,7 +229,7 @@ func (p *Plasma) getNoneOP() *Object {
 
 func (p *Plasma) newTupleOP(code Code) *Object {
 	numberOfValues := code.Value.(int)
-	var values []IObject
+	var values []Value
 	for i := 0; i < numberOfValues; i++ {
 		values = append(values, p.PopObject())
 	}
@@ -239,7 +239,7 @@ func (p *Plasma) newTupleOP(code Code) *Object {
 
 func (p *Plasma) newArrayOP(code Code) *Object {
 	numberOfValues := code.Value.(int)
-	var values []IObject
+	var values []Value
 	for i := 0; i < numberOfValues; i++ {
 		values = append(values, p.PopObject())
 	}
@@ -311,7 +311,7 @@ func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *Object {
 	return nil
 }
 
-func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide IObject, rightHandSide IObject, operationName string) *Object {
+func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide Value, rightHandSide Value, operationName string) *Object {
 	operation, getError := rightHandSide.Get("Right" + operationName)
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError("Right" + operationName)
@@ -359,14 +359,14 @@ func (p *Plasma) selectNameFromObjectOP(code Code) *Object {
 func (p *Plasma) methodInvocationOP(code Code) *Object {
 	numberOfArguments := code.Value.(int)
 	function := p.PopObject()
-	var arguments []IObject
+	var arguments []Value
 	for i := 0; i < numberOfArguments; i++ {
 		if !p.MemoryStack.HasNext() {
 			return p.NewInvalidNumberOfArgumentsError(i, numberOfArguments)
 		}
 		arguments = append(arguments, p.PopObject())
 	}
-	var result IObject
+	var result Value
 	var callError *Object
 	switch function.(type) {
 	case *Function:
@@ -455,7 +455,7 @@ func (p *Plasma) returnOP(code Code) *Object {
 		return nil
 	}
 
-	var values []IObject
+	var values []Value
 	for i := 0; i < numberOfReturnValues; i++ {
 		if !p.MemoryStack.HasNext() {
 			return p.NewInvalidNumberOfArgumentsError(i, numberOfReturnValues)
@@ -574,7 +574,7 @@ func (p *Plasma) setupForLoopOP() *Object {
 		}
 	}
 	// Finally transform it to iterable
-	var valueIterFunc IObject
+	var valueIterFunc Value
 	valueIterFunc, getError = value.Get(Iter)
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(Iter)
@@ -606,7 +606,7 @@ func (p *Plasma) hasNextOP(code Code) *Object {
 		return callError
 	}
 	if _, ok := result.(*Bool); !ok {
-		var resultToBool IObject
+		var resultToBool Value
 		resultToBool, getError = hasNext.Get(ToBool)
 		if getError != nil {
 			return p.NewObjectWithNameNotFoundError(ToBool)
@@ -614,7 +614,7 @@ func (p *Plasma) hasNextOP(code Code) *Object {
 		if _, ok = resultToBool.(*Function); !ok {
 			return p.NewInvalidTypeError(resultToBool.TypeName(), FunctionName)
 		}
-		var resultBool IObject
+		var resultBool Value
 		resultBool, callError = p.CallFunction(resultToBool.(*Function), hasNext.SymbolTable())
 		if callError != nil {
 			return callError
@@ -655,7 +655,7 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
 	// First try to unpack iterators
 	hasNext, getError := p.IterStack.Peek().LastValue.Get(HasNext)
 	if _, ok := hasNext.(*Function); getError == nil && ok {
-		var next IObject
+		var next Value
 		next, getError = p.IterStack.Peek().LastValue.Get(Next)
 		if _, ok = next.(*Function); getError == nil && ok {
 			for _, receiver := range receivers {
@@ -664,9 +664,9 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
 				if callError != nil {
 					return callError
 				}
-				var hasNextResultBool IObject
+				var hasNextResultBool Value
 				if _, ok = hasNextResult.(*Bool); !ok {
-					var hasNextResultToBool IObject
+					var hasNextResultToBool Value
 					hasNextResultToBool, getError = hasNextResult.Get(ToBool)
 					if getError != nil {
 						return p.NewObjectWithNameNotFoundError(ToBool)
@@ -684,7 +684,7 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
 					hasNextResult = hasNextResultBool
 				}
 				if hasNextResult.GetBool() {
-					var value IObject
+					var value Value
 					value, callError = p.CallFunction(next.(*Function), p.IterStack.Peek().LastValue.SymbolTable())
 					if callError != nil {
 						return callError
@@ -696,9 +696,9 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
 		}
 	}
 	// Then try to unpack index-ables
-	var lastValue IObject
+	var lastValue Value
 	if _, ok := p.IterStack.Peek().LastValue.(*Tuple); !ok {
-		var toTuple IObject
+		var toTuple Value
 		toTuple, getError = p.IterStack.Peek().LastValue.Get(ToTuple)
 		if getError != nil {
 			return p.NewObjectWithNameNotFoundError(ToTuple)
@@ -728,7 +728,7 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
 
 func (p *Plasma) newIteratorOP(code Code) *Object {
 	source := p.PopObject()
-	var iterSource IObject
+	var iterSource Value
 	var callError *Object
 	if _, ok := source.(*Iterator); ok {
 		iterSource = source
@@ -911,7 +911,7 @@ func (p *Plasma) newModuleOP(code Code) *Object {
 	for i := 0; i < moduleInformation.CodeLength; i++ {
 		moduleBody = append(moduleBody, p.PeekBytecode().Next())
 	}
-	module := p.NewObject(false, ModuleName, nil, p.PeekSymbolTable())
+	module := p.NewModule(false, p.PeekSymbolTable())
 	p.PushSymbolTable(module.SymbolTable())
 	p.PushBytecode(NewBytecodeFromArray(moduleBody))
 	_, executionError := p.Execute()
@@ -985,7 +985,7 @@ func (p *Plasma) caseOP(code Code) *Object {
 	if callError != nil {
 		return callError
 	}
-	var boolResult IObject
+	var boolResult Value
 	if _, ok := result.(*Bool); ok {
 		boolResult = result
 	} else {

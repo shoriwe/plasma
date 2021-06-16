@@ -33,11 +33,12 @@ func (p *Plasma) NewType(
 	result.Set(ToString,
 		p.NewFunction(isBuiltIn, result.symbols,
 			NewBuiltInClassFunction(result, 0,
-				func(_ IObject, _ ...IObject) (IObject, *Object) {
+				func(_ Value, _ ...Value) (Value, *Object) {
 					return p.NewString(false, p.PeekSymbolTable(), "Type@"+typeName), nil
 				},
 			),
 		),
 	)
+	result.Set(Self, result)
 	return result
 }

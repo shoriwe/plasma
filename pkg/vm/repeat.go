@@ -1,8 +1,8 @@
 package vm
 
-func (p *Plasma) Repeat(content []IObject, times int) ([]IObject, *Object) {
+func (p *Plasma) Repeat(content []Value, times int) ([]Value, *Object) {
 	copyFunctions := map[int64]*Function{}
-	var result []IObject
+	var result []Value
 	if times > 0 {
 		for _, object := range content {
 			copyObject, getError := object.Get(Copy)

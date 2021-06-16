@@ -1,6 +1,6 @@
 package vm
 
-func (p *Plasma) constructSubClass(subClass *Type, object IObject) *Object {
+func (p *Plasma) constructSubClass(subClass *Type, object Value) *Object {
 	for _, subSubClass := range subClass.subClasses {
 		object.SymbolTable().Parent = subSubClass.symbols.Parent
 		subSubClassConstructionError := p.constructSubClass(subSubClass, object)
@@ -16,7 +16,7 @@ func (p *Plasma) constructSubClass(subClass *Type, object IObject) *Object {
 	return nil
 }
 
-func (p *Plasma) ConstructObject(type_ *Type, parent *SymbolTable) (IObject, *Object) {
+func (p *Plasma) ConstructObject(type_ *Type, parent *SymbolTable) (Value, *Object) {
 	object := p.NewObject(false, type_.Name, type_.subClasses, parent)
 	for _, subclass := range object.subClasses {
 		subClassConstructionError := p.constructSubClass(subclass, object)
@@ -34,7 +34,7 @@ func (p *Plasma) ConstructObject(type_ *Type, parent *SymbolTable) (IObject, *Ob
 }
 
 type Constructor interface {
-	Construct(*Plasma, IObject) *Object
+	Construct(*Plasma, Value) *Object
 }
 
 type PlasmaConstructor struct {
@@ -42,7 +42,7 @@ type PlasmaConstructor struct {
 	Code []Code
 }
 
-func (c *PlasmaConstructor) Construct(vm *Plasma, object IObject) *Object {
+func (c *PlasmaConstructor) Construct(vm *Plasma, object Value) *Object {
 	vm.PushBytecode(NewBytecodeFromArray(c.Code))
 	vm.PushSymbolTable(object.SymbolTable())
 	vm.PushObject(object)
@@ -58,14 +58,14 @@ func NewPlasmaConstructor(code []Code) *PlasmaConstructor {
 	}
 }
 
-type ConstructorCallBack func(IObject) *Object
+type ConstructorCallBack func(Value) *Object
 
 type BuiltInConstructor struct {
 	Constructor
 	callback ConstructorCallBack
 }
 
-func (c *BuiltInConstructor) Construct(_ *Plasma, object IObject) *Object {
+func (c *BuiltInConstructor) Construct(_ *Plasma, object Value) *Object {
 	return c.callback(object)
 }
 

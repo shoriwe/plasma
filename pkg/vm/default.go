@@ -16,6 +16,7 @@ import (
 	Array        - (Done)
 	Tuple        - (Done)
 	Hash         - (Done)
+	Expand       - (Done)
 	Id           - (Done)
 	Range        - (Done)
 	Len          - (Done)
@@ -44,7 +45,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	type_.Set(ToString,
 		p.NewFunction(true, type_.symbols,
 			NewBuiltInClassFunction(type_, 0,
-				func(_ IObject, _ ...IObject) (IObject, *Object) {
+				func(_ Value, _ ...Value) (Value, *Object) {
 					return p.NewString(false, p.PeekSymbolTable(), "Type@Object"), nil
 				},
 			),
@@ -57,11 +58,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(InvalidTypeError,
 		p.NewType(true, InvalidTypeError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 2,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									received := arguments[0]
 									if _, ok := received.(*String); !ok {
 										return nil, p.NewInvalidTypeError(received.TypeName(), StringName)
@@ -84,11 +85,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(NotImplementedCallableError,
 		p.NewType(true, NotImplementedCallableError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 1,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									methodNameObject := arguments[0]
 									methodNameObjectToString, getError := methodNameObject.Get(ToString)
 									if getError != nil {
@@ -118,11 +119,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(ObjectConstructionError,
 		p.NewType(true, ObjectConstructionError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 2,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									typeName := arguments[0]
 									if _, ok := typeName.(*String); !ok {
 										return nil, p.NewInvalidTypeError(typeName.TypeName(), StringName)
@@ -145,11 +146,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(ObjectWithNameNotFoundError,
 		p.NewType(true, ObjectWithNameNotFoundError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 1,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									name := arguments[0]
 									if _, ok := name.(*String); !ok {
 										return nil, p.NewInvalidTypeError(name.TypeName(), StringName)
@@ -169,11 +170,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(InvalidNumberOfArgumentsError,
 		p.NewType(true, InvalidNumberOfArgumentsError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 2,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									received := arguments[0]
 									if _, ok := received.(*Integer); !ok {
 										return nil, p.NewInvalidTypeError(received.TypeName(), IntegerName)
@@ -196,11 +197,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(GoRuntimeError,
 		p.NewType(true, GoRuntimeError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 1,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									runtimeError := arguments[0]
 									if _, ok := runtimeError.(*String); !ok {
 										return nil, p.NewInvalidTypeError(runtimeError.TypeName(), StringName)
@@ -219,11 +220,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(UnhashableTypeError,
 		p.NewType(true, UnhashableTypeError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 1,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									objectType := arguments[0]
 									if _, ok := objectType.(*Type); !ok {
 										return nil, p.NewInvalidTypeError(objectType.TypeName(), TypeName)
@@ -242,11 +243,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(IndexOutOfRangeError,
 		p.NewType(true, IndexOutOfRangeError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 2,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									length := arguments[0]
 									if _, ok := length.(*Integer); !ok {
 										return nil, p.NewInvalidTypeError(length.TypeName(), IntegerName)
@@ -269,11 +270,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(KeyNotFoundError,
 		p.NewType(true, KeyNotFoundError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 1,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									key := arguments[0]
 									keyToString, getError := key.Get(ToString)
 									if getError != nil {
@@ -303,11 +304,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(IntegerParsingError,
 		p.NewType(true, IntegerParsingError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 0,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									self.SetString("Integer parsing error")
 									return p.NewNone(), nil
 								},
@@ -322,11 +323,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(FloatParsingError,
 		p.NewType(true, FloatParsingError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 0,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									self.SetString("Float parsing error")
 									return p.NewNone(), nil
 								},
@@ -341,11 +342,11 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(BuiltInSymbolProtectionError,
 		p.NewType(true, BuiltInSymbolProtectionError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
-				func(object IObject) *Object {
+				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
 							NewBuiltInClassFunction(object, 1,
-								func(self IObject, arguments ...IObject) (IObject, *Object) {
+								func(self Value, arguments ...Value) (Value, *Object) {
 									symbolName := arguments[0]
 									if _, ok := symbolName.(*String); !ok {
 										return nil, p.NewInvalidTypeError(symbolName.TypeName(), StringName)
@@ -367,6 +368,11 @@ func (p *Plasma) setBuiltInSymbols() {
 			NewBuiltInConstructor(p.NoneInitialize),
 		),
 	)
+	p.builtInSymbolTable.Set(ModuleName,
+		p.NewType(true, ModuleName, p.builtInSymbolTable, []*Type{type_},
+			NewBuiltInConstructor(p.ModuleInitialize(false)),
+		),
+	)
 	p.builtInSymbolTable.Set(BoolName,
 		p.NewType(true, BoolName, p.builtInSymbolTable, []*Type{type_},
 			NewBuiltInConstructor(p.BoolInitialize(false)),
@@ -374,20 +380,22 @@ func (p *Plasma) setBuiltInSymbols() {
 	)
 	p.builtInSymbolTable.Set(IteratorName,
 		p.NewType(true, IteratorName, p.builtInSymbolTable, []*Type{type_},
-			NewBuiltInConstructor(p.IteratorInitialize(true)),
+			NewBuiltInConstructor(p.IteratorInitialize(false)),
+		),
+	)
+	p.builtInSymbolTable.Set(FloatName,
+		p.NewType(true, FloatName, p.builtInSymbolTable, []*Type{type_},
+			NewBuiltInConstructor(p.FloatInitialize(false)),
 		),
 	)
 	p.builtInSymbolTable.Set(ObjectName,
 		p.NewType(true, ObjectName, p.builtInSymbolTable, []*Type{type_},
-			NewBuiltInConstructor(p.ObjectInitialize(true)),
+			NewBuiltInConstructor(p.ObjectInitialize(false)),
 		),
 	)
 	p.builtInSymbolTable.Set(FunctionName,
 		p.NewType(true, FunctionName, p.builtInSymbolTable, []*Type{type_},
-			NewBuiltInConstructor(
-				func(object IObject) *Object {
-					return nil
-				}),
+			NewBuiltInConstructor(p.FunctionInitialize(false)),
 		),
 	)
 	p.builtInSymbolTable.Set(IntegerName,
@@ -423,12 +431,25 @@ func (p *Plasma) setBuiltInSymbols() {
 	// Names
 
 	// Functions
+	p.builtInSymbolTable.Set("expand",
+		p.NewFunction(true, p.builtInSymbolTable,
+			NewBuiltInFunction(2,
+				func(_ Value, arguments ...Value) (Value, *Object) {
+					receiver := arguments[0]
+					for symbol, object := range arguments[1].SymbolTable().Symbols {
+						receiver.Set(symbol, object)
+					}
+					return p.NewNone(), nil
+				},
+			),
+		),
+	)
 	p.builtInSymbolTable.Set("dir",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					object := arguments[0]
-					var symbols []IObject
+					var symbols []Value
 					for symbol := range object.SymbolTable().Symbols {
 						symbols = append(symbols, p.NewString(false, p.PeekSymbolTable(), symbol))
 					}
@@ -440,7 +461,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("set",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(3,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					source := arguments[0]
 					symbol := arguments[1]
 					value := arguments[2]
@@ -459,7 +480,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("get_from",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(2,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					source := arguments[0]
 					symbol := arguments[1]
 					if _, ok := symbol.(*String); !ok {
@@ -477,7 +498,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("delete_from",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(2,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					source := arguments[0]
 					symbol := arguments[1]
 					if _, ok := symbol.(*String); !ok {
@@ -499,9 +520,9 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("input",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					message := arguments[0]
-					var messageString IObject
+					var messageString Value
 					if _, ok := message.(*String); !ok {
 						messageToString, getError := message.Get(ToString)
 						if getError != nil {
@@ -536,7 +557,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("print",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					value := arguments[0]
 					toString, getError := value.Get(ToString)
 					if getError != nil {
@@ -561,7 +582,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("println",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					value := arguments[0]
 					toString, getError := value.Get(ToString)
 					if getError != nil {
@@ -586,7 +607,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("id",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					object := arguments[0]
 					return p.NewInteger(false, p.PeekSymbolTable(), object.Id()), nil
 				},
@@ -596,7 +617,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("hash",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					object := arguments[0]
 					objectHashFunc, getError := object.Get(Hash)
 					if getError != nil {
@@ -613,7 +634,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("range",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(3,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					start := arguments[0]
 					if _, ok := start.(*Integer); !ok {
 						return nil, p.NewInvalidTypeError(start.TypeName(), IntegerName)
@@ -639,7 +660,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					rangeIterator.Set(HasNext,
 						p.NewFunction(true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
-								func(self IObject, _ ...IObject) (IObject, *Object) {
+								func(self Value, _ ...Value) (Value, *Object) {
 									return p.NewBool(false, p.PeekSymbolTable(), self.GetInteger64() < endValue), nil
 								},
 							),
@@ -648,7 +669,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					rangeIterator.Set(Next,
 						p.NewFunction(true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
-								func(self IObject, _ ...IObject) (IObject, *Object) {
+								func(self Value, _ ...Value) (Value, *Object) {
 									number := self.GetInteger64()
 									self.SetInteger64(number + stepValue)
 									return p.NewInteger(false, p.PeekSymbolTable(), number), nil
@@ -665,7 +686,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set("len",
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					object := arguments[0]
 					getLength, getError := object.Get(GetLength)
 					if getError != nil {
@@ -690,13 +711,13 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(ToFloat,
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					toFloat, getError := arguments[0].Get(ToFloat)
 					if getError != nil {
 						return nil, p.NewObjectWithNameNotFoundError(ToFloat)
 					}
 					if _, ok := toFloat.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(toFloat.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toFloat.(Value).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toFloat.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -706,13 +727,13 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(ToString,
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					toString, getError := arguments[0].Get(ToString)
 					if getError != nil {
 						return nil, p.NewObjectWithNameNotFoundError(ToString)
 					}
 					if _, ok := toString.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(toString.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toString.(Value).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toString.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -722,13 +743,13 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(ToInteger,
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					toInteger, getError := arguments[0].Get(ToInteger)
 					if getError != nil {
 						return nil, p.NewObjectWithNameNotFoundError(ToInteger)
 					}
 					if _, ok := toInteger.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(toInteger.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toInteger.(Value).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toInteger.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -738,7 +759,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(ToArray,
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					// First check if it is iterable
 					// If not call its ToArray
 					toArray, getError := arguments[0].Get(ToArray)
@@ -746,7 +767,7 @@ func (p *Plasma) setBuiltInSymbols() {
 						return nil, p.NewObjectWithNameNotFoundError(ToArray)
 					}
 					if _, ok := toArray.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(toArray.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toArray.(Value).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toArray.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -756,7 +777,7 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(ToTuple,
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					// First check if it is iterable
 					// If not call its ToTuple
 					toTuple, getError := arguments[0].Get(ToTuple)
@@ -764,7 +785,7 @@ func (p *Plasma) setBuiltInSymbols() {
 						return nil, p.NewObjectWithNameNotFoundError(ToTuple)
 					}
 					if _, ok := toTuple.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(toTuple.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toTuple.(Value).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toTuple.(*Function), arguments[0].SymbolTable().Parent)
 				},
@@ -774,13 +795,13 @@ func (p *Plasma) setBuiltInSymbols() {
 	p.builtInSymbolTable.Set(ToBool,
 		p.NewFunction(true, p.builtInSymbolTable,
 			NewBuiltInFunction(1,
-				func(_ IObject, arguments ...IObject) (IObject, *Object) {
+				func(_ Value, arguments ...Value) (Value, *Object) {
 					toBool, getError := arguments[0].Get(ToBool)
 					if getError != nil {
 						return nil, p.NewObjectWithNameNotFoundError(ToBool)
 					}
 					if _, ok := toBool.(*Function); !ok {
-						return nil, p.NewInvalidTypeError(toBool.(IObject).TypeName(), FunctionName)
+						return nil, p.NewInvalidTypeError(toBool.(Value).TypeName(), FunctionName)
 					}
 					return p.CallFunction(toBool.(*Function), arguments[0].SymbolTable().Parent)
 				},

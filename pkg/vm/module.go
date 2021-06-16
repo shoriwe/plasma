@@ -1,15 +1,8 @@
 package vm
 
-import (
-	"fmt"
-)
+import "fmt"
 
-type Function struct {
-	*Object
-	Callable Callable
-}
-
-func (p *Plasma) FunctionInitialize(isBuiltIn bool) ConstructorCallBack {
+func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(object Value) *Object {
 		object.Set(Hash, &Function{
 			Object: &Object{
@@ -68,7 +61,7 @@ func (p *Plasma) FunctionInitialize(isBuiltIn bool) ConstructorCallBack {
 				},
 				Callable: NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("Function-%d", object.Id())), nil
+						return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("Module-%d", object.Id())), nil
 					},
 				),
 			},
@@ -76,19 +69,16 @@ func (p *Plasma) FunctionInitialize(isBuiltIn bool) ConstructorCallBack {
 		return nil
 	}
 }
-
-func (p *Plasma) NewFunction(isBuiltIn bool, parentSymbols *SymbolTable, callable Callable) *Function {
-	function := &Function{
-		Object: &Object{
-			id:         p.NextId(),
-			typeName:   FunctionName,
-			subClasses: nil,
-			symbols:    NewSymbolTable(parentSymbols),
-			isBuiltIn:  isBuiltIn,
-		},
-		Callable: callable,
+func (p *Plasma) NewModule(isBuiltIn bool, parent *SymbolTable) Value {
+	module := &Object{
+		isBuiltIn:  isBuiltIn,
+		id:         p.NextId(),
+		typeName:   ModuleName,
+		class:      nil,
+		subClasses: nil,
+		symbols:    NewSymbolTable(parent),
 	}
-	function.Set(Self, function)
-	p.FunctionInitialize(isBuiltIn)(function)
-	return function
+	module.Set(Self, module)
+	p.ModuleInitialize(isBuiltIn)(module)
+	return module
 }

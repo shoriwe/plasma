@@ -14,7 +14,7 @@ const (
 	polySize = 0xffffffff
 )
 
-type ObjectLoader func(*Plasma) IObject
+type ObjectLoader func(*Plasma) Value
 
 type Plasma struct {
 	currentId          int64
@@ -41,14 +41,14 @@ func (p *Plasma) NextId() int64 {
 	return result
 }
 
-func (p *Plasma) PushObject(object IObject) {
+func (p *Plasma) PushObject(object Value) {
 	p.MemoryStack.Push(object)
 }
-func (p *Plasma) PeekObject() IObject {
+func (p *Plasma) PeekObject() Value {
 	return p.MemoryStack.Peek()
 }
 
-func (p *Plasma) PopObject() IObject {
+func (p *Plasma) PopObject() Value {
 	return p.MemoryStack.Pop()
 }
 

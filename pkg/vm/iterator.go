@@ -9,11 +9,12 @@ func (p *Plasma) NewIterator(isBuiltIn bool, parentSymbols *SymbolTable) *Iterat
 		Object: p.NewObject(isBuiltIn, IteratorName, nil, parentSymbols),
 	}
 	p.IteratorInitialize(isBuiltIn)(iterator)
+	iterator.Set(Self, iterator)
 	return iterator
 }
 
 func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object IObject) *Object {
+	return func(object Value) *Object {
 		object.Set(HasNext,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				p.NewNotImplementedCallable(HasNext, 0),
