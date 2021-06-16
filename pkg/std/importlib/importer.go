@@ -21,7 +21,7 @@ type context struct {
 	root        string
 }
 
-type settings struct {
+type Settings struct {
 	Name         string
 	Version      string
 	Resources    string
@@ -385,7 +385,7 @@ func moduleImport(memory map[string]vm.Value, ctx *context, sitePackages FileSys
 					if readingError != nil {
 						return nil, p.NewGoRuntimeError(readingError)
 					}
-					var moduleSettings settings
+					var moduleSettings Settings
 					jsonParsingError := json.Unmarshal(jsonContent, &moduleSettings)
 					if jsonParsingError != nil {
 						return nil, p.NewGoRuntimeError(jsonParsingError)
