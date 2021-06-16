@@ -2,34 +2,31 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
 	"github.com/shoriwe/gplasma/pkg/errors"
 	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/shoriwe/gplasma/pkg/std/importlib"
 	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
 const (
-	REPL = iota
-	Program
-
-	QuickHelp           = "-h"
-	Help                = "--help"
-	QuickDisableImports = "-I"
-	DisableImports      = "--no-imports"
-
-	NoColor = "NoColor"
+	NoColor      = "NoColor"
+	SitePackages = "SitePackages"
 )
 
 var (
-	files          []string
-	virtualMachine *vm.Plasma
-	flagOptions    map[string]configOption
-	envOptions     map[string]configOption
-	mode           = REPL
+	files                   []string
+	virtualMachine          *vm.Plasma
+	flagOptions             map[string]configOption
+	envOptions              map[string]configOption
+	defaultSitePackagesPath = true
+	sitePackagesPath        = "site-packages"
 )
 
 type configOption struct {
@@ -45,6 +42,14 @@ func noColor() {
 		color.NoColor = true
 	} else {
 		color.NoColor = false
+	}
+}
+
+func sitePackages() {
+	value := os.Getenv(SitePackages)
+	if value != "" {
+		sitePackagesPath = os.Getenv(SitePackages)
+		defaultSitePackagesPath = false
 	}
 }
 
@@ -67,47 +72,56 @@ func help() {
 
 // Setup the vm based on the options
 func setupVm() {
-	if len(files) > 0 {
-		mode = Program
-	}
 	virtualMachine = vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
+	currentDir, err := os.Getwd()
+	if err != nil {
+		currentDir = "."
+	}
+	virtualMachine.LoadBuiltInSymbols(
+		importlib.NewImporter(
+			importlib.NewRealFileSystem(sitePackagesPath),
+			importlib.NewRealFileSystem(currentDir),
+		),
+	)
 	// Setup from here the other flags
 }
 
 func init() {
-	flagOptions = map[string]configOption{
-		Help: {
-			extra:       QuickHelp,
-			description: "Show this help message",
-			onFound:     help,
-		},
-	}
 	envOptions = map[string]configOption{
 		NoColor: {
 			extra:       fmt.Sprintf("%s or %s", color.YellowString("TRUE"), color.YellowString("FALSE")),
 			description: "Disable color printing for this CLI",
 			onFound:     noColor,
 		},
+		SitePackages: {
+			extra:       fmt.Sprintf("%s", color.YellowString("PATH")),
+			description: fmt.Sprintf("This is the path to the Site-Packages of the running VM; Default is %s", color.BlueString("PATH/TO/PLASMA/EXECUTABLE/%s", sitePackagesPath)),
+			onFound:     sitePackages,
+		},
 	}
 	for _, information := range envOptions {
 		information.onFound()
 	}
-	for index, argument := range os.Args[1:] {
-		if argument[0] == '-' {
-			switch argument {
-			case QuickHelp, Help:
-				help()
-			case QuickDisableImports, DisableImports:
-				break // ToDo: Implement me
-			default:
-				_, _ = fmt.Fprintf(os.Stderr, "Option %s -> %s Unknown", color.BlueString("%d", index+1), color.RedString("%s", argument))
+	if defaultSitePackagesPath {
+		exePath, err := os.Executable()
+		if err != nil {
+			panic(err)
+		}
+		directory, _ := filepath.Split(exePath)
+		sitePackagesPath = filepath.Join(directory, sitePackagesPath)
+	}
+	if _, err := os.Stat(sitePackagesPath); err != nil {
+		if os.IsNotExist(err) {
+			dirCreationError := os.Mkdir(sitePackagesPath, 0755)
+			if dirCreationError != nil {
+				_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), dirCreationError.Error())
 				os.Exit(1)
 			}
 		} else {
-			files = append(files, argument)
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), err.Error())
+			os.Exit(1)
 		}
 	}
-	setupVm()
 }
 
 func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
@@ -225,11 +239,123 @@ func program() {
 	}
 }
 
-func main() {
-	switch mode {
-	case REPL:
+func helpModules() {
+	fmt.Printf("%s module OPTION ARGUMENT\n", color.BlueString("%s", os.Args[0]))
+	fmt.Printf("\n[%s] Options\n", color.BlueString("+"))
+	fmt.Printf("\t%s -> %s\t\t%s\n", color.RedString("install"), color.YellowString("MODULE_PATH"), "Install a module in path")
+	fmt.Printf("\t%s -> %s\t\t%s\n", color.RedString("uninstall"), color.YellowString("MODULE_PATH"), "Uninstall a module in path")
+	fmt.Printf("\n[%s] Environment Variables\n", color.BlueString("+"))
+	for option, information := range envOptions {
+		fmt.Printf("\t%s -> %s\t\t%s\n", color.RedString("%s", option), color.YellowString("%s", information.extra), information.description)
+	}
+	fmt.Println()
+	os.Exit(0)
+}
+
+func installModule() {
+
+}
+
+func uninstallModule() {
+	if len(os.Args) != 4 {
+		fmt.Printf("%s module uninstall MODULE_NAME[@MODULE_VERSION]", os.Args[0])
+		os.Exit(0)
+	}
+	module := os.Args[3]
+	splitModule := strings.Split(module, "@")
+	version := "all"
+	if len(splitModule) > 2 {
+		panic("Invalid nomenclature of MODULE@VERSION")
+	}
+	moduleName := splitModule[0]
+	if len(splitModule) == 2 {
+		version = splitModule[1]
+	}
+	modulePath := filepath.Join(sitePackagesPath, moduleName)
+	_, err := os.Stat(modulePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			panic("No module with name " + moduleName + " installer")
+		} else {
+			panic(err)
+		}
+	}
+	if version == "all" {
+		removeError := os.RemoveAll(modulePath)
+		if removeError != nil {
+			panic(removeError)
+		}
+		os.Exit(0)
+	}
+	modulePath = filepath.Join(modulePath, version)
+	_, err = os.Stat(modulePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			panic("No module with name " + moduleName + " installer")
+		} else {
+			panic(err)
+		}
+	}
+	removeError := os.RemoveAll(modulePath)
+	if removeError != nil {
+		panic(removeError)
+	}
+	os.Exit(0)
+}
+
+func modules() {
+	if len(os.Args) == 2 {
+		helpModules()
+		os.Exit(0)
+	}
+	switch os.Args[2] {
+	case "install":
+		installModule()
+	case "uninstall":
+		uninstallModule()
+	default:
+		helpModules()
+		os.Exit(1)
+	}
+}
+
+func execution() {
+	if len(os.Args) == 1 {
+		setupVm()
 		repl()
-	case Program:
+		os.Exit(0)
+	}
+	for _, arg := range os.Args {
+		if arg == "-h" || arg == "--help" {
+			help()
+			os.Exit(0)
+		}
+	}
+	plasmaFlagSet := flag.NewFlagSet("plasma", flag.ExitOnError)
+	parsingError := plasmaFlagSet.Parse(os.Args[1:])
+	if parsingError != nil {
+		panic(parsingError)
+	}
+
+	if len(plasmaFlagSet.Args()) == 0 {
+		setupVm()
+		repl()
+	} else {
+		files = plasmaFlagSet.Args()
+		setupVm()
 		program()
+	}
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		execution()
+		os.Exit(0)
+	}
+	switch os.Args[1] {
+	case "module":
+		modules()
+	default:
+		execution()
 	}
 }

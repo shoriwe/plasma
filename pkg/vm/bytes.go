@@ -10,22 +10,23 @@ type Bytes struct {
 	*Object
 }
 
-func (p *Plasma) NewBytes(isBuiltIn bool, parent *SymbolTable, content []uint8) IObject {
+func (p *Plasma) NewBytes(isBuiltIn bool, parent *SymbolTable, content []uint8) Value {
 	bytes_ := &Bytes{
 		Object: p.NewObject(false, BytesName, nil, parent),
 	}
 	bytes_.SetBytes(content)
 	bytes_.SetLength(len(content))
 	p.BytesInitialize(isBuiltIn)(bytes_)
+	bytes_.Set(Self, bytes_)
 	return bytes_
 }
 
 func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object IObject) *Object {
+	return func(object Value) *Object {
 		object.Set(Add,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Bytes); !ok {
 							return nil, p.NewInvalidTypeError(right.TypeName(), BytesName)
@@ -41,7 +42,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightAdd,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Bytes); !ok {
 							return nil, p.NewInvalidTypeError(left.TypeName(), BytesName)
@@ -57,7 +58,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Mul,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(right.TypeName(), IntegerName)
@@ -70,7 +71,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightMul,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(left.TypeName(), IntegerName)
@@ -83,7 +84,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Equals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Bytes); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -99,7 +100,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Bytes); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -115,7 +116,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(NotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Bytes); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -131,7 +132,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightNotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Bytes); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -147,7 +148,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Hash,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						selfHash := p.HashBytes(append(self.GetBytes(), []byte("Bytes")...))
 						return p.NewInteger(false, p.PeekSymbolTable(), selfHash), nil
 					},
@@ -157,7 +158,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Copy,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						var newBytes []uint8
 						copy(newBytes, self.GetBytes())
 						return p.NewBytes(false, p.PeekSymbolTable(), newBytes), nil
@@ -168,7 +169,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Index,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						indexObject := arguments[0]
 						var ok bool
 						if _, ok = indexObject.(*Integer); ok {
@@ -201,7 +202,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Iter,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						iterator := p.NewIterator(false, p.PeekSymbolTable())
 						iterator.SetInteger64(0) // This is the index
 						iterator.SetBytes(self.GetBytes())
@@ -210,7 +211,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 							p.NewFunction(isBuiltIn, iterator.SymbolTable(),
 								NewBuiltInClassFunction(iterator,
 									0,
-									func(funcSelf IObject, _ ...IObject) (IObject, *Object) {
+									func(funcSelf Value, _ ...Value) (Value, *Object) {
 										if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
 											return p.NewBool(false, p.PeekSymbolTable(), true), nil
 										}
@@ -223,7 +224,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 							p.NewFunction(isBuiltIn, iterator.SymbolTable(),
 								NewBuiltInClassFunction(iterator,
 									0,
-									func(funcSelf IObject, _ ...IObject) (IObject, *Object) {
+									func(funcSelf Value, _ ...Value) (Value, *Object) {
 										char := funcSelf.GetBytes()[int(funcSelf.GetInteger64())]
 										funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
 										return p.NewInteger(false, p.PeekSymbolTable(), int64(char)), nil
@@ -239,7 +240,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToInteger,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewInteger(false, p.PeekSymbolTable(), int64(binary.BigEndian.Uint32(self.GetBytes()))), nil
 					},
 				),
@@ -248,7 +249,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToString,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewString(false, p.PeekSymbolTable(), string(self.GetBytes())), nil
 					},
 				),
@@ -257,7 +258,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToBool,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewBool(false, p.PeekSymbolTable(), self.GetLength() != 0), nil
 					},
 				),
@@ -266,8 +267,8 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToArray,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
-						var newContent []IObject
+					func(self Value, _ ...Value) (Value, *Object) {
+						var newContent []Value
 						for _, byte_ := range self.GetBytes() {
 							newContent = append(newContent, p.NewInteger(false, p.PeekSymbolTable(), int64(byte_)))
 						}
@@ -279,8 +280,8 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToTuple,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
-						var newContent []IObject
+					func(self Value, _ ...Value) (Value, *Object) {
+						var newContent []Value
 						for _, byte_ := range self.GetBytes() {
 							newContent = append(newContent, p.NewInteger(false, p.PeekSymbolTable(), int64(byte_)))
 						}

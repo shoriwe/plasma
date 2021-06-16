@@ -12,11 +12,11 @@
 
 ```json
 {
-  "name": "TheModuleName",
-  "version": "0.0.0",
-  "resources": "path/to/the/relative/resources/directory",
-  "entry-script": "path/to/the/relative/entry/script/of/the/module",
-  "dependencies": [
+  "Name": "TheModuleName",
+  "Version": "0.0.0",
+  "Resources": "path/to/the/relative/resources/directory",
+  "EntryScript": "path/to/the/relative/entry/script/of/the/module",
+  "Dependencies": [
     "dependency_1",
     "dependency_2"
   ]
@@ -124,7 +124,7 @@ site-packages
 └───module
     └───0.0.0
         │   file.pm
-        │   module.json
+        │   settings.json
         │
         └───resources
 ```

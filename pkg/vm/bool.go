@@ -14,15 +14,16 @@ func (p *Plasma) NewBool(isBuiltIn bool, parentSymbols *SymbolTable, value bool)
 	}
 	bool_.SetBool(value)
 	p.BoolInitialize(isBuiltIn)(bool_)
+	bool_.Set(Self, bool_)
 	return bool_
 }
 
 func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object IObject) *Object {
+	return func(object Value) *Object {
 		object.Set(Equals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Bool); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -35,7 +36,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Bool); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -48,7 +49,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(NotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Bool); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -61,7 +62,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightNotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Bool); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -74,7 +75,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Copy,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 
 						if self.GetHash() == 0 {
 							boolHash := p.HashString(fmt.Sprintf("%t-%s", self.GetBool(), BoolName))
@@ -88,7 +89,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Copy,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewBool(false, p.PeekSymbolTable(), self.GetBool()), nil
 					},
 				),
@@ -97,7 +98,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToInteger,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						if self.GetBool() {
 							return p.NewInteger(false, p.PeekSymbolTable(), 1), nil
 						}
@@ -109,7 +110,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToFloat,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						if self.GetBool() {
 							return p.NewFloat(false, p.PeekSymbolTable(), 1), nil
 						}
@@ -121,7 +122,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToString,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 
 						if self.GetBool() {
 							return p.NewString(false, p.PeekSymbolTable(), TrueName), nil
@@ -134,7 +135,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToBool,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 
 						return p.NewBool(false, p.PeekSymbolTable(), self.GetBool()), nil
 					},

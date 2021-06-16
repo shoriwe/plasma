@@ -8,22 +8,23 @@ type Array struct {
 	*Object
 }
 
-func (p *Plasma) NewArray(isBuiltIn bool, parentSymbols *SymbolTable, content []IObject) *Array {
+func (p *Plasma) NewArray(isBuiltIn bool, parentSymbols *SymbolTable, content []Value) *Array {
 	array := &Array{
 		Object: p.NewObject(false, ArrayName, nil, parentSymbols),
 	}
 	array.SetContent(content)
 	array.SetLength(len(content))
 	p.ArrayInitialize(isBuiltIn)(array)
+	array.Set(Self, array)
 	return array
 }
 
 func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object IObject) *Object {
+	return func(object Value) *Object {
 		object.SymbolTable().Set(Mul,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						switch right.(type) {
 						case *Integer:
@@ -42,7 +43,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.SymbolTable().Set(RightMul,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						switch left.(type) {
 						case *Integer:
@@ -61,7 +62,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Equals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Array); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -69,11 +70,11 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 						if self.GetLength() != right.GetLength() {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
 						}
-						var rightEquals IObject
-						var comparisonResult IObject
+						var rightEquals Value
+						var comparisonResult Value
 						var callError *Object
-						var comparisonResultToBool IObject
-						var comparisonBool IObject
+						var comparisonResultToBool Value
+						var comparisonBool Value
 
 						for i := 0; i < self.GetLength(); i++ {
 							leftEquals, getError := self.GetContent()[i].Get(Equals)
@@ -118,7 +119,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Array); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -126,11 +127,11 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 						if self.GetLength() != left.GetLength() {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
 						}
-						var rightEquals IObject
-						var comparisonResult IObject
+						var rightEquals Value
+						var comparisonResult Value
 						var callError *Object
-						var comparisonResultToBool IObject
-						var comparisonBool IObject
+						var comparisonResultToBool Value
+						var comparisonBool Value
 
 						for i := 0; i < self.GetLength(); i++ {
 							leftEquals, getError := left.GetContent()[i].Get(Equals)
@@ -172,7 +173,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(NotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Array); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), true), nil
@@ -180,11 +181,11 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 						if self.GetLength() != right.GetLength() {
 							return p.NewBool(false, p.PeekSymbolTable(), true), nil
 						}
-						var rightNotEquals IObject
-						var comparisonResult IObject
+						var rightNotEquals Value
+						var comparisonResult Value
 						var callError *Object
-						var comparisonResultToBool IObject
-						var comparisonBool IObject
+						var comparisonResultToBool Value
+						var comparisonBool Value
 
 						for i := 0; i < self.GetLength(); i++ {
 							leftNotEquals, getError := self.GetContent()[i].Get(NotEquals)
@@ -229,7 +230,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightNotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Array); !ok {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -237,11 +238,11 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 						if self.GetLength() != left.GetLength() {
 							return p.NewBool(false, p.PeekSymbolTable(), false), nil
 						}
-						var rightEquals IObject
-						var comparisonResult IObject
+						var rightEquals Value
+						var comparisonResult Value
 						var callError *Object
-						var comparisonResultToBool IObject
-						var comparisonBool IObject
+						var comparisonResultToBool Value
+						var comparisonBool Value
 
 						for i := 0; i < self.GetLength(); i++ {
 							leftEquals, getError := left.GetContent()[i].Get(NotEquals)
@@ -286,7 +287,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Hash,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(_ IObject, _ ...IObject) (IObject, *Object) {
+					func(_ Value, _ ...Value) (Value, *Object) {
 						return nil, p.NewUnhashableTypeError(object.GetClass())
 					},
 				),
@@ -295,8 +296,8 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Copy,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
-						var copiedObjects []IObject
+					func(self Value, _ ...Value) (Value, *Object) {
+						var copiedObjects []Value
 						for _, contentObject := range self.GetContent() {
 							objectCopy, getError := contentObject.Get(Copy)
 							if getError != nil {
@@ -319,7 +320,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Index,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						indexObject := arguments[0]
 						var ok bool
 						if _, ok = indexObject.(*Integer); ok {
@@ -352,7 +353,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Assign,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 2,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						index, calcError := tools.CalcIndex(arguments[0].GetInteger64(), self.GetLength())
 						if calcError != nil {
 							return nil, p.NewIndexOutOfRange(self.GetLength(), arguments[0].GetInteger64())
@@ -366,7 +367,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Iter,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 
 						iterator := p.NewIterator(false, p.PeekSymbolTable())
 						iterator.SetInteger64(0)
@@ -376,7 +377,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 							p.NewFunction(isBuiltIn, iterator.SymbolTable(),
 								NewBuiltInClassFunction(iterator,
 									0,
-									func(funcSelf IObject, _ ...IObject) (IObject, *Object) {
+									func(funcSelf Value, _ ...Value) (Value, *Object) {
 										if funcSelf.GetLength() != self.GetLength() {
 											funcSelf.SetLength(self.GetLength())
 										}
@@ -389,7 +390,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 							p.NewFunction(isBuiltIn, iterator.SymbolTable(),
 								NewBuiltInClassFunction(iterator,
 									0,
-									func(funcSelf IObject, _ ...IObject) (IObject, *Object) {
+									func(funcSelf Value, _ ...Value) (Value, *Object) {
 										value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
 										funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
 										return value, nil
@@ -405,9 +406,9 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToString,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						result := "["
-						var objectString IObject
+						var objectString Value
 						var callError *Object
 						for index, contentObject := range self.GetContent() {
 							if index != 0 {
@@ -434,7 +435,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToBool,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewBool(false, p.PeekSymbolTable(), self.GetLength() != 0), nil
 					},
 				),
@@ -443,8 +444,8 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToArray,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
-						return p.NewArray(false, p.PeekSymbolTable(), append([]IObject{}, self.GetContent()...)), nil
+					func(self Value, _ ...Value) (Value, *Object) {
+						return p.NewArray(false, p.PeekSymbolTable(), append([]Value{}, self.GetContent()...)), nil
 					},
 				),
 			),
@@ -452,8 +453,8 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToTuple,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
-						return p.NewTuple(false, p.PeekSymbolTable(), append([]IObject{}, self.GetContent()...)), nil
+					func(self Value, _ ...Value) (Value, *Object) {
+						return p.NewTuple(false, p.PeekSymbolTable(), append([]Value{}, self.GetContent()...)), nil
 					},
 				),
 			),

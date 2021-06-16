@@ -11,19 +11,20 @@ type Float struct {
 
 func (p *Plasma) NewFloat(isBuiltIn bool, parentSymbols *SymbolTable, value float64) *Float {
 	float_ := &Float{
-		p.NewObject(isBuiltIn, IntegerName, nil, parentSymbols),
+		p.NewObject(isBuiltIn, FloatName, nil, parentSymbols),
 	}
 	float_.SetFloat64(value)
 	p.FloatInitialize(isBuiltIn)(float_)
+	float_.Set(Self, float_)
 	return float_
 }
 
 func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object IObject) *Object {
+	return func(object Value) *Object {
 		object.Set(Add,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						switch right.(type) {
 						case *Integer:
@@ -40,7 +41,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightAdd,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						switch left.(type) {
 						case *Integer:
@@ -57,7 +58,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Sub,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						switch right.(type) {
 						case *Integer:
@@ -74,7 +75,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightSub,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						switch left.(type) {
 						case *Integer:
@@ -91,7 +92,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Mul,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						switch right.(type) {
 						case *Integer:
@@ -108,7 +109,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightMul,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						switch left.(type) {
 						case *Integer:
@@ -125,7 +126,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Div,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						switch right.(type) {
 						case *Integer:
@@ -142,7 +143,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightDiv,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						switch left.(type) {
 						case *Integer:
@@ -159,7 +160,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Mod,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						switch right.(type) {
 						case *Integer:
@@ -176,7 +177,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightMod,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						switch left.(type) {
 						case *Integer:
@@ -193,7 +194,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Pow,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						switch right.(type) {
 						case *Integer:
@@ -210,7 +211,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightPow,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						switch left.(type) {
 						case *Integer:
@@ -228,7 +229,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Equals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						var floatRight float64
 						switch right.(type) {
@@ -247,7 +248,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						var floatLeft float64
 						switch left.(type) {
@@ -266,7 +267,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(NotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						var floatRight float64
 						switch right.(type) {
@@ -285,7 +286,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightNotEquals,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						var floatLeft float64
 						switch left.(type) {
@@ -304,7 +305,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(GreaterThan,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						var floatRight float64
 						switch right.(type) {
@@ -323,7 +324,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightGreaterThan,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						var floatLeft float64
 						switch left.(type) {
@@ -342,7 +343,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(LessThan,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						var floatRight float64
 						switch right.(type) {
@@ -361,7 +362,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightLessThan,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						var floatLeft float64
 						switch left.(type) {
@@ -380,7 +381,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(GreaterThanOrEqual,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						var floatRight float64
 						switch right.(type) {
@@ -399,7 +400,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightGreaterThanOrEqual,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						var floatLeft float64
 						switch left.(type) {
@@ -418,7 +419,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(LessThanOrEqual,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						var floatRight float64
 						switch right.(type) {
@@ -437,7 +438,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(RightLessThanOrEqual,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
-					func(self IObject, arguments ...IObject) (IObject, *Object) {
+					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						var floatLeft float64
 						switch left.(type) {
@@ -457,7 +458,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Hash,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						if self.GetHash() == 0 {
 							floatHash := p.HashString(fmt.Sprintf("%f-%s", self.GetFloat64(), FloatName))
 							self.SetHash(floatHash)
@@ -470,7 +471,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(Copy,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewFloat(false, p.PeekSymbolTable(), self.GetFloat64()), nil
 					},
 				),
@@ -480,7 +481,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToInteger,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewInteger(false, p.PeekSymbolTable(), int64(self.GetFloat64())), nil
 					},
 				),
@@ -489,7 +490,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToFloat,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewFloat(false, p.PeekSymbolTable(), self.GetFloat64()), nil
 					},
 				),
@@ -498,7 +499,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToString,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewString(false, p.PeekSymbolTable(), fmt.Sprint(self.GetFloat64())), nil
 					},
 				),
@@ -507,7 +508,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 		object.Set(ToBool,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
-					func(self IObject, _ ...IObject) (IObject, *Object) {
+					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewBool(false, p.PeekSymbolTable(), self.GetFloat64() != 0), nil
 					},
 				),

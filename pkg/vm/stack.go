@@ -13,8 +13,8 @@ func NewStackNode(value interface{}, next *stackNode) *stackNode {
 }
 
 type IterEntry struct {
-	Iterable  IObject
-	LastValue IObject // Used when redo is called
+	Iterable  Value
+	LastValue Value // Used when redo is called
 }
 
 type IterStack struct {
@@ -85,17 +85,17 @@ type ObjectStack struct {
 	head *stackNode
 }
 
-func (stack *ObjectStack) Pop() IObject {
+func (stack *ObjectStack) Pop() Value {
 	result := stack.head.value
 	stack.head = stack.head.next
-	return result.(IObject)
+	return result.(Value)
 }
 
-func (stack *ObjectStack) Peek() IObject {
-	return stack.head.value.(IObject)
+func (stack *ObjectStack) Peek() Value {
+	return stack.head.value.(Value)
 }
 
-func (stack *ObjectStack) Push(object IObject) {
+func (stack *ObjectStack) Push(object Value) {
 	stack.head = NewStackNode(object, stack.head)
 }
 

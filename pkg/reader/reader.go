@@ -3,7 +3,6 @@ package reader
 import (
 	"bytes"
 	"io"
-	"os"
 )
 
 type Reader interface {
@@ -49,7 +48,8 @@ func NewStringReader(code string) *StringReader {
 	}
 }
 
-func NewStringReaderFromFile(file *os.File) *StringReader {
+func NewStringReaderFromFile(file io.ReadCloser) *StringReader {
+	defer file.Close()
 	content, readingError := io.ReadAll(file)
 	if readingError != nil {
 		panic(readingError)
