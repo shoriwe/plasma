@@ -16,7 +16,6 @@ type Lexer struct {
 	line      int
 	reader    reader.Reader
 	complete  bool
-	peekToken *Token
 }
 
 func (lexer *Lexer) HasNext() bool {
@@ -70,13 +69,13 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener rune) ([]rune, ui
 func (lexer *Lexer) tokenizeHexadecimal(letterX rune) ([]rune, uint8, uint8, *errors.Error) {
 	result := []rune{'0', letterX}
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	nextDigit := lexer.reader.Char()
 	if !(('0' <= nextDigit && nextDigit <= '9') ||
 		('a' <= nextDigit && nextDigit <= 'f') ||
 		('A' <= nextDigit && nextDigit <= 'F')) {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
 	result = append(result, nextDigit)
@@ -93,11 +92,11 @@ func (lexer *Lexer) tokenizeHexadecimal(letterX rune) ([]rune, uint8, uint8, *er
 func (lexer *Lexer) tokenizeBinary(letterB rune) ([]rune, uint8, uint8, *errors.Error) {
 	result := []rune{'0', letterB}
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	nextDigit := lexer.reader.Char()
 	if !(nextDigit == '0' || nextDigit == '1') {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
 	result = append(result, nextDigit)
@@ -114,11 +113,11 @@ func (lexer *Lexer) tokenizeBinary(letterB rune) ([]rune, uint8, uint8, *errors.
 func (lexer *Lexer) tokenizeOctal(letterO rune) ([]rune, uint8, uint8, *errors.Error) {
 	result := []rune{'0', letterO}
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '7') {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
 	result = append(result, nextDigit)
@@ -135,21 +134,21 @@ func (lexer *Lexer) tokenizeOctal(letterO rune) ([]rune, uint8, uint8, *errors.E
 func (lexer *Lexer) tokenizeScientificFloat(base []rune) ([]rune, uint8, uint8, *errors.Error) {
 	result := base
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	direction := lexer.reader.Char()
 	if (direction != '-') && (direction != '+') {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
 	// Ensure next is a number
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	result = append(result, direction)
 	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '9') {
-		return result, Literal, Unknown, errors.New(lexer.line, "Unknown token kind", errors.LexingError)
+		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	result = append(result, nextDigit)
 	lexer.reader.Next()
@@ -227,8 +226,7 @@ func (lexer *Lexer) tokenizeNumeric(firstDigit rune) ([]rune, uint8, uint8, *err
 	}
 	nextChar := lexer.reader.Char()
 	lexer.reader.Next()
-	switch firstDigit {
-	case '0': // In this scenario it can be a float,  scientific float, integer, hex integer, octal integer or binary integer
+	if firstDigit == '0' {
 		switch nextChar {
 		case 'x', 'X': // Hexadecimal
 			return lexer.tokenizeHexadecimal(nextChar)
@@ -245,7 +243,7 @@ func (lexer *Lexer) tokenizeNumeric(firstDigit rune) ([]rune, uint8, uint8, *err
 				return lexer.tokenizeInteger([]rune{firstDigit, nextChar}) // Integer, Float or Scientific Float
 			}
 		}
-	default:
+	} else {
 		switch nextChar {
 		case 'e', 'E': // Scientific float
 			return lexer.tokenizeScientificFloat([]rune{firstDigit, nextChar})
@@ -326,14 +324,10 @@ func guessKind(buffer []rune) (uint8, uint8) {
 		return Comparator, Xor
 	case InString:
 		return Comparator, In
-	case IsInstanceOfString: // This is a method like super
-		return Keyboard, IsInstanceOf
 	case AsString:
 		return Keyboard, As
 	case RaiseString:
 		return Keyboard, Raise
-	case AwaitString:
-		return AwaitKeyboard, Await
 	case BEGINString:
 		return Keyboard, BEGIN
 	case ENDString:
@@ -346,8 +340,6 @@ func guessKind(buffer []rune) (uint8, uint8) {
 		return Boolean, False
 	case NoneString:
 		return NoneType, None
-	case DeferString:
-		return Keyboard, Defer
 	case ContextString:
 		return Keyboard, Context
 	default:
@@ -432,11 +424,6 @@ func (lexer *Lexer) tokenizeNotRepeatableOperator(char rune, single uint8, singl
 	return content, kind, directValue
 }
 func (lexer *Lexer) next() (*Token, *errors.Error) {
-	if lexer.peekToken != nil {
-		result := lexer.peekToken
-		lexer.peekToken = nil
-		return result, nil
-	}
 	if !lexer.reader.HasNext() {
 		lexer.complete = true
 		return &Token{
@@ -626,24 +613,11 @@ func (lexer *Lexer) Next() (*Token, *errors.Error) {
 	return token, nil
 }
 
-func (lexer *Lexer) Peek() (*Token, *errors.Error) {
-	if lexer.peekToken != nil {
-		return lexer.peekToken, nil
-	}
-	var nextError *errors.Error
-	lexer.peekToken, nextError = lexer.Next()
-	if nextError != nil {
-		return nil, nextError
-	}
-	return lexer.peekToken, nil
-}
-
 func NewLexer(codeReader reader.Reader) *Lexer {
 	return &Lexer{
 		lastToken: nil,
 		line:      1,
 		reader:    codeReader,
 		complete:  false,
-		peekToken: nil,
 	}
 }

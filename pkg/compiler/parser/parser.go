@@ -22,7 +22,6 @@ const (
 	InterfaceStatement          = "Interface Statement"
 	BinaryExpression            = "Binary Expression"
 	PointerExpression           = "Pointer Expression"
-	AwaitExpression             = "Await Expression"
 	LambdaExpression            = "Lambda Expression"
 	ParenthesesExpression       = "Parentheses Expression"
 	TupleExpression             = "Tuple Expression"
@@ -1042,22 +1041,6 @@ func (parser *Parser) parseUnaryExpression() (ast.Node, *errors.Error) {
 				X:        x.(ast.Expression),
 			}, nil
 		}
-	} else if parser.matchKind(lexer.AwaitKeyboard) {
-		tokenizingError := parser.next()
-		if tokenizingError != nil {
-			return nil, tokenizingError
-		}
-		line := parser.currentLine()
-		x, parsingError := parser.parseBinaryExpression(0)
-		if parsingError != nil {
-			return nil, parsingError
-		}
-		if _, ok := x.(*ast.MethodInvocationExpression); !ok {
-			return nil, newNonExpressionReceivedError(line, AwaitExpression)
-		}
-		return &ast.AwaitExpression{
-			X: x.(*ast.MethodInvocationExpression),
-		}, nil
 	}
 	return parser.parsePrimaryExpression()
 }
@@ -1913,29 +1896,6 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Erro
 	}, nil
 }
 
-func (parser *Parser) parseDeferStatement() (*ast.DeferStatement, *errors.Error) {
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	newLinesRemoveError := parser.removeNewLines()
-	if newLinesRemoveError != nil {
-		return nil, newLinesRemoveError
-	}
-	methodInvocation, parsingError := parser.parseBinaryExpression(0)
-	if parsingError != nil {
-		return nil, parsingError
-	}
-	switch methodInvocation.(type) {
-	case *ast.MethodInvocationExpression:
-		return &ast.DeferStatement{
-			X: methodInvocation.(*ast.MethodInvocationExpression),
-		}, nil
-	default:
-		return nil, newNonFunctionCallReceivedError(parser.currentLine(), DeferStatement)
-	}
-}
-
 func (parser *Parser) parseReturnStatement() (*ast.ReturnStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -2133,8 +2093,6 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 			return parser.parseFunctionDefinitionStatement()
 		case lexer.Interface:
 			return parser.parseInterfaceStatement()
-		case lexer.Defer:
-			return parser.parseDeferStatement()
 		case lexer.Class:
 			return parser.parseClassStatement()
 		case lexer.Raise:

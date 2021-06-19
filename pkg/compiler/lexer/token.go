@@ -25,7 +25,6 @@ const (
 	BinaryInteger
 	OctalInteger
 	Float
-	AwaitKeyboard
 	ScientificFloat
 	CommandOutput
 	ByteString
@@ -60,7 +59,6 @@ const (
 	Continue
 	Break
 	Redo
-	Defer
 	Module
 	Def
 	Lambda
@@ -69,8 +67,6 @@ const (
 	Try
 	Except
 	Finally
-	IsInstanceOf // This maybe can be a regular identifier
-	Await
 	BEGIN
 	END
 	Context
@@ -201,7 +197,6 @@ var (
 	ContinueString     = "continue"
 	BreakString        = "break"
 	RedoString         = "redo"
-	DeferString        = "defer"
 	ModuleString       = "module"
 	DefString          = "def"
 	LambdaString       = "lambda"
@@ -214,8 +209,6 @@ var (
 	OrString           = "or"
 	XorString          = "xor"
 	InString           = "in"
-	IsInstanceOfString = "isinstanceof"
-	AwaitString        = "await"
 	BEGINString        = "BEGIN"
 	ENDString          = "END"
 	NotString          = "not"

@@ -16,11 +16,6 @@ type AssignStatement struct {
 	RightHandSide  Expression
 }
 
-type DeferStatement struct {
-	Statement
-	X *MethodInvocationExpression
-}
-
 type DoWhileStatement struct {
 	Statement
 	Condition Expression

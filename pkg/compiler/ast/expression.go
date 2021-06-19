@@ -88,11 +88,6 @@ type IndexExpression struct {
 	Index  Expression
 }
 
-type AwaitExpression struct {
-	Expression
-	X *MethodInvocationExpression
-}
-
 type IfOneLinerExpression struct {
 	Expression
 	Result     Expression
