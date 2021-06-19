@@ -156,8 +156,6 @@ func walker(node ast.Node) string {
 			result += walker(output)
 		}
 		return result
-	case *ast.DeferStatement:
-		return "defer " + walker(node.(*ast.DeferStatement).X)
 	case *ast.SuperInvocationStatement:
 		result := "super("
 		for index, argument := range node.(*ast.SuperInvocationStatement).Arguments {
@@ -260,8 +258,6 @@ func walker(node ast.Node) string {
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
-	case *ast.AwaitExpression:
-		return "await " + walker(node.(*ast.AwaitExpression).X)
 	case *ast.ForLoopStatement:
 		result := "for "
 		for index, receiver := range node.(*ast.ForLoopStatement).Receivers {
@@ -470,7 +466,6 @@ var basicSamples = []string{
 	"yield 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
 	"return 1",
 	"return 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
-	"defer a()",
 	"super(1)",
 	"super(1, 2)",
 	"super(1, 2, call((1, 2, 3, 4, 2 * (5 - 3))))",
@@ -510,7 +505,6 @@ var basicSamples = []string{
 		"\ta += 1\n" +
 		"\tb -= 1\n" +
 		"end",
-	"await parser().a()",
 	"[]",
 	"for a, b, c in range(10)\n" +
 		"\tprint(\"hello world!\")\n" +
