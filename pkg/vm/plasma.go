@@ -7,7 +7,6 @@ import (
 	"hash/crc32"
 	"io"
 	"math/big"
-	"sync"
 )
 
 const (
@@ -17,8 +16,8 @@ const (
 type ObjectLoader func(*Plasma) Value
 
 type Plasma struct {
-	currentId          int64
-	mutex              *sync.Mutex
+	currentId int64
+	// mutex              *sync.Mutex
 	IterStack          *IterStack
 	builtInSymbolTable *SymbolTable
 	BytecodeStack      *CodeStack
@@ -34,10 +33,8 @@ type Plasma struct {
 }
 
 func (p *Plasma) NextId() int64 {
-	p.mutex.Lock()
 	result := p.currentId
 	p.currentId++
-	p.mutex.Unlock()
 	return result
 }
 
@@ -174,7 +171,6 @@ func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 	}
 	vm := &Plasma{
 		currentId:        1,
-		mutex:            &sync.Mutex{},
 		IterStack:        NewIterStack(),
 		BytecodeStack:    NewCodeStack(),
 		MemoryStack:      NewObjectStack(),

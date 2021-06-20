@@ -28,6 +28,9 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
+						if _, ok := right.(*String); !ok {
+							return nil, p.NewInvalidTypeError(right.TypeName(), StringName)
+						}
 						return p.NewString(false,
 							p.PeekSymbolTable(),
 							self.GetString()+right.GetString(),
@@ -41,6 +44,9 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
+						if _, ok := left.(*String); !ok {
+							return nil, p.NewInvalidTypeError(left.TypeName(), StringName)
+						}
 						return p.NewString(false,
 							p.PeekSymbolTable(),
 							left.GetString()+self.GetString(),
@@ -86,6 +92,9 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
+						if _, ok := right.(*String); !ok {
+							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+						}
 						return p.NewBool(false, p.PeekSymbolTable(), self.GetString() == right.GetString()), nil
 					},
 				),
@@ -96,6 +105,9 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
+						if _, ok := left.(*String); !ok {
+							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+						}
 						return p.NewBool(false, p.PeekSymbolTable(), left.GetString() == self.GetString()), nil
 					},
 				),
@@ -106,6 +118,9 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
+						if _, ok := right.(*String); !ok {
+							return p.NewBool(false, p.PeekSymbolTable(), true), nil
+						}
 						return p.NewBool(false, p.PeekSymbolTable(), self.GetString() != right.GetString()), nil
 					},
 				),
@@ -116,6 +131,9 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
+						if _, ok := left.(*String); !ok {
+							return p.NewBool(false, p.PeekSymbolTable(), true), nil
+						}
 						return p.NewBool(false, p.PeekSymbolTable(), left.GetString() != self.GetString()), nil
 					},
 				),

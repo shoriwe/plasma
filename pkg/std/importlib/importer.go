@@ -466,7 +466,11 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 					func(object vm.Value) *vm.Object {
 						object.Set(vm.Initialize,
 							p.NewFunction(true, object.SymbolTable(),
-								p.NewNotImplementedCallable(vm.Initialize, 0),
+								vm.NewBuiltInClassFunction(object, 0,
+									func(_ vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
+										return p.NewNone(), nil
+									},
+								),
 							),
 						)
 						return nil

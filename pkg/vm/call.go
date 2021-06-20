@@ -37,14 +37,6 @@ func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments
 
 type FunctionCallback func(Value, ...Value) (Value, *Object)
 
-func (p *Plasma) NewNotImplementedCallable(methodName string, numberOfArguments int) *BuiltInClassFunction {
-	return NewBuiltInClassFunction(nil, numberOfArguments,
-		func(self Value, _ ...Value) (Value, *Object) {
-			return nil, p.NewNotImplementedCallableError(methodName)
-		},
-	)
-}
-
 type Callable interface {
 	NumberOfArguments() int
 	Call() (Value, FunctionCallback, []Code) // self should return directly the object or the code of the function
