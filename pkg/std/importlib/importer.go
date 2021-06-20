@@ -71,7 +71,7 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 						if _, ok := bytesToRead.(*vm.Integer); !ok {
 							return p.NewInvalidTypeError(bytesToRead.TypeName(), vm.IntegerName), nil
 						}
-						bytes := make([]byte, bytesToRead.GetInteger64())
+						bytes := make([]byte, bytesToRead.GetInteger().Int64())
 						numberOfBytes, readError := r.Read(bytes)
 						if readError != nil {
 							if readError == io.EOF {
@@ -94,7 +94,7 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 						if _, ok := seek.(*vm.Integer); !ok {
 							return p.NewInvalidTypeError(seek.TypeName(), vm.IntegerName), nil
 						}
-						_, seekError := r.Seek(seek.GetInteger64(), io.SeekStart)
+						_, seekError := r.Seek(seek.GetInteger().Int64(), io.SeekStart)
 						if seekError != nil {
 							return nil, p.NewGoRuntimeError(seekError)
 						}

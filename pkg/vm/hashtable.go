@@ -1,5 +1,7 @@
 package vm
 
+import "math/big"
+
 type KeyValue struct {
 	Key   Value
 	Value Value
@@ -230,7 +232,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := indexHash.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(indexHash.TypeName(), IntegerName)
 						}
-						keyValues, found := self.GetKeyValues()[indexHash.GetInteger64()]
+						keyValues, found := self.GetKeyValues()[indexHash.GetInteger().Int64()]
 						if !found {
 							return nil, p.NewKeyNotFoundError(indexObject)
 						}
@@ -277,9 +279,9 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := indexHash.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(indexHash.TypeName(), IntegerName)
 						}
-						keyValues, found := self.GetKeyValues()[indexHash.GetInteger64()]
+						keyValues, found := self.GetKeyValues()[indexHash.GetInteger().Int64()]
 						if found {
-							self.AddKeyValue(indexHash.GetInteger64(), &KeyValue{
+							self.AddKeyValue(indexHash.GetInteger().Int64(), &KeyValue{
 								Key:   indexObject,
 								Value: newValue,
 							})
@@ -300,13 +302,13 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								return nil, p.NewInvalidTypeError(equals.TypeName(), BoolName)
 							}
 							if equals.GetBool() {
-								self.GetKeyValues()[indexHash.GetInteger64()][index].Value = newValue
+								self.GetKeyValues()[indexHash.GetInteger().Int64()][index].Value = newValue
 								return p.NewNone(), nil
 							}
 						}
 						self.IncreaseLength()
-						self.GetKeyValues()[indexHash.GetInteger64()] = append(
-							self.GetKeyValues()[indexHash.GetInteger64()],
+						self.GetKeyValues()[indexHash.GetInteger().Int64()] = append(
+							self.GetKeyValues()[indexHash.GetInteger().Int64()],
 							&KeyValue{
 								Key:   indexObject,
 								Value: newValue,
@@ -333,7 +335,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							return nil, callError
 						}
 						iterator := p.NewIterator(false, p.PeekSymbolTable())
-						iterator.SetInteger64(0) // This is the index
+						iterator.SetInteger(big.NewInt(0)) // This is the index
 						iterator.SetContent(hashKeys.GetContent())
 						iterator.SetLength(len(hashKeys.GetContent()))
 						iterator.Set(HasNext,
@@ -341,7 +343,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										return p.NewBool(false, p.PeekSymbolTable(), int(funcSelf.GetInteger64()) < funcSelf.GetLength()), nil
+										return p.NewBool(false, p.PeekSymbolTable(), funcSelf.GetInteger().Cmp(big.NewInt(int64(funcSelf.GetLength()))) == -1), nil
 									},
 								),
 							),
@@ -351,8 +353,8 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
-										funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
+										value := funcSelf.GetContent()[int(funcSelf.GetInteger().Int64())]
+										funcSelf.SetInteger(new(big.Int).Add(funcSelf.GetInteger(), big.NewInt(1)))
 										return value, nil
 									},
 								),

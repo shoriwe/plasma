@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+	"math/big"
 )
 
 /*
@@ -183,7 +184,7 @@ func (p *Plasma) setBuiltInSymbols() {
 									if _, ok := expecting.(*Integer); !ok {
 										return nil, p.NewInvalidTypeError(expecting.TypeName(), IntegerName)
 									}
-									self.SetString(fmt.Sprintf("Received %d but expecting %d expecting", received.GetInteger64(), expecting.GetInteger64()))
+									self.SetString(fmt.Sprintf("Received %d but expecting %d expecting", received.GetInteger(), expecting.GetInteger()))
 									return p.NewNone(), nil
 								},
 							),
@@ -256,7 +257,7 @@ func (p *Plasma) setBuiltInSymbols() {
 									if _, ok := length.(*Integer); !ok {
 										return nil, p.NewInvalidTypeError(index.TypeName(), IntegerName)
 									}
-									self.SetString(fmt.Sprintf("Index: %d, out of range (Length=%d)", index.GetInteger64(), length.GetInteger64()))
+									self.SetString(fmt.Sprintf("Index: %d, out of range (Length=%d)", index.GetInteger(), length.GetInteger()))
 									return p.NewNone(), nil
 								},
 							),
@@ -609,7 +610,7 @@ func (p *Plasma) setBuiltInSymbols() {
 			NewBuiltInFunction(1,
 				func(_ Value, arguments ...Value) (Value, *Object) {
 					object := arguments[0]
-					return p.NewInteger(false, p.PeekSymbolTable(), object.Id()), nil
+					return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(object.Id())), nil
 				},
 			),
 		),
@@ -639,29 +640,29 @@ func (p *Plasma) setBuiltInSymbols() {
 					if _, ok := start.(*Integer); !ok {
 						return nil, p.NewInvalidTypeError(start.TypeName(), IntegerName)
 					}
-					startValue := start.GetInteger64()
+					startValue := start.GetInteger()
 
 					end := arguments[1]
 					if _, ok := end.(*Integer); !ok {
 						return nil, p.NewInvalidTypeError(end.TypeName(), IntegerName)
 					}
-					endValue := end.GetInteger64()
+					endValue := end.GetInteger()
 
 					step := arguments[2]
 					if _, ok := step.(*Integer); !ok {
 						return nil, p.NewInvalidTypeError(step.TypeName(), IntegerName)
 					}
-					stepValue := step.GetInteger64()
+					stepValue := step.GetInteger()
 
 					// This should return a iterator
 					rangeIterator := p.NewIterator(true, p.PeekSymbolTable())
-					rangeIterator.SetInteger64(startValue)
+					rangeIterator.SetInteger(startValue)
 
 					rangeIterator.Set(HasNext,
 						p.NewFunction(true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self Value, _ ...Value) (Value, *Object) {
-									return p.NewBool(false, p.PeekSymbolTable(), self.GetInteger64() < endValue), nil
+									return p.NewBool(false, p.PeekSymbolTable(), self.GetInteger().Cmp(endValue) == -1), nil
 								},
 							),
 						),
@@ -670,8 +671,8 @@ func (p *Plasma) setBuiltInSymbols() {
 						p.NewFunction(true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self Value, _ ...Value) (Value, *Object) {
-									number := self.GetInteger64()
-									self.SetInteger64(number + stepValue)
+									number := self.GetInteger()
+									self.SetInteger(new(big.Int).Add(number, stepValue))
 									return p.NewInteger(false, p.PeekSymbolTable(), number), nil
 								},
 							),

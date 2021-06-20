@@ -1,6 +1,7 @@
 package tools
 
 import (
+	"math/big"
 	"strconv"
 )
 
@@ -15,10 +16,9 @@ var directCharEscapeValue = map[rune][]rune{
 	'?': {'\\', '?'},
 }
 
-func Repeat(s string, times int64) string {
+func Repeat(s string, times *big.Int) string {
 	result := ""
-	var i int64
-	for i = 0; i < times; i++ {
+	for i := big.NewInt(0); i.Cmp(times) == -1; i.Add(i, big.NewInt(1)) {
 		result += s
 	}
 	return result

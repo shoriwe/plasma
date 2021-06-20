@@ -3,44 +3,8 @@ package vm
 import (
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/errors"
+	"math/big"
 )
-
-type Value interface {
-	IsBuiltIn() bool
-	Id() int64
-	TypeName() string
-	SymbolTable() *SymbolTable
-	SubClasses() []*Type
-	Get(string) (Value, *errors.Error)
-	Set(string, Value)
-	GetHash() int64
-	SetHash(int64)
-
-	Implements(*Type) bool // This should check if the object implements a class directly or indirectly
-
-	GetClass() *Type
-	SetClass(*Type)
-
-	GetBool() bool
-	GetBytes() []uint8
-	GetString() string
-	GetInteger64() int64
-	GetFloat64() float64
-	GetContent() []Value
-	GetKeyValues() map[int64][]*KeyValue
-	GetLength() int
-
-	SetBool(bool)
-	SetBytes([]uint8)
-	SetString(string)
-	SetInteger64(int64)
-	SetFloat64(float64)
-	SetContent([]Value)
-	SetKeyValues(map[int64][]*KeyValue)
-	AddKeyValue(int64, *KeyValue)
-	SetLength(int)
-	IncreaseLength()
-}
 
 type Object struct {
 	isBuiltIn  bool
@@ -53,8 +17,8 @@ type Object struct {
 	Bool       bool
 	String     string
 	Bytes      []uint8
-	Integer64  int64
-	Float64    float64
+	Integer    *big.Int
+	Float      *big.Float
 	Content    []Value
 	KeyValues  map[int64][]*KeyValue
 	Length     int
@@ -80,12 +44,12 @@ func (o *Object) GetString() string {
 	return o.String
 }
 
-func (o *Object) GetInteger64() int64 {
-	return o.Integer64
+func (o *Object) GetInteger() *big.Int {
+	return o.Integer
 }
 
-func (o *Object) GetFloat64() float64 {
-	return o.Float64
+func (o *Object) GetFloat() *big.Float {
+	return o.Float
 }
 
 func (o *Object) GetContent() []Value {
@@ -104,12 +68,12 @@ func (o *Object) SetString(s string) {
 	o.String = s
 }
 
-func (o *Object) SetInteger64(i int64) {
-	o.Integer64 = i
+func (o *Object) SetInteger(i *big.Int) {
+	o.Integer = i
 }
 
-func (o *Object) SetFloat64(f float64) {
-	o.Float64 = f
+func (o *Object) SetFloat(f *big.Float) {
+	o.Float = f
 }
 
 func (o *Object) SetContent(objects []Value) {
@@ -454,7 +418,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 							objectHash := p.HashString(fmt.Sprintf("%v-%s-%d", self, self.TypeName(), self.Id()))
 							self.SetHash(objectHash)
 						}
-						return p.NewInteger(false, p.PeekSymbolTable(), self.GetHash()), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(self.GetHash())), nil
 					},
 				),
 			),
@@ -501,10 +465,10 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					},
 				),
 			),
-			GetInteger64: p.NewFunction(isBuiltIn, object.SymbolTable(),
+			GetInteger: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewInteger(false, p.PeekSymbolTable(), self.GetInteger64()), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), self.GetInteger()), nil
 					},
 				),
 			),
@@ -529,10 +493,10 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					},
 				),
 			),
-			GetFloat64: p.NewFunction(isBuiltIn, object.SymbolTable(),
+			GetFloat: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewFloat(false, p.PeekSymbolTable(), self.GetFloat64()), nil
+						return p.NewFloat(false, p.PeekSymbolTable(), self.GetFloat()), nil
 					},
 				),
 			),
@@ -553,7 +517,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			GetLength: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewInteger(false, p.PeekSymbolTable(), int64(self.GetLength())), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(int64(self.GetLength()))), nil
 					},
 				),
 			),
@@ -583,18 +547,18 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					},
 				),
 			),
-			SetInteger64: p.NewFunction(isBuiltIn, object.SymbolTable(),
+			SetInteger: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						self.SetInteger64(arguments[0].GetInteger64())
+						self.SetInteger(arguments[0].GetInteger())
 						return p.NewNone(), nil
 					},
 				),
 			),
-			SetFloat64: p.NewFunction(isBuiltIn, object.SymbolTable(),
+			SetFloat: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						self.SetFloat64(arguments[0].GetFloat64())
+						self.SetFloat(arguments[0].GetFloat())
 						return p.NewNone(), nil
 					},
 				),
@@ -645,8 +609,8 @@ func (p *Plasma) NewObject(
 	result.Length = 0
 	result.Bool = true
 	result.String = ""
-	result.Integer64 = 0
-	result.Float64 = 0
+	result.Integer = big.NewInt(0)
+	result.Float = big.NewFloat(0)
 	result.Content = []Value{}
 	result.KeyValues = map[int64][]*KeyValue{}
 	result.Bytes = []uint8{}

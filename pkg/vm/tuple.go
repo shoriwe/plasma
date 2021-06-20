@@ -2,6 +2,7 @@ package vm
 
 import (
 	"github.com/shoriwe/gplasma/pkg/tools"
+	"math/big"
 )
 
 type Tuple struct {
@@ -28,7 +29,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 						right := arguments[0]
 						switch right.(type) {
 						case *Integer:
-							content, repetitionError := p.Repeat(self.GetContent(), int(right.GetInteger64()))
+							content, repetitionError := p.Repeat(self.GetContent(), right.GetInteger())
 							if repetitionError != nil {
 								return nil, repetitionError
 							}
@@ -47,7 +48,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 						left := arguments[0]
 						switch left.(type) {
 						case *Integer:
-							content, repetitionError := p.Repeat(self.GetContent(), int(left.GetInteger64()))
+							content, repetitionError := p.Repeat(self.GetContent(), left.GetInteger())
 							if repetitionError != nil {
 								return nil, repetitionError
 							}
@@ -309,16 +310,12 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 							if _, ok := objectHash.(*Integer); !ok {
 								return nil, p.NewInvalidTypeError(objectHash.TypeName(), IntegerName)
 							}
-							tupleHash += uint64(objectHash.GetInteger64()) * XXPrime2
+							tupleHash += objectHash.GetInteger().Uint64() * XXPrime2
 							tupleHash = (tupleHash << 31) | (tupleHash >> 33)
 							tupleHash *= XXPrime1
 							tupleHash &= (1 << 64) - 1
 						}
-						finalTupleHash := int64(tupleHash)
-						if finalTupleHash < 0 {
-							finalTupleHash = -finalTupleHash
-						}
-						return p.NewInteger(false, p.PeekSymbolTable(), finalTupleHash), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), new(big.Int).SetUint64(tupleHash)), nil
 					},
 				),
 			),
@@ -355,23 +352,23 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 						indexObject := arguments[0]
 						var ok bool
 						if _, ok = indexObject.(*Integer); ok {
-							index, calcError := tools.CalcIndex(indexObject.GetInteger64(), self.GetLength())
+							index, calcError := tools.CalcIndex(indexObject.GetInteger().Int64(), self.GetLength())
 							if calcError != nil {
-								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetInteger64())
+								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetInteger().Int64())
 							}
 							return self.GetContent()[index], nil
 						} else if _, ok = indexObject.(*Tuple); ok {
 							if len(indexObject.GetContent()) != 2 {
 								return nil, p.NewInvalidNumberOfArgumentsError(len(indexObject.GetContent()), 2)
 							}
-							startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger64(), self.GetLength())
+							startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger().Int64(), self.GetLength())
 							if calcError != nil {
-								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[0].GetInteger64())
+								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[0].GetInteger().Int64())
 							}
 							var targetIndex int
-							targetIndex, calcError = tools.CalcIndex(indexObject.GetContent()[1].GetInteger64(), self.GetLength())
+							targetIndex, calcError = tools.CalcIndex(indexObject.GetContent()[1].GetInteger().Int64(), self.GetLength())
 							if calcError != nil {
-								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[1].GetInteger64())
+								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[1].GetInteger().Int64())
 							}
 							return p.NewTuple(false, p.PeekSymbolTable(), self.GetContent()[startIndex:targetIndex]), nil
 						} else {
@@ -386,7 +383,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						iterator := p.NewIterator(false, p.PeekSymbolTable())
-						iterator.SetInteger64(0)
+						iterator.SetInteger(big.NewInt(0))
 						iterator.SetContent(self.GetContent())
 						iterator.SetLength(self.GetLength())
 						iterator.Set(HasNext,
@@ -394,7 +391,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										return p.NewBool(false, p.PeekSymbolTable(), int(funcSelf.GetInteger64()) < funcSelf.GetLength()), nil
+										return p.NewBool(false, p.PeekSymbolTable(), funcSelf.GetInteger().Cmp(big.NewInt(int64(funcSelf.GetLength()))) == -1), nil
 									},
 								),
 							),
@@ -404,8 +401,8 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
-										funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
+										value := funcSelf.GetContent()[int(funcSelf.GetInteger().Int64())]
+										funcSelf.SetInteger(new(big.Int).Add(funcSelf.GetInteger(), big.NewInt(1)))
 										return value, nil
 									},
 								),

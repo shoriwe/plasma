@@ -1,6 +1,9 @@
 package vm
 
-import "fmt"
+import (
+	"fmt"
+	"math/big"
+)
 
 func (p *Plasma) Execute() (Value, *Object) {
 	var executionError *Object
@@ -199,14 +202,14 @@ func (p *Plasma) newBytesOP(code Code) *Object {
 }
 
 func (p *Plasma) newIntegerOP(code Code) *Object {
-	value := code.Value.(int64)
+	value := code.Value.(*big.Int)
 	integer := p.NewInteger(false, p.SymbolTableStack.Peek(), value)
 	p.PushObject(integer)
 	return nil
 }
 
 func (p *Plasma) newFloatOP(code Code) *Object {
-	value := code.Value.(float64)
+	value := code.Value.(*big.Float)
 	float := p.NewFloat(false, p.SymbolTableStack.Peek(), value)
 	p.PushObject(float)
 	return nil
