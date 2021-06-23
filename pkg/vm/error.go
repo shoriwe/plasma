@@ -19,6 +19,7 @@ const (
 	IntegerParsingError           = "IntegerParsingError"           // Done
 	FloatParsingError             = "FloatParsingError"             // Done
 	BuiltInSymbolProtectionError  = "BuiltInSymbolProtectionError"  // Done
+	ObjectNotCallableError        = "ObjectNotCallableError"        //
 )
 
 func (p *Plasma) ForceParentGetSelf(name string, parent *SymbolTable) Value {
@@ -62,7 +63,7 @@ func (p *Plasma) ForceInitialization(object Value, arguments ...Value) {
 		panic(getError.String())
 	}
 	_, callError := p.CallFunction(
-		initialize.(*Function), object.SymbolTable(),
+		initialize, object.SymbolTable(),
 		arguments...,
 	)
 	if callError != nil {
@@ -165,7 +166,7 @@ func (p *Plasma) NewInvalidTypeError(received string, expecting ...string) *Obje
 		expectingSum += s
 	}
 	_, _ = p.CallFunction(
-		instantiatedErrorInitialize.(*Function), instantiatedError.SymbolTable(),
+		instantiatedErrorInitialize, instantiatedError.SymbolTable(),
 		p.NewString(false, p.PeekSymbolTable(), received),
 		p.NewString(false, p.PeekSymbolTable(), expectingSum),
 	)
@@ -187,6 +188,13 @@ func (p *Plasma) NewBuiltInSymbolProtectionError(symbolName string) *Object {
 	p.ForceInitialization(instantiatedError,
 		p.NewString(false, p.PeekSymbolTable(), symbolName),
 	)
+	return instantiatedError.(*Object)
+}
+
+func (p *Plasma) NewObjectNotCallable(objectType *Type) *Object {
+	errorType := p.ForceMasterGetAny(ObjectNotCallableError)
+	instantiatedError := p.ForceConstruction(errorType)
+	p.ForceInitialization(instantiatedError, objectType)
 	return instantiatedError.(*Object)
 }
 

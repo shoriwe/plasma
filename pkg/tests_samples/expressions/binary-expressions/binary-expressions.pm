@@ -8,6 +8,9 @@ println(1 xor (1, 2, 3, 4) == False)
 println(1 in (1, 2, 3, 4))
 println(1 // 2 == 0)
 println((1, 2, 3, "Hello") * 2 == (1, 2, 3, "Hello", 1, 2, 3, "Hello"))
+println(1 in [1, 2, 3, 4, 5])
+println(1 in (1, 2, 3, 4, 5))
+println(1 in {1: 2, 2: 3, 3: 4, 4: 5, 5: 6})
 
 class A
     def Equals(other)

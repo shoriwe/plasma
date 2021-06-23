@@ -24,6 +24,7 @@ const (
 	IteratorName      = "Iterator"
 	ModuleName        = "Module"
 	None              = "None"
+	CallableName      = "Callable"
 	Source            = "0xFFFFFF"
 	TemporalVariable1 = "0xAAAAAA"
 	TemporalVariable2 = "0xBBBBBB"
@@ -78,6 +79,8 @@ const (
 	RightGreaterThanOrEqual = "RightGreaterThanOrEqual"
 	LessThanOrEqual         = "LessThanOrEqual"
 	RightLessThanOrEqual    = "RightLessThanOrEqual"
+	Contains                = "Contains"
+	RightContains           = "RightContains"
 	Hash                    = "Hash"
 	Copy                    = "Copy"
 	Index                   = "Index"
@@ -110,7 +113,6 @@ const (
 	SetContent              = "SetContent"
 	SetKeyValues            = "SetKeyValues"
 	SetLength               = "SetLength"
-	Contains                = "Contains"
 )
 
 type ExceptInformation struct {

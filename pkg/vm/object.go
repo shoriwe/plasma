@@ -169,16 +169,13 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			Negate: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						selfToBool, foundError := self.Get(ToBool)
-						if foundError != nil {
+						selfToBool, getError := self.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := selfToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(selfToBool.(Value).TypeName(), FunctionName)
-						}
-						selfBool, transformationError := p.CallFunction(selfToBool.(*Function), self.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						selfBool, callError := p.CallFunction(selfToBool, self.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), !selfBool.GetBool()), nil
 					},
@@ -188,30 +185,24 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 
-						leftToBool, foundError := self.Get(ToBool)
-						if foundError != nil {
+						leftToBool, getError := self.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := leftToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(leftToBool.(Value).TypeName(), FunctionName)
-						}
-						leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						right := arguments[0]
-						var rightToBool interface{}
-						rightToBool, foundError = right.Get(ToBool)
-						if foundError != nil {
+						var rightToBool Value
+						rightToBool, getError = right.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := rightToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(rightToBool.(Value).TypeName(), FunctionName)
-						}
 						var rightBool Value
-						rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						rightBool, callError = p.CallFunction(rightToBool, right.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() && rightBool.GetBool()), nil
 					},
@@ -220,30 +211,24 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			RightAnd: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						rightToBool, foundError := self.Get(ToBool)
-						if foundError != nil {
+						rightToBool, getError := self.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := rightToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(rightToBool.(Value).TypeName(), FunctionName)
-						}
-						rightBool, transformationError := p.CallFunction(rightToBool.(*Function), self.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						rightBool, callError := p.CallFunction(rightToBool, self.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						left := arguments[0]
-						var leftToBool interface{}
-						leftToBool, foundError = left.Get(ToBool)
-						if foundError != nil {
+						var leftToBool Value
+						leftToBool, getError = left.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := leftToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(leftToBool.(Value).TypeName(), FunctionName)
-						}
 						var leftBool Value
-						leftBool, transformationError = p.CallFunction(leftToBool.(*Function), left.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						leftBool, callError = p.CallFunction(leftToBool, left.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() && rightBool.GetBool()), nil
 					},
@@ -252,31 +237,25 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			Or: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						leftToBool, foundError := self.Get(ToBool)
-						if foundError != nil {
+						leftToBool, getError := self.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := leftToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(leftToBool.(Value).TypeName(), FunctionName)
-						}
-						leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 
 						right := arguments[0]
-						var rightToBool interface{}
-						rightToBool, foundError = right.Get(ToBool)
-						if foundError != nil {
+						var rightToBool Value
+						rightToBool, getError = right.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := rightToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(rightToBool.(Value).TypeName(), FunctionName)
-						}
 						var rightBool Value
-						rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						rightBool, callError = p.CallFunction(rightToBool, right.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() || rightBool.GetBool()), nil
 					},
@@ -285,30 +264,24 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			RightOr: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						rightToBool, foundError := self.Get(ToBool)
-						if foundError != nil {
+						rightToBool, getError := self.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := rightToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(rightToBool.(Value).TypeName(), FunctionName)
-						}
-						rightBool, transformationError := p.CallFunction(rightToBool.(*Function), self.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						rightBool, callError := p.CallFunction(rightToBool, self.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						left := arguments[0]
-						var leftToBool interface{}
-						leftToBool, foundError = left.Get(ToBool)
-						if foundError != nil {
+						var leftToBool Value
+						leftToBool, getError = left.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := leftToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(leftToBool.(Value).TypeName(), FunctionName)
-						}
 						var leftBool Value
-						leftBool, transformationError = p.CallFunction(leftToBool.(*Function), left.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						leftBool, callError = p.CallFunction(leftToBool, left.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() || rightBool.GetBool()), nil
 					},
@@ -317,31 +290,25 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			Xor: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						leftToBool, foundError := self.Get(ToBool)
-						if foundError != nil {
+						leftToBool, getError := self.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := leftToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(leftToBool.(Value).TypeName(), FunctionName)
-						}
-						leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 
 						right := arguments[0]
-						var rightToBool interface{}
-						rightToBool, foundError = right.Get(ToBool)
-						if foundError != nil {
+						var rightToBool Value
+						rightToBool, getError = right.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := rightToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(rightToBool.(Value).TypeName(), FunctionName)
-						}
 						var rightBool Value
-						rightBool, transformationError = p.CallFunction(rightToBool.(*Function), right.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						rightBool, callError = p.CallFunction(rightToBool, right.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() != rightBool.GetBool()), nil
 					},
@@ -350,31 +317,25 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			RightXor: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						leftToBool, foundError := self.Get(ToBool)
-						if foundError != nil {
+						leftToBool, getError := self.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := leftToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(leftToBool.(Value).TypeName(), FunctionName)
-						}
-						leftBool, transformationError := p.CallFunction(leftToBool.(*Function), self.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 
 						left := arguments[0]
-						var rightToBool interface{}
-						rightToBool, foundError = left.Get(ToBool)
-						if foundError != nil {
+						var rightToBool Value
+						rightToBool, getError = left.Get(ToBool)
+						if getError != nil {
 							return nil, p.NewObjectWithNameNotFoundError(ToBool)
 						}
-						if _, ok := rightToBool.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(rightToBool.(Value).TypeName(), FunctionName)
-						}
 						var rightBool Value
-						rightBool, transformationError = p.CallFunction(rightToBool.(*Function), left.SymbolTable())
-						if transformationError != nil {
-							return nil, transformationError
+						rightBool, callError = p.CallFunction(rightToBool, left.SymbolTable())
+						if callError != nil {
+							return nil, callError
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), rightBool.GetBool() != leftBool.GetBool()), nil
 					},

@@ -83,6 +83,7 @@ func (p *Plasma) Execute() (Value, *Object) {
 		case LessThanOrEqualOP:
 			executionError = p.leftBinaryExpressionFuncCall(LessThanOrEqual)
 		case ContainsOP:
+			// This operation is inverted, right is left and left is right
 			leftHandSide := p.PopObject()
 			rightHandSide := p.PopObject()
 			p.PushObject(leftHandSide)
@@ -268,7 +269,7 @@ func (p *Plasma) newHashOP(code Code) *Object {
 		return p.NewObjectWithNameNotFoundError(Assign)
 	}
 	for _, keyValue := range keyValues {
-		_, assignError := p.CallFunction(hashTableAssign.(*Function), hashTable.SymbolTable(), keyValue.Key, keyValue.Value)
+		_, assignError := p.CallFunction(hashTableAssign, hashTable.SymbolTable(), keyValue.Key, keyValue.Value)
 		if assignError != nil {
 			return assignError
 		}
@@ -284,10 +285,7 @@ func (p *Plasma) noArgsGetAndCall(operationName string) *Object {
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(operationName)
 	}
-	if _, ok := operation.(*Function); !ok {
-		return p.NewInvalidTypeError(operation.TypeName(), FunctionName)
-	}
-	result, callError := p.CallFunction(operation.(*Function), object.SymbolTable())
+	result, callError := p.CallFunction(operation, object.SymbolTable())
 	if callError != nil {
 		return callError
 	}
@@ -303,10 +301,7 @@ func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *Object {
 	if getError != nil {
 		return p.rightBinaryExpressionFuncCall(leftHandSide, rightHandSide, operationName)
 	}
-	if _, ok := operation.(*Function); !ok {
-		return p.rightBinaryExpressionFuncCall(leftHandSide, rightHandSide, operationName)
-	}
-	result, callError := p.CallFunction(operation.(*Function), leftHandSide.SymbolTable(), rightHandSide)
+	result, callError := p.CallFunction(operation, leftHandSide.SymbolTable(), rightHandSide)
 	if callError != nil {
 		return p.rightBinaryExpressionFuncCall(leftHandSide, rightHandSide, operationName)
 	}
@@ -319,10 +314,7 @@ func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide Value, rightHandSide
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError("Right" + operationName)
 	}
-	if _, ok := operation.(*Function); !ok {
-		return p.NewInvalidTypeError(operation.TypeName(), FunctionName)
-	}
-	result, callError := p.CallFunction(operation.(*Function), rightHandSide.SymbolTable(), leftHandSide)
+	result, callError := p.CallFunction(operation, rightHandSide.SymbolTable(), leftHandSide)
 	if callError != nil {
 		return callError
 	}
@@ -337,10 +329,7 @@ func (p *Plasma) indexOP() *Object {
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(Index)
 	}
-	if _, ok := indexOperation.(*Function); !ok {
-		return p.NewInvalidTypeError(indexOperation.TypeName(), FunctionName)
-	}
-	result, callError := p.CallFunction(indexOperation.(*Function), source.SymbolTable(), index)
+	result, callError := p.CallFunction(indexOperation, source.SymbolTable(), index)
 	if callError != nil {
 		return callError
 	}
@@ -371,10 +360,7 @@ func (p *Plasma) methodInvocationOP(code Code) *Object {
 	}
 	var result Value
 	var callError *Object
-	switch function.(type) {
-	case *Function:
-		result, callError = p.CallFunction(function.(*Function), NewSymbolTable(function.SymbolTable().Parent), arguments...)
-	case *Type:
+	if _, ok := function.(*Type); ok {
 		result, callError = p.ConstructObject(function.(*Type), NewSymbolTable(function.SymbolTable().Parent))
 		if callError != nil {
 			return callError
@@ -383,20 +369,9 @@ func (p *Plasma) methodInvocationOP(code Code) *Object {
 		if getError != nil {
 			return p.NewObjectWithNameNotFoundError(Initialize)
 		}
-		if _, ok := resultInitialize.(*Function); !ok {
-			return p.NewInvalidTypeError(resultInitialize.TypeName(), FunctionName)
-		}
-		_, callError = p.CallFunction(resultInitialize.(*Function), result.SymbolTable(), arguments...)
-	default:
-		// Try getting the method Call
-		call, getError := function.Get(Call)
-		if getError != nil {
-			return p.NewObjectWithNameNotFoundError(Call)
-		}
-		if _, ok := call.(*Function); !ok {
-			return p.NewInvalidTypeError(call.TypeName(), FunctionName)
-		}
-		result, callError = p.CallFunction(call.(*Function), NewSymbolTable(function.SymbolTable().Parent))
+		_, callError = p.CallFunction(resultInitialize, result.SymbolTable(), arguments...)
+	} else {
+		result, callError = p.CallFunction(function, NewSymbolTable(function.SymbolTable().Parent), arguments...)
 	}
 	if callError != nil {
 		return callError
@@ -441,10 +416,7 @@ func (p *Plasma) assignIndexOP() *Object {
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(Assign)
 	}
-	if _, ok := sourceAssign.(*Function); !ok {
-		return p.NewInvalidTypeError(sourceAssign.TypeName(), FunctionName)
-	}
-	_, callError := p.CallFunction(sourceAssign.(*Function), p.PeekSymbolTable(), index, value)
+	_, callError := p.CallFunction(sourceAssign, p.PeekSymbolTable(), index, value)
 	if callError != nil {
 		return callError
 	}
@@ -479,10 +451,7 @@ func (p *Plasma) ifJumpOP(code Code) *Object {
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(ToBool)
 	}
-	if _, ok := toBool.(*Function); !ok {
-		return p.NewInvalidTypeError(toBool.TypeName(), FunctionName)
-	}
-	conditionBool, callError := p.CallFunction(toBool.(*Function), toBool.SymbolTable())
+	conditionBool, callError := p.CallFunction(toBool, toBool.SymbolTable())
 	if callError != nil {
 		return callError
 	}
@@ -498,10 +467,7 @@ func (p *Plasma) unlessJumpOP(code Code) *Object {
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(ToBool)
 	}
-	if _, ok := toBool.(*Function); !ok {
-		return p.NewInvalidTypeError(toBool.TypeName(), FunctionName)
-	}
-	conditionBool, callError := p.CallFunction(toBool.(*Function), toBool.SymbolTable())
+	conditionBool, callError := p.CallFunction(toBool, toBool.SymbolTable())
 	if callError != nil {
 		return callError
 	}
@@ -582,10 +548,7 @@ func (p *Plasma) setupForLoopOP() *Object {
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(Iter)
 	}
-	if _, ok := valueIterFunc.(*Function); !ok {
-		return p.NewInvalidTypeError(valueIterFunc.TypeName(), FunctionName)
-	}
-	valueIter, callError := p.CallFunction(valueIterFunc.(*Function), value.SymbolTable())
+	valueIter, callError := p.CallFunction(valueIterFunc, value.SymbolTable())
 	if callError != nil {
 		return callError
 	}
@@ -601,10 +564,7 @@ func (p *Plasma) hasNextOP(code Code) *Object {
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(HasNext)
 	}
-	if _, ok := hasNext.(*Function); !ok {
-		return p.NewInvalidTypeError(hasNext.TypeName(), FunctionName)
-	}
-	result, callError := p.CallFunction(hasNext.(*Function), p.IterStack.Peek().Iterable.SymbolTable())
+	result, callError := p.CallFunction(hasNext, p.IterStack.Peek().Iterable.SymbolTable())
 	if callError != nil {
 		return callError
 	}
@@ -614,11 +574,8 @@ func (p *Plasma) hasNextOP(code Code) *Object {
 		if getError != nil {
 			return p.NewObjectWithNameNotFoundError(ToBool)
 		}
-		if _, ok = resultToBool.(*Function); !ok {
-			return p.NewInvalidTypeError(resultToBool.TypeName(), FunctionName)
-		}
 		var resultBool Value
-		resultBool, callError = p.CallFunction(resultToBool.(*Function), hasNext.SymbolTable())
+		resultBool, callError = p.CallFunction(resultToBool, hasNext.SymbolTable())
 		if callError != nil {
 			return callError
 		}
@@ -638,10 +595,7 @@ func (p *Plasma) unpackReceiversPopOP() *Object {
 	if getError != nil {
 		return p.NewObjectWithNameNotFoundError(Next)
 	}
-	if _, ok := next.(*Function); !ok {
-		return p.NewInvalidTypeError(next.TypeName(), FunctionName)
-	}
-	nextValue, callError := p.CallFunction(next.(*Function), p.IterStack.Peek().Iterable.SymbolTable())
+	nextValue, callError := p.CallFunction(next, p.IterStack.Peek().Iterable.SymbolTable())
 	if callError != nil {
 		return callError
 	}
@@ -657,27 +611,24 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
 	}
 	// First try to unpack iterators
 	hasNext, getError := p.IterStack.Peek().LastValue.Get(HasNext)
-	if _, ok := hasNext.(*Function); getError == nil && ok {
+	if getError == nil {
 		var next Value
 		next, getError = p.IterStack.Peek().LastValue.Get(Next)
-		if _, ok = next.(*Function); getError == nil && ok {
+		if getError == nil {
 			for _, receiver := range receivers {
 				// First check if there is next value
-				hasNextResult, callError := p.CallFunction(hasNext.(*Function), p.IterStack.Peek().LastValue.SymbolTable())
+				hasNextResult, callError := p.CallFunction(hasNext, p.IterStack.Peek().LastValue.SymbolTable())
 				if callError != nil {
 					return callError
 				}
 				var hasNextResultBool Value
-				if _, ok = hasNextResult.(*Bool); !ok {
+				if _, ok := hasNextResult.(*Bool); !ok {
 					var hasNextResultToBool Value
 					hasNextResultToBool, getError = hasNextResult.Get(ToBool)
 					if getError != nil {
 						return p.NewObjectWithNameNotFoundError(ToBool)
 					}
-					if _, ok = hasNextResultToBool.(*Function); !ok {
-						return p.NewInvalidTypeError(hasNextResultToBool.TypeName(), FunctionName)
-					}
-					hasNextResultBool, callError = p.CallFunction(hasNextResultToBool.(*Function), hasNextResult.SymbolTable())
+					hasNextResultBool, callError = p.CallFunction(hasNextResultToBool, hasNextResult.SymbolTable())
 					if callError != nil {
 						return callError
 					}
@@ -688,7 +639,7 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
 				}
 				if hasNextResult.GetBool() {
 					var value Value
-					value, callError = p.CallFunction(next.(*Function), p.IterStack.Peek().LastValue.SymbolTable())
+					value, callError = p.CallFunction(next, p.IterStack.Peek().LastValue.SymbolTable())
 					if callError != nil {
 						return callError
 					}
@@ -706,11 +657,8 @@ func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
 		if getError != nil {
 			return p.NewObjectWithNameNotFoundError(ToTuple)
 		}
-		if _, ok = toTuple.(*Function); !ok {
-			return p.NewInvalidTypeError(toTuple.TypeName(), FunctionName)
-		}
 		var callError *Object
-		lastValue, callError = p.CallFunction(toTuple.(*Function), p.IterStack.Peek().LastValue.SymbolTable())
+		lastValue, callError = p.CallFunction(toTuple, p.IterStack.Peek().LastValue.SymbolTable())
 		if callError != nil {
 			return callError
 		}
@@ -740,10 +688,7 @@ func (p *Plasma) newIteratorOP(code Code) *Object {
 		if getError != nil {
 			return p.NewObjectWithNameNotFoundError(Iter)
 		}
-		if _, ok = iter.(*Function); !ok {
-			return p.NewInvalidTypeError(iter.TypeName(), FunctionName)
-		}
-		iterSource, callError = p.CallFunction(iter.(*Function), source.SymbolTable())
+		iterSource, callError = p.CallFunction(iter, source.SymbolTable())
 		if callError != nil {
 			return callError
 		}
@@ -984,7 +929,7 @@ func (p *Plasma) raiseOP() *Object {
 func (p *Plasma) caseOP(code Code) *Object {
 	references := p.PopObject()
 	contains := p.ForceParentGetSelf(Contains, references.SymbolTable())
-	result, callError := p.CallFunction(contains.(*Function), references.SymbolTable(), p.PeekObject())
+	result, callError := p.CallFunction(contains, references.SymbolTable(), p.PeekObject())
 	if callError != nil {
 		return callError
 	}
@@ -996,10 +941,7 @@ func (p *Plasma) caseOP(code Code) *Object {
 		if getError != nil {
 			return p.NewObjectWithNameNotFoundError(ToBool)
 		}
-		if _, ok = toBool.(*Function); !ok {
-			return p.NewInvalidTypeError(toBool.TypeName(), FunctionName)
-		}
-		boolResult, callError = p.CallFunction(toBool.(*Function), result.SymbolTable())
+		boolResult, callError = p.CallFunction(toBool, result.SymbolTable())
 		if callError != nil {
 			return callError
 		}

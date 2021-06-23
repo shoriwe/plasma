@@ -1,12 +1,39 @@
 package vm
 
-func (p *Plasma) CallFunction(function *Function, parent *SymbolTable, arguments ...Value) (Value, *Object) {
-	if function.Callable.NumberOfArguments() != len(arguments) {
+func (p *Plasma) CallableInitialize(isBuiltIn bool) ConstructorCallBack {
+	return func(object Value) *Object {
+		object.Set(Call, p.NewFunction(isBuiltIn, object.SymbolTable(),
+			NewBuiltInClassFunction(object, 0,
+				func(_ Value, _ ...Value) (Value, *Object) {
+					return nil, p.NewNotImplementedCallableError(Call)
+				},
+			),
+		),
+		)
+		return nil
+	}
+}
+
+func (p *Plasma) CallFunction(function Value, parent *SymbolTable, arguments ...Value) (Value, *Object) {
+	var callFunction *Function
+	if _, ok := function.(*Function); !ok {
+		call, getError := function.Get(Call)
+		if getError != nil {
+			return nil, p.NewObjectNotCallable(function.GetClass())
+		}
+		if _, ok = call.(*Function); !ok {
+			return nil, p.NewInvalidTypeError(function.TypeName(), CallableName)
+		}
+		callFunction = call.(*Function)
+	} else {
+		callFunction = function.(*Function)
+	}
+	if callFunction.Callable.NumberOfArguments() != len(arguments) {
 		//  Return Here a error related to number of arguments
-		return nil, p.NewInvalidNumberOfArgumentsError(len(arguments), function.Callable.NumberOfArguments())
+		return nil, p.NewInvalidNumberOfArgumentsError(len(arguments), callFunction.Callable.NumberOfArguments())
 	}
 	symbols := NewSymbolTable(parent)
-	self, callback, code := function.Callable.Call()
+	self, callback, code := callFunction.Callable.Call()
 	if self != nil {
 		symbols.Set(Self, self)
 	} else {

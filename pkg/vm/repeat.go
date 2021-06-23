@@ -3,7 +3,7 @@ package vm
 import "math/big"
 
 func (p *Plasma) Repeat(content []Value, times *big.Int) ([]Value, *Object) {
-	copyFunctions := map[int64]*Function{}
+	copyFunctions := map[int64]Value{}
 	var result []Value
 	if times.Cmp(big.NewInt(0)) == 1 {
 		for _, object := range content {
@@ -12,10 +12,7 @@ func (p *Plasma) Repeat(content []Value, times *big.Int) ([]Value, *Object) {
 				copyFunctions[object.Id()] = nil
 				continue
 			}
-			if _, ok := copyObject.(*Function); !ok {
-				return nil, p.NewInvalidTypeError(copyObject.TypeName(), FunctionName)
-			}
-			copyFunctions[object.Id()] = copyObject.(*Function)
+			copyFunctions[object.Id()] = copyObject
 		}
 	}
 	for i := big.NewInt(0); i.Cmp(times) == -1; i.Add(i, big.NewInt(1)) {
