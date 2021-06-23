@@ -1,4 +1,5 @@
-println(1 + 2 / 3 == 1.6666666666666665)
+println(((1 + 2 / 3) == (1 + 2 / 3)) and ((1 + 2 / 3).ToString() == "1.6666666666666666667"))
+println(25**(1/2) == 5)
 println("Hello " * 5 == "Hello Hello Hello Hello Hello ")
 println((1, 2, 4 + 5 / 6 ** 2, 10, "hello * 5 " * 0) == (1, 2, 4 + 5 / 6 ** 2, 10, ""))
 println(1 and (1, 2, 3, 4))
@@ -7,6 +8,9 @@ println(1 xor (1, 2, 3, 4) == False)
 println(1 in (1, 2, 3, 4))
 println(1 // 2 == 0)
 println((1, 2, 3, "Hello") * 2 == (1, 2, 3, "Hello", 1, 2, 3, "Hello"))
+println(1 in [1, 2, 3, 4, 5])
+println(1 in (1, 2, 3, 4, 5))
+println(1 in {1: 2, 2: 3, 3: 4, 4: 5, 5: 6})
 
 class A
     def Equals(other)

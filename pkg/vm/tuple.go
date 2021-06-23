@@ -2,6 +2,7 @@ package vm
 
 import (
 	"github.com/shoriwe/gplasma/pkg/tools"
+	"math/big"
 )
 
 type Tuple struct {
@@ -28,7 +29,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 						right := arguments[0]
 						switch right.(type) {
 						case *Integer:
-							content, repetitionError := p.Repeat(self.GetContent(), int(right.GetInteger64()))
+							content, repetitionError := p.Repeat(self.GetContent(), right.GetInteger())
 							if repetitionError != nil {
 								return nil, repetitionError
 							}
@@ -47,7 +48,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 						left := arguments[0]
 						switch left.(type) {
 						case *Integer:
-							content, repetitionError := p.Repeat(self.GetContent(), int(left.GetInteger64()))
+							content, repetitionError := p.Repeat(self.GetContent(), left.GetInteger())
 							if repetitionError != nil {
 								return nil, repetitionError
 							}
@@ -83,12 +84,9 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 								if getError != nil {
 									return nil, p.NewObjectWithNameNotFoundError(RightEquals)
 								}
-								if _, ok := rightEquals.(*Function); !ok {
-									return nil, p.NewInvalidTypeError(rightEquals.TypeName(), FunctionName)
-								}
-								comparisonResult, callError = p.CallFunction(rightEquals.(*Function), p.PeekSymbolTable(), self.GetContent()[i])
+								comparisonResult, callError = p.CallFunction(rightEquals, p.PeekSymbolTable(), self.GetContent()[i])
 							} else {
-								comparisonResult, callError = p.CallFunction(leftEquals.(*Function), p.PeekSymbolTable(), right.GetContent()[i])
+								comparisonResult, callError = p.CallFunction(leftEquals, p.PeekSymbolTable(), right.GetContent()[i])
 							}
 							if callError != nil {
 								return nil, callError
@@ -97,10 +95,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 							if getError != nil {
 								return nil, p.NewObjectWithNameNotFoundError(ToBool)
 							}
-							if _, ok := comparisonResultToBool.(*Function); !ok {
-								return nil, p.NewInvalidTypeError(comparisonResultToBool.TypeName(), FunctionName)
-							}
-							comparisonBool, callError = p.CallFunction(comparisonResultToBool.(*Function), p.PeekSymbolTable())
+							comparisonBool, callError = p.CallFunction(comparisonResultToBool, p.PeekSymbolTable())
 							if callError != nil {
 								return nil, callError
 							}
@@ -140,12 +135,9 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 								if getError != nil {
 									return nil, p.NewObjectWithNameNotFoundError(RightEquals)
 								}
-								if _, ok := rightEquals.(*Function); !ok {
-									return nil, p.NewInvalidTypeError(rightEquals.TypeName(), FunctionName)
-								}
-								comparisonResult, callError = p.CallFunction(rightEquals.(*Function), p.PeekSymbolTable(), left.GetContent()[i])
+								comparisonResult, callError = p.CallFunction(rightEquals, p.PeekSymbolTable(), left.GetContent()[i])
 							} else {
-								comparisonResult, callError = p.CallFunction(leftEquals.(*Function), p.PeekSymbolTable(), self.GetContent()[i])
+								comparisonResult, callError = p.CallFunction(leftEquals, p.PeekSymbolTable(), self.GetContent()[i])
 							}
 							if callError != nil {
 								return nil, callError
@@ -154,10 +146,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 							if getError != nil {
 								return nil, p.NewObjectWithNameNotFoundError(ToBool)
 							}
-							if _, ok := comparisonResultToBool.(*Function); !ok {
-								return nil, p.NewInvalidTypeError(comparisonResultToBool.TypeName(), FunctionName)
-							}
-							comparisonBool, callError = p.CallFunction(comparisonResultToBool.(*Function), p.PeekSymbolTable())
+							comparisonBool, callError = p.CallFunction(comparisonResultToBool, p.PeekSymbolTable())
 							if callError != nil {
 								return nil, callError
 							}
@@ -198,12 +187,9 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 								if getError != nil {
 									return nil, p.NewObjectWithNameNotFoundError(RightNotEquals)
 								}
-								if _, ok := rightNotEquals.(*Function); !ok {
-									return nil, p.NewInvalidTypeError(rightNotEquals.TypeName(), FunctionName)
-								}
-								comparisonResult, callError = p.CallFunction(rightNotEquals.(*Function), p.PeekSymbolTable(), self.GetContent()[i])
+								comparisonResult, callError = p.CallFunction(rightNotEquals, p.PeekSymbolTable(), self.GetContent()[i])
 							} else {
-								comparisonResult, callError = p.CallFunction(leftNotEquals.(*Function), p.PeekSymbolTable(), right.GetContent()[i])
+								comparisonResult, callError = p.CallFunction(leftNotEquals, p.PeekSymbolTable(), right.GetContent()[i])
 							}
 							if callError != nil {
 								return nil, callError
@@ -212,10 +198,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 							if getError != nil {
 								return nil, p.NewObjectWithNameNotFoundError(ToBool)
 							}
-							if _, ok := comparisonResultToBool.(*Function); !ok {
-								return nil, p.NewInvalidTypeError(comparisonResultToBool.TypeName(), FunctionName)
-							}
-							comparisonBool, callError = p.CallFunction(comparisonResultToBool.(*Function), p.PeekSymbolTable())
+							comparisonBool, callError = p.CallFunction(comparisonResultToBool, p.PeekSymbolTable())
 							if callError != nil {
 								return nil, callError
 							}
@@ -256,12 +239,9 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 								if getError != nil {
 									return nil, p.NewObjectWithNameNotFoundError(RightNotEquals)
 								}
-								if _, ok := rightEquals.(*Function); !ok {
-									return nil, p.NewInvalidTypeError(rightEquals.TypeName(), FunctionName)
-								}
-								comparisonResult, callError = p.CallFunction(rightEquals.(*Function), p.PeekSymbolTable(), left.GetContent()[i])
+								comparisonResult, callError = p.CallFunction(rightEquals, p.PeekSymbolTable(), left.GetContent()[i])
 							} else {
-								comparisonResult, callError = p.CallFunction(leftEquals.(*Function), p.PeekSymbolTable(), self.GetContent()[i])
+								comparisonResult, callError = p.CallFunction(leftEquals, p.PeekSymbolTable(), self.GetContent()[i])
 							}
 							if callError != nil {
 								return nil, callError
@@ -270,10 +250,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 							if getError != nil {
 								return nil, p.NewObjectWithNameNotFoundError(ToBool)
 							}
-							if _, ok := comparisonResultToBool.(*Function); !ok {
-								return nil, p.NewInvalidTypeError(comparisonResultToBool.TypeName(), FunctionName)
-							}
-							comparisonBool, callError = p.CallFunction(comparisonResultToBool.(*Function), p.PeekSymbolTable())
+							comparisonBool, callError = p.CallFunction(comparisonResultToBool, p.PeekSymbolTable())
 							if callError != nil {
 								return nil, callError
 							}
@@ -289,6 +266,88 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 				),
 			),
 		)
+		object.Set(Contains,
+			p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self Value, arguments ...Value) (Value, *Object) {
+						value := arguments[0]
+						valueRightEquals, getError := value.Get(RightEquals)
+						if getError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(RightEquals)
+						}
+						for _, tupleValue := range self.GetContent() {
+							callResult, callError := p.CallFunction(valueRightEquals, value.SymbolTable(), tupleValue)
+							if callError != nil {
+								return nil, callError
+							}
+							var boolValue Value
+							if _, ok := callResult.(*Bool); ok {
+								boolValue = callResult
+							} else {
+								var boolValueToBool Value
+								boolValueToBool, getError = callResult.Get(ToBool)
+								if getError != nil {
+									return nil, p.NewObjectWithNameNotFoundError(ToBool)
+								}
+								callResult, callError = p.CallFunction(boolValueToBool, callResult.SymbolTable())
+								if callError != nil {
+									return nil, callError
+								}
+								if _, ok = callResult.(*Bool); !ok {
+									return nil, p.NewInvalidTypeError(callResult.TypeName(), BoolName)
+								}
+								boolValue = callResult
+							}
+							if boolValue.(*Bool).GetBool() {
+								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+							}
+						}
+						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+					},
+				),
+			),
+		)
+		object.Set(RightContains,
+			p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 1,
+					func(self Value, arguments ...Value) (Value, *Object) {
+						value := arguments[0]
+						valueRightEquals, getError := value.Get(Equals)
+						if getError != nil {
+							return nil, p.NewObjectWithNameNotFoundError(Equals)
+						}
+						for _, tupleValue := range self.GetContent() {
+							callResult, callError := p.CallFunction(valueRightEquals, value.SymbolTable(), tupleValue)
+							if callError != nil {
+								return nil, callError
+							}
+							var boolValue Value
+							if _, ok := callResult.(*Bool); ok {
+								boolValue = callResult
+							} else {
+								var boolValueToBool Value
+								boolValueToBool, getError = callResult.Get(ToBool)
+								if getError != nil {
+									return nil, p.NewObjectWithNameNotFoundError(ToBool)
+								}
+								callResult, callError = p.CallFunction(boolValueToBool, callResult.SymbolTable())
+								if callError != nil {
+									return nil, callError
+								}
+								if _, ok = callResult.(*Bool); !ok {
+									return nil, p.NewInvalidTypeError(callResult.TypeName(), BoolName)
+								}
+								boolValue = callResult
+							}
+							if boolValue.(*Bool).GetBool() {
+								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+							}
+						}
+						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+					},
+				),
+			),
+		)
 		object.Set(Hash,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
@@ -299,26 +358,19 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 							if getError != nil {
 								return nil, p.NewObjectWithNameNotFoundError(Hash)
 							}
-							if _, ok := objectHashFunc.(*Function); !ok {
-								return nil, p.NewInvalidTypeError(objectHashFunc.TypeName(), FunctionName)
-							}
-							objectHash, callError := p.CallFunction(objectHashFunc.(*Function), self.SymbolTable())
+							objectHash, callError := p.CallFunction(objectHashFunc, self.SymbolTable())
 							if callError != nil {
 								return nil, callError
 							}
 							if _, ok := objectHash.(*Integer); !ok {
 								return nil, p.NewInvalidTypeError(objectHash.TypeName(), IntegerName)
 							}
-							tupleHash += uint64(objectHash.GetInteger64()) * XXPrime2
+							tupleHash += objectHash.GetInteger().Uint64() * XXPrime2
 							tupleHash = (tupleHash << 31) | (tupleHash >> 33)
 							tupleHash *= XXPrime1
 							tupleHash &= (1 << 64) - 1
 						}
-						finalTupleHash := int64(tupleHash)
-						if finalTupleHash < 0 {
-							finalTupleHash = -finalTupleHash
-						}
-						return p.NewInteger(false, p.PeekSymbolTable(), finalTupleHash), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), new(big.Int).SetUint64(tupleHash)), nil
 					},
 				),
 			),
@@ -334,10 +386,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 							if getError != nil {
 								return nil, p.NewObjectWithNameNotFoundError(Copy)
 							}
-							if _, ok := objectCopy.(*Function); !ok {
-								return nil, p.NewInvalidTypeError(objectCopy.TypeName(), FunctionName)
-							}
-							copiedObject, copyError := p.CallFunction(objectCopy.(*Function), p.PeekSymbolTable())
+							copiedObject, copyError := p.CallFunction(objectCopy, p.PeekSymbolTable())
 							if copyError != nil {
 								return nil, copyError
 							}
@@ -355,23 +404,23 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 						indexObject := arguments[0]
 						var ok bool
 						if _, ok = indexObject.(*Integer); ok {
-							index, calcError := tools.CalcIndex(indexObject.GetInteger64(), self.GetLength())
+							index, calcError := tools.CalcIndex(indexObject.GetInteger().Int64(), self.GetLength())
 							if calcError != nil {
-								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetInteger64())
+								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetInteger().Int64())
 							}
 							return self.GetContent()[index], nil
 						} else if _, ok = indexObject.(*Tuple); ok {
 							if len(indexObject.GetContent()) != 2 {
 								return nil, p.NewInvalidNumberOfArgumentsError(len(indexObject.GetContent()), 2)
 							}
-							startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger64(), self.GetLength())
+							startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger().Int64(), self.GetLength())
 							if calcError != nil {
-								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[0].GetInteger64())
+								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[0].GetInteger().Int64())
 							}
 							var targetIndex int
-							targetIndex, calcError = tools.CalcIndex(indexObject.GetContent()[1].GetInteger64(), self.GetLength())
+							targetIndex, calcError = tools.CalcIndex(indexObject.GetContent()[1].GetInteger().Int64(), self.GetLength())
 							if calcError != nil {
-								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[1].GetInteger64())
+								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[1].GetInteger().Int64())
 							}
 							return p.NewTuple(false, p.PeekSymbolTable(), self.GetContent()[startIndex:targetIndex]), nil
 						} else {
@@ -386,7 +435,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						iterator := p.NewIterator(false, p.PeekSymbolTable())
-						iterator.SetInteger64(0)
+						iterator.SetInteger(big.NewInt(0))
 						iterator.SetContent(self.GetContent())
 						iterator.SetLength(self.GetLength())
 						iterator.Set(HasNext,
@@ -394,7 +443,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										return p.NewBool(false, p.PeekSymbolTable(), int(funcSelf.GetInteger64()) < funcSelf.GetLength()), nil
+										return p.NewBool(false, p.PeekSymbolTable(), funcSelf.GetInteger().Cmp(big.NewInt(int64(funcSelf.GetLength()))) == -1), nil
 									},
 								),
 							),
@@ -404,8 +453,8 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										value := funcSelf.GetContent()[int(funcSelf.GetInteger64())]
-										funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
+										value := funcSelf.GetContent()[int(funcSelf.GetInteger().Int64())]
+										funcSelf.SetInteger(new(big.Int).Add(funcSelf.GetInteger(), big.NewInt(1)))
 										return value, nil
 									},
 								),
@@ -431,10 +480,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 							if getError != nil {
 								return nil, p.NewObjectWithNameNotFoundError(ToString)
 							}
-							if _, ok := objectToString.(*Function); !ok {
-								return nil, p.NewInvalidTypeError(objectToString.TypeName(), FunctionName)
-							}
-							objectString, callError = p.CallFunction(objectToString.(*Function), p.PeekSymbolTable())
+							objectString, callError = p.CallFunction(objectToString, p.PeekSymbolTable())
 							if callError != nil {
 								return nil, callError
 							}
@@ -468,54 +514,6 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						return p.NewTuple(false, p.PeekSymbolTable(), append([]Value{}, self.GetContent()...)), nil
-					},
-				),
-			),
-		)
-		// Tuple Special functions
-		object.Set(Contains,
-			p.NewFunction(isBuiltIn, object.SymbolTable(),
-				NewBuiltInClassFunction(object, 1,
-					func(self Value, arguments ...Value) (Value, *Object) {
-						value := arguments[0]
-						valueRightEquals, getError := value.Get(RightEquals)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(RightEquals)
-						}
-						if _, ok := valueRightEquals.(*Function); !ok {
-							return nil, p.NewInvalidTypeError(valueRightEquals.TypeName(), FunctionName)
-						}
-						for _, tupleValue := range self.GetContent() {
-							callResult, callError := p.CallFunction(valueRightEquals.(*Function), value.SymbolTable(), tupleValue)
-							if callError != nil {
-								return nil, callError
-							}
-							var boolValue Value
-							if _, ok := callResult.(*Bool); ok {
-								boolValue = callResult
-							} else {
-								var boolValueToBool Value
-								boolValueToBool, getError = callResult.Get(ToBool)
-								if getError != nil {
-									return nil, p.NewObjectWithNameNotFoundError(ToBool)
-								}
-								if _, ok = boolValueToBool.(*Function); !ok {
-									return nil, p.NewInvalidTypeError(boolValueToBool.TypeName(), FunctionName)
-								}
-								callResult, callError = p.CallFunction(boolValueToBool.(*Function), callResult.SymbolTable())
-								if callError != nil {
-									return nil, callError
-								}
-								if _, ok = callResult.(*Bool); !ok {
-									return nil, p.NewInvalidTypeError(callResult.TypeName(), BoolName)
-								}
-								boolValue = callResult
-							}
-							if boolValue.(*Bool).GetBool() {
-								return p.NewBool(false, p.PeekSymbolTable(), true), nil
-							}
-						}
-						return p.NewBool(false, p.PeekSymbolTable(), false), nil
 					},
 				),
 			),

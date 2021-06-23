@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+	"math/big"
 )
 
 const (
@@ -18,6 +19,7 @@ const (
 	IntegerParsingError           = "IntegerParsingError"           // Done
 	FloatParsingError             = "FloatParsingError"             // Done
 	BuiltInSymbolProtectionError  = "BuiltInSymbolProtectionError"  // Done
+	ObjectNotCallableError        = "ObjectNotCallableError"        //
 )
 
 func (p *Plasma) ForceParentGetSelf(name string, parent *SymbolTable) Value {
@@ -61,7 +63,7 @@ func (p *Plasma) ForceInitialization(object Value, arguments ...Value) {
 		panic(getError.String())
 	}
 	_, callError := p.CallFunction(
-		initialize.(*Function), object.SymbolTable(),
+		initialize, object.SymbolTable(),
 		arguments...,
 	)
 	if callError != nil {
@@ -99,9 +101,9 @@ func (p *Plasma) NewIndexOutOfRange(length int, index int64) *Object {
 		p.NewInteger(
 			false,
 			p.PeekSymbolTable(),
-			int64(length),
+			big.NewInt(int64(length)),
 		),
-		p.NewInteger(false, p.PeekSymbolTable(), index),
+		p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(index)),
 	)
 	return instantiatedError.(*Object)
 }
@@ -137,8 +139,8 @@ func (p *Plasma) NewInvalidNumberOfArgumentsError(received int, expecting int) *
 	errorType := p.ForceMasterGetAny(InvalidNumberOfArgumentsError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewInteger(false, p.PeekSymbolTable(), int64(received)),
-		p.NewInteger(false, p.PeekSymbolTable(), int64(expecting)),
+		p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(int64(received))),
+		p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(int64(expecting))),
 	)
 	return instantiatedError.(*Object)
 }
@@ -164,7 +166,7 @@ func (p *Plasma) NewInvalidTypeError(received string, expecting ...string) *Obje
 		expectingSum += s
 	}
 	_, _ = p.CallFunction(
-		instantiatedErrorInitialize.(*Function), instantiatedError.SymbolTable(),
+		instantiatedErrorInitialize, instantiatedError.SymbolTable(),
 		p.NewString(false, p.PeekSymbolTable(), received),
 		p.NewString(false, p.PeekSymbolTable(), expectingSum),
 	)
@@ -186,6 +188,13 @@ func (p *Plasma) NewBuiltInSymbolProtectionError(symbolName string) *Object {
 	p.ForceInitialization(instantiatedError,
 		p.NewString(false, p.PeekSymbolTable(), symbolName),
 	)
+	return instantiatedError.(*Object)
+}
+
+func (p *Plasma) NewObjectNotCallable(objectType *Type) *Object {
+	errorType := p.ForceMasterGetAny(ObjectNotCallableError)
+	instantiatedError := p.ForceConstruction(errorType)
+	p.ForceInitialization(instantiatedError, objectType)
 	return instantiatedError.(*Object)
 }
 

@@ -2,6 +2,7 @@ package vm
 
 import (
 	"fmt"
+	"math/big"
 )
 
 type Bool struct {
@@ -81,7 +82,9 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 							boolHash := p.HashString(fmt.Sprintf("%t-%s", self.GetBool(), BoolName))
 							self.SetHash(boolHash)
 						}
-						return p.NewInteger(false, p.PeekSymbolTable(), self.GetHash()), nil
+						return p.NewInteger(false, p.PeekSymbolTable(),
+							big.NewInt(self.GetHash()),
+						), nil
 					},
 				),
 			),
@@ -100,9 +103,9 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						if self.GetBool() {
-							return p.NewInteger(false, p.PeekSymbolTable(), 1), nil
+							return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(1)), nil
 						}
-						return p.NewInteger(false, p.PeekSymbolTable(), 0), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(0)), nil
 					},
 				),
 			),
@@ -112,9 +115,9 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						if self.GetBool() {
-							return p.NewFloat(false, p.PeekSymbolTable(), 1), nil
+							return p.NewFloat(false, p.PeekSymbolTable(), big.NewFloat(1)), nil
 						}
-						return p.NewFloat(false, p.PeekSymbolTable(), 0), nil
+						return p.NewFloat(false, p.PeekSymbolTable(), big.NewFloat(0)), nil
 					},
 				),
 			),

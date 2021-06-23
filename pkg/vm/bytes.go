@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"github.com/shoriwe/gplasma/pkg/tools"
+	"math/big"
 )
 
 type Bytes struct {
@@ -63,7 +64,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := right.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(right.TypeName(), IntegerName)
 						}
-						return p.NewBytes(false, p.PeekSymbolTable(), bytes.Repeat(self.GetBytes(), int(right.GetInteger64()))), nil
+						return p.NewBytes(false, p.PeekSymbolTable(), bytes.Repeat(self.GetBytes(), int(right.GetInteger().Int64()))), nil
 					},
 				),
 			),
@@ -76,7 +77,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := left.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(left.TypeName(), IntegerName)
 						}
-						return p.NewBytes(false, p.PeekSymbolTable(), bytes.Repeat(left.GetBytes(), int(self.GetInteger64()))), nil
+						return p.NewBytes(false, p.PeekSymbolTable(), bytes.Repeat(left.GetBytes(), int(self.GetInteger().Int64()))), nil
 					},
 				),
 			),
@@ -150,7 +151,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						selfHash := p.HashBytes(append(self.GetBytes(), []byte("Bytes")...))
-						return p.NewInteger(false, p.PeekSymbolTable(), selfHash), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(selfHash)), nil
 					},
 				),
 			),
@@ -173,23 +174,23 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 						indexObject := arguments[0]
 						var ok bool
 						if _, ok = indexObject.(*Integer); ok {
-							index, calcError := tools.CalcIndex(indexObject.GetInteger64(), self.GetLength())
+							index, calcError := tools.CalcIndex(indexObject.GetInteger().Int64(), self.GetLength())
 							if calcError != nil {
-								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetInteger64())
+								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetInteger().Int64())
 							}
-							return p.NewInteger(false, p.PeekSymbolTable(), int64(self.GetBytes()[index])), nil
+							return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(int64(self.GetBytes()[index]))), nil
 						} else if _, ok = indexObject.(*Tuple); ok {
 							if len(indexObject.GetContent()) != 2 {
 								return nil, p.NewInvalidNumberOfArgumentsError(len(indexObject.GetContent()), 2)
 							}
-							startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger64(), self.GetLength())
+							startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger().Int64(), self.GetLength())
 							if calcError != nil {
-								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[0].GetInteger64())
+								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[0].GetInteger().Int64())
 							}
 							var targetIndex int
-							targetIndex, calcError = tools.CalcIndex(indexObject.GetContent()[1].GetInteger64(), self.GetLength())
+							targetIndex, calcError = tools.CalcIndex(indexObject.GetContent()[1].GetInteger().Int64(), self.GetLength())
 							if calcError != nil {
-								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[1].GetInteger64())
+								return nil, p.NewIndexOutOfRange(self.GetLength(), indexObject.GetContent()[1].GetInteger().Int64())
 							}
 							return p.NewBytes(false, p.PeekSymbolTable(), self.GetBytes()[startIndex:targetIndex]), nil
 						} else {
@@ -204,7 +205,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						iterator := p.NewIterator(false, p.PeekSymbolTable())
-						iterator.SetInteger64(0) // This is the index
+						iterator.SetInteger(big.NewInt(0)) // This is the index
 						iterator.SetBytes(self.GetBytes())
 						iterator.SetLength(self.GetLength())
 						iterator.Set(HasNext,
@@ -212,7 +213,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										if int(funcSelf.GetInteger64()) < funcSelf.GetLength() {
+										if int(funcSelf.GetInteger().Int64()) < funcSelf.GetLength() {
 											return p.NewBool(false, p.PeekSymbolTable(), true), nil
 										}
 										return p.NewBool(false, p.PeekSymbolTable(), false), nil
@@ -225,9 +226,9 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										char := funcSelf.GetBytes()[int(funcSelf.GetInteger64())]
-										funcSelf.SetInteger64(funcSelf.GetInteger64() + 1)
-										return p.NewInteger(false, p.PeekSymbolTable(), int64(char)), nil
+										char := funcSelf.GetBytes()[int(funcSelf.GetInteger().Int64())]
+										funcSelf.SetInteger(new(big.Int).Add(funcSelf.GetInteger(), big.NewInt(1)))
+										return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(int64(char))), nil
 									},
 								),
 							),
@@ -241,7 +242,9 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewInteger(false, p.PeekSymbolTable(), int64(binary.BigEndian.Uint32(self.GetBytes()))), nil
+						return p.NewInteger(false, p.PeekSymbolTable(),
+							big.NewInt(int64(binary.BigEndian.Uint32(self.GetBytes()))),
+						), nil
 					},
 				),
 			),
@@ -270,7 +273,11 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, _ ...Value) (Value, *Object) {
 						var newContent []Value
 						for _, byte_ := range self.GetBytes() {
-							newContent = append(newContent, p.NewInteger(false, p.PeekSymbolTable(), int64(byte_)))
+							newContent = append(newContent,
+								p.NewInteger(false, p.PeekSymbolTable(),
+									big.NewInt(int64(byte_)),
+								),
+							)
 						}
 						return p.NewArray(false, p.PeekSymbolTable(), newContent), nil
 					},
@@ -283,7 +290,11 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, _ ...Value) (Value, *Object) {
 						var newContent []Value
 						for _, byte_ := range self.GetBytes() {
-							newContent = append(newContent, p.NewInteger(false, p.PeekSymbolTable(), int64(byte_)))
+							newContent = append(newContent,
+								p.NewInteger(false, p.PeekSymbolTable(),
+									big.NewInt(int64(byte_)),
+								),
+							)
 						}
 						return p.NewTuple(false, p.PeekSymbolTable(), newContent), nil
 					},

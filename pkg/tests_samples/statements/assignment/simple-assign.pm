@@ -8,7 +8,7 @@ println(a.Age == 48 and a.Age.BornDate == 1972)
 # Overwrite the variable
 a = 1
 a *= 10 / 83475987
-println(a == 1.197949297682458e-07)
+println((a == a) and (a.ToString() == "1.1979492976824580702e-07"))
 
 array = [1, 2, 3, 4]
 array[2] = 10000

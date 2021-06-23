@@ -71,7 +71,7 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 						if _, ok := bytesToRead.(*vm.Integer); !ok {
 							return p.NewInvalidTypeError(bytesToRead.TypeName(), vm.IntegerName), nil
 						}
-						bytes := make([]byte, bytesToRead.GetInteger64())
+						bytes := make([]byte, bytesToRead.GetInteger().Int64())
 						numberOfBytes, readError := r.Read(bytes)
 						if readError != nil {
 							if readError == io.EOF {
@@ -94,7 +94,7 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 						if _, ok := seek.(*vm.Integer); !ok {
 							return p.NewInvalidTypeError(seek.TypeName(), vm.IntegerName), nil
 						}
-						_, seekError := r.Seek(seek.GetInteger64(), io.SeekStart)
+						_, seekError := r.Seek(seek.GetInteger().Int64(), io.SeekStart)
 						if seekError != nil {
 							return nil, p.NewGoRuntimeError(seekError)
 						}
@@ -466,7 +466,11 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 					func(object vm.Value) *vm.Object {
 						object.Set(vm.Initialize,
 							p.NewFunction(true, object.SymbolTable(),
-								p.NewNotImplementedCallable(vm.Initialize, 0),
+								vm.NewBuiltInClassFunction(object, 0,
+									func(_ vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
+										return p.NewNone(), nil
+									},
+								),
 							),
 						)
 						return nil

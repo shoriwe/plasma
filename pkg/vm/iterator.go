@@ -17,12 +17,20 @@ func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(object Value) *Object {
 		object.Set(HasNext,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
-				p.NewNotImplementedCallable(HasNext, 0),
+				NewBuiltInClassFunction(object, 0,
+					func(_ Value, _ ...Value) (Value, *Object) {
+						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+					},
+				),
 			),
 		)
 		object.Set(Next,
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
-				p.NewNotImplementedCallable(Next, 0),
+				NewBuiltInClassFunction(object, 0,
+					func(_ Value, _ ...Value) (Value, *Object) {
+						return p.NewNone(), nil
+					},
+				),
 			),
 		)
 		return nil
