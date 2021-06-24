@@ -1,4 +1,4 @@
-package plasma
+package success
 
 import (
 	"bytes"
@@ -16,7 +16,6 @@ import (
 	Bunch of samples that should only compile and execute (no result checking)
 */
 const (
-	testsSamples        = "tests_samples"
 	expressionSamples   = "expressions"
 	literals            = "literals"
 	composites          = "composites"
@@ -50,7 +49,7 @@ func test(t *testing.T, directory string) {
 		t.Fatal(currentDirGetError)
 		return
 	}
-	directory = filepath.Join(currentDir, "pkg", directory)
+	directory = filepath.Join(currentDir, directory)
 	directoryContent, directoryReadingError := os.ReadDir(directory)
 	if directoryReadingError != nil {
 		t.Fatal(directoryReadingError)
@@ -95,91 +94,91 @@ func test(t *testing.T, directory string) {
 }
 
 func TestLiterals(t *testing.T) {
-	test(t, filepath.Join(testsSamples, expressionSamples, literals))
+	test(t, filepath.Join("success", expressionSamples, literals))
 }
 
 func TestComposites(t *testing.T) {
-	test(t, filepath.Join(testsSamples, expressionSamples, composites))
+	test(t, filepath.Join("success", expressionSamples, composites))
 }
 
 func TestUnaryExpressions(t *testing.T) {
-	test(t, filepath.Join(testsSamples, expressionSamples, unaryExpressions))
+	test(t, filepath.Join("success", expressionSamples, unaryExpressions))
 }
 
 func TestBinaryExpressions(t *testing.T) {
-	test(t, filepath.Join(testsSamples, expressionSamples, binaryExpressions))
+	test(t, filepath.Join("success", expressionSamples, binaryExpressions))
 }
 
 func TestIndexExpressions(t *testing.T) {
-	test(t, filepath.Join(testsSamples, expressionSamples, indexExpressions))
+	test(t, filepath.Join("success", expressionSamples, indexExpressions))
 }
 
 func TestSelectorExpressions(t *testing.T) {
-	test(t, filepath.Join(testsSamples, expressionSamples, selectorExpressions))
+	test(t, filepath.Join("success", expressionSamples, selectorExpressions))
 }
 
 func TestLambdaExpressions(t *testing.T) {
-	test(t, filepath.Join(testsSamples, expressionSamples, lambdaExpressions))
+	test(t, filepath.Join("success", expressionSamples, lambdaExpressions))
 }
 
 func TestIfAndUnlessOneLinersExpressions(t *testing.T) {
-	test(t, filepath.Join(testsSamples, expressionSamples, ifUnlessOneLiners))
+	test(t, filepath.Join("success", expressionSamples, ifUnlessOneLiners))
 }
 
 func TestGeneratorExpressions(t *testing.T) {
-	test(t, filepath.Join(testsSamples, expressionSamples, generatorExpression))
+	test(t, filepath.Join("success", expressionSamples, generatorExpression))
 }
 
 // Statement tests
 
 func TestAssignStatement(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, assignStatement))
+	test(t, filepath.Join("success", statementSamples, assignStatement))
 }
 
 func TestFunctionDefinitionStatement(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, functionDefinition))
+	test(t, filepath.Join("success", statementSamples, functionDefinition))
 }
 
 func TestIfStatement(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, ifStatement))
+	test(t, filepath.Join("success", statementSamples, ifStatement))
 }
 
 func TestBeginEndStatements(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, beginEnd))
+	test(t, filepath.Join("success", statementSamples, beginEnd))
 }
 
 func TestDoWhileStatement(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, doWhileStatement))
+	test(t, filepath.Join("success", statementSamples, doWhileStatement))
 }
 
 func TestWhileStatements(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, whileStatement))
+	test(t, filepath.Join("success", statementSamples, whileStatement))
 }
 
 func TestUntilStatements(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, untilStatement))
+	test(t, filepath.Join("success", statementSamples, untilStatement))
 }
 
 func TestForStatements(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, forStatement))
+	test(t, filepath.Join("success", statementSamples, forStatement))
 }
 
 func TestTryStatements(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, tryStatement))
+	test(t, filepath.Join("success", statementSamples, tryStatement))
 }
 
 func TestModuleStatements(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, moduleStatement))
+	test(t, filepath.Join("success", statementSamples, moduleStatement))
 }
 
 func TestClassStatements(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, classStatement))
+	test(t, filepath.Join("success", statementSamples, classStatement))
 }
 
 func TestInterfaceStatements(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, interfaceStatement))
+	test(t, filepath.Join("success", statementSamples, interfaceStatement))
 }
 
 func TestSwitchStatements(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, switchStatement))
+	test(t, filepath.Join("success", statementSamples, switchStatement))
 }

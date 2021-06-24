@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"math/big"
 )
 
 func (p *Plasma) Execute() (Value, *Object) {
@@ -135,14 +134,13 @@ bytecodeExecutionLoop:
 		case JumpOP:
 			executionError = p.jumpOP(code)
 		case RedoOP:
-			p.LoopStack.Peek().Redo = true
-			return p.NewNone(), nil
+			p.LoopStack.Peek().Action = Redo
+			return nil, nil
 		case BreakOP:
-			p.LoopStack.Peek().Break = true
-			return p.NewNone(), nil
+			p.LoopStack.Peek().Action = Break
+			return nil, nil
 		case ContinueOP:
-			p.LoopStack.Peek().Continue = true
-			return p.NewNone(), nil
+			return nil, nil
 		case PushOP:
 			if object != nil {
 				p.MemoryStack.Push(object)
@@ -196,7 +194,7 @@ bytecodeExecutionLoop:
 	if p.MemoryStack.HasNext() {
 		return p.PopObject(), nil
 	}
-	return p.NewNone(), nil
+	return p.GetNone(), nil
 }
 
 func (p *Plasma) newStringOP(code Code) (Value, *Object) {
@@ -211,25 +209,25 @@ func (p *Plasma) newBytesOP(code Code) (Value, *Object) {
 }
 
 func (p *Plasma) newIntegerOP(code Code) (Value, *Object) {
-	value := code.Value.(*big.Int)
+	value := code.Value.(int64)
 	return p.NewInteger(false, p.SymbolTableStack.Peek(), value), nil
 }
 
 func (p *Plasma) newFloatOP(code Code) (Value, *Object) {
-	value := code.Value.(*big.Float)
+	value := code.Value.(float64)
 	return p.NewFloat(false, p.SymbolTableStack.Peek(), value), nil
 }
 
 func (p *Plasma) newTrueBoolOP() (Value, *Object) {
-	return p.NewBool(false, p.PeekSymbolTable(), true), nil
+	return p.GetTrue(), nil
 }
 
 func (p *Plasma) newFalseBoolOP() (Value, *Object) {
-	return p.NewBool(false, p.PeekSymbolTable(), false), nil
+	return p.GetFalse(), nil
 }
 
 func (p *Plasma) getNoneOP() (Value, *Object) {
-	return p.NewNone(), nil
+	return p.GetNone(), nil
 }
 
 func (p *Plasma) newTupleOP(code Code) (Value, *Object) {
@@ -459,7 +457,7 @@ func (p *Plasma) assignIndexOP() *Object {
 func (p *Plasma) returnOP(code Code) *Object {
 	numberOfReturnValues := code.Value.(int)
 	if numberOfReturnValues == 0 {
-		p.PushObject(p.NewNone())
+		p.PushObject(p.GetNone())
 		return nil
 	}
 	if numberOfReturnValues == 1 {
@@ -543,15 +541,16 @@ func (p *Plasma) jumpOP(code Code) *Object {
 func (p *Plasma) setupDoWhileLoop(code Code) *Object {
 	condition := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[0]))
 	body := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[1]))
+	doWhileLoopEntry := &loopEntry{
+		Action: NoAction,
+	}
 	p.LoopStack.Push(
-		&loopEntry{
-			Redo:     false,
-			Break:    false,
-			Continue: false,
-		},
+		doWhileLoopEntry,
 	)
 	defer p.LoopStack.Pop()
+loop:
 	for {
+	redoLocation:
 		// Execute the body
 		p.PushBytecode(body)
 		_, executionError := p.Execute()
@@ -561,13 +560,13 @@ func (p *Plasma) setupDoWhileLoop(code Code) *Object {
 			return executionError
 		}
 		// Check continue, redo and break
-		if p.LoopStack.Peek().Break {
-			break
+		switch doWhileLoopEntry.Action {
+		case Break:
+			break loop
+		case Redo:
+			doWhileLoopEntry.Action = NoAction
+			goto redoLocation
 		}
-		// Then reset Continue, redo and break
-		p.LoopStack.Peek().Redo = false
-		p.LoopStack.Peek().Break = false
-		p.LoopStack.Peek().Continue = false
 
 		// Evaluate the condition
 		p.PushBytecode(condition)
@@ -604,14 +603,14 @@ func (p *Plasma) setupDoWhileLoop(code Code) *Object {
 func (p *Plasma) setupWhileLoop(code Code) *Object {
 	condition := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[0]))
 	body := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[1]))
+	whileLoopEntry := &loopEntry{
+		Action: NoAction,
+	}
 	p.LoopStack.Push(
-		&loopEntry{
-			Redo:     false,
-			Break:    false,
-			Continue: false,
-		},
+		whileLoopEntry,
 	)
 	defer p.LoopStack.Pop()
+loop:
 	for {
 		// First Evaluate the condition
 		p.PushBytecode(condition)
@@ -639,6 +638,7 @@ func (p *Plasma) setupWhileLoop(code Code) *Object {
 		if !result.GetBool() {
 			break
 		}
+	redoLocation:
 		// Execute the body
 		p.PushBytecode(body)
 		_, executionError = p.Execute()
@@ -647,15 +647,13 @@ func (p *Plasma) setupWhileLoop(code Code) *Object {
 		if executionError != nil {
 			return executionError
 		}
-		// Check continue, redo and break
-		if p.LoopStack.Peek().Break {
-			break
+		switch whileLoopEntry.Action {
+		case Break:
+			break loop
+		case Redo:
+			whileLoopEntry.Action = NoAction
+			goto redoLocation
 		}
-		// Finally reset Continue, redo and break
-		p.LoopStack.Peek().Redo = false
-		p.LoopStack.Peek().Break = false
-		p.LoopStack.Peek().Continue = false
-
 	}
 	return nil
 }
@@ -734,16 +732,14 @@ func (p *Plasma) setupForLoopOP(code Code) *Object {
 
 	bodyBytecode := NewBytecodeFromArray(p.PeekBytecode().NextN(loopSettings.BodyLength))
 	receivers := loopSettings.Receivers
+	forLoopEntry := &loopEntry{
+		Action: NoAction,
+	}
 	p.LoopStack.Push(
-		&loopEntry{
-			Redo:     false,
-			Break:    false,
-			Continue: false,
-		},
+		forLoopEntry,
 	)
 	defer p.LoopStack.Pop()
 	context := map[string]Value{}
-	nextContext := true
 	var sourceHasNext Value
 	sourceHasNext, getError = sourceAsIter.Get(HasNext)
 	if getError != nil {
@@ -755,18 +751,18 @@ func (p *Plasma) setupForLoopOP(code Code) *Object {
 		return p.NewObjectWithNameNotFoundError(sourceAsIter.GetClass(p), Next)
 	}
 	receiversLength := len(receivers)
+loop:
 	for {
 		// Update receivers
-		if nextContext {
-			// Check if the iteration can continue
-			hasNext, loadSymbolsError := p.reloadForLoopContext(&context, receiversLength, receivers, sourceHasNext, sourceNext)
-			if loadSymbolsError != nil {
-				return loadSymbolsError
-			}
-			if !hasNext {
-				break
-			}
+		// Check if the iteration can continue
+		hasNext, loadSymbolsError := p.reloadForLoopContext(&context, receiversLength, receivers, sourceHasNext, sourceNext)
+		if loadSymbolsError != nil {
+			return loadSymbolsError
 		}
+		if !hasNext {
+			break
+		}
+	redoLocation:
 		// Load the receivers
 		for receiver, object := range context {
 			p.PeekSymbolTable().Set(receiver, object)
@@ -781,19 +777,13 @@ func (p *Plasma) setupForLoopOP(code Code) *Object {
 			return bodyExecutionError
 		}
 		// Check continue, redo and break
-		if p.LoopStack.Peek().Redo {
-			nextContext = false
-		} else if p.LoopStack.Peek().Continue {
-			nextContext = true
-		} else if p.LoopStack.Peek().Break {
-			break
-		} else {
-			nextContext = true
+		switch forLoopEntry.Action {
+		case Break:
+			break loop
+		case Redo:
+			forLoopEntry.Action = NoAction
+			goto redoLocation
 		}
-		// Finally reset Continue, redo and break
-		p.LoopStack.Peek().Redo = false
-		p.LoopStack.Peek().Break = false
-		p.LoopStack.Peek().Continue = false
 	}
 	return nil
 }

@@ -154,9 +154,7 @@ func NewTryStack() *TryStack {
 }
 
 type loopEntry struct {
-	Redo     bool
-	Break    bool
-	Continue bool
+	Action uint8
 }
 
 type LoopStack struct {

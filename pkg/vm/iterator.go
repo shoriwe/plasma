@@ -19,7 +19,7 @@ func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(_ Value, _ ...Value) (Value, *Object) {
-						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -28,7 +28,7 @@ func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(_ Value, _ ...Value) (Value, *Object) {
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),

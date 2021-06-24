@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"math/big"
 )
 
 /*
@@ -73,7 +72,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(expecting.TypeName(), StringName)
 									}
 									self.SetString(fmt.Sprintf("Expecting %s but received %s", expecting.GetString(), received.GetString()))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -104,7 +103,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(methodNameString.TypeName(), StringName)
 									}
 									self.SetString(fmt.Sprintf("Method %s not implemented", methodNameString.GetString()))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -131,7 +130,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(errorMessage.TypeName(), StringName)
 									}
 									self.SetString(fmt.Sprintf("Could not construct object of Type: %s -> %s", typeName.GetString(), errorMessage.GetString()))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -158,7 +157,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(name.TypeName(), StringName)
 									}
 									self.SetString(fmt.Sprintf("Object with name %s not Found inside object of type %s", name.GetString(), objectType.(*Type).Name))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -186,7 +185,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(expecting.TypeName(), IntegerName)
 									}
 									self.SetString(fmt.Sprintf("Received %d but expecting %d expecting", received.GetInteger(), expecting.GetInteger()))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -209,7 +208,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(runtimeError.TypeName(), StringName)
 									}
 									self.SetString(runtimeError.GetString())
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -232,7 +231,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(objectType.TypeName(), TypeName)
 									}
 									self.SetString(fmt.Sprintf("Object of type: %s is unhasable", objectType.(*Type).Name))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -259,7 +258,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(index.TypeName(), IntegerName)
 									}
 									self.SetString(fmt.Sprintf("Index: %d, out of range (Length=%d)", index.GetInteger(), length.GetInteger()))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -290,7 +289,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(keyString.TypeName(), StringName)
 									}
 									self.SetString(fmt.Sprintf("Key %s not found", keyString.GetString()))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -309,7 +308,7 @@ func (p *Plasma) setBuiltInSymbols() {
 							NewBuiltInClassFunction(object, 0,
 								func(self Value, arguments ...Value) (Value, *Object) {
 									self.SetString("Integer parsing error")
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -328,7 +327,7 @@ func (p *Plasma) setBuiltInSymbols() {
 							NewBuiltInClassFunction(object, 0,
 								func(self Value, arguments ...Value) (Value, *Object) {
 									self.SetString("Float parsing error")
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -351,7 +350,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(symbolName.TypeName(), StringName)
 									}
 									self.SetString(fmt.Sprintf("cannot assign/delete built-in symbol %s", symbolName.GetString()))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -374,7 +373,7 @@ func (p *Plasma) setBuiltInSymbols() {
 										return nil, p.NewInvalidTypeError(receivedType.TypeName(), TypeName)
 									}
 									self.SetString(fmt.Sprintf("Object of type %s object is not callable", receivedType.(*Type).Name))
-									return p.NewNone(), nil
+									return p.GetNone(), nil
 								},
 							),
 						),
@@ -456,7 +455,9 @@ func (p *Plasma) setBuiltInSymbols() {
 		),
 	)
 	// Names
-
+	p.builtInSymbolTable.Set(TrueName, p.NewBool(true, p.builtInSymbolTable, true))
+	p.builtInSymbolTable.Set(FalseName, p.NewBool(true, p.builtInSymbolTable, false))
+	p.builtInSymbolTable.Set(None, p.NewNone(true, p.builtInSymbolTable))
 	// Functions
 	p.builtInSymbolTable.Set("expand",
 		p.NewFunction(true, p.builtInSymbolTable,
@@ -466,7 +467,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					for symbol, object := range arguments[1].SymbolTable().Symbols {
 						receiver.Set(symbol, object)
 					}
-					return p.NewNone(), nil
+					return p.GetNone(), nil
 				},
 			),
 		),
@@ -499,7 +500,7 @@ func (p *Plasma) setBuiltInSymbols() {
 						return nil, p.NewBuiltInSymbolProtectionError(symbol.GetString())
 					}
 					source.Set(symbol.GetString(), value)
-					return p.NewNone(), nil
+					return p.GetNone(), nil
 				},
 			),
 		),
@@ -539,7 +540,7 @@ func (p *Plasma) setBuiltInSymbols() {
 						return nil, p.NewObjectWithNameNotFoundError(source.GetClass(p), symbol.GetString())
 					}
 					delete(source.SymbolTable().Symbols, symbol.GetString())
-					return p.NewNone(), nil
+					return p.GetNone(), nil
 				},
 			),
 		),
@@ -595,7 +596,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					if writeError != nil {
 						return nil, p.NewGoRuntimeError(writeError)
 					}
-					return p.NewNone(), nil
+					return p.GetNone(), nil
 				},
 			),
 		),
@@ -617,7 +618,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					if writeError != nil {
 						return nil, p.NewGoRuntimeError(writeError)
 					}
-					return p.NewNone(), nil
+					return p.GetNone(), nil
 				},
 			),
 		),
@@ -627,7 +628,7 @@ func (p *Plasma) setBuiltInSymbols() {
 			NewBuiltInFunction(1,
 				func(_ Value, arguments ...Value) (Value, *Object) {
 					object := arguments[0]
-					return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(object.Id())), nil
+					return p.NewInteger(false, p.PeekSymbolTable(), object.Id()), nil
 				},
 			),
 		),
@@ -676,7 +677,7 @@ func (p *Plasma) setBuiltInSymbols() {
 						p.NewFunction(true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self Value, _ ...Value) (Value, *Object) {
-									return p.NewBool(false, p.PeekSymbolTable(), self.GetInteger().Cmp(endValue) == -1), nil
+									return p.NewBool(false, p.PeekSymbolTable(), self.GetInteger() < endValue), nil
 								},
 							),
 						),
@@ -686,7 +687,7 @@ func (p *Plasma) setBuiltInSymbols() {
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self Value, _ ...Value) (Value, *Object) {
 									number := self.GetInteger()
-									self.SetInteger(new(big.Int).Add(number, stepValue))
+									self.SetInteger(number + stepValue)
 									return p.NewInteger(false, p.PeekSymbolTable(), number), nil
 								},
 							),

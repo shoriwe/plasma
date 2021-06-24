@@ -9,8 +9,8 @@ import (
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/tools"
 	"github.com/shoriwe/gplasma/pkg/vm"
-	"math/big"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -40,8 +40,8 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) ([]vm.Cod
 	case lexer.Integer:
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
-		number, success := new(big.Int).SetString(numberString, 10)
-		if !success {
+		number, success := strconv.ParseInt(numberString, 10, 64)
+		if success != nil {
 			return nil, errors.New(literal.Token.Line, "Error parsing Integer", errors.GoRuntimeError)
 		}
 		return []vm.Code{vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number)}, nil
@@ -49,8 +49,8 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) ([]vm.Cod
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		numberString = numberString[2:]
-		number, parsingError := new(big.Int).SetString(numberString, 16)
-		if !parsingError {
+		number, parsingError := strconv.ParseInt(numberString, 16, 64)
+		if parsingError != nil {
 			return nil, errors.New(literal.Token.Line, "Error parsing Hexadecimal Integer", errors.GoRuntimeError)
 		}
 		return []vm.Code{vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number)}, nil
@@ -58,8 +58,8 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) ([]vm.Cod
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		numberString = numberString[2:]
-		number, parsingError := new(big.Int).SetString(numberString, 8)
-		if !parsingError {
+		number, parsingError := strconv.ParseInt(numberString, 8, 64)
+		if parsingError != nil {
 			return nil, errors.New(literal.Token.Line, "Error parsing Octal Integer", errors.GoRuntimeError)
 		}
 		return []vm.Code{vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number)}, nil
@@ -67,15 +67,15 @@ func (c *Compiler) compileLiteral(literal *ast.BasicLiteralExpression) ([]vm.Cod
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		numberString = numberString[2:]
-		number, parsingError := new(big.Int).SetString(numberString, 2)
-		if !parsingError {
+		number, parsingError := strconv.ParseInt(numberString, 2, 64)
+		if parsingError != nil {
 			return nil, errors.New(literal.Token.Line, "Error parsing Binary Integer", errors.GoRuntimeError)
 		}
 		return []vm.Code{vm.NewCode(vm.NewIntegerOP, literal.Token.Line, number)}, nil
 	case lexer.Float, lexer.ScientificFloat:
 		numberString := literal.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
-		number, _, parsingError := new(big.Float).Parse(numberString, 10)
+		number, parsingError := strconv.ParseFloat(numberString, 64)
 		if parsingError != nil {
 			return nil, errors.New(literal.Token.Line, parsingError.Error(), errors.GoRuntimeError)
 		}

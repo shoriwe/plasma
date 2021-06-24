@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"math/big"
 )
 
 const (
@@ -101,9 +100,9 @@ func (p *Plasma) NewIndexOutOfRange(length int, index int64) *Object {
 		p.NewInteger(
 			false,
 			p.PeekSymbolTable(),
-			big.NewInt(int64(length)),
+			int64(length),
 		),
-		p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(index)),
+		p.NewInteger(false, p.PeekSymbolTable(), index),
 	)
 	return instantiatedError.(*Object)
 }
@@ -139,8 +138,8 @@ func (p *Plasma) NewInvalidNumberOfArgumentsError(received int, expecting int) *
 	errorType := p.ForceMasterGetAny(InvalidNumberOfArgumentsError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(int64(received))),
-		p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(int64(expecting))),
+		p.NewInteger(false, p.PeekSymbolTable(), int64(received)),
+		p.NewInteger(false, p.PeekSymbolTable(), int64(expecting)),
 	)
 	return instantiatedError.(*Object)
 }
@@ -208,7 +207,7 @@ func (p *Plasma) RuntimeErrorInitialize(object Value) *Object {
 						return nil, p.NewInvalidTypeError(message.TypeName(), StringName)
 					}
 					self.SetString(message.GetString())
-					return p.NewNone(), nil
+					return p.GetNone(), nil
 				},
 			),
 		),

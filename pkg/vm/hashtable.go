@@ -1,9 +1,5 @@
 package vm
 
-import (
-	"math/big"
-)
-
 type KeyValue struct {
 	Key   Value
 	Value Value
@@ -15,7 +11,7 @@ type HashTable struct {
 
 func (p *Plasma) NewHashTable(isBuiltIn bool, parent *SymbolTable, entries map[int64][]*KeyValue, entriesLength int) *HashTable {
 	hashTable := &HashTable{
-		Object: p.NewObject(false, HashName, nil, parent),
+		Object: p.NewObject(isBuiltIn, HashName, nil, parent),
 	}
 	hashTable.SetKeyValues(entries)
 	hashTable.SetLength(entriesLength)
@@ -33,11 +29,11 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 
 						rawRight := arguments[0]
 						if _, ok := rawRight.(*HashTable); !ok {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						right := rawRight.(*HashTable)
 						if self.GetLength() != right.Length {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						rightIndex, getError := right.Get(Index)
 						if getError != nil {
@@ -47,21 +43,21 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							// Check if other has the key
 							rightValue, ok := right.KeyValues[key]
 							if !ok {
-								return p.NewBool(false, p.PeekSymbolTable(), false), nil
+								return p.GetFalse(), nil
 							}
 							// Check if the each entry one has the same length
 							if len(leftValue) != len(rightValue) {
-								return p.NewBool(false, p.PeekSymbolTable(), false), nil
+								return p.GetFalse(), nil
 							}
 							// Start comparing the entries
 							for _, entry := range leftValue {
 								_, indexingError := p.CallFunction(rightIndex, p.PeekSymbolTable(), entry.Key)
 								if indexingError != nil {
-									return p.NewBool(false, p.PeekSymbolTable(), false), nil
+									return p.GetFalse(), nil
 								}
 							}
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), true), nil
+						return p.GetTrue(), nil
 					},
 				),
 			),
@@ -73,11 +69,11 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 
 						rawLeft := arguments[0]
 						if _, ok := rawLeft.(*HashTable); !ok {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						left := rawLeft.(*HashTable)
 						if self.GetLength() != left.Length {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						leftIndex, getError := left.Get(Index)
 						if getError != nil {
@@ -87,21 +83,21 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							// Check if other has the key
 							rightValue, ok := self.GetKeyValues()[key]
 							if !ok {
-								return p.NewBool(false, p.PeekSymbolTable(), false), nil
+								return p.GetFalse(), nil
 							}
 							// Check if the each entry one has the same length
 							if len(leftValue) != len(rightValue) {
-								return p.NewBool(false, p.PeekSymbolTable(), false), nil
+								return p.GetFalse(), nil
 							}
 							// Start comparing the entries
 							for _, entry := range leftValue {
 								_, indexingError := p.CallFunction(leftIndex, p.PeekSymbolTable(), entry.Key)
 								if indexingError != nil {
-									return p.NewBool(false, p.PeekSymbolTable(), false), nil
+									return p.GetFalse(), nil
 								}
 							}
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), true), nil
+						return p.GetTrue(), nil
 					},
 				),
 			),
@@ -112,11 +108,11 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						rawRight := arguments[0]
 						if _, ok := rawRight.(*HashTable); !ok {
-							return p.NewBool(false, p.PeekSymbolTable(), true), nil
+							return p.GetTrue(), nil
 						}
 						right := rawRight.(*HashTable)
 						if self.GetLength() != right.Length {
-							return p.NewBool(false, p.PeekSymbolTable(), true), nil
+							return p.GetTrue(), nil
 						}
 						rightIndex, getError := right.Get(Index)
 						if getError != nil {
@@ -126,21 +122,21 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							// Check if other has the key
 							rightValue, ok := right.KeyValues[key]
 							if !ok {
-								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+								return p.GetTrue(), nil
 							}
 							// Check if the each entry one has the same length
 							if len(leftValue) != len(rightValue) {
-								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+								return p.GetTrue(), nil
 							}
 							// Start comparing the entries
 							for _, entry := range leftValue {
 								_, indexingError := p.CallFunction(rightIndex, p.PeekSymbolTable(), entry.Key)
 								if indexingError != nil {
-									return p.NewBool(false, p.PeekSymbolTable(), true), nil
+									return p.GetTrue(), nil
 								}
 							}
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -151,11 +147,11 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						rawLeft := arguments[0]
 						if _, ok := rawLeft.(*HashTable); !ok {
-							return p.NewBool(false, p.PeekSymbolTable(), true), nil
+							return p.GetTrue(), nil
 						}
 						left := rawLeft.(*HashTable)
 						if self.GetLength() != left.Length {
-							return p.NewBool(false, p.PeekSymbolTable(), true), nil
+							return p.GetTrue(), nil
 						}
 						leftIndex, getError := left.Get(Index)
 						if getError != nil {
@@ -165,21 +161,21 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							// Check if other has the key
 							rightValue, ok := self.GetKeyValues()[key]
 							if !ok {
-								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+								return p.GetTrue(), nil
 							}
 							// Check if the each entry one has the same length
 							if len(leftValue) != len(rightValue) {
-								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+								return p.GetTrue(), nil
 							}
 							// Start comparing the entries
 							for _, entry := range leftValue {
 								_, indexingError := p.CallFunction(leftIndex, p.PeekSymbolTable(), entry.Key)
 								if indexingError != nil {
-									return p.NewBool(false, p.PeekSymbolTable(), true), nil
+									return p.GetTrue(), nil
 								}
 							}
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -200,10 +196,10 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := valueHashObject.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(valueHashObject.TypeName(), IntegerName)
 						}
-						valueHash := valueHashObject.GetInteger().Int64()
+						valueHash := valueHashObject.GetInteger()
 						entries, found := self.GetKeyValues()[valueHash]
 						if !found {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						var valueEquals Value
 						valueEquals, getError = value.Get(RightEquals)
@@ -218,7 +214,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								return nil, callError
 							}
 							if _, ok := comparisonResult.(*Bool); ok && comparisonResult.GetBool() {
-								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+								return p.GetTrue(), nil
 							}
 							comparisonResultToBool, getError = comparisonResult.Get(ToBool)
 							comparisonResult, callError = p.CallFunction(comparisonResultToBool, p.PeekSymbolTable())
@@ -229,10 +225,10 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								return nil, p.NewInvalidTypeError(comparisonResult.TypeName(), BoolName)
 							}
 							if comparisonResult.GetBool() {
-								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+								return p.GetTrue(), nil
 							}
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -253,10 +249,10 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := valueHashObject.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(valueHashObject.TypeName(), IntegerName)
 						}
-						valueHash := valueHashObject.GetInteger().Int64()
+						valueHash := valueHashObject.GetInteger()
 						entries, found := self.GetKeyValues()[valueHash]
 						if !found {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						var valueEquals Value
 						valueEquals, getError = value.Get(Equals)
@@ -271,7 +267,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								return nil, callError
 							}
 							if _, ok := comparisonResult.(*Bool); ok && comparisonResult.GetBool() {
-								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+								return p.GetTrue(), nil
 							}
 							comparisonResultToBool, getError = comparisonResult.Get(ToBool)
 							comparisonResult, callError = p.CallFunction(comparisonResultToBool, p.PeekSymbolTable())
@@ -282,10 +278,10 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								return nil, p.NewInvalidTypeError(comparisonResult.TypeName(), BoolName)
 							}
 							if comparisonResult.GetBool() {
-								return p.NewBool(false, p.PeekSymbolTable(), true), nil
+								return p.GetTrue(), nil
 							}
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -324,7 +320,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := indexHash.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(indexHash.TypeName(), IntegerName)
 						}
-						keyValues, found := self.GetKeyValues()[indexHash.GetInteger().Int64()]
+						keyValues, found := self.GetKeyValues()[indexHash.GetInteger()]
 						if !found {
 							return nil, p.NewKeyNotFoundError(indexObject)
 						}
@@ -365,13 +361,13 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := indexHash.(*Integer); !ok {
 							return nil, p.NewInvalidTypeError(indexHash.TypeName(), IntegerName)
 						}
-						keyValues, found := self.GetKeyValues()[indexHash.GetInteger().Int64()]
+						keyValues, found := self.GetKeyValues()[indexHash.GetInteger()]
 						if found {
-							self.AddKeyValue(indexHash.GetInteger().Int64(), &KeyValue{
+							self.AddKeyValue(indexHash.GetInteger(), &KeyValue{
 								Key:   indexObject,
 								Value: newValue,
 							})
-							return p.NewNone(), nil
+							return p.GetNone(), nil
 						}
 						var indexObjectEquals Value
 						indexObjectEquals, getError = indexObject.Get(Equals)
@@ -385,19 +381,19 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								return nil, p.NewInvalidTypeError(equals.TypeName(), BoolName)
 							}
 							if equals.GetBool() {
-								self.GetKeyValues()[indexHash.GetInteger().Int64()][index].Value = newValue
-								return p.NewNone(), nil
+								self.GetKeyValues()[indexHash.GetInteger()][index].Value = newValue
+								return p.GetNone(), nil
 							}
 						}
 						self.IncreaseLength()
-						self.GetKeyValues()[indexHash.GetInteger().Int64()] = append(
-							self.GetKeyValues()[indexHash.GetInteger().Int64()],
+						self.GetKeyValues()[indexHash.GetInteger()] = append(
+							self.GetKeyValues()[indexHash.GetInteger()],
 							&KeyValue{
 								Key:   indexObject,
 								Value: newValue,
 							},
 						)
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -415,7 +411,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							return nil, callError
 						}
 						iterator := p.NewIterator(false, p.PeekSymbolTable())
-						iterator.SetInteger(big.NewInt(0)) // This is the index
+						iterator.SetInteger(0) // This is the index
 						iterator.SetContent(hashKeys.GetContent())
 						iterator.SetLength(len(hashKeys.GetContent()))
 						iterator.Set(HasNext,
@@ -423,7 +419,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										return p.NewBool(false, p.PeekSymbolTable(), funcSelf.GetInteger().Cmp(big.NewInt(int64(funcSelf.GetLength()))) == -1), nil
+										return p.NewBool(false, p.PeekSymbolTable(), funcSelf.GetInteger() < int64(funcSelf.GetLength())), nil
 									},
 								),
 							),
@@ -433,8 +429,8 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										value := funcSelf.GetContent()[int(funcSelf.GetInteger().Int64())]
-										funcSelf.SetInteger(new(big.Int).Add(funcSelf.GetInteger(), big.NewInt(1)))
+										value := funcSelf.GetContent()[int(funcSelf.GetInteger())]
+										funcSelf.SetInteger(funcSelf.GetInteger() + 1)
 										return value, nil
 									},
 								),
@@ -492,9 +488,9 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						if self.GetLength() > 0 {
-							return p.NewBool(false, p.PeekSymbolTable(), true), nil
+							return p.GetTrue(), nil
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+						return p.GetFalse(), nil
 					},
 				),
 			),

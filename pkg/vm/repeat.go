@@ -1,11 +1,9 @@
 package vm
 
-import "math/big"
-
-func (p *Plasma) Repeat(content []Value, times *big.Int) ([]Value, *Object) {
+func (p *Plasma) Repeat(content []Value, times int64) ([]Value, *Object) {
 	copyFunctions := map[int64]Value{}
 	var result []Value
-	if times.Cmp(big.NewInt(0)) == 1 {
+	if times == 0 {
 		for _, object := range content {
 			copyObject, getError := object.Get(Copy)
 			if getError != nil {
@@ -15,7 +13,7 @@ func (p *Plasma) Repeat(content []Value, times *big.Int) ([]Value, *Object) {
 			copyFunctions[object.Id()] = copyObject
 		}
 	}
-	for i := big.NewInt(0); i.Cmp(times) == -1; i.Add(i, big.NewInt(1)) {
+	for i := int64(0); i < times; i++ {
 		for _, object := range content {
 			copyFunction := copyFunctions[object.Id()]
 			if copyFunction == nil {

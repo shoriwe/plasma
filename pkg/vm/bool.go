@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"math/big"
 )
 
 type Bool struct {
@@ -11,12 +10,20 @@ type Bool struct {
 
 func (p *Plasma) NewBool(isBuiltIn bool, parentSymbols *SymbolTable, value bool) *Bool {
 	bool_ := &Bool{
-		Object: p.NewObject(false, BoolName, nil, parentSymbols),
+		Object: p.NewObject(isBuiltIn, BoolName, nil, parentSymbols),
 	}
 	bool_.SetBool(value)
 	p.BoolInitialize(isBuiltIn)(bool_)
 	bool_.Set(Self, bool_)
 	return bool_
+}
+
+func (p *Plasma) GetFalse() *Bool {
+	return p.ForceMasterGetAny(FalseName).(*Bool)
+}
+
+func (p *Plasma) GetTrue() *Bool {
+	return p.ForceMasterGetAny(TrueName).(*Bool)
 }
 
 func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
@@ -27,7 +34,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Bool); !ok {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), self.GetBool() == right.GetBool()), nil
 					},
@@ -40,7 +47,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Bool); !ok {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), left.GetBool() == self.GetBool()), nil
 					},
@@ -53,7 +60,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
 						if _, ok := right.(*Bool); !ok {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), self.GetBool() != right.GetBool()), nil
 					},
@@ -66,7 +73,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
 						if _, ok := left.(*Bool); !ok {
-							return p.NewBool(false, p.PeekSymbolTable(), false), nil
+							return p.GetFalse(), nil
 						}
 						return p.NewBool(false, p.PeekSymbolTable(), left.GetBool() != self.GetBool()), nil
 					},
@@ -83,7 +90,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 							self.SetHash(boolHash)
 						}
 						return p.NewInteger(false, p.PeekSymbolTable(),
-							big.NewInt(self.GetHash()),
+							self.GetHash(),
 						), nil
 					},
 				),
@@ -103,9 +110,9 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						if self.GetBool() {
-							return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(1)), nil
+							return p.NewInteger(false, p.PeekSymbolTable(), 1), nil
 						}
-						return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(0)), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), 0), nil
 					},
 				),
 			),
@@ -115,9 +122,9 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
 						if self.GetBool() {
-							return p.NewFloat(false, p.PeekSymbolTable(), big.NewFloat(1)), nil
+							return p.NewFloat(false, p.PeekSymbolTable(), 1), nil
 						}
-						return p.NewFloat(false, p.PeekSymbolTable(), big.NewFloat(0)), nil
+						return p.NewFloat(false, p.PeekSymbolTable(), 0), nil
 					},
 				),
 			),

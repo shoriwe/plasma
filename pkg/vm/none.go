@@ -1,7 +1,13 @@
 package vm
 
-func (p *Plasma) NewNone() *Object {
-	return p.ForceConstruction(p.ForceMasterGetAny(NoneName)).(*Object)
+func (p *Plasma) GetNone() *Object {
+	return p.ForceMasterGetAny(None).(*Object)
+}
+
+func (p *Plasma) NewNone(isBuiltIn bool, parent *SymbolTable) *Object {
+	result := p.NewObject(isBuiltIn, NoneName, nil, parent)
+	p.NoneInitialize(isBuiltIn)(result)
+	return result
 }
 
 func (p *Plasma) NoneInitialize(isBuiltIn bool) ConstructorCallBack {
@@ -39,7 +45,7 @@ func (p *Plasma) NoneInitialize(isBuiltIn bool) ConstructorCallBack {
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(_ Value, _ ...Value) (Value, *Object) {
-						return p.NewBool(false, p.PeekSymbolTable(), false), nil
+						return p.GetFalse(), nil
 					},
 				),
 			),
