@@ -33,6 +33,15 @@ func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
 				),
 			),
 		)
+		object.Set(Iter,
+			p.NewFunction(isBuiltIn, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self Value, _ ...Value) (Value, *Object) {
+						return self, nil
+					},
+				),
+			),
+		)
 		return nil
 	}
 }

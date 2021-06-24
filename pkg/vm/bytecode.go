@@ -35,9 +35,19 @@ func (bytecode *Bytecode) HasNext() bool {
 	return bytecode.index < bytecode.length
 }
 
+func (bytecode *Bytecode) Peek() Code {
+	return bytecode.instructions[bytecode.index]
+}
+
 func (bytecode *Bytecode) Next() Code {
 	result := bytecode.instructions[bytecode.index]
 	bytecode.index++
+	return result
+}
+
+func (bytecode *Bytecode) NextN(n int) []Code {
+	result := bytecode.instructions[bytecode.index : bytecode.index+n]
+	bytecode.index += n
 	return result
 }
 

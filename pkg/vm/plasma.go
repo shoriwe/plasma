@@ -16,13 +16,12 @@ const (
 type ObjectLoader func(*Plasma) Value
 
 type Plasma struct {
-	currentId int64
-	// mutex              *sync.Mutex
-	IterStack          *IterStack
+	currentId          int64
 	builtInSymbolTable *SymbolTable
 	BytecodeStack      *CodeStack
 	MemoryStack        *ObjectStack
 	TryStack           *TryStack
+	LoopStack          *LoopStack
 	SymbolTableStack   *SymbolStack
 	Crc32Hash          hash.Hash32
 	seed               uint64
@@ -91,13 +90,13 @@ func (p *Plasma) LoadBuiltInSymbols(symbolMap map[string]ObjectLoader) {
 	InitializeBytecode
 	Loads the bytecode and clears the stack
 */
-func (p *Plasma) InitializeBytecode(bytecode *Bytecode) {
+
+func (p *Plasma) Reset() {
 	p.BytecodeStack.Clear()
 	p.MemoryStack.Clear()
 	p.SymbolTableStack.Clear()
-	p.IterStack.Clear()
 	p.TryStack.Clear()
-	p.PushBytecode(bytecode)
+	p.setBuiltInSymbols()
 	symbols := NewSymbolTable(p.builtInSymbolTable)
 	symbols.Set("__built_in__",
 		&Object{
@@ -119,6 +118,11 @@ func (p *Plasma) InitializeBytecode(bytecode *Bytecode) {
 		},
 	)
 	p.SymbolTableStack.Push(symbols)
+}
+func (p *Plasma) InitializeBytecode(bytecode *Bytecode) {
+	p.Reset()
+	p.PushBytecode(bytecode)
+
 }
 
 func (p *Plasma) PushSymbolTable(table *SymbolTable) {
@@ -171,10 +175,10 @@ func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 	}
 	vm := &Plasma{
 		currentId:        1,
-		IterStack:        NewIterStack(),
 		BytecodeStack:    NewCodeStack(),
 		MemoryStack:      NewObjectStack(),
 		TryStack:         NewTryStack(),
+		LoopStack:        NewLoopStack(),
 		SymbolTableStack: NewSymbolStack(),
 		Crc32Hash:        crc32.New(crc32.MakeTable(polySize)),
 		seed:             number.Uint64(),

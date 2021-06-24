@@ -41,7 +41,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						}
 						rightIndex, getError := right.Get(Index)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(Index)
+							return nil, p.NewObjectWithNameNotFoundError(right.GetClass(p), Index)
 						}
 						for key, leftValue := range self.GetKeyValues() {
 							// Check if other has the key
@@ -81,7 +81,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						}
 						leftIndex, getError := left.Get(Index)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(Index)
+							return nil, p.NewObjectWithNameNotFoundError(left.GetClass(p), Index)
 						}
 						for key, leftValue := range left.KeyValues {
 							// Check if other has the key
@@ -120,7 +120,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						}
 						rightIndex, getError := right.Get(Index)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(Index)
+							return nil, p.NewObjectWithNameNotFoundError(right.GetClass(p), Index)
 						}
 						for key, leftValue := range self.GetKeyValues() {
 							// Check if other has the key
@@ -159,7 +159,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						}
 						leftIndex, getError := left.Get(Index)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(Index)
+							return nil, p.NewObjectWithNameNotFoundError(left.GetClass(p), Index)
 						}
 						for key, leftValue := range left.KeyValues {
 							// Check if other has the key
@@ -191,7 +191,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						value := arguments[0]
 						valueHashFunc, getError := value.Get(Hash)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(Hash)
+							return nil, p.NewObjectWithNameNotFoundError(value.GetClass(p), Hash)
 						}
 						valueHashObject, callError := p.CallFunction(valueHashFunc, p.PeekSymbolTable())
 						if callError != nil {
@@ -208,7 +208,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						var valueEquals Value
 						valueEquals, getError = value.Get(RightEquals)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(RightEquals)
+							return nil, p.NewObjectWithNameNotFoundError(value.GetClass(p), RightEquals)
 						}
 						var comparisonResult Value
 						var comparisonResultToBool Value
@@ -244,7 +244,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						value := arguments[0]
 						valueHashFunc, getError := value.Get(Hash)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(Hash)
+							return nil, p.NewObjectWithNameNotFoundError(value.GetClass(p), Hash)
 						}
 						valueHashObject, callError := p.CallFunction(valueHashFunc, p.PeekSymbolTable())
 						if callError != nil {
@@ -261,7 +261,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						var valueEquals Value
 						valueEquals, getError = value.Get(Equals)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(Equals)
+							return nil, p.NewObjectWithNameNotFoundError(value.GetClass(p), Equals)
 						}
 						var comparisonResult Value
 						var comparisonResultToBool Value
@@ -303,7 +303,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(_ Value, _ ...Value) (Value, *Object) {
-						return nil, p.NewUnhashableTypeError(object.GetClass())
+						return nil, p.NewUnhashableTypeError(object.GetClass(p))
 					},
 				),
 			),
@@ -315,7 +315,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						indexObject := arguments[0]
 						indexObjectHash, getError := indexObject.Get(Hash)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(Hash)
+							return nil, p.NewObjectWithNameNotFoundError(indexObject.GetClass(p), Hash)
 						}
 						indexHash, callError := p.CallFunction(indexObjectHash, indexObject.SymbolTable())
 						if callError != nil {
@@ -356,7 +356,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						newValue := arguments[1]
 						indexObjectHash, getError := indexObject.Get(Hash)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(Hash)
+							return nil, p.NewObjectWithNameNotFoundError(indexObject.GetClass(p), Hash)
 						}
 						indexHash, callError := p.CallFunction(indexObjectHash, indexObject.SymbolTable())
 						if callError != nil {
@@ -408,7 +408,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, _ ...Value) (Value, *Object) {
 						toTuple, getError := self.Get(ToTuple)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToTuple)
+							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToTuple)
 						}
 						hashKeys, callError := p.CallFunction(toTuple, self.SymbolTable())
 						if callError != nil {
@@ -461,7 +461,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							for _, keyValue := range keyValues {
 								keyToString, getError := keyValue.Key.Get(ToString)
 								if getError != nil {
-									return nil, p.NewObjectWithNameNotFoundError(ToString)
+									return nil, p.NewObjectWithNameNotFoundError(keyValue.Key.GetClass(p), ToString)
 								}
 								keyString, callError = p.CallFunction(keyToString, keyValue.Key.SymbolTable())
 								if callError != nil {
@@ -470,7 +470,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								result += keyString.GetString()
 								valueToString, getError = keyValue.Value.Get(ToString)
 								if getError != nil {
-									return nil, p.NewObjectWithNameNotFoundError(ToString)
+									return nil, p.NewObjectWithNameNotFoundError(keyValue.Value.GetClass(p), ToString)
 								}
 								valueString, callError = p.CallFunction(valueToString, keyValue.Value.SymbolTable())
 								if callError != nil {

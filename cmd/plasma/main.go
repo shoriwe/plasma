@@ -138,7 +138,10 @@ func init() {
 func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
 	scanner.Scan()
 	sourceCode := scanner.Text()
-	compiler := plasma.NewCompiler(reader.NewStringReader(sourceCode), plasma.Options{})
+	compiler := plasma.NewCompiler(reader.NewStringReader(sourceCode),
+		plasma.Options{
+		},
+	)
 	bytecode, compilationError := compiler.CompileToArray()
 	if compilationError != nil {
 		switch compilationError.Type() {
@@ -183,7 +186,7 @@ func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
 }
 
 func repl() {
-	virtualMachine.InitializeBytecode(nil)
+	virtualMachine.Reset()
 	stdinScanner := bufio.NewScanner(os.Stdin)
 	for {
 		fmt.Print(color.GreenString(">>>"))
@@ -229,8 +232,7 @@ func program() {
 		}
 		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
 			plasma.Options{
-				Debug:             false,
-				PopRawExpressions: true,
+				Debug: false,
 			},
 		)
 		code, compilationError := compiler.Compile()

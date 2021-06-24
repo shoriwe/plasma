@@ -302,8 +302,7 @@ func scriptImport(memory map[string]vm.Value, ctx *context, sitePackages FileSys
 					// ToDo: Fix this, use a better file reader object
 					scriptCode, compilationError := plasma.NewCompiler(reader.NewStringReaderFromFile(scriptFile),
 						plasma.Options{
-							Debug:             false,
-							PopRawExpressions: true,
+							Debug: false,
 						},
 					).Compile()
 					if compilationError != nil {
@@ -415,8 +414,7 @@ func moduleImport(memory map[string]vm.Value, ctx *context, sitePackages FileSys
 					// Run the entry script
 					scriptCode, compilationError := plasma.NewCompiler(reader.NewStringReaderFromFile(scriptFile),
 						plasma.Options{
-							Debug:             false,
-							PopRawExpressions: true,
+							Debug: false,
 						},
 					).Compile()
 					if compilationError != nil {

@@ -18,7 +18,7 @@ type Value interface {
 
 	Implements(*Type) bool // This should check if the object implements a class directly or indirectly
 
-	GetClass() *Type
+	GetClass(*Plasma) *Type
 	SetClass(*Type)
 
 	GetBool() bool

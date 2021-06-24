@@ -94,7 +94,7 @@ func (p *Plasma) setBuiltInSymbols() {
 									methodNameObject := arguments[0]
 									methodNameObjectToString, getError := methodNameObject.Get(ToString)
 									if getError != nil {
-										return nil, p.NewObjectWithNameNotFoundError(ToString)
+										return nil, p.NewObjectWithNameNotFoundError(methodNameObject.GetClass(p), ToString)
 									}
 									methodNameString, callError := p.CallFunction(methodNameObjectToString, p.PeekSymbolTable())
 									if callError != nil {
@@ -147,13 +147,17 @@ func (p *Plasma) setBuiltInSymbols() {
 				func(object Value) *Object {
 					object.Set(Initialize,
 						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 1,
+							NewBuiltInClassFunction(object, 2,
 								func(self Value, arguments ...Value) (Value, *Object) {
-									name := arguments[0]
+									objectType := arguments[0]
+									if _, ok := objectType.(*Type); !ok {
+										return nil, p.NewInvalidTypeError(objectType.TypeName(), TypeName)
+									}
+									name := arguments[1]
 									if _, ok := name.(*String); !ok {
 										return nil, p.NewInvalidTypeError(name.TypeName(), StringName)
 									}
-									self.SetString(fmt.Sprintf("Object with name %s not Found", name.GetString()))
+									self.SetString(fmt.Sprintf("Object with name %s not Found inside object of type %s", name.GetString(), objectType.(*Type).Name))
 									return p.NewNone(), nil
 								},
 							),
@@ -276,7 +280,7 @@ func (p *Plasma) setBuiltInSymbols() {
 									key := arguments[0]
 									keyToString, getError := key.Get(ToString)
 									if getError != nil {
-										return nil, p.NewObjectWithNameNotFoundError(ToString)
+										return nil, p.NewObjectWithNameNotFoundError(key.GetClass(p), ToString)
 									}
 									keyString, callError := p.CallFunction(keyToString, p.PeekSymbolTable())
 									if callError != nil {
@@ -511,7 +515,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					}
 					value, getError := source.Get(symbol.GetString())
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(symbol.GetString())
+						return nil, p.NewObjectWithNameNotFoundError(source.GetClass(p), symbol.GetString())
 					}
 					return value, nil
 				},
@@ -532,7 +536,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					}
 					_, getError := source.SymbolTable().GetSelf(symbol.GetString())
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(symbol.GetString())
+						return nil, p.NewObjectWithNameNotFoundError(source.GetClass(p), symbol.GetString())
 					}
 					delete(source.SymbolTable().Symbols, symbol.GetString())
 					return p.NewNone(), nil
@@ -549,7 +553,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					if _, ok := message.(*String); !ok {
 						messageToString, getError := message.Get(ToString)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToString)
+							return nil, p.NewObjectWithNameNotFoundError(message.GetClass(p), ToString)
 						}
 						toStringResult, callError := p.CallFunction(messageToString, p.PeekSymbolTable())
 						if callError != nil {
@@ -581,7 +585,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					value := arguments[0]
 					toString, getError := value.Get(ToString)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToString)
+						return nil, p.NewObjectWithNameNotFoundError(value.GetClass(p), ToString)
 					}
 					stringValue, callError := p.CallFunction(toString, value.SymbolTable())
 					if callError != nil {
@@ -603,7 +607,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					value := arguments[0]
 					toString, getError := value.Get(ToString)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToString)
+						return nil, p.NewObjectWithNameNotFoundError(value.GetClass(p), ToString)
 					}
 					stringValue, callError := p.CallFunction(toString, value.SymbolTable())
 					if callError != nil {
@@ -635,7 +639,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					object := arguments[0]
 					objectHashFunc, getError := object.Get(Hash)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(Hash)
+						return nil, p.NewObjectWithNameNotFoundError(object.GetClass(p), Hash)
 					}
 					return p.CallFunction(objectHashFunc, p.PeekSymbolTable())
 				},
@@ -701,7 +705,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					object := arguments[0]
 					getLength, getError := object.Get(GetLength)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(GetLength)
+						return nil, p.NewObjectWithNameNotFoundError(object.GetClass(p), GetLength)
 					}
 					length, callError := p.CallFunction(getLength, p.PeekSymbolTable())
 					if callError != nil {
@@ -722,7 +726,7 @@ func (p *Plasma) setBuiltInSymbols() {
 				func(_ Value, arguments ...Value) (Value, *Object) {
 					toFloat, getError := arguments[0].Get(ToFloat)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToFloat)
+						return nil, p.NewObjectWithNameNotFoundError(arguments[0].GetClass(p), ToFloat)
 					}
 					return p.CallFunction(toFloat, arguments[0].SymbolTable().Parent)
 				},
@@ -735,7 +739,7 @@ func (p *Plasma) setBuiltInSymbols() {
 				func(_ Value, arguments ...Value) (Value, *Object) {
 					toString, getError := arguments[0].Get(ToString)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToString)
+						return nil, p.NewObjectWithNameNotFoundError(arguments[0].GetClass(p), ToString)
 					}
 					return p.CallFunction(toString, arguments[0].SymbolTable().Parent)
 				},
@@ -748,7 +752,7 @@ func (p *Plasma) setBuiltInSymbols() {
 				func(_ Value, arguments ...Value) (Value, *Object) {
 					toInteger, getError := arguments[0].Get(ToInteger)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToInteger)
+						return nil, p.NewObjectWithNameNotFoundError(arguments[0].GetClass(p), ToInteger)
 					}
 					return p.CallFunction(toInteger, arguments[0].SymbolTable().Parent)
 				},
@@ -763,7 +767,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					// If not call its ToArray
 					toArray, getError := arguments[0].Get(ToArray)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToArray)
+						return nil, p.NewObjectWithNameNotFoundError(arguments[0].GetClass(p), ToArray)
 					}
 					return p.CallFunction(toArray, arguments[0].SymbolTable().Parent)
 				},
@@ -778,7 +782,7 @@ func (p *Plasma) setBuiltInSymbols() {
 					// If not call its ToTuple
 					toTuple, getError := arguments[0].Get(ToTuple)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToTuple)
+						return nil, p.NewObjectWithNameNotFoundError(arguments[0].GetClass(p), ToTuple)
 					}
 					return p.CallFunction(toTuple, arguments[0].SymbolTable().Parent)
 				},
@@ -791,7 +795,7 @@ func (p *Plasma) setBuiltInSymbols() {
 				func(_ Value, arguments ...Value) (Value, *Object) {
 					toBool, getError := arguments[0].Get(ToBool)
 					if getError != nil {
-						return nil, p.NewObjectWithNameNotFoundError(ToBool)
+						return nil, p.NewObjectWithNameNotFoundError(arguments[0].GetClass(p), ToBool)
 					}
 					return p.CallFunction(toBool, arguments[0].SymbolTable().Parent)
 				},

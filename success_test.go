@@ -67,8 +67,7 @@ func test(t *testing.T, directory string) {
 		}
 		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
 			plasma.Options{
-				Debug:             false,
-				PopRawExpressions: true,
+				Debug: false,
 			},
 		)
 		code, compilingError := compiler.Compile()
@@ -145,12 +144,12 @@ func TestIfStatement(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, ifStatement))
 }
 
-func TestDoWhileStatement(t *testing.T) {
-	test(t, filepath.Join(testsSamples, statementSamples, doWhileStatement))
-}
-
 func TestBeginEndStatements(t *testing.T) {
 	test(t, filepath.Join(testsSamples, statementSamples, beginEnd))
+}
+
+func TestDoWhileStatement(t *testing.T) {
+	test(t, filepath.Join(testsSamples, statementSamples, doWhileStatement))
 }
 
 func TestWhileStatements(t *testing.T) {

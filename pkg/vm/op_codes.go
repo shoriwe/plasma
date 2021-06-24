@@ -8,6 +8,8 @@ const (
 	NewFloatOP
 	NewTrueBoolOP
 	NewFalseBoolOP
+	NewParenthesesOP
+	NewLambdaFunctionOP
 	GetNoneOP
 
 	// Composite creation
@@ -65,13 +67,12 @@ const (
 	LoadFunctionArgumentsOP
 	NewFunctionOP
 	JumpOP
+	PushOP
 	PopOP
 	NOP
 	SetupForLoopOP
-	HasNextOP
-	UnpackReceiversPopOP
-	UnpackReceiversPeekOP
-	PopIterOP
+	SetupWhileLoop
+	SetupDoWhileLoop
 	NewIteratorOP
 
 	// Try-Except related

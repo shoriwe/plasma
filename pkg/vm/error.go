@@ -19,7 +19,7 @@ const (
 	IntegerParsingError           = "IntegerParsingError"           // Done
 	FloatParsingError             = "FloatParsingError"             // Done
 	BuiltInSymbolProtectionError  = "BuiltInSymbolProtectionError"  // Done
-	ObjectNotCallableError        = "ObjectNotCallableError"        //
+	ObjectNotCallableError        = "ObjectNotCallableError"        // Done
 )
 
 func (p *Plasma) ForceParentGetSelf(name string, parent *SymbolTable) Value {
@@ -145,11 +145,11 @@ func (p *Plasma) NewInvalidNumberOfArgumentsError(received int, expecting int) *
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewObjectWithNameNotFoundError(name string) *Object {
+func (p *Plasma) NewObjectWithNameNotFoundError(objectType *Type, name string) *Object {
 	errorType := p.ForceMasterGetAny(ObjectWithNameNotFoundError)
 	instantiatedError := p.ForceConstruction(errorType)
 	p.ForceInitialization(instantiatedError,
-		p.NewString(false, p.PeekSymbolTable(), name),
+		objectType, p.NewString(false, p.PeekSymbolTable(), name),
 	)
 	return instantiatedError.(*Object)
 }

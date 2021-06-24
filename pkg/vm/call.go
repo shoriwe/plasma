@@ -19,7 +19,7 @@ func (p *Plasma) CallFunction(function Value, parent *SymbolTable, arguments ...
 	if _, ok := function.(*Function); !ok {
 		call, getError := function.Get(Call)
 		if getError != nil {
-			return nil, p.NewObjectNotCallable(function.GetClass())
+			return nil, p.NewObjectNotCallable(function.GetClass(p))
 		}
 		if _, ok = call.(*Function); !ok {
 			return nil, p.NewInvalidTypeError(function.TypeName(), CallableName)
