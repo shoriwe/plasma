@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"math/big"
 )
 
 func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
@@ -17,7 +16,7 @@ func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 			Callable: NewBuiltInClassFunction(object, 0,
 				func(self Value, _ ...Value) (Value, *Object) {
-					return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(object.Id())), nil
+					return p.NewInteger(false, p.PeekSymbolTable(), object.Id()), nil
 				},
 			),
 		})

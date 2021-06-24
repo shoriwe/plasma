@@ -12,43 +12,6 @@ func NewStackNode(value interface{}, next *stackNode) *stackNode {
 	}
 }
 
-type IterEntry struct {
-	Iterable  Value
-	LastValue Value // Used when redo is called
-}
-
-type IterStack struct {
-	head *stackNode
-}
-
-func (stack *IterStack) Pop() *IterEntry {
-	result := stack.head.value
-	stack.head = stack.head.next
-	return result.(*IterEntry)
-}
-
-func (stack *IterStack) Peek() *IterEntry {
-	return stack.head.value.(*IterEntry)
-}
-
-func (stack *IterStack) Push(iter *IterEntry) {
-	stack.head = NewStackNode(iter, stack.head)
-}
-
-func (stack *IterStack) HasNext() bool {
-	return stack.head != nil
-}
-
-func (stack *IterStack) Clear() {
-	stack.head = nil
-}
-
-func NewIterStack() *IterStack {
-	return &IterStack{
-		head: nil,
-	}
-}
-
 type CodeStack struct {
 	head *stackNode
 }
@@ -186,6 +149,42 @@ func (stack *TryStack) Clear() {
 
 func NewTryStack() *TryStack {
 	return &TryStack{
+		head: nil,
+	}
+}
+
+type loopEntry struct {
+	Action uint8
+}
+
+type LoopStack struct {
+	head *stackNode
+}
+
+func (stack *LoopStack) Pop() *loopEntry {
+	result := stack.head.value
+	stack.head = stack.head.next
+	return result.(*loopEntry)
+}
+
+func (stack *LoopStack) Peek() *loopEntry {
+	return stack.head.value.(*loopEntry)
+}
+
+func (stack *LoopStack) Push(tryStackEntry *loopEntry) {
+	stack.head = NewStackNode(tryStackEntry, stack.head)
+}
+
+func (stack *LoopStack) HasNext() bool {
+	return stack.head != nil
+}
+
+func (stack *LoopStack) Clear() {
+	stack.head = nil
+}
+
+func NewLoopStack() *LoopStack {
+	return &LoopStack{
 		head: nil,
 	}
 }

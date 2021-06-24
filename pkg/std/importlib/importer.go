@@ -71,11 +71,11 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 						if _, ok := bytesToRead.(*vm.Integer); !ok {
 							return p.NewInvalidTypeError(bytesToRead.TypeName(), vm.IntegerName), nil
 						}
-						bytes := make([]byte, bytesToRead.GetInteger().Int64())
+						bytes := make([]byte, bytesToRead.GetInteger())
 						numberOfBytes, readError := r.Read(bytes)
 						if readError != nil {
 							if readError == io.EOF {
-								return p.NewNone(), nil
+								return p.GetNone(), nil
 							} else {
 								return nil, p.NewGoRuntimeError(readError)
 							}
@@ -94,11 +94,11 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 						if _, ok := seek.(*vm.Integer); !ok {
 							return p.NewInvalidTypeError(seek.TypeName(), vm.IntegerName), nil
 						}
-						_, seekError := r.Seek(seek.GetInteger().Int64(), io.SeekStart)
+						_, seekError := r.Seek(seek.GetInteger(), io.SeekStart)
 						if seekError != nil {
 							return nil, p.NewGoRuntimeError(seekError)
 						}
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -111,7 +111,7 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 						if closeError != nil {
 							return nil, p.NewGoRuntimeError(closeError)
 						}
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -302,8 +302,7 @@ func scriptImport(memory map[string]vm.Value, ctx *context, sitePackages FileSys
 					// ToDo: Fix this, use a better file reader object
 					scriptCode, compilationError := plasma.NewCompiler(reader.NewStringReaderFromFile(scriptFile),
 						plasma.Options{
-							Debug:             false,
-							PopRawExpressions: true,
+							Debug: false,
 						},
 					).Compile()
 					if compilationError != nil {
@@ -415,8 +414,7 @@ func moduleImport(memory map[string]vm.Value, ctx *context, sitePackages FileSys
 					// Run the entry script
 					scriptCode, compilationError := plasma.NewCompiler(reader.NewStringReaderFromFile(scriptFile),
 						plasma.Options{
-							Debug:             false,
-							PopRawExpressions: true,
+							Debug: false,
 						},
 					).Compile()
 					if compilationError != nil {
@@ -468,7 +466,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 							p.NewFunction(true, object.SymbolTable(),
 								vm.NewBuiltInClassFunction(object, 0,
 									func(_ vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
-										return p.NewNone(), nil
+										return p.GetNone(), nil
 									},
 								),
 							),
@@ -490,7 +488,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											return nil, p.NewInvalidTypeError(resourceName.TypeName(), vm.StringName)
 										}
 										self.SetString(fmt.Sprintf("Resource with name %s not found", resourceName.GetString()))
-										return p.NewNone(), nil
+										return p.GetNone(), nil
 									},
 								),
 							),
@@ -511,7 +509,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 								vm.NewBuiltInClassFunction(object, 0,
 									func(self vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
 										self.SetString("Not inside a module context")
-										return p.NewNone(), nil
+										return p.GetNone(), nil
 									},
 								),
 							),
@@ -536,7 +534,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											return nil, p.NewInvalidTypeError(script.TypeName(), vm.StringName)
 										}
 										self.SetString(fmt.Sprintf("Script %s not found", script.GetString()))
-										return p.NewNone(), nil
+										return p.GetNone(), nil
 									},
 								),
 							),
@@ -560,7 +558,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											return nil, p.NewInvalidTypeError(compilationError.TypeName(), vm.StringName)
 										}
 										self.SetString(compilationError.GetString())
-										return p.NewNone(), nil
+										return p.GetNone(), nil
 									},
 								),
 							),
@@ -585,7 +583,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											return nil, p.NewInvalidTypeError(moduleName.TypeName(), vm.StringName)
 										}
 										self.SetString(fmt.Sprintf("No module with name %s found", moduleName.GetString()))
-										return p.NewNone(), nil
+										return p.GetNone(), nil
 									},
 								),
 							),
@@ -610,7 +608,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											return nil, p.NewInvalidTypeError(message.TypeName(), vm.StringName)
 										}
 										self.SetString(message.GetString())
-										return p.NewNone(), nil
+										return p.GetNone(), nil
 									},
 								),
 							),
@@ -635,7 +633,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											return nil, p.NewInvalidTypeError(moduleName.TypeName(), vm.StringName)
 										}
 										self.SetString(fmt.Sprintf("Invalid module nomenclature for %s, expecting estructure like \"NAME\" or \"NAME@VERSION\"", moduleName.GetString()))
-										return p.NewNone(), nil
+										return p.GetNone(), nil
 									},
 								),
 							),
@@ -664,7 +662,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											return nil, p.NewInvalidTypeError(version.TypeName(), vm.StringName)
 										}
 										self.SetString(fmt.Sprintf("no module found with name: %s and version %s", moduleName.GetString(), version.GetString()))
-										return p.NewNone(), nil
+										return p.GetNone(), nil
 									},
 								),
 							),

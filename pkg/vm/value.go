@@ -2,7 +2,6 @@ package vm
 
 import (
 	"github.com/shoriwe/gplasma/pkg/errors"
-	"math/big"
 )
 
 type Value interface {
@@ -18,14 +17,14 @@ type Value interface {
 
 	Implements(*Type) bool // This should check if the object implements a class directly or indirectly
 
-	GetClass() *Type
+	GetClass(*Plasma) *Type
 	SetClass(*Type)
 
 	GetBool() bool
 	GetBytes() []uint8
 	GetString() string
-	GetInteger() *big.Int
-	GetFloat() *big.Float
+	GetInteger() int64
+	GetFloat() float64
 	GetContent() []Value
 	GetKeyValues() map[int64][]*KeyValue
 	GetLength() int
@@ -33,8 +32,8 @@ type Value interface {
 	SetBool(bool)
 	SetBytes([]uint8)
 	SetString(string)
-	SetInteger(*big.Int)
-	SetFloat(*big.Float)
+	SetInteger(int64)
+	SetFloat(float64)
 	SetContent([]Value)
 	SetKeyValues(map[int64][]*KeyValue)
 	AddKeyValue(int64, *KeyValue)

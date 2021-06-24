@@ -115,6 +115,16 @@ const (
 	SetLength               = "SetLength"
 )
 
+const (
+	Redo = iota
+	Break
+	NoAction
+)
+
+type ForLoopSettings struct {
+	BodyLength int
+	Receivers  []string
+}
 type ExceptInformation struct {
 	Receiver      string
 	TargetsLength int

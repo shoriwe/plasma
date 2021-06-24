@@ -3,7 +3,6 @@ package vm
 import (
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/errors"
-	"math/big"
 )
 
 type Object struct {
@@ -17,8 +16,8 @@ type Object struct {
 	Bool       bool
 	String     string
 	Bytes      []uint8
-	Integer    *big.Int
-	Float      *big.Float
+	Integer    int64
+	Float      float64
 	Content    []Value
 	KeyValues  map[int64][]*KeyValue
 	Length     int
@@ -44,11 +43,11 @@ func (o *Object) GetString() string {
 	return o.String
 }
 
-func (o *Object) GetInteger() *big.Int {
+func (o *Object) GetInteger() int64 {
 	return o.Integer
 }
 
-func (o *Object) GetFloat() *big.Float {
+func (o *Object) GetFloat() float64 {
 	return o.Float
 }
 
@@ -68,11 +67,11 @@ func (o *Object) SetString(s string) {
 	o.String = s
 }
 
-func (o *Object) SetInteger(i *big.Int) {
+func (o *Object) SetInteger(i int64) {
 	o.Integer = i
 }
 
-func (o *Object) SetFloat(f *big.Float) {
+func (o *Object) SetFloat(f float64) {
 	o.Float = f
 }
 
@@ -109,11 +108,7 @@ func (o *Object) SubClasses() []*Type {
 }
 
 func (o *Object) Get(symbol string) (Value, *errors.Error) {
-	value, getError := o.symbols.GetSelf(symbol)
-	if getError != nil {
-		return nil, getError
-	}
-	return value, nil
+	return o.symbols.GetSelf(symbol)
 }
 
 func (o *Object) Set(symbol string, object Value) {
@@ -136,7 +131,10 @@ func (o *Object) SetHash(newHash int64) {
 	o.hash = newHash
 }
 
-func (o *Object) GetClass() *Type {
+func (o *Object) GetClass(p *Plasma) *Type {
+	if o.class == nil { // This should only happen with built-ins
+		o.class = p.ForceMasterGetAny(o.typeName).(*Type)
+	}
 	return o.class
 }
 
@@ -156,13 +154,39 @@ func (o *Object) Implements(class *Type) bool {
 	return false
 }
 
+func (p *Plasma) NewObject(
+	isBuiltIn bool,
+	typeName string,
+	subClasses []*Type,
+	parentSymbols *SymbolTable,
+) *Object {
+	result := &Object{
+		id:         p.NextId(),
+		typeName:   typeName,
+		subClasses: subClasses,
+		symbols:    NewSymbolTable(parentSymbols),
+		isBuiltIn:  isBuiltIn,
+	}
+	result.Length = 0
+	result.Bool = true
+	result.String = ""
+	result.Integer = 0
+	result.Float = 0
+	result.Content = []Value{}
+	result.KeyValues = map[int64][]*KeyValue{}
+	result.Bytes = []uint8{}
+	result.Set(Self, result)
+	p.ObjectInitialize(isBuiltIn)(result)
+	return result
+}
+
 func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(object Value) *Object {
 		object.SymbolTable().Update(map[string]Value{
 			Initialize: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(_ Value, _ ...Value) (Value, *Object) {
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -171,7 +195,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, _ ...Value) (Value, *Object) {
 						selfToBool, getError := self.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
 						}
 						selfBool, callError := p.CallFunction(selfToBool, self.SymbolTable())
 						if callError != nil {
@@ -187,7 +211,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 
 						leftToBool, getError := self.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
 						}
 						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
 						if callError != nil {
@@ -197,7 +221,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 						var rightToBool Value
 						rightToBool, getError = right.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(right.GetClass(p), ToBool)
 						}
 						var rightBool Value
 						rightBool, callError = p.CallFunction(rightToBool, right.SymbolTable())
@@ -213,7 +237,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						rightToBool, getError := self.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
 						}
 						rightBool, callError := p.CallFunction(rightToBool, self.SymbolTable())
 						if callError != nil {
@@ -223,7 +247,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 						var leftToBool Value
 						leftToBool, getError = left.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(left.GetClass(p), ToBool)
 						}
 						var leftBool Value
 						leftBool, callError = p.CallFunction(leftToBool, left.SymbolTable())
@@ -239,7 +263,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						leftToBool, getError := self.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
 						}
 						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
 						if callError != nil {
@@ -250,7 +274,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 						var rightToBool Value
 						rightToBool, getError = right.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(right.GetClass(p), ToBool)
 						}
 						var rightBool Value
 						rightBool, callError = p.CallFunction(rightToBool, right.SymbolTable())
@@ -266,7 +290,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						rightToBool, getError := self.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
 						}
 						rightBool, callError := p.CallFunction(rightToBool, self.SymbolTable())
 						if callError != nil {
@@ -276,7 +300,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 						var leftToBool Value
 						leftToBool, getError = left.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(left.GetClass(p), ToBool)
 						}
 						var leftBool Value
 						leftBool, callError = p.CallFunction(leftToBool, left.SymbolTable())
@@ -292,7 +316,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						leftToBool, getError := self.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
 						}
 						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
 						if callError != nil {
@@ -303,7 +327,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 						var rightToBool Value
 						rightToBool, getError = right.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(right.GetClass(p), ToBool)
 						}
 						var rightBool Value
 						rightBool, callError = p.CallFunction(rightToBool, right.SymbolTable())
@@ -319,7 +343,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						leftToBool, getError := self.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
 						}
 						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
 						if callError != nil {
@@ -330,7 +354,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 						var rightToBool Value
 						rightToBool, getError = left.Get(ToBool)
 						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(ToBool)
+							return nil, p.NewObjectWithNameNotFoundError(left.GetClass(p), ToBool)
 						}
 						var rightBool Value
 						rightBool, callError = p.CallFunction(rightToBool, left.SymbolTable())
@@ -379,24 +403,14 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 							objectHash := p.HashString(fmt.Sprintf("%v-%s-%d", self, self.TypeName(), self.Id()))
 							self.SetHash(objectHash)
 						}
-						return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(self.GetHash())), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), self.GetHash()), nil
 					},
 				),
 			),
 			Class: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						if self.GetClass() == nil { // This should only happen with built-ins
-							class, getError := p.BuiltInSymbols().GetAny(self.TypeName())
-							if getError != nil {
-								return nil, p.NewObjectWithNameNotFoundError(self.TypeName())
-							}
-							if _, ok := class.(*Type); !ok {
-								return nil, p.NewInvalidTypeError(class.TypeName(), TypeName)
-							}
-							self.SetClass(class.(*Type))
-						}
-						return self.GetClass(), nil
+						return self.GetClass(p), nil
 					},
 				),
 			),
@@ -422,7 +436,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			ToBool: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(_ Value, _ ...Value) (Value, *Object) {
-						return p.NewBool(false, p.PeekSymbolTable(), true), nil
+						return p.GetTrue(), nil
 					},
 				),
 			),
@@ -478,7 +492,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			GetLength: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewInteger(false, p.PeekSymbolTable(), big.NewInt(int64(self.GetLength()))), nil
+						return p.NewInteger(false, p.PeekSymbolTable(), int64(self.GetLength())), nil
 					},
 				),
 			),
@@ -486,7 +500,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						self.SetBool(arguments[0].GetBool())
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -495,7 +509,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						self.SetBytes(arguments[0].GetBytes())
 						self.SetLength(arguments[0].GetLength())
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -504,7 +518,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						self.SetString(arguments[0].GetString())
 						self.SetLength(arguments[0].GetLength())
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -512,7 +526,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						self.SetInteger(arguments[0].GetInteger())
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -520,7 +534,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						self.SetFloat(arguments[0].GetFloat())
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -529,7 +543,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						self.SetContent(arguments[0].GetContent())
 						self.SetLength(arguments[0].GetLength())
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -538,7 +552,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 					func(self Value, arguments ...Value) (Value, *Object) {
 						self.SetKeyValues(arguments[0].GetKeyValues())
 						self.SetLength(arguments[0].GetLength())
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
@@ -546,36 +560,11 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						self.SetLength(arguments[0].GetLength())
-						return p.NewNone(), nil
+						return p.GetNone(), nil
 					},
 				),
 			),
 		})
 		return nil
 	}
-}
-func (p *Plasma) NewObject(
-	isBuiltIn bool,
-	typeName string,
-	subClasses []*Type,
-	parentSymbols *SymbolTable,
-) *Object {
-	result := &Object{
-		id:         p.NextId(),
-		typeName:   typeName,
-		subClasses: subClasses,
-		symbols:    NewSymbolTable(parentSymbols),
-		isBuiltIn:  isBuiltIn,
-	}
-	result.Length = 0
-	result.Bool = true
-	result.String = ""
-	result.Integer = big.NewInt(0)
-	result.Float = big.NewFloat(0)
-	result.Content = []Value{}
-	result.KeyValues = map[int64][]*KeyValue{}
-	result.Bytes = []uint8{}
-	result.Set(Self, result)
-	p.ObjectInitialize(isBuiltIn)(result)
-	return result
 }

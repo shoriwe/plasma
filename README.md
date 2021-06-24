@@ -2,8 +2,8 @@
 
 ## Description
 
-**`plasma`** is a dynamic programming language highly inspired in **`ruby`** syntax and semantics with a new features
-like interfaces and design focused in application embedding.
+**`plasma`** is my first dynamic programming language (so, since I am totally a novice expect horrible performance) highly inspired in **`ruby`** syntax and semantics with interfaces and design focused in application embedding.
+
 
 ## Try it
 
@@ -192,15 +192,6 @@ end
 
 println(hello())
 ```
-
-## Important
-
-- **`plasma`** is not a replacement for **`ruby`**, there are many missing features that are required to make **`ruby`**
-  code run properly in **`plasma`**, of course there is the chance that some simpler scripts will run just fine
-  in **`plasma`**.
-
-- Also notice that this software has passed only by one iteration, so you should expect some bugs and performance
-  issues, which will be of course corrected in the future.
 
 # Useful references
 

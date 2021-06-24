@@ -2,102 +2,116 @@ package vm
 
 import (
 	"fmt"
-	"math/big"
 )
 
 func (p *Plasma) Execute() (Value, *Object) {
 	var executionError *Object
+	var object Value
+bytecodeExecutionLoop:
 	for ; p.PeekBytecode().HasNext(); {
 		code := p.PeekBytecode().Next()
+		/*
+			if code.Line != 0 {
+				fmt.Println(color.GreenString(strconv.Itoa(code.Line)), code.Instruction, code.Value)
+			} else {
+				fmt.Println(color.RedString("UL"), code.Instruction, code.Value)
+			}
+		*/
 		switch code.Instruction.OpCode {
 		// Literals
 		case NewStringOP:
-			executionError = p.newStringOP(code)
+			object, executionError = p.newStringOP(code)
 		case NewBytesOP:
-			executionError = p.newBytesOP(code)
+			object, executionError = p.newBytesOP(code)
 		case NewIntegerOP:
-			executionError = p.newIntegerOP(code)
+			object, executionError = p.newIntegerOP(code)
 		case NewFloatOP:
-			executionError = p.newFloatOP(code)
+			object, executionError = p.newFloatOP(code)
 		case NewTrueBoolOP:
-			executionError = p.newTrueBoolOP()
+			object, executionError = p.newTrueBoolOP()
 		case NewFalseBoolOP:
-			executionError = p.newFalseBoolOP()
+			object, executionError = p.newFalseBoolOP()
+		case NewParenthesesOP:
+			object, executionError = p.newParenthesesOP()
+		case NewLambdaFunctionOP:
+			object, executionError = p.newLambdaFunctionOP(code)
 		case GetNoneOP:
-			executionError = p.getNoneOP()
+			object, executionError = p.getNoneOP()
 		// Composite creation
 		case NewTupleOP:
-			executionError = p.newTupleOP(code)
+			object, executionError = p.newTupleOP(code)
 		case NewArrayOP:
-			executionError = p.newArrayOP(code)
+			object, executionError = p.newArrayOP(code)
 		case NewHashOP:
-			executionError = p.newHashOP(code)
+			object, executionError = p.newHashOP(code)
 		// Unary Expressions
 		case NegateBitsOP:
-			executionError = p.noArgsGetAndCall(NegBits)
+			object, executionError = p.noArgsGetAndCall(NegBits)
 		case BoolNegateOP:
-			executionError = p.noArgsGetAndCall(Negate)
+			object, executionError = p.noArgsGetAndCall(Negate)
 		case NegativeOP:
-			executionError = p.noArgsGetAndCall(Negative)
+			object, executionError = p.noArgsGetAndCall(Negative)
 		// Binary Expressions
 		case AddOP:
-			executionError = p.leftBinaryExpressionFuncCall(Add)
+			object, executionError = p.leftBinaryExpressionFuncCall(Add)
 		case SubOP:
-			executionError = p.leftBinaryExpressionFuncCall(Sub)
+			object, executionError = p.leftBinaryExpressionFuncCall(Sub)
 		case MulOP:
-			executionError = p.leftBinaryExpressionFuncCall(Mul)
+			object, executionError = p.leftBinaryExpressionFuncCall(Mul)
 		case DivOP:
-			executionError = p.leftBinaryExpressionFuncCall(Div)
+			object, executionError = p.leftBinaryExpressionFuncCall(Div)
 		case FloorDivOP:
-			executionError = p.leftBinaryExpressionFuncCall(FloorDiv)
+			object, executionError = p.leftBinaryExpressionFuncCall(FloorDiv)
 		case ModOP:
-			executionError = p.leftBinaryExpressionFuncCall(Mod)
+			object, executionError = p.leftBinaryExpressionFuncCall(Mod)
 		case PowOP:
-			executionError = p.leftBinaryExpressionFuncCall(Pow)
+			object, executionError = p.leftBinaryExpressionFuncCall(Pow)
 		case BitXorOP:
-			executionError = p.leftBinaryExpressionFuncCall(BitXor)
+			object, executionError = p.leftBinaryExpressionFuncCall(BitXor)
 		case BitAndOP:
-			executionError = p.leftBinaryExpressionFuncCall(BitAnd)
+			object, executionError = p.leftBinaryExpressionFuncCall(BitAnd)
 		case BitOrOP:
-			executionError = p.leftBinaryExpressionFuncCall(BitOr)
+			object, executionError = p.leftBinaryExpressionFuncCall(BitOr)
 		case BitLeftOP:
-			executionError = p.leftBinaryExpressionFuncCall(BitLeft)
+			object, executionError = p.leftBinaryExpressionFuncCall(BitLeft)
 		case BitRightOP:
-			executionError = p.leftBinaryExpressionFuncCall(BitRight)
+			object, executionError = p.leftBinaryExpressionFuncCall(BitRight)
 		case AndOP:
-			executionError = p.leftBinaryExpressionFuncCall(And)
+			object, executionError = p.leftBinaryExpressionFuncCall(And)
 		case OrOP:
-			executionError = p.leftBinaryExpressionFuncCall(Or)
+			object, executionError = p.leftBinaryExpressionFuncCall(Or)
 		case XorOP:
-			executionError = p.leftBinaryExpressionFuncCall(Xor)
+			object, executionError = p.leftBinaryExpressionFuncCall(Xor)
 		case EqualsOP:
-			executionError = p.leftBinaryExpressionFuncCall(Equals)
+			object, executionError = p.leftBinaryExpressionFuncCall(Equals)
 		case NotEqualsOP:
-			executionError = p.leftBinaryExpressionFuncCall(NotEquals)
+			object, executionError = p.leftBinaryExpressionFuncCall(NotEquals)
 		case GreaterThanOP:
-			executionError = p.leftBinaryExpressionFuncCall(GreaterThan)
+			object, executionError = p.leftBinaryExpressionFuncCall(GreaterThan)
 		case LessThanOP:
-			executionError = p.leftBinaryExpressionFuncCall(LessThan)
+			object, executionError = p.leftBinaryExpressionFuncCall(LessThan)
 		case GreaterThanOrEqualOP:
-			executionError = p.leftBinaryExpressionFuncCall(GreaterThanOrEqual)
+			object, executionError = p.leftBinaryExpressionFuncCall(GreaterThanOrEqual)
 		case LessThanOrEqualOP:
-			executionError = p.leftBinaryExpressionFuncCall(LessThanOrEqual)
+			object, executionError = p.leftBinaryExpressionFuncCall(LessThanOrEqual)
 		case ContainsOP:
 			// This operation is inverted, right is left and left is right
 			leftHandSide := p.PopObject()
 			rightHandSide := p.PopObject()
 			p.PushObject(leftHandSide)
 			p.PushObject(rightHandSide)
-			executionError = p.leftBinaryExpressionFuncCall(Contains)
+			object, executionError = p.leftBinaryExpressionFuncCall(Contains)
 		// Other Expressions
 		case GetIdentifierOP:
-			executionError = p.getIdentifierOP(code)
+			object, executionError = p.getIdentifierOP(code)
 		case IndexOP:
-			executionError = p.indexOP()
+			object, executionError = p.indexOP()
 		case SelectNameFromObjectOP:
-			executionError = p.selectNameFromObjectOP(code)
+			object, executionError = p.selectNameFromObjectOP(code)
 		case MethodInvocationOP:
-			executionError = p.methodInvocationOP(code)
+			object, executionError = p.methodInvocationOP(code)
+		case NewIteratorOP:
+			object, executionError = p.newIteratorOP(code)
 		// Assign Statement
 		case AssignIdentifierOP:
 			executionError = p.assignIdentifierOP(code)
@@ -107,13 +121,7 @@ func (p *Plasma) Execute() (Value, *Object) {
 			executionError = p.assignIndexOP()
 		case ReturnOP:
 			executionError = p.returnOP(code)
-			if executionError != nil {
-				return nil, executionError
-			}
-			if p.MemoryStack.HasNext() {
-				return p.PopObject(), nil
-			}
-			return p.PeekSymbolTable().Symbols[None], nil
+			break bytecodeExecutionLoop
 		case IfJumpOP:
 			executionError = p.ifJumpOP(code)
 		case UnlessJumpOP:
@@ -126,27 +134,28 @@ func (p *Plasma) Execute() (Value, *Object) {
 		case JumpOP:
 			executionError = p.jumpOP(code)
 		case RedoOP:
-			executionError = p.redoOP(code)
+			p.LoopStack.Peek().Action = Redo
+			return nil, nil
 		case BreakOP:
-			executionError = p.breakOP(code)
+			p.LoopStack.Peek().Action = Break
+			return nil, nil
 		case ContinueOP:
-			executionError = p.continueOP(code)
+			return nil, nil
+		case PushOP:
+			if object != nil {
+				p.MemoryStack.Push(object)
+				object = nil
+			}
 		case PopOP:
 			p.MemoryStack.Pop()
 		case NOP:
 			break
+		case SetupDoWhileLoop:
+			executionError = p.setupDoWhileLoop(code)
+		case SetupWhileLoop:
+			executionError = p.setupWhileLoop(code)
 		case SetupForLoopOP:
-			executionError = p.setupForLoopOP()
-		case HasNextOP:
-			executionError = p.hasNextOP(code)
-		case UnpackReceiversPopOP:
-			executionError = p.unpackReceiversPopOP()
-		case UnpackReceiversPeekOP:
-			executionError = p.unpackReceiversPeekOP(code)
-		case PopIterOP:
-			p.IterStack.Pop()
-		case NewIteratorOP:
-			executionError = p.newIteratorOP(code)
+			executionError = p.setupForLoopOP(code)
 		case SetupTryBlockOP:
 			executionError = p.setupTryBlockOP(code)
 		case SetupTryExceptBlockOP:
@@ -185,73 +194,61 @@ func (p *Plasma) Execute() (Value, *Object) {
 	if p.MemoryStack.HasNext() {
 		return p.PopObject(), nil
 	}
-	return p.NewNone(), nil
+	return p.GetNone(), nil
 }
 
-func (p *Plasma) newStringOP(code Code) *Object {
+func (p *Plasma) newStringOP(code Code) (Value, *Object) {
 	value := code.Value.(string)
 	stringObject := p.NewString(false, p.SymbolTableStack.Peek(), value)
-	p.PushObject(stringObject)
-	return nil
+	return stringObject, nil
 }
 
-func (p *Plasma) newBytesOP(code Code) *Object {
+func (p *Plasma) newBytesOP(code Code) (Value, *Object) {
 	value := code.Value.([]byte)
-	bytesObject := p.NewBytes(false, p.SymbolTableStack.Peek(), value)
-	p.PushObject(bytesObject)
-	return nil
+	return p.NewBytes(false, p.SymbolTableStack.Peek(), value), nil
 }
 
-func (p *Plasma) newIntegerOP(code Code) *Object {
-	value := code.Value.(*big.Int)
-	integer := p.NewInteger(false, p.SymbolTableStack.Peek(), value)
-	p.PushObject(integer)
-	return nil
+func (p *Plasma) newIntegerOP(code Code) (Value, *Object) {
+	value := code.Value.(int64)
+	return p.NewInteger(false, p.SymbolTableStack.Peek(), value), nil
 }
 
-func (p *Plasma) newFloatOP(code Code) *Object {
-	value := code.Value.(*big.Float)
-	float := p.NewFloat(false, p.SymbolTableStack.Peek(), value)
-	p.PushObject(float)
-	return nil
+func (p *Plasma) newFloatOP(code Code) (Value, *Object) {
+	value := code.Value.(float64)
+	return p.NewFloat(false, p.SymbolTableStack.Peek(), value), nil
 }
 
-func (p *Plasma) newTrueBoolOP() *Object {
-	p.PushObject(p.NewBool(false, p.PeekSymbolTable(), true))
-	return nil
+func (p *Plasma) newTrueBoolOP() (Value, *Object) {
+	return p.GetTrue(), nil
 }
 
-func (p *Plasma) newFalseBoolOP() *Object {
-	p.PushObject(p.NewBool(false, p.PeekSymbolTable(), false))
-	return nil
+func (p *Plasma) newFalseBoolOP() (Value, *Object) {
+	return p.GetFalse(), nil
 }
 
-func (p *Plasma) getNoneOP() *Object {
-	p.PushObject(p.NewNone())
-	return nil
+func (p *Plasma) getNoneOP() (Value, *Object) {
+	return p.GetNone(), nil
 }
 
-func (p *Plasma) newTupleOP(code Code) *Object {
+func (p *Plasma) newTupleOP(code Code) (Value, *Object) {
 	numberOfValues := code.Value.(int)
 	var values []Value
 	for i := 0; i < numberOfValues; i++ {
 		values = append(values, p.PopObject())
 	}
-	p.PushObject(p.NewTuple(false, p.PeekSymbolTable(), values))
-	return nil
+	return p.NewTuple(false, p.PeekSymbolTable(), values), nil
 }
 
-func (p *Plasma) newArrayOP(code Code) *Object {
+func (p *Plasma) newArrayOP(code Code) (Value, *Object) {
 	numberOfValues := code.Value.(int)
 	var values []Value
 	for i := 0; i < numberOfValues; i++ {
 		values = append(values, p.PopObject())
 	}
-	p.PushObject(p.NewArray(false, p.PeekSymbolTable(), values))
-	return nil
+	return p.NewArray(false, p.PeekSymbolTable(), values), nil
 }
 
-func (p *Plasma) newHashOP(code Code) *Object {
+func (p *Plasma) newHashOP(code Code) (Value, *Object) {
 	numberOfValues := code.Value.(int)
 	var keyValues []*KeyValue
 	for i := 0; i < numberOfValues; i++ {
@@ -266,35 +263,45 @@ func (p *Plasma) newHashOP(code Code) *Object {
 	hashTable := p.NewHashTable(false, p.PeekSymbolTable(), map[int64][]*KeyValue{}, numberOfValues)
 	hashTableAssign, getError := hashTable.Get(Assign)
 	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(Assign)
+		return nil, p.NewObjectWithNameNotFoundError(hashTable.GetClass(p), Assign)
 	}
 	for _, keyValue := range keyValues {
 		_, assignError := p.CallFunction(hashTableAssign, hashTable.SymbolTable(), keyValue.Key, keyValue.Value)
 		if assignError != nil {
-			return assignError
+			return nil, assignError
 		}
 	}
-	p.PushObject(hashTable)
-	return nil
+	return hashTable, nil
+}
+
+func (p *Plasma) newParenthesesOP() (Value, *Object) {
+	return p.PopObject(), nil
+}
+
+func (p *Plasma) newLambdaFunctionOP(code Code) (Value, *Object) {
+	functionInformation := code.Value.([2]int)
+	codeLength := functionInformation[0]
+	numberOfArguments := functionInformation[1]
+	start := p.PeekBytecode().index
+	p.PeekBytecode().index += codeLength
+	end := p.PeekBytecode().index
+	functionCode := make([]Code, codeLength)
+	copy(functionCode, p.PeekBytecode().instructions[start:end])
+	return p.NewFunction(false, p.PeekSymbolTable(), NewPlasmaFunction(numberOfArguments, functionCode)), nil
 }
 
 // Useful function to call those built ins that doesn't receive arguments of an object
-func (p *Plasma) noArgsGetAndCall(operationName string) *Object {
+func (p *Plasma) noArgsGetAndCall(operationName string) (Value, *Object) {
 	object := p.PopObject()
 	operation, getError := object.Get(operationName)
 	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(operationName)
+		return nil, p.NewObjectWithNameNotFoundError(object.GetClass(p), operationName)
 	}
-	result, callError := p.CallFunction(operation, object.SymbolTable())
-	if callError != nil {
-		return callError
-	}
-	p.PushObject(result)
-	return nil
+	return p.CallFunction(operation, object.SymbolTable())
 }
 
 // Function useful to cal object built-ins binary expression functions
-func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *Object {
+func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) (Value, *Object) {
 	leftHandSide := p.PopObject()
 	rightHandSide := p.PopObject()
 	operation, getError := leftHandSide.Get(operationName)
@@ -305,56 +312,44 @@ func (p *Plasma) leftBinaryExpressionFuncCall(operationName string) *Object {
 	if callError != nil {
 		return p.rightBinaryExpressionFuncCall(leftHandSide, rightHandSide, operationName)
 	}
-	p.PushObject(result)
-	return nil
+	return result, nil
 }
 
-func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide Value, rightHandSide Value, operationName string) *Object {
+func (p *Plasma) rightBinaryExpressionFuncCall(leftHandSide Value, rightHandSide Value, operationName string) (Value, *Object) {
 	operation, getError := rightHandSide.Get("Right" + operationName)
 	if getError != nil {
-		return p.NewObjectWithNameNotFoundError("Right" + operationName)
+		return nil, p.NewObjectWithNameNotFoundError(p.ForceMasterGetAny(ObjectName).(*Type), "Right"+operationName)
 	}
-	result, callError := p.CallFunction(operation, rightHandSide.SymbolTable(), leftHandSide)
-	if callError != nil {
-		return callError
-	}
-	p.PushObject(result)
-	return nil
+	return p.CallFunction(operation, rightHandSide.SymbolTable(), leftHandSide)
 }
 
-func (p *Plasma) indexOP() *Object {
+func (p *Plasma) indexOP() (Value, *Object) {
 	index := p.PopObject()
 	source := p.PopObject()
 	indexOperation, getError := source.Get(Index)
 	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(Index)
+		return nil, p.NewObjectWithNameNotFoundError(source.GetClass(p), Index)
 	}
-	result, callError := p.CallFunction(indexOperation, source.SymbolTable(), index)
-	if callError != nil {
-		return callError
-	}
-	p.PushObject(result)
-	return nil
+	return p.CallFunction(indexOperation, source.SymbolTable(), index)
 }
 
-func (p *Plasma) selectNameFromObjectOP(code Code) *Object {
+func (p *Plasma) selectNameFromObjectOP(code Code) (Value, *Object) {
 	name := code.Value.(string)
 	source := p.PopObject()
 	value, getError := source.Get(name)
 	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(name)
+		return nil, p.NewObjectWithNameNotFoundError(source.GetClass(p), name)
 	}
-	p.PushObject(value)
-	return nil
+	return value, nil
 }
 
-func (p *Plasma) methodInvocationOP(code Code) *Object {
+func (p *Plasma) methodInvocationOP(code Code) (Value, *Object) {
 	numberOfArguments := code.Value.(int)
 	function := p.PopObject()
 	var arguments []Value
 	for i := 0; i < numberOfArguments; i++ {
 		if !p.MemoryStack.HasNext() {
-			return p.NewInvalidNumberOfArgumentsError(i, numberOfArguments)
+			return nil, p.NewInvalidNumberOfArgumentsError(i, numberOfArguments)
 		}
 		arguments = append(arguments, p.PopObject())
 	}
@@ -363,30 +358,66 @@ func (p *Plasma) methodInvocationOP(code Code) *Object {
 	if _, ok := function.(*Type); ok {
 		result, callError = p.ConstructObject(function.(*Type), NewSymbolTable(function.SymbolTable().Parent))
 		if callError != nil {
-			return callError
+			return nil, callError
 		}
 		resultInitialize, getError := result.Get(Initialize)
 		if getError != nil {
-			return p.NewObjectWithNameNotFoundError(Initialize)
+			return nil, p.NewObjectWithNameNotFoundError(result.GetClass(p), Initialize)
 		}
 		_, callError = p.CallFunction(resultInitialize, result.SymbolTable(), arguments...)
 	} else {
 		result, callError = p.CallFunction(function, NewSymbolTable(function.SymbolTable().Parent), arguments...)
 	}
-	if callError != nil {
-		return callError
-	}
-	p.PushObject(result)
-	return nil
+	return result, callError
 }
 
-func (p *Plasma) getIdentifierOP(code Code) *Object {
+func (p *Plasma) getIdentifierOP(code Code) (Value, *Object) {
 	value, getError := p.PeekSymbolTable().GetAny(code.Value.(string))
 	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(code.Value.(string))
+		return nil, p.NewObjectWithNameNotFoundError(p.ForceMasterGetAny(ObjectName).GetClass(p), code.Value.(string))
 	}
-	p.PushObject(value)
-	return nil
+	return value, nil
+}
+
+func (p *Plasma) newIteratorOP(code Code) (Value, *Object) {
+	source := p.PopObject()
+	var iterSource Value
+	var callError *Object
+	if _, ok := source.(*Iterator); ok {
+		iterSource = source
+	} else {
+		iter, getError := source.Get(Iter)
+		if getError != nil {
+			return nil, p.NewObjectWithNameNotFoundError(source.GetClass(p), Iter)
+		}
+		iterSource, callError = p.CallFunction(iter, source.SymbolTable())
+		if callError != nil {
+			return nil, callError
+		}
+	}
+	generatorIterator := p.NewIterator(false, p.PeekSymbolTable())
+	generatorIterator.Set(Source, iterSource)
+
+	hasNextCodeLength, nextCodeLength := code.Value.([2]int)[0], code.Value.([2]int)[1]
+	var hasNextCode []Code
+	for i := 0; i < hasNextCodeLength; i++ {
+		hasNextCode = append(hasNextCode, p.PeekBytecode().Next())
+	}
+	var nextCode []Code
+	for i := 0; i < nextCodeLength; i++ {
+		nextCode = append(nextCode, p.PeekBytecode().Next())
+	}
+	generatorIterator.Set(Next,
+		p.NewFunction(false, generatorIterator.symbols,
+			NewPlasmaClassFunction(generatorIterator, 0, nextCode),
+		),
+	)
+	generatorIterator.Set(HasNext,
+		p.NewFunction(false, generatorIterator.symbols,
+			NewPlasmaClassFunction(generatorIterator, 0, hasNextCode),
+		),
+	)
+	return generatorIterator, nil
 }
 
 // Assign Statement
@@ -414,7 +445,7 @@ func (p *Plasma) assignIndexOP() *Object {
 	value := p.PopObject()
 	sourceAssign, getError := source.Get(Assign)
 	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(Assign)
+		return p.NewObjectWithNameNotFoundError(source.GetClass(p), Assign)
 	}
 	_, callError := p.CallFunction(sourceAssign, p.PeekSymbolTable(), index, value)
 	if callError != nil {
@@ -426,7 +457,13 @@ func (p *Plasma) assignIndexOP() *Object {
 func (p *Plasma) returnOP(code Code) *Object {
 	numberOfReturnValues := code.Value.(int)
 	if numberOfReturnValues == 0 {
-		p.PushObject(p.NewNone())
+		p.PushObject(p.GetNone())
+		return nil
+	}
+	if numberOfReturnValues == 1 {
+		if !p.MemoryStack.HasNext() {
+			return p.NewInvalidNumberOfArgumentsError(1, numberOfReturnValues)
+		}
 		return nil
 	}
 
@@ -437,11 +474,7 @@ func (p *Plasma) returnOP(code Code) *Object {
 		}
 		values = append(values, p.PopObject())
 	}
-	if len(values) == 1 {
-		p.PushObject(values[0])
-	} else {
-		p.PushObject(p.NewTuple(false, p.PeekSymbolTable(), values))
-	}
+	p.PushObject(p.NewTuple(false, p.PeekSymbolTable(), values))
 	return nil
 }
 
@@ -449,7 +482,7 @@ func (p *Plasma) ifJumpOP(code Code) *Object {
 	condition := p.PopObject()
 	toBool, getError := condition.Get(ToBool)
 	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(ToBool)
+		return p.NewObjectWithNameNotFoundError(condition.GetClass(p), ToBool)
 	}
 	conditionBool, callError := p.CallFunction(toBool, toBool.SymbolTable())
 	if callError != nil {
@@ -465,7 +498,7 @@ func (p *Plasma) unlessJumpOP(code Code) *Object {
 	condition := p.PopObject()
 	toBool, getError := condition.Get(ToBool)
 	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(ToBool)
+		return p.NewObjectWithNameNotFoundError(condition.GetClass(p), ToBool)
 	}
 	conditionBool, callError := p.CallFunction(toBool, toBool.SymbolTable())
 	if callError != nil {
@@ -505,217 +538,253 @@ func (p *Plasma) jumpOP(code Code) *Object {
 	return nil
 }
 
-func (p *Plasma) breakOP(code Code) *Object {
-	p.PeekBytecode().index += code.Value.(int)
-	return nil
-}
-
-func (p *Plasma) redoOP(code Code) *Object {
-	p.PeekBytecode().index += code.Value.(int)
-	return nil
-}
-
-func (p *Plasma) continueOP(code Code) *Object {
-	p.PeekBytecode().index += code.Value.(int) // This could be positive or negative (positive only for do-while loop)
-	return nil
-}
-
-func (p *Plasma) setupForLoopOP() *Object {
-	// First check if it is a iterator
-	value := p.PopObject()
-	if _, ok := value.(*Iterator); ok {
-		p.IterStack.Push(&IterEntry{
-			Iterable:  value,
-			LastValue: nil,
-		})
-		return nil
+func (p *Plasma) setupDoWhileLoop(code Code) *Object {
+	condition := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[0]))
+	body := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[1]))
+	doWhileLoopEntry := &loopEntry{
+		Action: NoAction,
 	}
-	// Then check if the type implements iterator
-	_, getError := value.Get(HasNext)
-	if getError == nil {
-		_, getError = value.Get(Next)
-		if getError == nil {
-			p.IterStack.Push(&IterEntry{
-				Iterable:  value,
-				LastValue: nil,
-			})
-			return nil
+	p.LoopStack.Push(
+		doWhileLoopEntry,
+	)
+	defer p.LoopStack.Pop()
+loop:
+	for {
+	redoLocation:
+		// Execute the body
+		p.PushBytecode(body)
+		_, executionError := p.Execute()
+		p.PopBytecode()
+		body.index = 0
+		if executionError != nil {
+			return executionError
 		}
-	}
-	// Finally transform it to iterable
-	var valueIterFunc Value
-	valueIterFunc, getError = value.Get(Iter)
-	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(Iter)
-	}
-	valueIter, callError := p.CallFunction(valueIterFunc, value.SymbolTable())
-	if callError != nil {
-		return callError
-	}
-	p.IterStack.Push(&IterEntry{
-		Iterable:  valueIter,
-		LastValue: nil,
-	})
-	return nil
-}
-
-func (p *Plasma) hasNextOP(code Code) *Object {
-	hasNext, getError := p.IterStack.Peek().Iterable.Get(HasNext)
-	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(HasNext)
-	}
-	result, callError := p.CallFunction(hasNext, p.IterStack.Peek().Iterable.SymbolTable())
-	if callError != nil {
-		return callError
-	}
-	if _, ok := result.(*Bool); !ok {
-		var resultToBool Value
-		resultToBool, getError = hasNext.Get(ToBool)
-		if getError != nil {
-			return p.NewObjectWithNameNotFoundError(ToBool)
+		// Check continue, redo and break
+		switch doWhileLoopEntry.Action {
+		case Break:
+			break loop
+		case Redo:
+			doWhileLoopEntry.Action = NoAction
+			goto redoLocation
 		}
-		var resultBool Value
-		resultBool, callError = p.CallFunction(resultToBool, hasNext.SymbolTable())
-		if callError != nil {
-			return callError
-		}
-		if _, ok = resultBool.(*Bool); !ok {
-			return p.NewInvalidTypeError(resultBool.TypeName(), BoolName)
-		}
-		result = resultBool
-	}
-	if !result.GetBool() {
-		p.PeekBytecode().index += code.Value.(int)
-	}
-	return nil
-}
 
-func (p *Plasma) unpackReceiversPopOP() *Object {
-	next, getError := p.IterStack.Peek().Iterable.Get(Next)
-	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(Next)
-	}
-	nextValue, callError := p.CallFunction(next, p.IterStack.Peek().Iterable.SymbolTable())
-	if callError != nil {
-		return callError
-	}
-	p.IterStack.Peek().LastValue = nextValue
-	return nil
-}
+		// Evaluate the condition
+		p.PushBytecode(condition)
+		var result Value
+		result, executionError = p.Execute()
+		p.PopBytecode()
+		condition.index = 0
+		if executionError != nil {
+			return executionError
+		}
 
-func (p *Plasma) unpackReceiversPeekOP(code Code) *Object {
-	receivers := code.Value.([]string)
-	if len(receivers) == 1 {
-		p.PeekSymbolTable().Set(receivers[0], p.IterStack.Peek().LastValue)
-		return nil
-	}
-	// First try to unpack iterators
-	hasNext, getError := p.IterStack.Peek().LastValue.Get(HasNext)
-	if getError == nil {
-		var next Value
-		next, getError = p.IterStack.Peek().LastValue.Get(Next)
-		if getError == nil {
-			for _, receiver := range receivers {
-				// First check if there is next value
-				hasNextResult, callError := p.CallFunction(hasNext, p.IterStack.Peek().LastValue.SymbolTable())
-				if callError != nil {
-					return callError
-				}
-				var hasNextResultBool Value
-				if _, ok := hasNextResult.(*Bool); !ok {
-					var hasNextResultToBool Value
-					hasNextResultToBool, getError = hasNextResult.Get(ToBool)
-					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(ToBool)
-					}
-					hasNextResultBool, callError = p.CallFunction(hasNextResultToBool, hasNextResult.SymbolTable())
-					if callError != nil {
-						return callError
-					}
-					if _, ok = hasNextResultBool.(*Bool); !ok {
-						return p.NewInvalidTypeError(hasNextResultBool.TypeName(), BoolName)
-					}
-					hasNextResult = hasNextResultBool
-				}
-				if hasNextResult.GetBool() {
-					var value Value
-					value, callError = p.CallFunction(next, p.IterStack.Peek().LastValue.SymbolTable())
-					if callError != nil {
-						return callError
-					}
-					p.PeekSymbolTable().Set(receiver, value)
-				}
+		// Finally decide if it continues or not
+		if _, ok := result.(*Bool); !ok {
+			resultToBool, getError := result.Get(ToBool)
+			if getError != nil {
+				return p.NewObjectWithNameNotFoundError(result.GetClass(p), ToBool)
 			}
-			return nil
+			var callError *Object
+			result, callError = p.CallFunction(resultToBool, resultToBool.SymbolTable())
+			if callError != nil {
+				return callError
+			}
+			if _, ok = result.(*Object); !ok {
+				return p.NewInvalidTypeError(result.TypeName(), BoolName)
+			}
 		}
-	}
-	// Then try to unpack index-ables
-	var lastValue Value
-	if _, ok := p.IterStack.Peek().LastValue.(*Tuple); !ok {
-		var toTuple Value
-		toTuple, getError = p.IterStack.Peek().LastValue.Get(ToTuple)
-		if getError != nil {
-			return p.NewObjectWithNameNotFoundError(ToTuple)
+		if !result.GetBool() {
+			break
 		}
-		var callError *Object
-		lastValue, callError = p.CallFunction(toTuple, p.IterStack.Peek().LastValue.SymbolTable())
-		if callError != nil {
-			return callError
-		}
-		if _, ok = lastValue.(*Tuple); !ok {
-			return p.NewInvalidTypeError(lastValue.TypeName(), TupleName)
-		}
-	} else {
-		lastValue = p.IterStack.Peek().LastValue
-	}
-	if len(receivers) != lastValue.GetLength() {
-		return p.NewInvalidNumberOfArgumentsError(lastValue.GetLength(), len(receivers))
-	}
-	for i, receiver := range receivers {
-		p.PeekSymbolTable().Set(receiver, lastValue.GetContent()[i])
 	}
 	return nil
 }
 
-func (p *Plasma) newIteratorOP(code Code) *Object {
-	source := p.PopObject()
-	var iterSource Value
-	var callError *Object
-	if _, ok := source.(*Iterator); ok {
-		iterSource = source
-	} else {
-		iter, getError := source.Get(Iter)
-		if getError != nil {
-			return p.NewObjectWithNameNotFoundError(Iter)
+func (p *Plasma) setupWhileLoop(code Code) *Object {
+	condition := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[0]))
+	body := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[1]))
+	whileLoopEntry := &loopEntry{
+		Action: NoAction,
+	}
+	p.LoopStack.Push(
+		whileLoopEntry,
+	)
+	defer p.LoopStack.Pop()
+loop:
+	for {
+		// First Evaluate the condition
+		p.PushBytecode(condition)
+		result, executionError := p.Execute()
+		p.PopBytecode()
+		condition.index = 0
+		if executionError != nil {
+			return executionError
 		}
-		iterSource, callError = p.CallFunction(iter, source.SymbolTable())
-		if callError != nil {
-			return callError
+		// Decide if the body is going to be executed
+		if _, ok := result.(*Bool); !ok {
+			resultToBool, getError := result.Get(ToBool)
+			if getError != nil {
+				return p.NewObjectWithNameNotFoundError(result.GetClass(p), ToBool)
+			}
+			var callError *Object
+			result, callError = p.CallFunction(resultToBool, resultToBool.SymbolTable())
+			if callError != nil {
+				return callError
+			}
+			if _, ok = result.(*Object); !ok {
+				return p.NewInvalidTypeError(result.TypeName(), BoolName)
+			}
+		}
+		if !result.GetBool() {
+			break
+		}
+	redoLocation:
+		// Execute the body
+		p.PushBytecode(body)
+		_, executionError = p.Execute()
+		p.PopBytecode()
+		body.index = 0
+		if executionError != nil {
+			return executionError
+		}
+		switch whileLoopEntry.Action {
+		case Break:
+			break loop
+		case Redo:
+			whileLoopEntry.Action = NoAction
+			goto redoLocation
 		}
 	}
-	generatorIterator := p.NewIterator(false, p.PeekSymbolTable())
-	generatorIterator.Set(Source, iterSource)
+	return nil
+}
 
-	hasNextCodeLength, nextCodeLength := code.Value.([2]int)[0], code.Value.([2]int)[1]
-	var hasNextCode []Code
-	for i := 0; i < hasNextCodeLength; i++ {
-		hasNextCode = append(hasNextCode, p.PeekBytecode().Next())
+func (p *Plasma) reloadForLoopContext(context *map[string]Value, numberOfReceivers int, receivers []string, sourceHasNext Value, sourceNext Value) (bool, *Object) {
+	hasNextObject, callError := p.CallFunction(sourceHasNext, sourceHasNext.SymbolTable())
+	if callError != nil {
+		return false, callError
 	}
-	var nextCode []Code
-	for i := 0; i < nextCodeLength; i++ {
-		nextCode = append(nextCode, p.PeekBytecode().Next())
+	if _, ok := hasNextObject.(*Bool); !ok {
+		return false, p.NewInvalidTypeError(hasNextObject.TypeName(), BoolName)
 	}
-	generatorIterator.Set(Next,
-		p.NewFunction(false, generatorIterator.symbols,
-			NewPlasmaClassFunction(generatorIterator, 0, nextCode),
-		),
+	if !hasNextObject.GetBool() {
+		return false, nil
+	}
+	var value Value
+	value, callError = p.CallFunction(sourceNext, sourceNext.SymbolTable())
+	if callError != nil {
+		return false, callError
+	}
+	if numberOfReceivers == 1 {
+		(*context)[receivers[0]] = value
+		return true, nil
+	}
+	// Unpack it as first calling to iter
+	valueIterFunc, getError := value.Get(Iter)
+	if getError != nil {
+		return false, p.NewObjectWithNameNotFoundError(value.GetClass(p), Iter)
+	}
+	var valueAsIter Value
+	valueAsIter, callError = p.CallFunction(valueIterFunc, valueIterFunc.SymbolTable())
+	if callError != nil {
+		return false, callError
+	}
+	var valueAsIterHasNext Value
+	valueAsIterHasNext, getError = valueAsIter.Get(HasNext)
+	if getError != nil {
+		return false, p.NewObjectWithNameNotFoundError(valueAsIter.GetClass(p), HasNext)
+	}
+	var valueAsIterNext Value
+	valueAsIterNext, getError = valueAsIter.Get(Next)
+	if getError != nil {
+		return false, p.NewObjectWithNameNotFoundError(valueAsIter.GetClass(p), Next)
+	}
+	for index, receiver := range receivers {
+		hasNextObject, callError = p.CallFunction(valueAsIterHasNext, valueAsIterHasNext.SymbolTable())
+		if callError != nil {
+			return false, callError
+		}
+		if _, ok := hasNextObject.(*Bool); !ok {
+			return false, p.NewInvalidTypeError(hasNextObject.TypeName(), BoolName)
+		}
+		if !hasNextObject.GetBool() {
+			return false, p.NewInvalidNumberOfArgumentsError(numberOfReceivers, index+1)
+		}
+		value, callError = p.CallFunction(valueAsIterNext, valueAsIterNext.SymbolTable())
+		if callError != nil {
+			return false, callError
+		}
+		(*context)[receiver] = value
+	}
+	return true, nil
+}
+
+func (p *Plasma) setupForLoopOP(code Code) *Object {
+	source := p.PopObject()
+	sourceIter, getError := source.Get(Iter)
+	if getError != nil {
+		return p.NewObjectWithNameNotFoundError(source.GetClass(p), Iter)
+	}
+	sourceAsIter, callError := p.CallFunction(sourceIter, sourceIter.SymbolTable())
+	if callError != nil {
+		return callError
+	}
+	loopSettings := code.Value.(ForLoopSettings)
+
+	bodyBytecode := NewBytecodeFromArray(p.PeekBytecode().NextN(loopSettings.BodyLength))
+	receivers := loopSettings.Receivers
+	forLoopEntry := &loopEntry{
+		Action: NoAction,
+	}
+	p.LoopStack.Push(
+		forLoopEntry,
 	)
-	generatorIterator.Set(HasNext,
-		p.NewFunction(false, generatorIterator.symbols,
-			NewPlasmaClassFunction(generatorIterator, 0, hasNextCode),
-		),
-	)
-	p.PushObject(generatorIterator)
+	defer p.LoopStack.Pop()
+	context := map[string]Value{}
+	var sourceHasNext Value
+	sourceHasNext, getError = sourceAsIter.Get(HasNext)
+	if getError != nil {
+		return p.NewObjectWithNameNotFoundError(sourceAsIter.GetClass(p), HasNext)
+	}
+	var sourceNext Value
+	sourceNext, getError = sourceAsIter.Get(Next)
+	if getError != nil {
+		return p.NewObjectWithNameNotFoundError(sourceAsIter.GetClass(p), Next)
+	}
+	receiversLength := len(receivers)
+loop:
+	for {
+		// Update receivers
+		// Check if the iteration can continue
+		hasNext, loadSymbolsError := p.reloadForLoopContext(&context, receiversLength, receivers, sourceHasNext, sourceNext)
+		if loadSymbolsError != nil {
+			return loadSymbolsError
+		}
+		if !hasNext {
+			break
+		}
+	redoLocation:
+		// Load the receivers
+		for receiver, object := range context {
+			p.PeekSymbolTable().Set(receiver, object)
+		}
+		// Execute body
+		p.PushBytecode(bodyBytecode)
+		_, bodyExecutionError := p.Execute()
+		p.PopBytecode()
+		bodyBytecode.index = 0
+		// If fail return return error
+		if bodyExecutionError != nil {
+			return bodyExecutionError
+		}
+		// Check continue, redo and break
+		switch forLoopEntry.Action {
+		case Break:
+			break loop
+		case Redo:
+			forLoopEntry.Action = NoAction
+			goto redoLocation
+		}
+	}
 	return nil
 }
 
@@ -783,7 +852,7 @@ func (p *Plasma) executeFinally(finallyBody []Code) *Object {
 func (p *Plasma) handleTryExcepts(exception *Object) *Object {
 	entry := p.TryStack.Pop()
 	for _, except := range entry.exceptBlocks {
-		if len(except.targets) == 1 {
+		if len(except.targets) == 2 { // The tuple instruction and the push that loads it
 			p.PushBytecode(NewBytecodeFromArray(except.body))
 			_, executionError := p.Execute()
 			p.PopBytecode()
@@ -939,7 +1008,7 @@ func (p *Plasma) caseOP(code Code) *Object {
 	} else {
 		toBool, getError := result.Get(ToBool)
 		if getError != nil {
-			return p.NewObjectWithNameNotFoundError(ToBool)
+			return p.NewObjectWithNameNotFoundError(result.GetClass(p), ToBool)
 		}
 		boolResult, callError = p.CallFunction(toBool, result.SymbolTable())
 		if callError != nil {
