@@ -2,13 +2,16 @@ package vm
 
 func (p *Plasma) CallableInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(object Value) *Object {
-		object.Set(Call, p.NewFunction(isBuiltIn, object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(_ Value, _ ...Value) (Value, *Object) {
-					return nil, p.NewNotImplementedCallableError(Call)
-				},
-			),
-		),
+		object.SetOnDemandSymbol(Call,
+			func() Value {
+				return p.NewFunction(isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(_ Value, _ ...Value) (Value, *Object) {
+							return nil, p.NewNotImplementedCallableError(Call)
+						},
+					),
+				)
+			},
 		)
 		return nil
 	}

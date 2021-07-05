@@ -15,32 +15,38 @@ func (p *Plasma) NewIterator(isBuiltIn bool, parentSymbols *SymbolTable) *Iterat
 
 func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(object Value) *Object {
-		object.Set(HasNext,
-			p.NewFunction(isBuiltIn, object.SymbolTable(),
-				NewBuiltInClassFunction(object, 0,
-					func(_ Value, _ ...Value) (Value, *Object) {
-						return p.GetFalse(), nil
-					},
-				),
-			),
+		object.SetOnDemandSymbol(HasNext,
+			func() Value {
+				return p.NewFunction(isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(_ Value, _ ...Value) (Value, *Object) {
+							return p.GetFalse(), nil
+						},
+					),
+				)
+			},
 		)
-		object.Set(Next,
-			p.NewFunction(isBuiltIn, object.SymbolTable(),
-				NewBuiltInClassFunction(object, 0,
-					func(_ Value, _ ...Value) (Value, *Object) {
-						return p.GetNone(), nil
-					},
-				),
-			),
+		object.SetOnDemandSymbol(Next,
+			func() Value {
+				return p.NewFunction(isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(_ Value, _ ...Value) (Value, *Object) {
+							return p.GetNone(), nil
+						},
+					),
+				)
+			},
 		)
-		object.Set(Iter,
-			p.NewFunction(isBuiltIn, object.SymbolTable(),
-				NewBuiltInClassFunction(object, 0,
-					func(self Value, _ ...Value) (Value, *Object) {
-						return self, nil
-					},
-				),
-			),
+		object.SetOnDemandSymbol(Iter,
+			func() Value {
+				return p.NewFunction(isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self Value, _ ...Value) (Value, *Object) {
+							return self, nil
+						},
+					),
+				)
+			},
 		)
 		return nil
 	}

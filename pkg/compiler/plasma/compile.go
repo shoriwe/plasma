@@ -255,54 +255,70 @@ func (c *Compiler) compileIfOneLinerExpression(ifOneLineExpression *ast.IfOneLin
 		return nil, conditionCompilationError
 	}
 
-	ifResult, resultCompilationError := c.compileExpression(false, ifOneLineExpression.Result)
+	ifResult, resultCompilationError := c.compileExpression(true, ifOneLineExpression.Result)
 	if resultCompilationError != nil {
 		return nil, resultCompilationError
 	}
 
-	elseResult := []vm.Code{vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil)}
+	var elseResult []vm.Code
 	if ifOneLineExpression.ElseResult != nil {
 		var elseResultCompilationError *errors.Error
-		elseResult, elseResultCompilationError = c.compileExpression(false, ifOneLineExpression.ElseResult)
+		elseResult, elseResultCompilationError = c.compileExpression(true, ifOneLineExpression.ElseResult)
 		if elseResultCompilationError != nil {
 			return nil, elseResultCompilationError
 		}
+	} else {
+		elseResult = append(elseResult,
+			vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil),
+			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
+		)
 	}
-	result := condition
-	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(ifResult)+1))
-	result = append(result, ifResult...)
-	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
-	result = append(result, elseResult...)
-	return result, nil
+	return []vm.Code{
+		vm.NewCode(vm.IfOneLinerOP, errors.UnknownLine,
+			&vm.IfInformation{
+				Condition:  condition,
+				Body:       ifResult,
+				ElifBlocks: nil,
+				Else:       elseResult,
+			},
+		),
+	}, nil
 }
 
 func (c *Compiler) compileUnlessOneLinerExpression(ifOneLineExpression *ast.UnlessOneLinerExpression) ([]vm.Code, *errors.Error) {
-
 	condition, conditionCompilationError := c.compileExpression(true, ifOneLineExpression.Condition)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
 
-	unlessResult, resultCompilationError := c.compileExpression(false, ifOneLineExpression.Result)
+	ifResult, resultCompilationError := c.compileExpression(true, ifOneLineExpression.Result)
 	if resultCompilationError != nil {
 		return nil, resultCompilationError
 	}
 
-	elseResult := []vm.Code{vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil)}
+	var elseResult []vm.Code
 	if ifOneLineExpression.ElseResult != nil {
 		var elseResultCompilationError *errors.Error
-		elseResult, elseResultCompilationError = c.compileExpression(false, ifOneLineExpression.ElseResult)
+		elseResult, elseResultCompilationError = c.compileExpression(true, ifOneLineExpression.ElseResult)
 		if elseResultCompilationError != nil {
 			return nil, elseResultCompilationError
 		}
-
+	} else {
+		elseResult = append(elseResult,
+			vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil),
+			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
+		)
 	}
-	result := condition
-	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(unlessResult)+1))
-	result = append(result, unlessResult...)
-	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, len(elseResult)))
-	result = append(result, elseResult...)
-	return result, nil
+	return []vm.Code{
+		vm.NewCode(vm.UnlessOneLinerOP, errors.UnknownLine,
+			&vm.IfInformation{
+				Condition:  condition,
+				Body:       ifResult,
+				ElifBlocks: nil,
+				Else:       elseResult,
+			},
+		),
+	}, nil
 }
 
 func (c *Compiler) compileIndexExpression(indexExpression *ast.IndexExpression) ([]vm.Code, *errors.Error) {
@@ -727,138 +743,89 @@ func (c *Compiler) compileReturnStatement(returnStatement *ast.ReturnStatement) 
 }
 
 func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) ([]vm.Code, *errors.Error) {
-	// Compile If Condition
 	condition, conditionCompilationError := c.compileExpression(true, ifStatement.Condition)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
-	// Compile If Body
-	bodyInstructions, bodyCompilationError := c.compileBody(ifStatement.Body)
+	body, bodyCompilationError := c.compileBody(ifStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	// Compile Elif blocks
-	var compiledElifBlocks [][2][]vm.Code
-	for _, elif := range ifStatement.ElifBlocks {
-		// Elif condition
-		elifCondition, elifConditionCompilationError := c.compileExpression(true, elif.Condition)
+	var elifBlocks []*vm.IfInformation
+	for _, elifBlock := range ifStatement.ElifBlocks {
+		elifCondition, elifConditionCompilationError := c.compileExpression(true, elifBlock.Condition)
 		if elifConditionCompilationError != nil {
 			return nil, elifConditionCompilationError
 		}
-		// Elif body
-		elifBody, elifBodyCompilationError := c.compileBody(elif.Body)
+		elifBody, elifBodyCompilationError := c.compileBody(elifBlock.Body)
 		if elifBodyCompilationError != nil {
 			return nil, elifBodyCompilationError
 		}
-		// Append it
-		compiledElifBlocks = append(compiledElifBlocks, [2][]vm.Code{elifCondition, elifBody})
+		elifBlocks = append(elifBlocks, &vm.IfInformation{
+			Condition:  elifCondition,
+			Body:       elifBody,
+			ElifBlocks: nil,
+			Else:       nil,
+		})
 	}
-	// Compile Else Block
 	var elseBody []vm.Code
+	var elseCompilationError *errors.Error
 	if ifStatement.Else != nil {
-		var elseBodyCompilationError *errors.Error
-		elseBody, elseBodyCompilationError = c.compileBody(ifStatement.Else)
-		if elseBodyCompilationError != nil {
-			return nil, elseBodyCompilationError
+		elseBody, elseCompilationError = c.compileBody(ifStatement.Else)
+		if elseCompilationError != nil {
+			return nil, elseCompilationError
 		}
 	}
-	// Sum the length of everything compiled for the on-success JUMP
-	successJump := len(bodyInstructions) + 1
-	for _, compiledElifBlock := range compiledElifBlocks {
-		successJump += len(compiledElifBlock[0]) + len(compiledElifBlock[1]) + 2
+	ifInformation := &vm.IfInformation{
+		Condition:  condition,
+		Body:       body,
+		ElifBlocks: elifBlocks,
+		Else:       elseBody,
 	}
-	if elseBody != nil {
-		successJump += len(elseBody)
-	}
-	bodyInstructionsLength := len(bodyInstructions)
-	successJump -= bodyInstructionsLength + 1
-	// Add the first condition
-	var result []vm.Code
-	result = append(result, condition...)
-	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
-	result = append(result, bodyInstructions...)
-	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
-	// Add the elif conditions
-	for _, compiledElifBlock := range compiledElifBlocks {
-		result = append(result, compiledElifBlock[0]...)
-		compiledElifBlockBodyLength := len(compiledElifBlock[1])
-		successJump -= len(compiledElifBlock[0]) + compiledElifBlockBodyLength + 2
-		result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
-		result = append(result, compiledElifBlock[1]...)
-		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
-	}
-	// Finally add the else condition
-	if elseBody != nil {
-		result = append(result, elseBody...)
-	}
-	return result, nil
+	return []vm.Code{vm.NewCode(vm.IfOP, errors.UnknownLine, ifInformation)}, nil
 }
 
 func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) ([]vm.Code, *errors.Error) {
-	// Compile If Condition
 	condition, conditionCompilationError := c.compileExpression(true, unlessStatement.Condition)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
-	// Compile If Body
-	bodyInstructions, bodyCompilationError := c.compileBody(unlessStatement.Body)
+	body, bodyCompilationError := c.compileBody(unlessStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	// Compile Elif blocks
-	var compiledElifBlocks [][2][]vm.Code
-	for _, elif := range unlessStatement.ElifBlocks {
-		// Elif condition
-		elifCondition, elifConditionCompilationError := c.compileExpression(true, elif.Condition)
+	var elifBlocks []*vm.IfInformation
+	for _, elifBlock := range unlessStatement.ElifBlocks {
+		elifCondition, elifConditionCompilationError := c.compileExpression(true, elifBlock.Condition)
 		if elifConditionCompilationError != nil {
 			return nil, elifConditionCompilationError
 		}
-		// Elif body
-		elifBody, elifBodyCompilationError := c.compileBody(elif.Body)
+		elifBody, elifBodyCompilationError := c.compileBody(elifBlock.Body)
 		if elifBodyCompilationError != nil {
 			return nil, elifBodyCompilationError
 		}
-		// Append it
-		compiledElifBlocks = append(compiledElifBlocks, [2][]vm.Code{elifCondition, elifBody})
+		elifBlocks = append(elifBlocks, &vm.IfInformation{
+			Condition:  elifCondition,
+			Body:       elifBody,
+			ElifBlocks: nil,
+			Else:       nil,
+		})
 	}
-	// Compile Else Block
 	var elseBody []vm.Code
+	var elseCompilationError *errors.Error
 	if unlessStatement.Else != nil {
-		var elseBodyCompilationError *errors.Error
-		elseBody, elseBodyCompilationError = c.compileBody(unlessStatement.Else)
-		if elseBodyCompilationError != nil {
-			return nil, elseBodyCompilationError
+		elseBody, elseCompilationError = c.compileBody(unlessStatement.Else)
+		if elseCompilationError != nil {
+			return nil, elseCompilationError
 		}
 	}
-	// Sum the length of everything compiled for the on-success JUMP
-	successJump := len(bodyInstructions) + 1
-	for _, compiledElifBlock := range compiledElifBlocks {
-		successJump += len(compiledElifBlock[0]) + len(compiledElifBlock[1]) + 2
+	ifInformation := &vm.IfInformation{
+		Condition:  condition,
+		Body:       body,
+		ElifBlocks: elifBlocks,
+		Else:       elseBody,
 	}
-	if elseBody != nil {
-		successJump += len(elseBody)
-	}
-	bodyInstructionsLength := len(bodyInstructions)
-	successJump -= bodyInstructionsLength + 1
-	// Add the first condition
-	result := condition
-	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, bodyInstructionsLength+1))
-	result = append(result, bodyInstructions...)
-	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
-	// Add the elif conditions
-	for _, compiledElifBlock := range compiledElifBlocks {
-		result = append(result, compiledElifBlock[0]...)
-		compiledElifBlockBodyLength := len(compiledElifBlock[1])
-		successJump -= len(compiledElifBlock[0]) + compiledElifBlockBodyLength + 2
-		result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, compiledElifBlockBodyLength+1))
-		result = append(result, compiledElifBlock[1]...)
-		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, successJump))
-	}
-	// Finally add the else condition
-	if elseBody != nil {
-		result = append(result, elseBody...)
-	}
-	return result, nil
+	return []vm.Code{vm.NewCode(vm.UnlessOP, errors.UnknownLine, ifInformation)}, nil
 }
 
 func (c *Compiler) compileRedoStatement() ([]vm.Code, *errors.Error) {
@@ -887,7 +854,7 @@ func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatemen
 		return nil, bodyCompilationError
 	}
 	result := []vm.Code{
-		vm.NewCode(vm.SetupDoWhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
+		vm.NewCode(vm.DoWhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
 	}
 	result = append(result, condition...)
 	result = append(result, body...)
@@ -904,7 +871,7 @@ func (c *Compiler) compileWhileLoopStatement(whileStatement *ast.WhileLoopStatem
 		return nil, bodyCompilationError
 	}
 	result := []vm.Code{
-		vm.NewCode(vm.SetupWhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
+		vm.NewCode(vm.WhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
 	}
 	result = append(result, condition...)
 	result = append(result, body...)
@@ -933,7 +900,7 @@ func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) 
 		return nil, bodyCompilationError
 	}
 	result := []vm.Code{
-		vm.NewCode(vm.SetupWhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
+		vm.NewCode(vm.WhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
 	}
 	result = append(result, condition...)
 	result = append(result, body...)
@@ -954,7 +921,7 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) (
 		return nil, compilationError
 	}
 	result = append(result,
-		vm.NewCode(vm.SetupForLoopOP, errors.UnknownLine,
+		vm.NewCode(vm.ForLoopOP, errors.UnknownLine,
 			vm.ForLoopSettings{
 				BodyLength: len(body),
 				Receivers:  receivers,
@@ -966,89 +933,51 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) (
 }
 
 func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) ([]vm.Code, *errors.Error) {
-	var exceptBlocksCode []vm.Code
-	// Compile the try body
-	for _, exceptBlock := range tryStatement.ExceptBlocks {
-		// Compile the targets that the exception receives
-		targets, targetCompilationError := c.compileExpression(true,
-			&ast.TupleExpression{
-				Values: exceptBlock.Targets,
-			},
-		)
-		if targetCompilationError != nil {
-			return nil, targetCompilationError
-		}
-		// Compile Except body
-		exceptionBody, exceptCompilationError := c.compileBody(exceptBlock.Body)
-		if exceptCompilationError != nil {
-			return nil, exceptCompilationError
-		}
-		// Setup the except block all together
-		if exceptBlock.CaptureName != nil {
-			exceptBlocksCode = append(exceptBlocksCode,
-				vm.NewCode(
-					vm.SetupTryExceptBlockOP, errors.UnknownLine, vm.ExceptInformation{
-						Receiver:      exceptBlock.CaptureName.Token.String,
-						TargetsLength: len(targets),
-						BodyLength:    len(exceptionBody),
-					},
-				),
-			)
-		} else {
-			exceptBlocksCode = append(exceptBlocksCode,
-				vm.NewCode(
-					vm.SetupTryExceptBlockOP, errors.UnknownLine, vm.ExceptInformation{
-						Receiver:      vm.JunkVariable,
-						TargetsLength: len(targets),
-						BodyLength:    len(exceptionBody),
-					},
-				),
-			)
-		}
-		exceptBlocksCode = append(exceptBlocksCode, targets...)
-		exceptBlocksCode = append(exceptBlocksCode, exceptionBody...)
-	}
-	var elseBlock []vm.Code
-	if tryStatement.Else != nil {
-		elseBody, elseBodyCompilationError := c.compileBody(tryStatement.Else)
-		if elseBodyCompilationError != nil {
-			return nil, elseBodyCompilationError
-		}
-		elseBlock = append(elseBlock, vm.NewCode(vm.SetupTryElseBlockOP, errors.UnknownLine, len(elseBody)))
-		elseBlock = append(elseBlock, elseBody...)
-	} else {
-		elseBlock = append(elseBlock, vm.NewCode(vm.SetupTryElseBlockOP, errors.UnknownLine, 0))
-	}
-	var finallyBlock []vm.Code
-	if tryStatement.Finally != nil {
-		finallyBody, finallyBodyCompilationError := c.compileBody(tryStatement.Finally)
-		if finallyBodyCompilationError != nil {
-			return nil, finallyBodyCompilationError
-		}
-		finallyBlock = append(finallyBlock, vm.NewCode(vm.SetupTryFinallyBlockOP, errors.UnknownLine, len(finallyBody)))
-		finallyBlock = append(finallyBlock, finallyBody...)
-	} else {
-		finallyBlock = append(finallyBlock, vm.NewCode(vm.SetupTryFinallyBlockOP, errors.UnknownLine, 0))
-	}
-	// Compile the real body of the try
-	tryBody, bodyCompilationError := c.compileBody(tryStatement.Body)
+	body, bodyCompilationError := c.compileBody(tryStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	// Put everything together
-	result := []vm.Code{
-		vm.NewCode(
-			vm.SetupTryBlockOP,
-			errors.UnknownLine,
-			len(exceptBlocksCode)+len(elseBlock)+len(finallyBlock)+len(tryBody)+2,
-		),
+	var exceptBlocks []*vm.ExceptBlock
+	for _, exceptBlock := range tryStatement.ExceptBlocks {
+		var targets [][]vm.Code
+		for _, target := range exceptBlock.Targets {
+			targetCode, targetCompilationError := c.compileExpression(true, target)
+			if targetCompilationError != nil {
+				return nil, targetCompilationError
+			}
+			targets = append(targets, targetCode)
+		}
+		exceptBlockBody, exceptBlockBodyCompilationError := c.compileBody(exceptBlock.Body)
+		if exceptBlockBodyCompilationError != nil {
+			return nil, exceptBlockBodyCompilationError
+		}
+		receiver := vm.JunkVariable
+		if exceptBlock.CaptureName != nil {
+			receiver = exceptBlock.CaptureName.Token.String
+		}
+		exceptBlocks = append(exceptBlocks,
+			&vm.ExceptBlock{
+				TargetErrors: targets,
+				Receiver:     receiver,
+				Body:         exceptBlockBody,
+			},
+		)
 	}
-	result = append(result, exceptBlocksCode...)
-	result = append(result, elseBlock...)
-	result = append(result, finallyBlock...)
-	result = append(result, tryBody...)
-	result = append(result, vm.NewCode(vm.ExitTryBlockOP, errors.UnknownLine, nil))
-	return result, nil
+	elseBody, elseCompilationError := c.compileBody(tryStatement.Else)
+	if elseCompilationError != nil {
+		return nil, elseCompilationError
+	}
+	finallyBody, finallyCompilationError := c.compileBody(tryStatement.Finally)
+	if finallyCompilationError != nil {
+		return nil, finallyCompilationError
+	}
+	tryInformation := &vm.TryInformation{
+		Body:         body,
+		ExceptBlocks: exceptBlocks,
+		Else:         elseBody,
+		Finally:      finallyBody,
+	}
+	return []vm.Code{vm.NewCode(vm.TryOP, errors.UnknownLine, tryInformation)}, nil
 }
 
 func (c *Compiler) compileModuleStatement(moduleStatement *ast.ModuleStatement) ([]vm.Code, *errors.Error) {

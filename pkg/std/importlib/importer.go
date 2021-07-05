@@ -63,58 +63,64 @@ func getScriptHash(r io.ReadSeekCloser) (string, error) {
 
 func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorCallBack {
 	return func(object vm.Value) *vm.Object {
-		object.Set("Read",
-			p.NewFunction(false, object.SymbolTable(),
-				vm.NewBuiltInClassFunction(object, 1,
-					func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
-						bytesToRead := arguments[0]
-						if _, ok := bytesToRead.(*vm.Integer); !ok {
-							return p.NewInvalidTypeError(bytesToRead.TypeName(), vm.IntegerName), nil
-						}
-						bytes := make([]byte, bytesToRead.GetInteger())
-						numberOfBytes, readError := r.Read(bytes)
-						if readError != nil {
-							if readError == io.EOF {
-								return p.GetNone(), nil
-							} else {
-								return nil, p.NewGoRuntimeError(readError)
+		object.SetOnDemandSymbol("Read",
+			func() vm.Value {
+				return p.NewFunction(false, object.SymbolTable(),
+					vm.NewBuiltInClassFunction(object, 1,
+						func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+							bytesToRead := arguments[0]
+							if _, ok := bytesToRead.(*vm.Integer); !ok {
+								return p.NewInvalidTypeError(bytesToRead.TypeName(), vm.IntegerName), nil
 							}
-						}
-						bytes = bytes[:numberOfBytes]
-						return p.NewBytes(false, p.PeekSymbolTable(), bytes), nil
-					},
-				),
-			),
+							bytes := make([]byte, bytesToRead.GetInteger())
+							numberOfBytes, readError := r.Read(bytes)
+							if readError != nil {
+								if readError == io.EOF {
+									return p.GetNone(), nil
+								} else {
+									return nil, p.NewGoRuntimeError(readError)
+								}
+							}
+							bytes = bytes[:numberOfBytes]
+							return p.NewBytes(false, p.PeekSymbolTable(), bytes), nil
+						},
+					),
+				)
+			},
 		)
-		object.Set("Seek",
-			p.NewFunction(false, object.SymbolTable(),
-				vm.NewBuiltInClassFunction(object, 1,
-					func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
-						seek := arguments[0]
-						if _, ok := seek.(*vm.Integer); !ok {
-							return p.NewInvalidTypeError(seek.TypeName(), vm.IntegerName), nil
-						}
-						_, seekError := r.Seek(seek.GetInteger(), io.SeekStart)
-						if seekError != nil {
-							return nil, p.NewGoRuntimeError(seekError)
-						}
-						return p.GetNone(), nil
-					},
-				),
-			),
+		object.SetOnDemandSymbol("Seek",
+			func() vm.Value {
+				return p.NewFunction(false, object.SymbolTable(),
+					vm.NewBuiltInClassFunction(object, 1,
+						func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+							seek := arguments[0]
+							if _, ok := seek.(*vm.Integer); !ok {
+								return p.NewInvalidTypeError(seek.TypeName(), vm.IntegerName), nil
+							}
+							_, seekError := r.Seek(seek.GetInteger(), io.SeekStart)
+							if seekError != nil {
+								return nil, p.NewGoRuntimeError(seekError)
+							}
+							return p.GetNone(), nil
+						},
+					),
+				)
+			},
 		)
-		object.Set("Close",
-			p.NewFunction(false, object.SymbolTable(),
-				vm.NewBuiltInClassFunction(object, 0,
-					func(self vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
-						closeError := r.Close()
-						if closeError != nil {
-							return nil, p.NewGoRuntimeError(closeError)
-						}
-						return p.GetNone(), nil
-					},
-				),
-			),
+		object.SetOnDemandSymbol("Close",
+			func() vm.Value {
+				return p.NewFunction(false, object.SymbolTable(),
+					vm.NewBuiltInClassFunction(object, 0,
+						func(self vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
+							closeError := r.Close()
+							if closeError != nil {
+								return nil, p.NewGoRuntimeError(closeError)
+							}
+							return p.GetNone(), nil
+						},
+					),
+				)
+			},
 		)
 		return nil
 	}
@@ -462,14 +468,16 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			return p.NewType(true, ResourceReader, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
 				vm.NewBuiltInConstructor(
 					func(object vm.Value) *vm.Object {
-						object.Set(vm.Initialize,
-							p.NewFunction(true, object.SymbolTable(),
-								vm.NewBuiltInClassFunction(object, 0,
-									func(_ vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
-										return p.GetNone(), nil
-									},
-								),
-							),
+						object.SetOnDemandSymbol(vm.Initialize,
+							func() vm.Value {
+								return p.NewFunction(true, object.SymbolTable(),
+									vm.NewBuiltInClassFunction(object, 0,
+										func(_ vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
+											return p.GetNone(), nil
+										},
+									),
+								)
+							},
 						)
 						return nil
 					}))
@@ -479,19 +487,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			return p.NewType(true, ResourceNotFoundError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
 				vm.NewBuiltInConstructor(
 					func(object vm.Value) *vm.Object {
-						object.Set(vm.Initialize,
-							p.NewFunction(true, object.SymbolTable(),
-								vm.NewBuiltInClassFunction(object, 1,
-									func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
-										resourceName := arguments[0]
-										if _, ok := resourceName.(*vm.String); !ok {
-											return nil, p.NewInvalidTypeError(resourceName.TypeName(), vm.StringName)
-										}
-										self.SetString(fmt.Sprintf("Resource with name %s not found", resourceName.GetString()))
-										return p.GetNone(), nil
-									},
-								),
-							),
+						object.SetOnDemandSymbol(vm.Initialize,
+							func() vm.Value {
+								return p.NewFunction(true, object.SymbolTable(),
+									vm.NewBuiltInClassFunction(object, 1,
+										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+											resourceName := arguments[0]
+											if _, ok := resourceName.(*vm.String); !ok {
+												return nil, p.NewInvalidTypeError(resourceName.TypeName(), vm.StringName)
+											}
+											self.SetString(fmt.Sprintf("Resource with name %s not found", resourceName.GetString()))
+											return p.GetNone(), nil
+										},
+									),
+								)
+							},
 						)
 						return nil
 
@@ -504,15 +514,17 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			return p.NewType(true, NotInsideModuleError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
 				vm.NewBuiltInConstructor(
 					func(object vm.Value) *vm.Object {
-						object.Set(vm.Initialize,
-							p.NewFunction(true, object.SymbolTable(),
-								vm.NewBuiltInClassFunction(object, 0,
-									func(self vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
-										self.SetString("Not inside a module context")
-										return p.GetNone(), nil
-									},
-								),
-							),
+						object.SetOnDemandSymbol(vm.Initialize,
+							func() vm.Value {
+								return p.NewFunction(true, object.SymbolTable(),
+									vm.NewBuiltInClassFunction(object, 0,
+										func(self vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
+											self.SetString("Not inside a module context")
+											return p.GetNone(), nil
+										},
+									),
+								)
+							},
 						)
 						return nil
 
@@ -525,19 +537,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			return p.NewType(true, ScriptNotFoundError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
 				vm.NewBuiltInConstructor(
 					func(object vm.Value) *vm.Object {
-						object.Set(vm.Initialize,
-							p.NewFunction(true, object.SymbolTable(),
-								vm.NewBuiltInClassFunction(object, 1,
-									func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
-										script := arguments[0]
-										if _, ok := script.(*vm.String); !ok {
-											return nil, p.NewInvalidTypeError(script.TypeName(), vm.StringName)
-										}
-										self.SetString(fmt.Sprintf("Script %s not found", script.GetString()))
-										return p.GetNone(), nil
-									},
-								),
-							),
+						object.SetOnDemandSymbol(vm.Initialize,
+							func() vm.Value {
+								return p.NewFunction(true, object.SymbolTable(),
+									vm.NewBuiltInClassFunction(object, 1,
+										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+											script := arguments[0]
+											if _, ok := script.(*vm.String); !ok {
+												return nil, p.NewInvalidTypeError(script.TypeName(), vm.StringName)
+											}
+											self.SetString(fmt.Sprintf("Script %s not found", script.GetString()))
+											return p.GetNone(), nil
+										},
+									),
+								)
+							},
 						)
 						return nil
 					},
@@ -549,19 +563,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			return p.NewType(true, CompilationError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
 				vm.NewBuiltInConstructor(
 					func(object vm.Value) *vm.Object {
-						object.Set(vm.Initialize,
-							p.NewFunction(true, object.SymbolTable(),
-								vm.NewBuiltInClassFunction(object, 1,
-									func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
-										compilationError := arguments[0]
-										if _, ok := compilationError.(*vm.String); !ok {
-											return nil, p.NewInvalidTypeError(compilationError.TypeName(), vm.StringName)
-										}
-										self.SetString(compilationError.GetString())
-										return p.GetNone(), nil
-									},
-								),
-							),
+						object.SetOnDemandSymbol(vm.Initialize,
+							func() vm.Value {
+								return p.NewFunction(true, object.SymbolTable(),
+									vm.NewBuiltInClassFunction(object, 1,
+										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+											compilationError := arguments[0]
+											if _, ok := compilationError.(*vm.String); !ok {
+												return nil, p.NewInvalidTypeError(compilationError.TypeName(), vm.StringName)
+											}
+											self.SetString(compilationError.GetString())
+											return p.GetNone(), nil
+										},
+									),
+								)
+							},
 						)
 						return nil
 
@@ -574,19 +590,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			return p.NewType(true, ModuleNotFoundError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
 				vm.NewBuiltInConstructor(
 					func(object vm.Value) *vm.Object {
-						object.Set(vm.Initialize,
-							p.NewFunction(true, object.SymbolTable(),
-								vm.NewBuiltInClassFunction(object, 1,
-									func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
-										moduleName := arguments[0]
-										if _, ok := moduleName.(*vm.String); !ok {
-											return nil, p.NewInvalidTypeError(moduleName.TypeName(), vm.StringName)
-										}
-										self.SetString(fmt.Sprintf("No module with name %s found", moduleName.GetString()))
-										return p.GetNone(), nil
-									},
-								),
-							),
+						object.SetOnDemandSymbol(vm.Initialize,
+							func() vm.Value {
+								return p.NewFunction(true, object.SymbolTable(),
+									vm.NewBuiltInClassFunction(object, 1,
+										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+											moduleName := arguments[0]
+											if _, ok := moduleName.(*vm.String); !ok {
+												return nil, p.NewInvalidTypeError(moduleName.TypeName(), vm.StringName)
+											}
+											self.SetString(fmt.Sprintf("No module with name %s found", moduleName.GetString()))
+											return p.GetNone(), nil
+										},
+									),
+								)
+							},
 						)
 						return nil
 
@@ -599,19 +617,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			return p.NewType(true, ChangeDirectoryError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
 				vm.NewBuiltInConstructor(
 					func(object vm.Value) *vm.Object {
-						object.Set(vm.Initialize,
-							p.NewFunction(true, object.SymbolTable(),
-								vm.NewBuiltInClassFunction(object, 1,
-									func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
-										message := arguments[0]
-										if _, ok := message.(*vm.String); !ok {
-											return nil, p.NewInvalidTypeError(message.TypeName(), vm.StringName)
-										}
-										self.SetString(message.GetString())
-										return p.GetNone(), nil
-									},
-								),
-							),
+						object.SetOnDemandSymbol(vm.Initialize,
+							func() vm.Value {
+								return p.NewFunction(true, object.SymbolTable(),
+									vm.NewBuiltInClassFunction(object, 1,
+										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+											message := arguments[0]
+											if _, ok := message.(*vm.String); !ok {
+												return nil, p.NewInvalidTypeError(message.TypeName(), vm.StringName)
+											}
+											self.SetString(message.GetString())
+											return p.GetNone(), nil
+										},
+									),
+								)
+							},
 						)
 						return nil
 
@@ -624,19 +644,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			return p.NewType(true, ModuleNomenclatureError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
 				vm.NewBuiltInConstructor(
 					func(object vm.Value) *vm.Object {
-						object.Set(vm.Initialize,
-							p.NewFunction(true, object.SymbolTable(),
-								vm.NewBuiltInClassFunction(object, 1,
-									func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
-										moduleName := arguments[0]
-										if _, ok := moduleName.(*vm.String); !ok {
-											return nil, p.NewInvalidTypeError(moduleName.TypeName(), vm.StringName)
-										}
-										self.SetString(fmt.Sprintf("Invalid module nomenclature for %s, expecting estructure like \"NAME\" or \"NAME@VERSION\"", moduleName.GetString()))
-										return p.GetNone(), nil
-									},
-								),
-							),
+						object.SetOnDemandSymbol(vm.Initialize,
+							func() vm.Value {
+								return p.NewFunction(true, object.SymbolTable(),
+									vm.NewBuiltInClassFunction(object, 1,
+										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+											moduleName := arguments[0]
+											if _, ok := moduleName.(*vm.String); !ok {
+												return nil, p.NewInvalidTypeError(moduleName.TypeName(), vm.StringName)
+											}
+											self.SetString(fmt.Sprintf("Invalid module nomenclature for %s, expecting estructure like \"NAME\" or \"NAME@VERSION\"", moduleName.GetString()))
+											return p.GetNone(), nil
+										},
+									),
+								)
+							},
 						)
 						return nil
 
@@ -649,23 +671,25 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			return p.NewType(true, NoVersionFoundError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
 				vm.NewBuiltInConstructor(
 					func(object vm.Value) *vm.Object {
-						object.Set(vm.Initialize,
-							p.NewFunction(true, object.SymbolTable(),
-								vm.NewBuiltInClassFunction(object, 2,
-									func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
-										moduleName := arguments[0]
-										if _, ok := moduleName.(*vm.String); !ok {
-											return nil, p.NewInvalidTypeError(moduleName.TypeName(), vm.StringName)
-										}
-										version := arguments[1]
-										if _, ok := version.(*vm.String); !ok {
-											return nil, p.NewInvalidTypeError(version.TypeName(), vm.StringName)
-										}
-										self.SetString(fmt.Sprintf("no module found with name: %s and version %s", moduleName.GetString(), version.GetString()))
-										return p.GetNone(), nil
-									},
-								),
-							),
+						object.SetOnDemandSymbol(vm.Initialize,
+							func() vm.Value {
+								return p.NewFunction(true, object.SymbolTable(),
+									vm.NewBuiltInClassFunction(object, 2,
+										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+											moduleName := arguments[0]
+											if _, ok := moduleName.(*vm.String); !ok {
+												return nil, p.NewInvalidTypeError(moduleName.TypeName(), vm.StringName)
+											}
+											version := arguments[1]
+											if _, ok := version.(*vm.String); !ok {
+												return nil, p.NewInvalidTypeError(version.TypeName(), vm.StringName)
+											}
+											self.SetString(fmt.Sprintf("no module found with name: %s and version %s", moduleName.GetString(), version.GetString()))
+											return p.GetNone(), nil
+										},
+									),
+								)
+							},
 						)
 						return nil
 

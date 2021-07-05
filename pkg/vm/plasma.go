@@ -20,7 +20,6 @@ type Plasma struct {
 	builtInSymbolTable *SymbolTable
 	BytecodeStack      *CodeStack
 	MemoryStack        *ObjectStack
-	TryStack           *TryStack
 	LoopStack          *LoopStack
 	SymbolTableStack   *SymbolStack
 	Crc32Hash          hash.Hash32
@@ -95,7 +94,6 @@ func (p *Plasma) Reset() {
 	p.BytecodeStack.Clear()
 	p.MemoryStack.Clear()
 	p.SymbolTableStack.Clear()
-	p.TryStack.Clear()
 	p.setBuiltInSymbols()
 	symbols := NewSymbolTable(p.builtInSymbolTable)
 	symbols.Set("__built_in__",
@@ -177,7 +175,6 @@ func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 		currentId:        1,
 		BytecodeStack:    NewCodeStack(),
 		MemoryStack:      NewObjectStack(),
-		TryStack:         NewTryStack(),
 		LoopStack:        NewLoopStack(),
 		SymbolTableStack: NewSymbolStack(),
 		Crc32Hash:        crc32.New(crc32.MakeTable(polySize)),

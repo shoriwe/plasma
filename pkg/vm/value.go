@@ -4,6 +4,8 @@ import (
 	"github.com/shoriwe/gplasma/pkg/errors"
 )
 
+type OnDemandLoader func() Value
+
 type Value interface {
 	IsBuiltIn() bool
 	Id() int64
@@ -14,6 +16,10 @@ type Value interface {
 	Set(string, Value)
 	GetHash() int64
 	SetHash(int64)
+	SetOnDemandSymbol(string, OnDemandLoader)
+	GetOnDemandSymbolLoader(string) OnDemandLoader
+	GetOnDemandSymbols() map[string]OnDemandLoader
+	Dir() map[string]byte
 
 	Implements(*Type) bool // This should check if the object implements a class directly or indirectly
 
