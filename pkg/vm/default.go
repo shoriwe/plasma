@@ -59,23 +59,25 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, InvalidTypeError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 2,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									received := arguments[0]
-									if _, ok := received.(*String); !ok {
-										return nil, p.NewInvalidTypeError(received.TypeName(), StringName)
-									}
-									expecting := arguments[1]
-									if _, ok := expecting.(*String); !ok {
-										return nil, p.NewInvalidTypeError(expecting.TypeName(), StringName)
-									}
-									self.SetString(fmt.Sprintf("Expecting %s but received %s", expecting.GetString(), received.GetString()))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 2,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										received := arguments[0]
+										if _, ok := received.(*String); !ok {
+											return nil, p.NewInvalidTypeError(received.TypeName(), StringName)
+										}
+										expecting := arguments[1]
+										if _, ok := expecting.(*String); !ok {
+											return nil, p.NewInvalidTypeError(expecting.TypeName(), StringName)
+										}
+										self.SetString(fmt.Sprintf("Expecting %s but received %s", expecting.GetString(), received.GetString()))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -86,27 +88,29 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, NotImplementedCallableError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 1,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									methodNameObject := arguments[0]
-									methodNameObjectToString, getError := methodNameObject.Get(ToString)
-									if getError != nil {
-										return nil, p.NewObjectWithNameNotFoundError(methodNameObject.GetClass(p), ToString)
-									}
-									methodNameString, callError := p.CallFunction(methodNameObjectToString, p.PeekSymbolTable())
-									if callError != nil {
-										return nil, callError
-									}
-									if _, ok := methodNameString.(*String); !ok {
-										return nil, p.NewInvalidTypeError(methodNameString.TypeName(), StringName)
-									}
-									self.SetString(fmt.Sprintf("Method %s not implemented", methodNameString.GetString()))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 1,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										methodNameObject := arguments[0]
+										methodNameObjectToString, getError := methodNameObject.Get(ToString)
+										if getError != nil {
+											return nil, p.NewObjectWithNameNotFoundError(methodNameObject.GetClass(p), ToString)
+										}
+										methodNameString, callError := p.CallFunction(methodNameObjectToString, p.PeekSymbolTable())
+										if callError != nil {
+											return nil, callError
+										}
+										if _, ok := methodNameString.(*String); !ok {
+											return nil, p.NewInvalidTypeError(methodNameString.TypeName(), StringName)
+										}
+										self.SetString(fmt.Sprintf("Method %s not implemented", methodNameString.GetString()))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -117,23 +121,25 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, ObjectConstructionError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 2,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									typeName := arguments[0]
-									if _, ok := typeName.(*String); !ok {
-										return nil, p.NewInvalidTypeError(typeName.TypeName(), StringName)
-									}
-									errorMessage := arguments[1]
-									if _, ok := typeName.(*String); !ok {
-										return nil, p.NewInvalidTypeError(errorMessage.TypeName(), StringName)
-									}
-									self.SetString(fmt.Sprintf("Could not construct object of Type: %s -> %s", typeName.GetString(), errorMessage.GetString()))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 2,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										typeName := arguments[0]
+										if _, ok := typeName.(*String); !ok {
+											return nil, p.NewInvalidTypeError(typeName.TypeName(), StringName)
+										}
+										errorMessage := arguments[1]
+										if _, ok := typeName.(*String); !ok {
+											return nil, p.NewInvalidTypeError(errorMessage.TypeName(), StringName)
+										}
+										self.SetString(fmt.Sprintf("Could not construct object of Type: %s -> %s", typeName.GetString(), errorMessage.GetString()))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -144,23 +150,25 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, ObjectWithNameNotFoundError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 2,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									objectType := arguments[0]
-									if _, ok := objectType.(*Type); !ok {
-										return nil, p.NewInvalidTypeError(objectType.TypeName(), TypeName)
-									}
-									name := arguments[1]
-									if _, ok := name.(*String); !ok {
-										return nil, p.NewInvalidTypeError(name.TypeName(), StringName)
-									}
-									self.SetString(fmt.Sprintf("Object with name %s not Found inside object of type %s", name.GetString(), objectType.(*Type).Name))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 2,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										objectType := arguments[0]
+										if _, ok := objectType.(*Type); !ok {
+											return nil, p.NewInvalidTypeError(objectType.TypeName(), TypeName)
+										}
+										name := arguments[1]
+										if _, ok := name.(*String); !ok {
+											return nil, p.NewInvalidTypeError(name.TypeName(), StringName)
+										}
+										self.SetString(fmt.Sprintf("Object with name %s not Found inside object of type %s", name.GetString(), objectType.(*Type).Name))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -172,23 +180,25 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, InvalidNumberOfArgumentsError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 2,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									received := arguments[0]
-									if _, ok := received.(*Integer); !ok {
-										return nil, p.NewInvalidTypeError(received.TypeName(), IntegerName)
-									}
-									expecting := arguments[1]
-									if _, ok := expecting.(*Integer); !ok {
-										return nil, p.NewInvalidTypeError(expecting.TypeName(), IntegerName)
-									}
-									self.SetString(fmt.Sprintf("Received %d but expecting %d expecting", received.GetInteger(), expecting.GetInteger()))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 2,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										received := arguments[0]
+										if _, ok := received.(*Integer); !ok {
+											return nil, p.NewInvalidTypeError(received.TypeName(), IntegerName)
+										}
+										expecting := arguments[1]
+										if _, ok := expecting.(*Integer); !ok {
+											return nil, p.NewInvalidTypeError(expecting.TypeName(), IntegerName)
+										}
+										self.SetString(fmt.Sprintf("Received %d but expecting %d expecting", received.GetInteger(), expecting.GetInteger()))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -199,19 +209,21 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, GoRuntimeError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 1,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									runtimeError := arguments[0]
-									if _, ok := runtimeError.(*String); !ok {
-										return nil, p.NewInvalidTypeError(runtimeError.TypeName(), StringName)
-									}
-									self.SetString(runtimeError.GetString())
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 1,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										runtimeError := arguments[0]
+										if _, ok := runtimeError.(*String); !ok {
+											return nil, p.NewInvalidTypeError(runtimeError.TypeName(), StringName)
+										}
+										self.SetString(runtimeError.GetString())
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -222,19 +234,21 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, UnhashableTypeError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 1,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									objectType := arguments[0]
-									if _, ok := objectType.(*Type); !ok {
-										return nil, p.NewInvalidTypeError(objectType.TypeName(), TypeName)
-									}
-									self.SetString(fmt.Sprintf("Object of type: %s is unhasable", objectType.(*Type).Name))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 1,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										objectType := arguments[0]
+										if _, ok := objectType.(*Type); !ok {
+											return nil, p.NewInvalidTypeError(objectType.TypeName(), TypeName)
+										}
+										self.SetString(fmt.Sprintf("Object of type: %s is unhasable", objectType.(*Type).Name))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -245,23 +259,25 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, IndexOutOfRangeError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 2,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									length := arguments[0]
-									if _, ok := length.(*Integer); !ok {
-										return nil, p.NewInvalidTypeError(length.TypeName(), IntegerName)
-									}
-									index := arguments[1]
-									if _, ok := length.(*Integer); !ok {
-										return nil, p.NewInvalidTypeError(index.TypeName(), IntegerName)
-									}
-									self.SetString(fmt.Sprintf("Index: %d, out of range (Length=%d)", index.GetInteger(), length.GetInteger()))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 2,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										length := arguments[0]
+										if _, ok := length.(*Integer); !ok {
+											return nil, p.NewInvalidTypeError(length.TypeName(), IntegerName)
+										}
+										index := arguments[1]
+										if _, ok := length.(*Integer); !ok {
+											return nil, p.NewInvalidTypeError(index.TypeName(), IntegerName)
+										}
+										self.SetString(fmt.Sprintf("Index: %d, out of range (Length=%d)", index.GetInteger(), length.GetInteger()))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -272,27 +288,29 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, KeyNotFoundError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 1,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									key := arguments[0]
-									keyToString, getError := key.Get(ToString)
-									if getError != nil {
-										return nil, p.NewObjectWithNameNotFoundError(key.GetClass(p), ToString)
-									}
-									keyString, callError := p.CallFunction(keyToString, p.PeekSymbolTable())
-									if callError != nil {
-										return nil, callError
-									}
-									if _, ok := keyString.(*String); !ok {
-										return nil, p.NewInvalidTypeError(keyString.TypeName(), StringName)
-									}
-									self.SetString(fmt.Sprintf("Key %s not found", keyString.GetString()))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 1,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										key := arguments[0]
+										keyToString, getError := key.Get(ToString)
+										if getError != nil {
+											return nil, p.NewObjectWithNameNotFoundError(key.GetClass(p), ToString)
+										}
+										keyString, callError := p.CallFunction(keyToString, p.PeekSymbolTable())
+										if callError != nil {
+											return nil, callError
+										}
+										if _, ok := keyString.(*String); !ok {
+											return nil, p.NewInvalidTypeError(keyString.TypeName(), StringName)
+										}
+										self.SetString(fmt.Sprintf("Key %s not found", keyString.GetString()))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -303,15 +321,17 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, IntegerParsingError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 0,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									self.SetString("Integer parsing error")
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 0,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										self.SetString("Integer parsing error")
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -322,15 +342,17 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, FloatParsingError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 0,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									self.SetString("Float parsing error")
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 0,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										self.SetString("Float parsing error")
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -341,19 +363,21 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, BuiltInSymbolProtectionError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 1,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									symbolName := arguments[0]
-									if _, ok := symbolName.(*String); !ok {
-										return nil, p.NewInvalidTypeError(symbolName.TypeName(), StringName)
-									}
-									self.SetString(fmt.Sprintf("cannot assign/delete built-in symbol %s", symbolName.GetString()))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 1,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										symbolName := arguments[0]
+										if _, ok := symbolName.(*String); !ok {
+											return nil, p.NewInvalidTypeError(symbolName.TypeName(), StringName)
+										}
+										self.SetString(fmt.Sprintf("cannot assign/delete built-in symbol %s", symbolName.GetString()))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -364,19 +388,21 @@ func (p *Plasma) setBuiltInSymbols() {
 		p.NewType(true, ObjectNotCallableError, p.builtInSymbolTable, []*Type{exception},
 			NewBuiltInConstructor(
 				func(object Value) *Object {
-					object.Set(Initialize,
-						p.NewFunction(true, object.SymbolTable(),
-							NewBuiltInClassFunction(object, 1,
-								func(self Value, arguments ...Value) (Value, *Object) {
-									receivedType := arguments[0]
-									if _, ok := receivedType.(*Type); !ok {
-										return nil, p.NewInvalidTypeError(receivedType.TypeName(), TypeName)
-									}
-									self.SetString(fmt.Sprintf("Object of type %s object is not callable", receivedType.(*Type).Name))
-									return p.GetNone(), nil
-								},
-							),
-						),
+					object.SetOnDemandSymbol(Initialize,
+						func() Value {
+							return p.NewFunction(true, object.SymbolTable(),
+								NewBuiltInClassFunction(object, 1,
+									func(self Value, arguments ...Value) (Value, *Object) {
+										receivedType := arguments[0]
+										if _, ok := receivedType.(*Type); !ok {
+											return nil, p.NewInvalidTypeError(receivedType.TypeName(), TypeName)
+										}
+										self.SetString(fmt.Sprintf("Object of type %s object is not callable", receivedType.(*Type).Name))
+										return p.GetNone(), nil
+									},
+								),
+							)
+						},
 					)
 					return nil
 				},
@@ -478,7 +504,7 @@ func (p *Plasma) setBuiltInSymbols() {
 				func(_ Value, arguments ...Value) (Value, *Object) {
 					object := arguments[0]
 					var symbols []Value
-					for symbol := range object.SymbolTable().Symbols {
+					for symbol := range object.Dir() {
 						symbols = append(symbols, p.NewString(false, p.PeekSymbolTable(), symbol))
 					}
 					return p.NewTuple(false, p.PeekSymbolTable(), symbols), nil

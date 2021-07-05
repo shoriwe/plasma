@@ -4,6 +4,8 @@ import (
 	"github.com/shoriwe/gplasma/pkg/errors"
 )
 
+type OnDemandLoader func() Value
+
 type Value interface {
 	IsBuiltIn() bool
 	Id() int64
@@ -14,6 +16,10 @@ type Value interface {
 	Set(string, Value)
 	GetHash() int64
 	SetHash(int64)
+	SetOnDemandSymbol(string, OnDemandLoader)
+	GetOnDemandSymbolLoader(string) OnDemandLoader
+	GetOnDemandSymbols() map[string]OnDemandLoader
+	Dir() map[string]byte
 
 	Implements(*Type) bool // This should check if the object implements a class directly or indirectly
 
@@ -39,22 +45,4 @@ type Value interface {
 	AddKeyValue(int64, *KeyValue)
 	SetLength(int)
 	IncreaseLength()
-}
-
-func (p *Plasma) QuickGetBool(value Value) (bool, *Object) {
-	if _, ok := value.(*Bool); ok {
-		return value.GetBool(), nil
-	}
-	valueToBool, getError := value.Get(ToBool)
-	if getError != nil {
-		return false, p.NewObjectWithNameNotFoundError(value.GetClass(p), ToBool)
-	}
-	valueBool, callError := p.CallFunction(valueToBool, valueToBool.SymbolTable().Parent)
-	if callError != nil {
-		return false, callError
-	}
-	if _, ok := valueBool.(*Bool); !ok {
-		return false, p.NewInvalidTypeError(value.TypeName(), BoolName)
-	}
-	return valueBool.GetBool(), nil
 }

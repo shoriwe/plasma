@@ -994,7 +994,7 @@ func (p *Plasma) raiseOP() *Object {
 
 func (p *Plasma) caseOP(code Code) *Object {
 	references := p.PopObject()
-	contains := p.ForceParentGetSelf(Contains, references.SymbolTable())
+	contains := p.ForceGetSelf(Contains, references)
 	result, callError := p.CallFunction(contains, references.SymbolTable(), p.PeekObject())
 	if callError != nil {
 		return callError

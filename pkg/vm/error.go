@@ -21,8 +21,8 @@ const (
 	ObjectNotCallableError        = "ObjectNotCallableError"        // Done
 )
 
-func (p *Plasma) ForceParentGetSelf(name string, parent *SymbolTable) Value {
-	object, getError := parent.GetSelf(name)
+func (p *Plasma) ForceGetSelf(name string, parent Value) Value {
+	object, getError := parent.Get(name)
 	if getError != nil {
 		panic(getError.String())
 	}
@@ -198,28 +198,32 @@ func (p *Plasma) NewObjectNotCallable(objectType *Type) *Object {
 }
 
 func (p *Plasma) RuntimeErrorInitialize(object Value) *Object {
-	object.Set(Initialize,
-		p.NewFunction(false, object.SymbolTable(),
-			NewBuiltInClassFunction(object, 2,
-				func(self Value, arguments ...Value) (Value, *Object) {
-					message := arguments[0]
-					if _, ok := message.(*String); !ok {
-						return nil, p.NewInvalidTypeError(message.TypeName(), StringName)
-					}
-					self.SetString(message.GetString())
-					return p.GetNone(), nil
-				},
-			),
-		),
+	object.SetOnDemandSymbol(Initialize,
+		func() Value {
+			return p.NewFunction(false, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 2,
+					func(self Value, arguments ...Value) (Value, *Object) {
+						message := arguments[0]
+						if _, ok := message.(*String); !ok {
+							return nil, p.NewInvalidTypeError(message.TypeName(), StringName)
+						}
+						self.SetString(message.GetString())
+						return p.GetNone(), nil
+					},
+				),
+			)
+		},
 	)
-	object.Set(ToString,
-		p.NewFunction(false, object.SymbolTable(),
-			NewBuiltInClassFunction(object, 0,
-				func(self Value, _ ...Value) (Value, *Object) {
-					return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("%s: %s", self.TypeName(), self.GetString())), nil
-				},
-			),
-		),
+	object.SetOnDemandSymbol(ToString,
+		func() Value {
+			return p.NewFunction(false, object.SymbolTable(),
+				NewBuiltInClassFunction(object, 0,
+					func(self Value, _ ...Value) (Value, *Object) {
+						return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("%s: %s", self.TypeName(), self.GetString())), nil
+					},
+				),
+			)
+		},
 	)
 	return nil
 }
