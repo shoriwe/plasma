@@ -207,24 +207,17 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							return nil, p.NewObjectWithNameNotFoundError(value.GetClass(p), RightEquals)
 						}
 						var comparisonResult Value
-						var comparisonResultToBool Value
+						var comparisonResultBool bool
 						for _, entry := range entries {
 							comparisonResult, callError = p.CallFunction(valueEquals, p.PeekSymbolTable(), entry.Key)
 							if callError != nil {
 								return nil, callError
 							}
-							if _, ok := comparisonResult.(*Bool); ok && comparisonResult.GetBool() {
-								return p.GetTrue(), nil
-							}
-							comparisonResultToBool, getError = comparisonResult.Get(ToBool)
-							comparisonResult, callError = p.CallFunction(comparisonResultToBool, p.PeekSymbolTable())
+							comparisonResultBool, callError = p.QuickGetBool(comparisonResult)
 							if callError != nil {
 								return nil, callError
 							}
-							if _, ok := comparisonResult.(*Bool); !ok {
-								return nil, p.NewInvalidTypeError(comparisonResult.TypeName(), BoolName)
-							}
-							if comparisonResult.GetBool() {
+							if comparisonResultBool {
 								return p.GetTrue(), nil
 							}
 						}
@@ -260,24 +253,17 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 							return nil, p.NewObjectWithNameNotFoundError(value.GetClass(p), Equals)
 						}
 						var comparisonResult Value
-						var comparisonResultToBool Value
+						var comparisonResultBool bool
 						for _, entry := range entries {
 							comparisonResult, callError = p.CallFunction(valueEquals, p.PeekSymbolTable(), entry.Key)
 							if callError != nil {
 								return nil, callError
 							}
-							if _, ok := comparisonResult.(*Bool); ok && comparisonResult.GetBool() {
-								return p.GetTrue(), nil
-							}
-							comparisonResultToBool, getError = comparisonResult.Get(ToBool)
-							comparisonResult, callError = p.CallFunction(comparisonResultToBool, p.PeekSymbolTable())
+							comparisonResultBool, callError = p.QuickGetBool(comparisonResult)
 							if callError != nil {
 								return nil, callError
 							}
-							if _, ok := comparisonResult.(*Bool); !ok {
-								return nil, p.NewInvalidTypeError(comparisonResult.TypeName(), BoolName)
-							}
-							if comparisonResult.GetBool() {
+							if comparisonResultBool {
 								return p.GetTrue(), nil
 							}
 						}
@@ -327,15 +313,17 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						var indexObjectEquals Value
 						indexObjectEquals, getError = indexObject.Get(Equals)
 						var equals Value
+						var equalsBool bool
 						for _, keyValue := range keyValues {
 							equals, callError = p.CallFunction(indexObjectEquals, indexObject.SymbolTable(), keyValue.Key)
 							if callError != nil {
 								return nil, callError
 							}
-							if _, ok := equals.(*Bool); !ok {
-								return nil, p.NewInvalidTypeError(equals.TypeName(), BoolName)
+							equalsBool, callError = p.QuickGetBool(equals)
+							if callError != nil {
+								return nil, callError
 							}
-							if equals.GetBool() {
+							if equalsBool {
 								return keyValue.Value, nil
 							}
 						}
@@ -372,15 +360,17 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 						var indexObjectEquals Value
 						indexObjectEquals, getError = indexObject.Get(Equals)
 						var equals Value
+						var equalsBool bool
 						for index, keyValue := range keyValues {
 							equals, callError = p.CallFunction(indexObjectEquals, indexObject.SymbolTable(), keyValue.Key)
 							if callError != nil {
 								return nil, callError
 							}
-							if _, ok := equals.(*Bool); !ok {
-								return nil, p.NewInvalidTypeError(equals.TypeName(), BoolName)
+							equalsBool, callError = p.QuickGetBool(equals)
+							if callError != nil {
+								return nil, callError
 							}
-							if equals.GetBool() {
+							if equalsBool {
 								self.GetKeyValues()[indexHash.GetInteger()][index].Value = newValue
 								return p.GetNone(), nil
 							}
@@ -419,7 +409,10 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 								NewBuiltInClassFunction(iterator,
 									0,
 									func(funcSelf Value, _ ...Value) (Value, *Object) {
-										return p.NewBool(false, p.PeekSymbolTable(), funcSelf.GetInteger() < int64(funcSelf.GetLength())), nil
+										if funcSelf.GetInteger() < int64(funcSelf.GetLength()) {
+											return p.GetTrue(), nil
+										}
+										return p.GetFalse(), nil
 									},
 								),
 							),

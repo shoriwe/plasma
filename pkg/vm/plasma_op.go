@@ -16,7 +16,12 @@ bytecodeExecutionLoop:
 			} else {
 				fmt.Println(color.RedString("UL"), code.Instruction, code.Value)
 			}
+			if p.MemoryStack.head != nil {
+				fmt.Println("Head:", p.MemoryStack.head.value)
+			}
+			fmt.Println("Object:", object)
 		*/
+
 		switch code.Instruction.OpCode {
 		// Literals
 		case NewStringOP:
@@ -122,10 +127,14 @@ bytecodeExecutionLoop:
 		case ReturnOP:
 			executionError = p.returnOP(code)
 			break bytecodeExecutionLoop
-		case IfJumpOP:
-			executionError = p.ifJumpOP(code)
-		case UnlessJumpOP:
-			executionError = p.unlessJumpOP(code)
+		case IfOP:
+			executionError = p.ifOP(code)
+		case IfOneLinerOP:
+			object, executionError = p.ifOneLinerOP(code)
+		case UnlessOP:
+			executionError = p.unlessOP(code)
+		case UnlessOneLinerOP:
+			object, executionError = p.unlessOneLinerOP(code)
 		// Special Instructions
 		case LoadFunctionArgumentsOP:
 			executionError = p.loadFunctionArgumentsOP(code)
@@ -150,22 +159,14 @@ bytecodeExecutionLoop:
 			p.MemoryStack.Pop()
 		case NOP:
 			break
-		case SetupDoWhileLoop:
+		case DoWhileLoop:
 			executionError = p.setupDoWhileLoop(code)
-		case SetupWhileLoop:
+		case WhileLoop:
 			executionError = p.setupWhileLoop(code)
-		case SetupForLoopOP:
+		case ForLoopOP:
 			executionError = p.setupForLoopOP(code)
-		case SetupTryBlockOP:
-			executionError = p.setupTryBlockOP(code)
-		case SetupTryExceptBlockOP:
-			executionError = p.setupTryExceptBlockOP(code)
-		case SetupTryElseBlockOP:
-			executionError = p.setupTryElseBlockOP(code)
-		case SetupTryFinallyBlockOP:
-			executionError = p.setupTryFinallyBlockOP(code)
-		case ExitTryBlockOP:
-			executionError = p.exitTryBlockOP()
+		case TryOP:
+			executionError = p.tryOP(code)
 		case NewModuleOP:
 			executionError = p.newModuleOP(code)
 		case RaiseOP:
@@ -180,14 +181,6 @@ bytecodeExecutionLoop:
 			panic(fmt.Sprintf("Unknown VM instruction %d", code.Instruction.OpCode))
 		}
 		if executionError != nil {
-			// Here should be some of the code related to the try-except block
-			if p.TryStack.HasNext() {
-				executionError = p.handleTryExcepts(executionError)
-				if executionError != nil && !p.TryStack.HasNext() {
-					return nil, executionError
-				}
-				continue
-			}
 			return nil, executionError
 		}
 	}
@@ -478,36 +471,128 @@ func (p *Plasma) returnOP(code Code) *Object {
 	return nil
 }
 
-func (p *Plasma) ifJumpOP(code Code) *Object {
-	condition := p.PopObject()
-	toBool, getError := condition.Get(ToBool)
-	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(condition.GetClass(p), ToBool)
+func (p *Plasma) ifOP(code Code) *Object {
+	ifInformation := code.Value.(*IfInformation)
+	p.PushBytecode(NewBytecodeFromArray(ifInformation.Condition))
+	condition, executionError := p.Execute()
+	p.PopBytecode()
+	if executionError != nil {
+		return executionError
 	}
-	conditionBool, callError := p.CallFunction(toBool, toBool.SymbolTable())
-	if callError != nil {
-		return callError
+	var conditionBool bool
+	conditionBool, executionError = p.QuickGetBool(condition)
+	if conditionBool {
+		p.PushBytecode(NewBytecodeFromArray(ifInformation.Body))
+		_, executionError = p.Execute()
+		p.PopBytecode()
+		return executionError
 	}
-	if !conditionBool.GetBool() {
-		p.PeekBytecode().index += code.Value.(int)
+	for _, elif := range ifInformation.ElifBlocks {
+		p.PushBytecode(NewBytecodeFromArray(elif.Condition))
+		condition, executionError = p.Execute()
+		p.PopBytecode()
+		if executionError != nil {
+			return executionError
+		}
+		conditionBool, executionError = p.QuickGetBool(condition)
+		if conditionBool {
+			p.PushBytecode(NewBytecodeFromArray(elif.Body))
+			_, executionError = p.Execute()
+			p.PopBytecode()
+			return executionError
+		}
 	}
-	return nil
+	p.PushBytecode(NewBytecodeFromArray(ifInformation.Else))
+	_, executionError = p.Execute()
+	p.PopBytecode()
+	return executionError
 }
 
-func (p *Plasma) unlessJumpOP(code Code) *Object {
-	condition := p.PopObject()
-	toBool, getError := condition.Get(ToBool)
-	if getError != nil {
-		return p.NewObjectWithNameNotFoundError(condition.GetClass(p), ToBool)
+func (p *Plasma) ifOneLinerOP(code Code) (Value, *Object) {
+	ifInformation := code.Value.(*IfInformation)
+	p.PushBytecode(NewBytecodeFromArray(ifInformation.Condition))
+	condition, executionError := p.Execute()
+	p.PopBytecode()
+	if executionError != nil {
+		return nil, executionError
 	}
-	conditionBool, callError := p.CallFunction(toBool, toBool.SymbolTable())
-	if callError != nil {
-		return callError
+	var conditionBool bool
+	conditionBool, executionError = p.QuickGetBool(condition)
+	var result Value
+	if conditionBool {
+		p.PushBytecode(NewBytecodeFromArray(ifInformation.Body))
+		result, executionError = p.Execute()
+		p.PopBytecode()
+		return result, executionError
+	} else if ifInformation.Else != nil {
+		p.PushBytecode(NewBytecodeFromArray(ifInformation.Else))
+		result, executionError = p.Execute()
+		p.PopBytecode()
+		return result, executionError
 	}
-	if conditionBool.GetBool() {
-		p.PeekBytecode().index += code.Value.(int)
+	return p.GetNone(), nil
+}
+
+func (p *Plasma) unlessOP(code Code) *Object {
+	ifInformation := code.Value.(*IfInformation)
+	p.PushBytecode(NewBytecodeFromArray(ifInformation.Condition))
+	condition, executionError := p.Execute()
+	p.PopBytecode()
+	if executionError != nil {
+		return executionError
 	}
-	return nil
+	var conditionBool bool
+	conditionBool, executionError = p.QuickGetBool(condition)
+	if !conditionBool {
+		p.PushBytecode(NewBytecodeFromArray(ifInformation.Body))
+		_, executionError = p.Execute()
+		p.PopBytecode()
+		return executionError
+	}
+	for _, elif := range ifInformation.ElifBlocks {
+		p.PushBytecode(NewBytecodeFromArray(elif.Condition))
+		condition, executionError = p.Execute()
+		p.PopBytecode()
+		if executionError != nil {
+			return executionError
+		}
+		conditionBool, executionError = p.QuickGetBool(condition)
+		if !conditionBool {
+			p.PushBytecode(NewBytecodeFromArray(elif.Body))
+			_, executionError = p.Execute()
+			p.PopBytecode()
+			return executionError
+		}
+	}
+	p.PushBytecode(NewBytecodeFromArray(ifInformation.Else))
+	_, executionError = p.Execute()
+	p.PopBytecode()
+	return executionError
+}
+
+func (p *Plasma) unlessOneLinerOP(code Code) (Value, *Object) {
+	ifInformation := code.Value.(*IfInformation)
+	p.PushBytecode(NewBytecodeFromArray(ifInformation.Condition))
+	condition, executionError := p.Execute()
+	p.PopBytecode()
+	if executionError != nil {
+		return nil, executionError
+	}
+	var conditionBool bool
+	conditionBool, executionError = p.QuickGetBool(condition)
+	var result Value
+	if !conditionBool {
+		p.PushBytecode(NewBytecodeFromArray(ifInformation.Body))
+		result, executionError = p.Execute()
+		p.PopBytecode()
+		return result, executionError
+	} else if ifInformation.Else != nil {
+		p.PushBytecode(NewBytecodeFromArray(ifInformation.Else))
+		result, executionError = p.Execute()
+		p.PopBytecode()
+		return result, executionError
+	}
+	return p.GetNone(), nil
 }
 
 // Special Instructions
@@ -577,23 +662,9 @@ loop:
 		if executionError != nil {
 			return executionError
 		}
-
-		// Finally decide if it continues or not
-		if _, ok := result.(*Bool); !ok {
-			resultToBool, getError := result.Get(ToBool)
-			if getError != nil {
-				return p.NewObjectWithNameNotFoundError(result.GetClass(p), ToBool)
-			}
-			var callError *Object
-			result, callError = p.CallFunction(resultToBool, resultToBool.SymbolTable())
-			if callError != nil {
-				return callError
-			}
-			if _, ok = result.(*Object); !ok {
-				return p.NewInvalidTypeError(result.TypeName(), BoolName)
-			}
-		}
-		if !result.GetBool() {
+		var conditionBool bool
+		conditionBool, executionError = p.QuickGetBool(result)
+		if !conditionBool {
 			break
 		}
 	}
@@ -620,22 +691,10 @@ loop:
 		if executionError != nil {
 			return executionError
 		}
-		// Decide if the body is going to be executed
-		if _, ok := result.(*Bool); !ok {
-			resultToBool, getError := result.Get(ToBool)
-			if getError != nil {
-				return p.NewObjectWithNameNotFoundError(result.GetClass(p), ToBool)
-			}
-			var callError *Object
-			result, callError = p.CallFunction(resultToBool, resultToBool.SymbolTable())
-			if callError != nil {
-				return callError
-			}
-			if _, ok = result.(*Object); !ok {
-				return p.NewInvalidTypeError(result.TypeName(), BoolName)
-			}
-		}
-		if !result.GetBool() {
+
+		var conditionBool bool
+		conditionBool, executionError = p.QuickGetBool(result)
+		if !conditionBool {
 			break
 		}
 	redoLocation:
@@ -663,10 +722,11 @@ func (p *Plasma) reloadForLoopContext(context *map[string]Value, numberOfReceive
 	if callError != nil {
 		return false, callError
 	}
-	if _, ok := hasNextObject.(*Bool); !ok {
-		return false, p.NewInvalidTypeError(hasNextObject.TypeName(), BoolName)
+	hasNextObjectBool, executionError := p.QuickGetBool(hasNextObject)
+	if executionError != nil {
+		return false, executionError
 	}
-	if !hasNextObject.GetBool() {
+	if !hasNextObjectBool {
 		return false, nil
 	}
 	var value Value
@@ -703,10 +763,11 @@ func (p *Plasma) reloadForLoopContext(context *map[string]Value, numberOfReceive
 		if callError != nil {
 			return false, callError
 		}
-		if _, ok := hasNextObject.(*Bool); !ok {
-			return false, p.NewInvalidTypeError(hasNextObject.TypeName(), BoolName)
+		hasNextObjectBool, executionError = p.QuickGetBool(hasNextObject)
+		if executionError != nil {
+			return false, executionError
 		}
-		if !hasNextObject.GetBool() {
+		if !hasNextObjectBool {
 			return false, p.NewInvalidNumberOfArgumentsError(numberOfReceivers, index+1)
 		}
 		value, callError = p.CallFunction(valueAsIterNext, valueAsIterNext.SymbolTable())
@@ -788,133 +849,69 @@ loop:
 	return nil
 }
 
-func (p *Plasma) setupTryBlockOP(code Code) *Object {
-	p.TryStack.Push(
-		&tryStackEntry{
-			finalIndex:   p.PeekBytecode().index + code.Value.(int) - 1,
-			exceptBlocks: nil,
-			elseBlock:    nil,
-			finallyBody:  nil,
-		},
-	)
-	return nil
-}
-
-func (p *Plasma) setupTryExceptBlockOP(code Code) *Object {
-	rawExcept := code.Value.(ExceptInformation)
-	except := exceptBlock{
-		targets:  nil,
-		receiver: rawExcept.Receiver,
-		body:     nil,
-	}
-	for ii := 0; ii < rawExcept.TargetsLength; ii++ {
-		except.targets = append(except.targets, p.PeekBytecode().Next())
-	}
-	for iii := 0; iii < rawExcept.BodyLength; iii++ {
-		except.body = append(except.body, p.PeekBytecode().Next())
-	}
-	p.TryStack.Peek().exceptBlocks = append(p.TryStack.Peek().exceptBlocks, except)
-	return nil
-}
-
-func (p *Plasma) setupTryElseBlockOP(code Code) *Object {
-	elseLength := code.Value.(int)
-	for i := 0; i < elseLength; i++ {
-		p.TryStack.Peek().elseBlock = append(p.TryStack.Peek().elseBlock, p.PeekBytecode().Next())
-	}
-	return nil
-}
-
-func (p *Plasma) setupTryFinallyBlockOP(code Code) *Object {
-	finallyLength := code.Value.(int)
-	for i := 0; i < finallyLength; i++ {
-		p.TryStack.Peek().finallyBody = append(p.TryStack.Peek().finallyBody, p.PeekBytecode().Next())
-	}
-	return nil
-}
-
-func (p *Plasma) exitTryBlockOP() *Object {
-	return p.executeFinally(p.TryStack.Pop().finallyBody)
-}
-
-func (p *Plasma) executeFinally(finallyBody []Code) *Object {
-	if len(finallyBody) > 0 {
-		p.PushBytecode(NewBytecodeFromArray(finallyBody))
+func (p *Plasma) executeFinally(finally []Code) *Object {
+	if finally != nil {
+		p.PushBytecode(NewBytecodeFromArray(finally))
 		_, executionError := p.Execute()
 		p.PopBytecode()
-		if executionError != nil {
-			return executionError
-		}
+		return executionError
 	}
 	return nil
 }
 
-func (p *Plasma) handleTryExcepts(exception *Object) *Object {
-	entry := p.TryStack.Pop()
-	for _, except := range entry.exceptBlocks {
-		if len(except.targets) == 2 { // The tuple instruction and the push that loads it
-			p.PushBytecode(NewBytecodeFromArray(except.body))
-			_, executionError := p.Execute()
-			p.PopBytecode()
-			if executionError != nil {
-				return executionError
-			}
-			finallyExecutionError := p.executeFinally(entry.finallyBody)
-			if finallyExecutionError != nil {
-				return finallyExecutionError
-			}
-			p.PeekBytecode().index = entry.finalIndex
-			return nil
-		}
-		p.PushBytecode(NewBytecodeFromArray(except.targets))
-		targetsTuple, executionError := p.Execute()
-		p.PopBytecode()
-		if executionError != nil {
-			return executionError
-		}
-		if _, ok := targetsTuple.(*Tuple); !ok {
-			return p.NewInvalidTypeError(targetsTuple.TypeName(), TupleName)
-		}
-		runtimeError := p.ForceMasterGetAny(RuntimeError).(*Type)
-		for _, target := range targetsTuple.GetContent() {
-			if _, ok := target.(*Type); !ok {
-				return p.NewInvalidTypeError(target.TypeName(), TypeName)
-			}
-			if !target.Implements(runtimeError) {
-				return p.NewInvalidTypeError(target.TypeName(), RuntimeError)
-			}
-			if exception.class == target {
-				p.PeekSymbolTable().Set(except.receiver, exception)
-				p.PushBytecode(NewBytecodeFromArray(except.body))
-				_, executionError = p.Execute()
+func (p *Plasma) tryOP(code Code) *Object {
+	tryInformation := code.Value.(*TryInformation)
+	p.PushBytecode(NewBytecodeFromArray(tryInformation.Body))
+	_, executionError := p.Execute()
+	p.PopBytecode()
+	if executionError == nil {
+		return p.executeFinally(tryInformation.Finally)
+	}
+	var targetError Value
+	var executionError2 *Object
+	for _, exceptBlock := range tryInformation.ExceptBlocks {
+		if exceptBlock.TargetErrors != nil {
+			for _, targetErrorCode := range exceptBlock.TargetErrors {
+				p.PushBytecode(NewBytecodeFromArray(targetErrorCode))
+				targetError, executionError2 = p.Execute()
 				p.PopBytecode()
-				if executionError != nil {
+				if executionError2 != nil {
 					return executionError
 				}
-				finallyExecutionError := p.executeFinally(entry.finallyBody)
-				if finallyExecutionError != nil {
-					return finallyExecutionError
+				if !targetError.Implements(p.ForceMasterGetAny(RuntimeError).(*Type)) {
+					return p.NewInvalidTypeError(targetError.TypeName(), RuntimeError)
 				}
-				p.PeekBytecode().index = entry.finalIndex
-				return nil
+				if executionError.Implements(targetError.(*Type)) {
+					p.PeekSymbolTable().Set(exceptBlock.Receiver, executionError)
+					p.PushBytecode(NewBytecodeFromArray(exceptBlock.Body))
+					_, executionError2 = p.Execute()
+					p.PopBytecode()
+					if executionError2 == nil {
+						return p.executeFinally(tryInformation.Finally)
+					}
+					return executionError2
+				}
 			}
+		} else {
+			p.PeekSymbolTable().Set(exceptBlock.Receiver, executionError)
+			p.PushBytecode(NewBytecodeFromArray(exceptBlock.Body))
+			_, executionError2 = p.Execute()
+			p.PopBytecode()
+			if executionError2 == nil {
+				return p.executeFinally(tryInformation.Finally)
+			}
+			return executionError2
 		}
 	}
-	if len(entry.elseBlock) > 0 {
-		p.PushBytecode(NewBytecodeFromArray(entry.elseBlock))
-		_, executionError := p.Execute()
+	if tryInformation.Else != nil {
+		p.PushBytecode(NewBytecodeFromArray(tryInformation.Else))
+		_, executionError2 = p.Execute()
 		p.PopBytecode()
-		if executionError != nil {
-			return executionError
+		if executionError2 != nil {
+			return executionError2
 		}
-		finallyExecutionError := p.executeFinally(entry.finallyBody)
-		if finallyExecutionError != nil {
-			return finallyExecutionError
-		}
-		p.PeekBytecode().index = entry.finalIndex
-		return nil
 	}
-	return exception
+	return p.executeFinally(tryInformation.Finally)
 }
 
 type ModuleInformation struct {
@@ -1002,20 +999,11 @@ func (p *Plasma) caseOP(code Code) *Object {
 	if callError != nil {
 		return callError
 	}
-	var boolResult Value
-	if _, ok := result.(*Bool); ok {
-		boolResult = result
-	} else {
-		toBool, getError := result.Get(ToBool)
-		if getError != nil {
-			return p.NewObjectWithNameNotFoundError(result.GetClass(p), ToBool)
-		}
-		boolResult, callError = p.CallFunction(toBool, result.SymbolTable())
-		if callError != nil {
-			return callError
-		}
+	boolResult, executionError := p.QuickGetBool(result)
+	if executionError != nil {
+		return executionError
 	}
-	if !boolResult.GetBool() {
+	if !boolResult {
 		p.PeekBytecode().index += code.Value.(int)
 		return nil
 	}

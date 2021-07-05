@@ -125,8 +125,23 @@ type ForLoopSettings struct {
 	BodyLength int
 	Receivers  []string
 }
-type ExceptInformation struct {
-	Receiver      string
-	TargetsLength int
-	BodyLength    int
+
+type IfInformation struct {
+	Condition  []Code
+	Body       []Code
+	ElifBlocks []*IfInformation
+	Else       []Code
+}
+
+type ExceptBlock struct {
+	TargetErrors [][]Code
+	Receiver     string
+	Body         []Code
+}
+
+type TryInformation struct {
+	Body         []Code
+	ExceptBlocks []*ExceptBlock
+	Else         []Code
+	Finally      []Code
 }

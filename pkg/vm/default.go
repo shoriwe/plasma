@@ -677,7 +677,10 @@ func (p *Plasma) setBuiltInSymbols() {
 						p.NewFunction(true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self Value, _ ...Value) (Value, *Object) {
-									return p.NewBool(false, p.PeekSymbolTable(), self.GetInteger() < endValue), nil
+									if self.GetInteger() < endValue {
+										return p.GetTrue(), nil
+									}
+									return p.GetFalse(), nil
 								},
 							),
 						),

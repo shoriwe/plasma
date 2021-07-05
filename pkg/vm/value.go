@@ -40,3 +40,21 @@ type Value interface {
 	SetLength(int)
 	IncreaseLength()
 }
+
+func (p *Plasma) QuickGetBool(value Value) (bool, *Object) {
+	if _, ok := value.(*Bool); ok {
+		return value.GetBool(), nil
+	}
+	valueToBool, getError := value.Get(ToBool)
+	if getError != nil {
+		return false, p.NewObjectWithNameNotFoundError(value.GetClass(p), ToBool)
+	}
+	valueBool, callError := p.CallFunction(valueToBool, valueToBool.SymbolTable().Parent)
+	if callError != nil {
+		return false, callError
+	}
+	if _, ok := valueBool.(*Bool); !ok {
+		return false, p.NewInvalidTypeError(value.TypeName(), BoolName)
+	}
+	return valueBool.GetBool(), nil
+}

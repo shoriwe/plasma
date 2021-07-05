@@ -27,7 +27,7 @@ end
 a = 0
 try
     println("Invalid Number of arguments", 2)
-except ObjectWithNameNotFoundError, RuntimeError, ObjectConstructionError as error
+except ObjectWithNameNotFoundError, ObjectConstructionError as error
     println(False)
 else
     a = 2

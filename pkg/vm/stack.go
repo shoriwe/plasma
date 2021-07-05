@@ -108,51 +108,6 @@ func NewSymbolStack() *SymbolStack {
 	}
 }
 
-type exceptBlock struct {
-	targets  []Code
-	receiver string
-	body     []Code
-}
-
-type tryStackEntry struct {
-	finalIndex   int
-	exceptBlocks []exceptBlock
-	elseBlock    []Code
-	finallyBody  []Code
-}
-
-type TryStack struct {
-	head *stackNode
-}
-
-func (stack *TryStack) Pop() *tryStackEntry {
-	result := stack.head.value
-	stack.head = stack.head.next
-	return result.(*tryStackEntry)
-}
-
-func (stack *TryStack) Peek() *tryStackEntry {
-	return stack.head.value.(*tryStackEntry)
-}
-
-func (stack *TryStack) Push(tryStackEntry *tryStackEntry) {
-	stack.head = NewStackNode(tryStackEntry, stack.head)
-}
-
-func (stack *TryStack) HasNext() bool {
-	return stack.head != nil
-}
-
-func (stack *TryStack) Clear() {
-	stack.head = nil
-}
-
-func NewTryStack() *TryStack {
-	return &TryStack{
-		head: nil,
-	}
-}
-
 type loopEntry struct {
 	Action uint8
 }

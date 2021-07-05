@@ -31,7 +31,10 @@ func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
 				},
 				Callable: NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						return p.NewBool(false, p.PeekSymbolTable(), object.Id() == arguments[0].Id()), nil
+						if object.Id() == arguments[0].Id()  {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			},
@@ -47,7 +50,10 @@ func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
 				},
 				Callable: NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						return p.NewBool(false, p.PeekSymbolTable(), object.Id() == arguments[0].Id()), nil
+						if  object.Id() == arguments[0].Id() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			},

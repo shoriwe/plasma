@@ -92,7 +92,10 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 						if self.GetLength() != right.GetLength() {
 							return p.GetFalse(), nil
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), bytes.Compare(self.GetBytes(), right.GetBytes()) == 0), nil
+						if bytes.Compare(self.GetBytes(), right.GetBytes()) == 0 {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -108,7 +111,10 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 						if left.GetLength() != self.GetLength() {
 							return p.GetFalse(), nil
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), bytes.Compare(left.GetBytes(), self.GetBytes()) == 0), nil
+						if bytes.Compare(left.GetBytes(), self.GetBytes()) == 0 {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -124,7 +130,10 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 						if self.GetLength() != right.GetLength() {
 							return p.GetFalse(), nil
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), bytes.Compare(self.GetBytes(), right.GetBytes()) == 0), nil
+						if bytes.Compare(self.GetBytes(), right.GetBytes()) != 0 {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -140,7 +149,10 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 						if left.GetLength() != self.GetLength() {
 							return p.GetFalse(), nil
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), bytes.Compare(left.GetBytes(), self.GetBytes()) == 0), nil
+						if bytes.Compare(left.GetBytes(), self.GetBytes()) != 0 {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -261,7 +273,10 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewBool(false, p.PeekSymbolTable(), self.GetLength() != 0), nil
+						if self.GetLength() != 0 {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),

@@ -11,6 +11,7 @@ println((1, 2, 3, "Hello") * 2 == (1, 2, 3, "Hello", 1, 2, 3, "Hello"))
 println(1 in [1, 2, 3, 4, 5])
 println(1 in (1, 2, 3, 4, 5))
 println(1 in {1: 2, 2: 3, 3: 4, 4: 5, 5: 6})
+println(((1 + 2) / 3) == 1)
 
 class A
     def Equals(other)

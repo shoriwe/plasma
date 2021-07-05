@@ -193,190 +193,150 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			Negate: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						selfToBool, getError := self.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
-						}
-						selfBool, callError := p.CallFunction(selfToBool, self.SymbolTable())
+						selfBool, callError := p.QuickGetBool(self)
 						if callError != nil {
 							return nil, callError
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), !selfBool.GetBool()), nil
+						if selfBool {
+							return p.GetFalse(), nil
+						}
+						return p.GetTrue(), nil
 					},
 				),
 			),
 			And: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-
-						leftToBool, getError := self.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
-						}
-						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
+						leftBool, callError := p.QuickGetBool(self)
 						if callError != nil {
 							return nil, callError
 						}
-						right := arguments[0]
-						var rightToBool Value
-						rightToBool, getError = right.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(right.GetClass(p), ToBool)
-						}
-						var rightBool Value
-						rightBool, callError = p.CallFunction(rightToBool, right.SymbolTable())
+						var rightBool bool
+						rightBool, callError = p.QuickGetBool(arguments[0])
 						if callError != nil {
 							return nil, callError
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() && rightBool.GetBool()), nil
+						if leftBool && rightBool {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
 			RightAnd: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						rightToBool, getError := self.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
-						}
-						rightBool, callError := p.CallFunction(rightToBool, self.SymbolTable())
+						leftBool, callError := p.QuickGetBool(arguments[0])
 						if callError != nil {
 							return nil, callError
 						}
-						left := arguments[0]
-						var leftToBool Value
-						leftToBool, getError = left.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(left.GetClass(p), ToBool)
-						}
-						var leftBool Value
-						leftBool, callError = p.CallFunction(leftToBool, left.SymbolTable())
+						var rightBool bool
+						rightBool, callError = p.QuickGetBool(self)
 						if callError != nil {
 							return nil, callError
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() && rightBool.GetBool()), nil
+						if leftBool && rightBool {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
 			Or: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						leftToBool, getError := self.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
-						}
-						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
+						leftBool, callError := p.QuickGetBool(self)
 						if callError != nil {
 							return nil, callError
 						}
-
-						right := arguments[0]
-						var rightToBool Value
-						rightToBool, getError = right.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(right.GetClass(p), ToBool)
-						}
-						var rightBool Value
-						rightBool, callError = p.CallFunction(rightToBool, right.SymbolTable())
+						var rightBool bool
+						rightBool, callError = p.QuickGetBool(arguments[0])
 						if callError != nil {
 							return nil, callError
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() || rightBool.GetBool()), nil
+						if leftBool || rightBool {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
 			RightOr: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						rightToBool, getError := self.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
-						}
-						rightBool, callError := p.CallFunction(rightToBool, self.SymbolTable())
+						leftBool, callError := p.QuickGetBool(arguments[0])
 						if callError != nil {
 							return nil, callError
 						}
-						left := arguments[0]
-						var leftToBool Value
-						leftToBool, getError = left.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(left.GetClass(p), ToBool)
-						}
-						var leftBool Value
-						leftBool, callError = p.CallFunction(leftToBool, left.SymbolTable())
+						var rightBool bool
+						rightBool, callError = p.QuickGetBool(self)
 						if callError != nil {
 							return nil, callError
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() || rightBool.GetBool()), nil
+						if leftBool || rightBool {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
 			Xor: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						leftToBool, getError := self.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
-						}
-						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
+						leftBool, callError := p.QuickGetBool(self)
 						if callError != nil {
 							return nil, callError
 						}
-
-						right := arguments[0]
-						var rightToBool Value
-						rightToBool, getError = right.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(right.GetClass(p), ToBool)
-						}
-						var rightBool Value
-						rightBool, callError = p.CallFunction(rightToBool, right.SymbolTable())
+						var rightBool bool
+						rightBool, callError = p.QuickGetBool(arguments[0])
 						if callError != nil {
 							return nil, callError
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), leftBool.GetBool() != rightBool.GetBool()), nil
+						if leftBool != rightBool {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
 			RightXor: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
-						leftToBool, getError := self.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(self.GetClass(p), ToBool)
-						}
-						leftBool, callError := p.CallFunction(leftToBool, self.SymbolTable())
+						leftBool, callError := p.QuickGetBool(arguments[0])
 						if callError != nil {
 							return nil, callError
 						}
-
-						left := arguments[0]
-						var rightToBool Value
-						rightToBool, getError = left.Get(ToBool)
-						if getError != nil {
-							return nil, p.NewObjectWithNameNotFoundError(left.GetClass(p), ToBool)
-						}
-						var rightBool Value
-						rightBool, callError = p.CallFunction(rightToBool, left.SymbolTable())
+						var rightBool bool
+						rightBool, callError = p.QuickGetBool(self)
 						if callError != nil {
 							return nil, callError
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), rightBool.GetBool() != leftBool.GetBool()), nil
+						if leftBool != rightBool {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
 			Equals: p.NewFunction(isBuiltIn, object.SymbolTable(),
-				NewBuiltInClassFunction(object, 1, func(self Value, arguments ...Value) (Value, *Object) {
-					right := arguments[0]
-					return p.NewBool(false, p.PeekSymbolTable(), self.Id() == right.Id()), nil
-				},
+				NewBuiltInClassFunction(object, 1,
+					func(self Value, arguments ...Value) (Value, *Object) {
+						right := arguments[0]
+						if self.Id() == right.Id() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
+					},
 				),
 			),
 			RightEquals: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
-						return p.NewBool(false, p.PeekSymbolTable(), left.Id() == self.Id()), nil
+						if left.Id() == self.Id() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -384,7 +344,10 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
-						return p.NewBool(false, p.PeekSymbolTable(), self.Id() != right.Id()), nil
+						if self.Id() != right.Id() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -392,7 +355,10 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
-						return p.NewBool(false, p.PeekSymbolTable(), left.Id() != self.Id()), nil
+						if left.Id() != self.Id() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -450,7 +416,10 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 			GetBool: p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewBool(false, p.PeekSymbolTable(), self.GetBool()), nil
+						if self.GetBool() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),

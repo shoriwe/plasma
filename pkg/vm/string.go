@@ -96,7 +96,10 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := right.(*String); !ok {
 							return p.GetFalse(), nil
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), self.GetString() == right.GetString()), nil
+						if self.GetString() == right.GetString() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -109,7 +112,10 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := left.(*String); !ok {
 							return p.GetFalse(), nil
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), left.GetString() == self.GetString()), nil
+						if left.GetString() == self.GetString() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -122,7 +128,10 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := right.(*String); !ok {
 							return p.GetTrue(), nil
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), self.GetString() != right.GetString()), nil
+						if self.GetString() != right.GetString() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -135,7 +144,10 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 						if _, ok := left.(*String); !ok {
 							return p.GetTrue(), nil
 						}
-						return p.NewBool(false, p.PeekSymbolTable(), left.GetString() != self.GetString()), nil
+						if left.GetString() != self.GetString() {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -277,7 +289,10 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 			p.NewFunction(isBuiltIn, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewBool(false, p.PeekSymbolTable(), self.GetLength() != 0), nil
+						if self.GetLength() > 0 {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),

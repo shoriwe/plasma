@@ -17,7 +17,10 @@ func (p *Plasma) NoneInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(_ Value, arguments ...Value) (Value, *Object) {
 						right := arguments[0]
-						return p.NewBool(false, p.PeekSymbolTable(), right.GetClass(p) == p.ForceMasterGetAny(NoneName).(*Type)), nil
+						if  right.GetClass(p) == p.ForceMasterGetAny(NoneName).(*Type) {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
@@ -27,7 +30,10 @@ func (p *Plasma) NoneInitialize(isBuiltIn bool) ConstructorCallBack {
 				NewBuiltInClassFunction(object, 1,
 					func(_ Value, arguments ...Value) (Value, *Object) {
 						left := arguments[0]
-						return p.NewBool(false, p.PeekSymbolTable(), left.GetClass(p) == p.ForceMasterGetAny(NoneName).(*Type)), nil
+						if left.GetClass(p) == p.ForceMasterGetAny(NoneName).(*Type) {
+							return p.GetTrue(), nil
+						}
+						return p.GetFalse(), nil
 					},
 				),
 			),
