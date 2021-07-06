@@ -2,7 +2,8 @@
 
 ## Description
 
-**`plasma`** is a dynamic programming language highly inspired in **`ruby`** syntax and semantics with interfaces and design focused in application embedding.
+**`plasma`** is a dynamic programming language highly inspired in **`ruby`** syntax and semantics with interfaces and
+design focused in application embedding.
 
 ## Try it
 

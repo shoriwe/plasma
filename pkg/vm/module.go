@@ -5,7 +5,7 @@ import (
 )
 
 func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object Value) *Object {
+	return func(context *Context, object Value) *Object {
 		object.SetOnDemandSymbol(Hash,
 			func() Value {
 				return &Function{
@@ -18,7 +18,7 @@ func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
 					},
 					Callable: NewBuiltInClassFunction(object, 0,
 						func(self Value, _ ...Value) (Value, *Object) {
-							return p.NewInteger(false, p.PeekSymbolTable(), object.Id()), nil
+							return p.NewInteger(context, false, context.PeekSymbolTable(), object.Id()), nil
 						},
 					),
 				}
@@ -79,7 +79,7 @@ func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
 					},
 					Callable: NewBuiltInClassFunction(object, 0,
 						func(self Value, _ ...Value) (Value, *Object) {
-							return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("Module-%d", object.Id())), nil
+							return p.NewString(context, false, context.PeekSymbolTable(), fmt.Sprintf("Module-%d", object.Id())), nil
 						},
 					),
 				}
@@ -88,13 +88,13 @@ func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
 		return nil
 	}
 }
-func (p *Plasma) NewModule(isBuiltIn bool, parent *SymbolTable) Value {
-	module := p.NewObject(isBuiltIn, ModuleName, nil, parent)
+func (p *Plasma) NewModule(context *Context, isBuiltIn bool, parent *SymbolTable) Value {
+	module := p.NewObject(context, isBuiltIn, ModuleName, nil, parent)
 	module.SetOnDemandSymbol(Self,
 		func() Value {
 			return module
 		},
 	)
-	p.ModuleInitialize(isBuiltIn)(module)
+	p.ModuleInitialize(isBuiltIn)(context, module)
 	return module
 }

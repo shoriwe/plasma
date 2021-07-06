@@ -76,38 +76,38 @@ func NewSymbolStack() *SymbolStack {
 	}
 }
 
-type loopEntry struct {
+type stateEntry struct {
 	Action uint8
 }
 
-type LoopStack struct {
+type StateStack struct {
 	head *stackNode
 }
 
-func (stack *LoopStack) Pop() *loopEntry {
+func (stack *StateStack) Pop() *stateEntry {
 	result := stack.head.value
 	stack.head = stack.head.next
-	return result.(*loopEntry)
+	return result.(*stateEntry)
 }
 
-func (stack *LoopStack) Peek() *loopEntry {
-	return stack.head.value.(*loopEntry)
+func (stack *StateStack) Peek() *stateEntry {
+	return stack.head.value.(*stateEntry)
 }
 
-func (stack *LoopStack) Push(tryStackEntry *loopEntry) {
+func (stack *StateStack) Push(tryStackEntry *stateEntry) {
 	stack.head = NewStackNode(tryStackEntry, stack.head)
 }
 
-func (stack *LoopStack) HasNext() bool {
+func (stack *StateStack) HasNext() bool {
 	return stack.head != nil
 }
 
-func (stack *LoopStack) Clear() {
+func (stack *StateStack) Clear() {
 	stack.head = nil
 }
 
-func NewLoopStack() *LoopStack {
-	return &LoopStack{
+func NewStateStack() *StateStack {
+	return &StateStack{
 		head: nil,
 	}
 }
