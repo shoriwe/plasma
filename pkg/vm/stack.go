@@ -12,38 +12,6 @@ func NewStackNode(value interface{}, next *stackNode) *stackNode {
 	}
 }
 
-type CodeStack struct {
-	head *stackNode
-}
-
-func (stack *CodeStack) Pop() *Bytecode {
-	result := stack.head.value
-	stack.head = stack.head.next
-	return result.(*Bytecode)
-}
-
-func (stack *CodeStack) Peek() *Bytecode {
-	return stack.head.value.(*Bytecode)
-}
-
-func (stack *CodeStack) Push(code *Bytecode) {
-	stack.head = NewStackNode(code, stack.head)
-}
-
-func (stack *CodeStack) HasNext() bool {
-	return stack.head != nil
-}
-
-func (stack *CodeStack) Clear() {
-	stack.head = nil
-}
-
-func NewCodeStack() *CodeStack {
-	return &CodeStack{
-		head: nil,
-	}
-}
-
 type ObjectStack struct {
 	head *stackNode
 }

@@ -52,9 +52,7 @@ func (p *Plasma) CallFunction(function Value, parent *SymbolTable, arguments ...
 		for i := len(arguments) - 1; i > -1; i-- {
 			p.PushObject(arguments[i])
 		}
-		p.PushBytecode(NewBytecodeFromArray(code))
-		result, callError = p.Execute()
-		p.PopBytecode()
+		result, callError = p.Execute(NewBytecodeFromArray(code))
 	} else {
 		panic("callback and code are nil")
 	}

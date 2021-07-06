@@ -18,7 +18,11 @@ func (p *Plasma) NewString(isBuiltIn bool, parentSymbols *SymbolTable, value str
 	string_.SetString(value)
 	string_.SetLength(len(value))
 	p.StringInitialize(isBuiltIn)(string_)
-	string_.Set(Self, string_)
+	string_.SetOnDemandSymbol(Self,
+		func() Value {
+			return string_
+		},
+	)
 	return string_
 }
 

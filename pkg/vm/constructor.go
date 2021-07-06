@@ -43,11 +43,9 @@ type PlasmaConstructor struct {
 }
 
 func (c *PlasmaConstructor) Construct(vm *Plasma, object Value) *Object {
-	vm.PushBytecode(NewBytecodeFromArray(c.Code))
 	vm.PushSymbolTable(object.SymbolTable())
 	vm.PushObject(object)
-	_, executionError := vm.Execute()
-	vm.PopBytecode()
+	_, executionError := vm.Execute(NewBytecodeFromArray(c.Code))
 	vm.PopSymbolTable()
 	return executionError
 }

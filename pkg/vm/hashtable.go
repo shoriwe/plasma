@@ -16,7 +16,11 @@ func (p *Plasma) NewHashTable(isBuiltIn bool, parent *SymbolTable, entries map[i
 	hashTable.SetKeyValues(entries)
 	hashTable.SetLength(entriesLength)
 	p.HashTableInitialize(isBuiltIn)(hashTable)
-	hashTable.Set(Self, hashTable)
+	hashTable.SetOnDemandSymbol(Self,
+		func() Value {
+			return hashTable
+		},
+	)
 	return hashTable
 }
 

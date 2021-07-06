@@ -207,7 +207,11 @@ func (p *Plasma) NewObject(
 	result.Content = []Value{}
 	result.KeyValues = map[int64][]*KeyValue{}
 	result.Bytes = []uint8{}
-	result.Set(Self, result)
+	result.SetOnDemandSymbol(Self,
+		func() Value {
+			return result
+		},
+	)
 	p.ObjectInitialize(isBuiltIn)(result)
 	return result
 }

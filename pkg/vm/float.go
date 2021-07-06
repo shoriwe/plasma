@@ -15,7 +15,11 @@ func (p *Plasma) NewFloat(isBuiltIn bool, parentSymbols *SymbolTable, value floa
 	}
 	float_.SetFloat(value)
 	p.FloatInitialize(isBuiltIn)(float_)
-	float_.Set(Self, float_)
+	float_.SetOnDemandSymbol(Self,
+		func() Value {
+			return float_
+		},
+	)
 	return float_
 }
 

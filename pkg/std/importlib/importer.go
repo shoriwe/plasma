@@ -318,12 +318,10 @@ func scriptImport(memory map[string]vm.Value, ctx *context, sitePackages FileSys
 					script := p.NewModule(false, p.PeekSymbolTable())
 					memory[scriptHash] = script
 					p.PushSymbolTable(script.SymbolTable())
-					p.PushBytecode(scriptCode)
-					_, executionError := p.Execute()
+					_, executionError := p.Execute(scriptCode)
 					if executionError != nil {
 						return nil, executionError
 					}
-					p.PopBytecode()
 					p.PopSymbolTable()
 					// Return the initialized module object
 					return script, nil
@@ -430,12 +428,10 @@ func moduleImport(memory map[string]vm.Value, ctx *context, sitePackages FileSys
 					script := p.NewModule(false, p.PeekSymbolTable())
 					memory[scriptHash] = script
 					p.PushSymbolTable(script.SymbolTable())
-					p.PushBytecode(scriptCode)
-					_, executionError := p.Execute()
+					_, executionError := p.Execute(scriptCode)
 					if executionError != nil {
 						return nil, executionError
 					}
-					p.PopBytecode()
 					p.PopSymbolTable()
 					// Restore the backed context
 					sitePackages.ResetPath()

@@ -28,7 +28,11 @@ func (p *Plasma) NewBool(isBuiltIn bool, parentSymbols *SymbolTable, value bool)
 	}
 	bool_.SetBool(value)
 	p.BoolInitialize(isBuiltIn)(bool_)
-	bool_.Set(Self, bool_)
+	bool_.SetOnDemandSymbol(Self,
+		func() Value {
+			return bool_
+		},
+	)
 	return bool_
 }
 

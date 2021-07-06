@@ -4,12 +4,12 @@ import (
 	"fmt"
 )
 
-func (p *Plasma) Execute() (Value, *Object) {
+func (p *Plasma) Execute(bytecode *Bytecode) (Value, *Object) {
 	var executionError *Object
 	var object Value
 bytecodeExecutionLoop:
-	for ; p.PeekBytecode().HasNext(); {
-		code := p.PeekBytecode().Next()
+	for ; bytecode.HasNext(); {
+		code := bytecode.Next()
 		/*
 			if code.Line != 0 {
 				fmt.Println(color.GreenString(strconv.Itoa(code.Line)), code.Instruction, code.Value)
@@ -39,7 +39,7 @@ bytecodeExecutionLoop:
 		case NewParenthesesOP:
 			object, executionError = p.newParenthesesOP()
 		case NewLambdaFunctionOP:
-			object, executionError = p.newLambdaFunctionOP(code)
+			object, executionError = p.newLambdaFunctionOP(bytecode, code)
 		case GetNoneOP:
 			object, executionError = p.getNoneOP()
 		// Composite creation
@@ -116,7 +116,7 @@ bytecodeExecutionLoop:
 		case MethodInvocationOP:
 			object, executionError = p.methodInvocationOP(code)
 		case NewIteratorOP:
-			object, executionError = p.newIteratorOP(code)
+			object, executionError = p.newIteratorOP(bytecode, code)
 		// Assign Statement
 		case AssignIdentifierOP:
 			executionError = p.assignIdentifierOP(code)
@@ -139,17 +139,15 @@ bytecodeExecutionLoop:
 		case LoadFunctionArgumentsOP:
 			executionError = p.loadFunctionArgumentsOP(code)
 		case NewFunctionOP:
-			executionError = p.newFunctionOP(code)
+			executionError = p.newFunctionOP(bytecode, code)
 		case JumpOP:
-			executionError = p.jumpOP(code)
+			executionError = p.jumpOP(bytecode, code)
 		case RedoOP:
-			p.LoopStack.Peek().Action = Redo
-			return nil, nil
+			executionError = p.jumpOP(bytecode, code)
 		case BreakOP:
-			p.LoopStack.Peek().Action = Break
-			return nil, nil
+			executionError = p.jumpOP(bytecode, code)
 		case ContinueOP:
-			return nil, nil
+			executionError = p.jumpOP(bytecode, code)
 		case PushOP:
 			if object != nil {
 				p.MemoryStack.Push(object)
@@ -160,23 +158,23 @@ bytecodeExecutionLoop:
 		case NOP:
 			break
 		case DoWhileLoop:
-			executionError = p.setupDoWhileLoop(code)
+			executionError = p.setupDoWhileLoop(bytecode, code)
 		case WhileLoop:
-			executionError = p.setupWhileLoop(code)
+			executionError = p.setupWhileLoop(bytecode, code)
 		case ForLoopOP:
-			executionError = p.setupForLoopOP(code)
+			executionError = p.setupForLoopOP(bytecode, code)
 		case TryOP:
 			executionError = p.tryOP(code)
 		case NewModuleOP:
-			executionError = p.newModuleOP(code)
+			executionError = p.newModuleOP(bytecode, code)
 		case RaiseOP:
 			executionError = p.raiseOP()
 		case NewClassOP:
-			executionError = p.newClassOP(code)
+			executionError = p.newClassOP(bytecode, code)
 		case NewClassFunctionOP:
-			executionError = p.newClassFunctionOP(code)
+			executionError = p.newClassFunctionOP(bytecode, code)
 		case CaseOP:
-			executionError = p.caseOP(code)
+			executionError = p.caseOP(bytecode, code)
 		default:
 			panic(fmt.Sprintf("Unknown VM instruction %d", code.Instruction.OpCode))
 		}
@@ -271,15 +269,15 @@ func (p *Plasma) newParenthesesOP() (Value, *Object) {
 	return p.PopObject(), nil
 }
 
-func (p *Plasma) newLambdaFunctionOP(code Code) (Value, *Object) {
+func (p *Plasma) newLambdaFunctionOP(bytecode *Bytecode, code Code) (Value, *Object) {
 	functionInformation := code.Value.([2]int)
 	codeLength := functionInformation[0]
 	numberOfArguments := functionInformation[1]
-	start := p.PeekBytecode().index
-	p.PeekBytecode().index += codeLength
-	end := p.PeekBytecode().index
+	start := bytecode.index
+	bytecode.index += codeLength
+	end := bytecode.index
 	functionCode := make([]Code, codeLength)
-	copy(functionCode, p.PeekBytecode().instructions[start:end])
+	copy(functionCode, bytecode.instructions[start:end])
 	return p.NewFunction(false, p.PeekSymbolTable(), NewPlasmaFunction(numberOfArguments, functionCode)), nil
 }
 
@@ -372,7 +370,7 @@ func (p *Plasma) getIdentifierOP(code Code) (Value, *Object) {
 	return value, nil
 }
 
-func (p *Plasma) newIteratorOP(code Code) (Value, *Object) {
+func (p *Plasma) newIteratorOP(bytecode *Bytecode, code Code) (Value, *Object) {
 	source := p.PopObject()
 	var iterSource Value
 	var callError *Object
@@ -394,11 +392,11 @@ func (p *Plasma) newIteratorOP(code Code) (Value, *Object) {
 	hasNextCodeLength, nextCodeLength := code.Value.([2]int)[0], code.Value.([2]int)[1]
 	var hasNextCode []Code
 	for i := 0; i < hasNextCodeLength; i++ {
-		hasNextCode = append(hasNextCode, p.PeekBytecode().Next())
+		hasNextCode = append(hasNextCode, bytecode.Next())
 	}
 	var nextCode []Code
 	for i := 0; i < nextCodeLength; i++ {
-		nextCode = append(nextCode, p.PeekBytecode().Next())
+		nextCode = append(nextCode, bytecode.Next())
 	}
 	generatorIterator.Set(Next,
 		p.NewFunction(false, generatorIterator.symbols,
@@ -473,124 +471,86 @@ func (p *Plasma) returnOP(code Code) *Object {
 
 func (p *Plasma) ifOP(code Code) *Object {
 	ifInformation := code.Value.(*IfInformation)
-	p.PushBytecode(NewBytecodeFromArray(ifInformation.Condition))
-	condition, executionError := p.Execute()
-	p.PopBytecode()
+	condition, executionError := p.Execute(NewBytecodeFromArray(ifInformation.Condition))
 	if executionError != nil {
 		return executionError
 	}
 	var conditionBool bool
 	conditionBool, executionError = p.QuickGetBool(condition)
 	if conditionBool {
-		p.PushBytecode(NewBytecodeFromArray(ifInformation.Body))
-		_, executionError = p.Execute()
-		p.PopBytecode()
+		_, executionError = p.Execute(NewBytecodeFromArray(ifInformation.Body))
 		return executionError
 	}
 	for _, elif := range ifInformation.ElifBlocks {
-		p.PushBytecode(NewBytecodeFromArray(elif.Condition))
-		condition, executionError = p.Execute()
-		p.PopBytecode()
+		condition, executionError = p.Execute(NewBytecodeFromArray(elif.Condition))
 		if executionError != nil {
 			return executionError
 		}
 		conditionBool, executionError = p.QuickGetBool(condition)
 		if conditionBool {
-			p.PushBytecode(NewBytecodeFromArray(elif.Body))
-			_, executionError = p.Execute()
-			p.PopBytecode()
+			_, executionError = p.Execute(NewBytecodeFromArray(elif.Body))
 			return executionError
 		}
 	}
-	p.PushBytecode(NewBytecodeFromArray(ifInformation.Else))
-	_, executionError = p.Execute()
-	p.PopBytecode()
+	_, executionError = p.Execute(NewBytecodeFromArray(ifInformation.Else))
 	return executionError
 }
 
 func (p *Plasma) ifOneLinerOP(code Code) (Value, *Object) {
 	ifInformation := code.Value.(*IfInformation)
-	p.PushBytecode(NewBytecodeFromArray(ifInformation.Condition))
-	condition, executionError := p.Execute()
-	p.PopBytecode()
+	condition, executionError := p.Execute(NewBytecodeFromArray(ifInformation.Condition))
 	if executionError != nil {
 		return nil, executionError
 	}
 	var conditionBool bool
 	conditionBool, executionError = p.QuickGetBool(condition)
-	var result Value
 	if conditionBool {
-		p.PushBytecode(NewBytecodeFromArray(ifInformation.Body))
-		result, executionError = p.Execute()
-		p.PopBytecode()
-		return result, executionError
+		return p.Execute(NewBytecodeFromArray(ifInformation.Body))
 	} else if ifInformation.Else != nil {
-		p.PushBytecode(NewBytecodeFromArray(ifInformation.Else))
-		result, executionError = p.Execute()
-		p.PopBytecode()
-		return result, executionError
+		return p.Execute(NewBytecodeFromArray(ifInformation.Else))
 	}
 	return p.GetNone(), nil
 }
 
 func (p *Plasma) unlessOP(code Code) *Object {
 	ifInformation := code.Value.(*IfInformation)
-	p.PushBytecode(NewBytecodeFromArray(ifInformation.Condition))
-	condition, executionError := p.Execute()
-	p.PopBytecode()
+	condition, executionError := p.Execute(NewBytecodeFromArray(ifInformation.Condition))
 	if executionError != nil {
 		return executionError
 	}
 	var conditionBool bool
 	conditionBool, executionError = p.QuickGetBool(condition)
 	if !conditionBool {
-		p.PushBytecode(NewBytecodeFromArray(ifInformation.Body))
-		_, executionError = p.Execute()
-		p.PopBytecode()
+		_, executionError = p.Execute(NewBytecodeFromArray(ifInformation.Body))
 		return executionError
 	}
 	for _, elif := range ifInformation.ElifBlocks {
-		p.PushBytecode(NewBytecodeFromArray(elif.Condition))
-		condition, executionError = p.Execute()
-		p.PopBytecode()
+		condition, executionError = p.Execute(NewBytecodeFromArray(elif.Condition))
 		if executionError != nil {
 			return executionError
 		}
 		conditionBool, executionError = p.QuickGetBool(condition)
 		if !conditionBool {
-			p.PushBytecode(NewBytecodeFromArray(elif.Body))
-			_, executionError = p.Execute()
-			p.PopBytecode()
+			_, executionError = p.Execute(NewBytecodeFromArray(elif.Body))
 			return executionError
 		}
 	}
-	p.PushBytecode(NewBytecodeFromArray(ifInformation.Else))
-	_, executionError = p.Execute()
-	p.PopBytecode()
+	_, executionError = p.Execute(NewBytecodeFromArray(ifInformation.Else))
 	return executionError
 }
 
 func (p *Plasma) unlessOneLinerOP(code Code) (Value, *Object) {
 	ifInformation := code.Value.(*IfInformation)
-	p.PushBytecode(NewBytecodeFromArray(ifInformation.Condition))
-	condition, executionError := p.Execute()
-	p.PopBytecode()
+	condition, executionError := p.Execute(NewBytecodeFromArray(ifInformation.Condition))
 	if executionError != nil {
 		return nil, executionError
 	}
 	var conditionBool bool
 	conditionBool, executionError = p.QuickGetBool(condition)
-	var result Value
 	if !conditionBool {
-		p.PushBytecode(NewBytecodeFromArray(ifInformation.Body))
-		result, executionError = p.Execute()
-		p.PopBytecode()
-		return result, executionError
+		return p.Execute(NewBytecodeFromArray(ifInformation.Body))
 	} else if ifInformation.Else != nil {
-		p.PushBytecode(NewBytecodeFromArray(ifInformation.Else))
-		result, executionError = p.Execute()
-		p.PopBytecode()
-		return result, executionError
+		return p.Execute(NewBytecodeFromArray(ifInformation.Else))
 	}
 	return p.GetNone(), nil
 }
@@ -605,27 +565,27 @@ func (p *Plasma) loadFunctionArgumentsOP(code Code) *Object {
 	return nil
 }
 
-func (p *Plasma) newFunctionOP(code Code) *Object {
+func (p *Plasma) newFunctionOP(bytecode *Bytecode, code Code) *Object {
 	functionInformation := code.Value.([2]int)
 	codeLength := functionInformation[0]
 	numberOfArguments := functionInformation[1]
-	start := p.PeekBytecode().index
-	p.PeekBytecode().index += codeLength
-	end := p.PeekBytecode().index
+	start := bytecode.index
+	bytecode.index += codeLength
+	end := bytecode.index
 	functionCode := make([]Code, codeLength)
-	copy(functionCode, p.PeekBytecode().instructions[start:end])
+	copy(functionCode, bytecode.instructions[start:end])
 	p.PushObject(p.NewFunction(false, p.PeekSymbolTable(), NewPlasmaFunction(numberOfArguments, functionCode)))
 	return nil
 }
 
-func (p *Plasma) jumpOP(code Code) *Object {
-	p.PeekBytecode().index += code.Value.(int)
+func (p *Plasma) jumpOP(bytecode *Bytecode, code Code) *Object {
+	bytecode.index += code.Value.(int)
 	return nil
 }
 
-func (p *Plasma) setupDoWhileLoop(code Code) *Object {
-	condition := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[0]))
-	body := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[1]))
+func (p *Plasma) setupDoWhileLoop(bytecode *Bytecode, code Code) *Object {
+	condition := NewBytecodeFromArray(bytecode.NextN(code.Value.([2]int)[0]))
+	body := NewBytecodeFromArray(bytecode.NextN(code.Value.([2]int)[1]))
 	doWhileLoopEntry := &loopEntry{
 		Action: NoAction,
 	}
@@ -637,9 +597,7 @@ loop:
 	for {
 	redoLocation:
 		// Execute the body
-		p.PushBytecode(body)
-		_, executionError := p.Execute()
-		p.PopBytecode()
+		_, executionError := p.Execute(body)
 		body.index = 0
 		if executionError != nil {
 			return executionError
@@ -654,10 +612,8 @@ loop:
 		}
 
 		// Evaluate the condition
-		p.PushBytecode(condition)
 		var result Value
-		result, executionError = p.Execute()
-		p.PopBytecode()
+		result, executionError = p.Execute(condition)
 		condition.index = 0
 		if executionError != nil {
 			return executionError
@@ -671,9 +627,9 @@ loop:
 	return nil
 }
 
-func (p *Plasma) setupWhileLoop(code Code) *Object {
-	condition := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[0]))
-	body := NewBytecodeFromArray(p.PeekBytecode().NextN(code.Value.([2]int)[1]))
+func (p *Plasma) setupWhileLoop(bytecode *Bytecode, code Code) *Object {
+	condition := NewBytecodeFromArray(bytecode.NextN(code.Value.([2]int)[0]))
+	body := NewBytecodeFromArray(bytecode.NextN(code.Value.([2]int)[1]))
 	whileLoopEntry := &loopEntry{
 		Action: NoAction,
 	}
@@ -684,9 +640,7 @@ func (p *Plasma) setupWhileLoop(code Code) *Object {
 loop:
 	for {
 		// First Evaluate the condition
-		p.PushBytecode(condition)
-		result, executionError := p.Execute()
-		p.PopBytecode()
+		result, executionError := p.Execute(condition)
 		condition.index = 0
 		if executionError != nil {
 			return executionError
@@ -699,9 +653,7 @@ loop:
 		}
 	redoLocation:
 		// Execute the body
-		p.PushBytecode(body)
-		_, executionError = p.Execute()
-		p.PopBytecode()
+		_, executionError = p.Execute(body)
 		body.index = 0
 		if executionError != nil {
 			return executionError
@@ -779,7 +731,7 @@ func (p *Plasma) reloadForLoopContext(context *map[string]Value, numberOfReceive
 	return true, nil
 }
 
-func (p *Plasma) setupForLoopOP(code Code) *Object {
+func (p *Plasma) setupForLoopOP(bytecode *Bytecode, code Code) *Object {
 	source := p.PopObject()
 	sourceIter, getError := source.Get(Iter)
 	if getError != nil {
@@ -791,7 +743,7 @@ func (p *Plasma) setupForLoopOP(code Code) *Object {
 	}
 	loopSettings := code.Value.(ForLoopSettings)
 
-	bodyBytecode := NewBytecodeFromArray(p.PeekBytecode().NextN(loopSettings.BodyLength))
+	bodyBytecode := NewBytecodeFromArray(bytecode.NextN(loopSettings.BodyLength))
 	receivers := loopSettings.Receivers
 	forLoopEntry := &loopEntry{
 		Action: NoAction,
@@ -829,9 +781,7 @@ loop:
 			p.PeekSymbolTable().Set(receiver, object)
 		}
 		// Execute body
-		p.PushBytecode(bodyBytecode)
-		_, bodyExecutionError := p.Execute()
-		p.PopBytecode()
+		_, bodyExecutionError := p.Execute(bodyBytecode)
 		bodyBytecode.index = 0
 		// If fail return return error
 		if bodyExecutionError != nil {
@@ -851,9 +801,7 @@ loop:
 
 func (p *Plasma) executeFinally(finally []Code) *Object {
 	if finally != nil {
-		p.PushBytecode(NewBytecodeFromArray(finally))
-		_, executionError := p.Execute()
-		p.PopBytecode()
+		_, executionError := p.Execute(NewBytecodeFromArray(finally))
 		return executionError
 	}
 	return nil
@@ -861,9 +809,7 @@ func (p *Plasma) executeFinally(finally []Code) *Object {
 
 func (p *Plasma) tryOP(code Code) *Object {
 	tryInformation := code.Value.(*TryInformation)
-	p.PushBytecode(NewBytecodeFromArray(tryInformation.Body))
-	_, executionError := p.Execute()
-	p.PopBytecode()
+	_, executionError := p.Execute(NewBytecodeFromArray(tryInformation.Body))
 	if executionError == nil {
 		return p.executeFinally(tryInformation.Finally)
 	}
@@ -872,9 +818,7 @@ func (p *Plasma) tryOP(code Code) *Object {
 	for _, exceptBlock := range tryInformation.ExceptBlocks {
 		if exceptBlock.TargetErrors != nil {
 			for _, targetErrorCode := range exceptBlock.TargetErrors {
-				p.PushBytecode(NewBytecodeFromArray(targetErrorCode))
-				targetError, executionError2 = p.Execute()
-				p.PopBytecode()
+				targetError, executionError2 = p.Execute(NewBytecodeFromArray(targetErrorCode))
 				if executionError2 != nil {
 					return executionError
 				}
@@ -883,9 +827,7 @@ func (p *Plasma) tryOP(code Code) *Object {
 				}
 				if executionError.Implements(targetError.(*Type)) {
 					p.PeekSymbolTable().Set(exceptBlock.Receiver, executionError)
-					p.PushBytecode(NewBytecodeFromArray(exceptBlock.Body))
-					_, executionError2 = p.Execute()
-					p.PopBytecode()
+					_, executionError2 = p.Execute(NewBytecodeFromArray(exceptBlock.Body))
 					if executionError2 == nil {
 						return p.executeFinally(tryInformation.Finally)
 					}
@@ -894,9 +836,7 @@ func (p *Plasma) tryOP(code Code) *Object {
 			}
 		} else {
 			p.PeekSymbolTable().Set(exceptBlock.Receiver, executionError)
-			p.PushBytecode(NewBytecodeFromArray(exceptBlock.Body))
-			_, executionError2 = p.Execute()
-			p.PopBytecode()
+			_, executionError2 = p.Execute(NewBytecodeFromArray(exceptBlock.Body))
 			if executionError2 == nil {
 				return p.executeFinally(tryInformation.Finally)
 			}
@@ -904,9 +844,7 @@ func (p *Plasma) tryOP(code Code) *Object {
 		}
 	}
 	if tryInformation.Else != nil {
-		p.PushBytecode(NewBytecodeFromArray(tryInformation.Else))
-		_, executionError2 = p.Execute()
-		p.PopBytecode()
+		_, executionError2 = p.Execute(NewBytecodeFromArray(tryInformation.Else))
 		if executionError2 != nil {
 			return executionError2
 		}
@@ -919,20 +857,18 @@ type ModuleInformation struct {
 	CodeLength int
 }
 
-func (p *Plasma) newModuleOP(code Code) *Object {
+func (p *Plasma) newModuleOP(bytecode *Bytecode, code Code) *Object {
 	moduleInformation := code.Value.(ModuleInformation)
 	var moduleBody []Code
 	for i := 0; i < moduleInformation.CodeLength; i++ {
-		moduleBody = append(moduleBody, p.PeekBytecode().Next())
+		moduleBody = append(moduleBody, bytecode.Next())
 	}
 	module := p.NewModule(false, p.PeekSymbolTable())
 	p.PushSymbolTable(module.SymbolTable())
-	p.PushBytecode(NewBytecodeFromArray(moduleBody))
-	_, executionError := p.Execute()
+	_, executionError := p.Execute(NewBytecodeFromArray(moduleBody))
 	if executionError != nil {
 		return executionError
 	}
-	p.PopBytecode()
 	p.PopSymbolTable()
 	p.PeekSymbolTable().Set(moduleInformation.Name, module)
 	return nil
@@ -943,7 +879,7 @@ type ClassInformation struct {
 	BodyLength int
 }
 
-func (p *Plasma) newClassOP(code Code) *Object {
+func (p *Plasma) newClassOP(bytecode *Bytecode, code Code) *Object {
 	classInformation := code.Value.(ClassInformation)
 	rawSubClasses := p.PopObject().GetContent()
 	var subClasses []*Type
@@ -956,7 +892,7 @@ func (p *Plasma) newClassOP(code Code) *Object {
 
 	var classBody []Code
 	for i := 0; i < classInformation.BodyLength; i++ {
-		classBody = append(classBody, p.PeekBytecode().Next())
+		classBody = append(classBody, bytecode.Next())
 	}
 	class := p.NewType(
 		false,
@@ -969,15 +905,15 @@ func (p *Plasma) newClassOP(code Code) *Object {
 	return nil
 }
 
-func (p *Plasma) newClassFunctionOP(code Code) *Object {
+func (p *Plasma) newClassFunctionOP(bytecode *Bytecode, code Code) *Object {
 	functionInformation := code.Value.([2]int)
 	codeLength := functionInformation[0]
 	numberOfArguments := functionInformation[1]
-	start := p.PeekBytecode().index
-	p.PeekBytecode().index += codeLength
-	end := p.PeekBytecode().index
+	start := bytecode.index
+	bytecode.index += codeLength
+	end := bytecode.index
 	functionCode := make([]Code, codeLength)
-	copy(functionCode, p.PeekBytecode().instructions[start:end])
+	copy(functionCode, bytecode.instructions[start:end])
 	p.PushObject(p.NewFunction(false, p.PeekSymbolTable(), NewPlasmaClassFunction(p.PeekObject(), numberOfArguments, functionCode)))
 	return nil
 }
@@ -992,7 +928,7 @@ func (p *Plasma) raiseOP() *Object {
 	return p.PeekObject().(*Object)
 }
 
-func (p *Plasma) caseOP(code Code) *Object {
+func (p *Plasma) caseOP(bytecode *Bytecode, code Code) *Object {
 	references := p.PopObject()
 	contains := p.ForceGetSelf(Contains, references)
 	result, callError := p.CallFunction(contains, references.SymbolTable(), p.PeekObject())
@@ -1004,7 +940,7 @@ func (p *Plasma) caseOP(code Code) *Object {
 		return executionError
 	}
 	if !boolResult {
-		p.PeekBytecode().index += code.Value.(int)
+		bytecode.index += code.Value.(int)
 		return nil
 	}
 	p.PopObject()

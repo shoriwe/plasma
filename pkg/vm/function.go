@@ -95,17 +95,14 @@ func (p *Plasma) FunctionInitialize(isBuiltIn bool) ConstructorCallBack {
 
 func (p *Plasma) NewFunction(isBuiltIn bool, parentSymbols *SymbolTable, callable Callable) *Function {
 	function := &Function{
-		Object: &Object{
-			id:              p.NextId(),
-			typeName:        FunctionName,
-			subClasses:      nil,
-			symbols:         NewSymbolTable(parentSymbols),
-			isBuiltIn:       isBuiltIn,
-			onDemandSymbols: map[string]OnDemandLoader{},
-		},
+		Object:   p.NewObject(isBuiltIn, FunctionName, nil, parentSymbols),
 		Callable: callable,
 	}
-	function.Set(Self, function)
+	function.SetOnDemandSymbol(Self,
+		func() Value {
+			return function
+		},
+	)
 	p.FunctionInitialize(isBuiltIn)(function)
 	return function
 }

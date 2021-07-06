@@ -195,9 +195,7 @@ func repl() {
 			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), compilationError.Type(), compilationError.Message())
 			continue
 		}
-		virtualMachine.PushBytecode(vm.NewBytecodeFromArray(bytecode))
-		result, executionError := virtualMachine.Execute()
-		virtualMachine.PopBytecode()
+		result, executionError := virtualMachine.Execute(vm.NewBytecodeFromArray(bytecode))
 		if executionError != nil {
 			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), executionError.TypeName(), executionError.GetString())
 			continue
@@ -224,7 +222,6 @@ func repl() {
 }
 
 func program() {
-	virtualMachine.InitializeBytecode(nil)
 	for _, file := range files {
 		fileHandler, readingError := os.Open(file)
 		if readingError != nil {
@@ -243,8 +240,7 @@ func program() {
 		/*
 			ToDo: Do intermediate stuff with other flags
 		*/
-		virtualMachine.InitializeBytecode(code)
-		_, executionError := virtualMachine.Execute()
+		_, executionError := virtualMachine.Execute(code)
 		if executionError != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), executionError.TypeName(), executionError.GetString())
 			os.Exit(1)

@@ -76,9 +76,8 @@ func test(t *testing.T, directory string) {
 		}
 		output := bytes.NewBuffer(make([]byte, 0))
 		plasmaVm := vm.NewPlasmaVM(nil, output, output)
-		plasmaVm.InitializeBytecode(code)
 		// result, executionError := plasmaVm.Execute()
-		_, executionError := plasmaVm.Execute()
+		_, executionError := plasmaVm.Execute(code)
 		if executionError != nil {
 			t.Errorf("[+] %s: FAIL", file.Name())
 			t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.GetString()))

@@ -16,7 +16,11 @@ func (p *Plasma) NewInteger(isBuiltIn bool, parentSymbols *SymbolTable, value in
 	}
 	integer.SetInteger(value)
 	p.IntegerInitialize(isBuiltIn)(integer)
-	integer.Set(Self, integer)
+	integer.SetOnDemandSymbol(Self,
+		func() Value {
+			return integer
+		},
+	)
 	return integer
 }
 

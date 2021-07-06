@@ -30,15 +30,21 @@ func (p *Plasma) NewType(
 		Constructor: constructor,
 		Name:        typeName,
 	}
-	result.Set(ToString,
-		p.NewFunction(isBuiltIn, result.symbols,
-			NewBuiltInClassFunction(result, 0,
-				func(_ Value, _ ...Value) (Value, *Object) {
-					return p.NewString(false, p.PeekSymbolTable(), "Type@"+typeName), nil
-				},
-			),
-		),
+	result.SetOnDemandSymbol(ToString,
+		func() Value {
+			return p.NewFunction(isBuiltIn, result.symbols,
+				NewBuiltInClassFunction(result, 0,
+					func(_ Value, _ ...Value) (Value, *Object) {
+						return p.NewString(false, p.PeekSymbolTable(), "Type@"+typeName), nil
+					},
+				),
+			)
+		},
 	)
-	result.Set(Self, result)
+	result.SetOnDemandSymbol(Self,
+		func() Value {
+			return result
+		},
+	)
 	return result
 }

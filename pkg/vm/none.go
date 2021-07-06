@@ -7,6 +7,11 @@ func (p *Plasma) GetNone() *Object {
 func (p *Plasma) NewNone(isBuiltIn bool, parent *SymbolTable) *Object {
 	result := p.NewObject(isBuiltIn, NoneName, nil, parent)
 	p.NoneInitialize(isBuiltIn)(result)
+	result.SetOnDemandSymbol(Self,
+		func() Value {
+			return result
+		},
+	)
 	return result
 }
 

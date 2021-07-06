@@ -15,7 +15,11 @@ func (p *Plasma) NewTuple(isBuiltIn bool, parentSymbols *SymbolTable, content []
 	tuple.SetContent(content)
 	tuple.SetLength(len(content))
 	p.TupleInitialize(isBuiltIn)(tuple)
-	tuple.Set(Self, tuple)
+	tuple.SetOnDemandSymbol(Self,
+		func() Value {
+			return tuple
+		},
+	)
 	return tuple
 }
 

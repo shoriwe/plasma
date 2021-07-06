@@ -18,7 +18,6 @@ type ObjectLoader func(*Plasma) Value
 type Plasma struct {
 	currentId          int64
 	builtInSymbolTable *SymbolTable
-	BytecodeStack      *CodeStack
 	MemoryStack        *ObjectStack
 	LoopStack          *LoopStack
 	SymbolTableStack   *SymbolStack
@@ -91,7 +90,6 @@ func (p *Plasma) LoadBuiltInSymbols(symbolMap map[string]ObjectLoader) {
 */
 
 func (p *Plasma) Reset() {
-	p.BytecodeStack.Clear()
 	p.MemoryStack.Clear()
 	p.SymbolTableStack.Clear()
 	p.setBuiltInSymbols()
@@ -117,11 +115,6 @@ func (p *Plasma) Reset() {
 	)
 	p.SymbolTableStack.Push(symbols)
 }
-func (p *Plasma) InitializeBytecode(bytecode *Bytecode) {
-	p.Reset()
-	p.PushBytecode(bytecode)
-
-}
 
 func (p *Plasma) PushSymbolTable(table *SymbolTable) {
 	p.SymbolTableStack.Push(table)
@@ -133,18 +126,6 @@ func (p *Plasma) PopSymbolTable() *SymbolTable {
 
 func (p *Plasma) PeekSymbolTable() *SymbolTable {
 	return p.SymbolTableStack.Peek()
-}
-
-func (p *Plasma) PushBytecode(code *Bytecode) {
-	p.BytecodeStack.Push(code)
-}
-
-func (p *Plasma) PopBytecode() *Bytecode {
-	return p.BytecodeStack.Pop()
-}
-
-func (p *Plasma) PeekBytecode() *Bytecode {
-	return p.BytecodeStack.Peek()
 }
 
 func (p *Plasma) StdInScanner() *bufio.Scanner {
@@ -173,7 +154,6 @@ func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 	}
 	vm := &Plasma{
 		currentId:        1,
-		BytecodeStack:    NewCodeStack(),
 		MemoryStack:      NewObjectStack(),
 		LoopStack:        NewLoopStack(),
 		SymbolTableStack: NewSymbolStack(),
@@ -184,6 +164,6 @@ func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 		stdout:           stdout,
 		stderr:           stderr,
 	}
-	vm.setBuiltInSymbols()
+	vm.Reset()
 	return vm
 }

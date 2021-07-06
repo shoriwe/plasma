@@ -9,7 +9,11 @@ func (p *Plasma) NewIterator(isBuiltIn bool, parentSymbols *SymbolTable) *Iterat
 		Object: p.NewObject(isBuiltIn, IteratorName, nil, parentSymbols),
 	}
 	p.IteratorInitialize(isBuiltIn)(iterator)
-	iterator.Set(Self, iterator)
+	iterator.SetOnDemandSymbol(Self,
+		func() Value {
+			return iterator
+		},
+	)
 	return iterator
 }
 

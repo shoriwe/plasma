@@ -15,7 +15,11 @@ func (p *Plasma) NewArray(isBuiltIn bool, parentSymbols *SymbolTable, content []
 	array.SetContent(content)
 	array.SetLength(len(content))
 	p.ArrayInitialize(isBuiltIn)(array)
-	array.Set(Self, array)
+	array.SetOnDemandSymbol(Self,
+		func() Value {
+			return array
+		},
+	)
 	return array
 }
 

@@ -17,7 +17,11 @@ func (p *Plasma) NewBytes(isBuiltIn bool, parent *SymbolTable, content []uint8) 
 	bytes_.SetBytes(content)
 	bytes_.SetLength(len(content))
 	p.BytesInitialize(isBuiltIn)(bytes_)
-	bytes_.Set(Self, bytes_)
+	bytes_.SetOnDemandSymbol(Self,
+		func() Value {
+			return bytes_
+		},
+	)
 	return bytes_
 }
 

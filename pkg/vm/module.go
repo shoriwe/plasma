@@ -89,16 +89,12 @@ func (p *Plasma) ModuleInitialize(isBuiltIn bool) ConstructorCallBack {
 	}
 }
 func (p *Plasma) NewModule(isBuiltIn bool, parent *SymbolTable) Value {
-	module := &Object{
-		isBuiltIn:       isBuiltIn,
-		id:              p.NextId(),
-		typeName:        ModuleName,
-		class:           nil,
-		subClasses:      nil,
-		symbols:         NewSymbolTable(parent),
-		onDemandSymbols: map[string]OnDemandLoader{},
-	}
-	module.Set(Self, module)
+	module := p.NewObject(isBuiltIn, ModuleName, nil, parent)
+	module.SetOnDemandSymbol(Self,
+		func() Value {
+			return module
+		},
+	)
 	p.ModuleInitialize(isBuiltIn)(module)
 	return module
 }
