@@ -111,3 +111,45 @@ func NewStateStack() *StateStack {
 		head: nil,
 	}
 }
+
+type propagationEntry struct {
+	PropagationLevel int
+}
+
+func (p *propagationEntry) Decrement() {
+	p.PropagationLevel--
+}
+
+type PropagationStack struct {
+	head *stackNode
+}
+
+func (stack *PropagationStack) Pop() *propagationEntry {
+	result := stack.head.value
+	stack.head = stack.head.next
+	return result.(*propagationEntry)
+}
+
+func (stack *PropagationStack) Peek() *propagationEntry {
+	return stack.head.value.(*propagationEntry)
+}
+
+func (stack *PropagationStack) Push(initialPropagation int) {
+	stack.head = NewStackNode(&propagationEntry{
+		PropagationLevel: initialPropagation,
+	}, stack.head)
+}
+
+func (stack *PropagationStack) HasNext() bool {
+	return stack.head != nil
+}
+
+func (stack *PropagationStack) Clear() {
+	stack.head = nil
+}
+
+func NewPropagationStack() *PropagationStack {
+	return &PropagationStack{
+		head: nil,
+	}
+}

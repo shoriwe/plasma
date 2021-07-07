@@ -118,6 +118,8 @@ const (
 const (
 	Redo = iota
 	Break
+	Continue
+	Return
 	NoAction
 )
 
@@ -147,16 +149,18 @@ type TryInformation struct {
 }
 
 type Context struct {
-	MemoryStack      *ObjectStack
-	StateStack       *StateStack
-	SymbolTableStack *SymbolStack
+	ToFunctionPropagationStack *PropagationStack
+	MemoryStack                *ObjectStack
+	StateStack                 *StateStack
+	SymbolTableStack           *SymbolStack
 }
 
 func NewContext() *Context {
 	result := &Context{
-		MemoryStack:      NewObjectStack(),
-		StateStack:       NewStateStack(),
-		SymbolTableStack: NewSymbolStack(),
+		ToFunctionPropagationStack: NewPropagationStack(),
+		MemoryStack:                NewObjectStack(),
+		StateStack:                 NewStateStack(),
+		SymbolTableStack:           NewSymbolStack(),
 	}
 	return result
 }
