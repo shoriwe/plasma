@@ -13,38 +13,18 @@ const (
 	polySize = 0xffffffff
 )
 
-type ObjectLoader func(*Plasma) Value
+type ObjectLoader func(*Context, *Plasma) Value
 
 type Plasma struct {
 	currentId          int64
+	builtInContext     *Context
 	builtInSymbolTable *SymbolTable
-	BytecodeStack      *CodeStack
-	MemoryStack        *ObjectStack
-	LoopStack          *LoopStack
-	SymbolTableStack   *SymbolStack
 	Crc32Hash          hash.Hash32
 	seed               uint64
 	stdinScanner       *bufio.Scanner
 	stdin              io.Reader
 	stdout             io.Writer
 	stderr             io.Writer
-}
-
-func (p *Plasma) NextId() int64 {
-	result := p.currentId
-	p.currentId++
-	return result
-}
-
-func (p *Plasma) PushObject(object Value) {
-	p.MemoryStack.Push(object)
-}
-func (p *Plasma) PeekObject() Value {
-	return p.MemoryStack.Peek()
-}
-
-func (p *Plasma) PopObject() Value {
-	return p.MemoryStack.Pop()
 }
 
 func (p *Plasma) HashString(s string) int64 {
@@ -76,12 +56,12 @@ func (p *Plasma) Seed() uint64 {
 	This function should be used to load custom object in the built-in symbol table
 */
 func (p *Plasma) LoadBuiltInObject(symbolName string, loader ObjectLoader) {
-	p.builtInSymbolTable.Set(symbolName, loader(p))
+	p.builtInSymbolTable.Set(symbolName, loader(p.builtInContext, p))
 }
 
 func (p *Plasma) LoadBuiltInSymbols(symbolMap map[string]ObjectLoader) {
 	for symbol, loader := range symbolMap {
-		p.builtInSymbolTable.Set(symbol, loader(p))
+		p.builtInSymbolTable.Set(symbol, loader(p.builtInContext, p))
 	}
 }
 
@@ -90,11 +70,33 @@ func (p *Plasma) LoadBuiltInSymbols(symbolMap map[string]ObjectLoader) {
 	Loads the bytecode and clears the stack
 */
 
-func (p *Plasma) Reset() {
-	p.BytecodeStack.Clear()
-	p.MemoryStack.Clear()
-	p.SymbolTableStack.Clear()
-	p.setBuiltInSymbols()
+func (p *Plasma) StdInScanner() *bufio.Scanner {
+	return p.stdinScanner
+}
+
+func (p *Plasma) StdIn() io.Reader {
+	return p.stdin
+}
+
+func (p *Plasma) StdOut() io.Writer {
+	return p.stdout
+}
+
+func (p *Plasma) StdErr() io.Writer {
+	return p.stderr
+}
+
+func (p *Plasma) BuiltInSymbols() *SymbolTable {
+	return p.builtInSymbolTable
+}
+
+func (p *Plasma) NextId() int64 {
+	result := p.currentId
+	p.currentId++
+	return result
+}
+
+func (p *Plasma) InitializeContext(context *Context) {
 	symbols := NewSymbolTable(p.builtInSymbolTable)
 	symbols.Set("__built_in__",
 		&Object{
@@ -115,55 +117,7 @@ func (p *Plasma) Reset() {
 			symbols:    symbols,
 		},
 	)
-	p.SymbolTableStack.Push(symbols)
-}
-func (p *Plasma) InitializeBytecode(bytecode *Bytecode) {
-	p.Reset()
-	p.PushBytecode(bytecode)
-
-}
-
-func (p *Plasma) PushSymbolTable(table *SymbolTable) {
-	p.SymbolTableStack.Push(table)
-}
-
-func (p *Plasma) PopSymbolTable() *SymbolTable {
-	return p.SymbolTableStack.Pop()
-}
-
-func (p *Plasma) PeekSymbolTable() *SymbolTable {
-	return p.SymbolTableStack.Peek()
-}
-
-func (p *Plasma) PushBytecode(code *Bytecode) {
-	p.BytecodeStack.Push(code)
-}
-
-func (p *Plasma) PopBytecode() *Bytecode {
-	return p.BytecodeStack.Pop()
-}
-
-func (p *Plasma) PeekBytecode() *Bytecode {
-	return p.BytecodeStack.Peek()
-}
-
-func (p *Plasma) StdInScanner() *bufio.Scanner {
-	return p.stdinScanner
-}
-func (p *Plasma) StdIn() io.Reader {
-	return p.stdin
-}
-
-func (p *Plasma) StdOut() io.Writer {
-	return p.stdout
-}
-
-func (p *Plasma) StdErr() io.Writer {
-	return p.stderr
-}
-
-func (p *Plasma) BuiltInSymbols() *SymbolTable {
-	return p.builtInSymbolTable
+	context.SymbolTableStack.Push(symbols)
 }
 
 func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
@@ -172,18 +126,15 @@ func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 		panic(randError)
 	}
 	vm := &Plasma{
-		currentId:        1,
-		BytecodeStack:    NewCodeStack(),
-		MemoryStack:      NewObjectStack(),
-		LoopStack:        NewLoopStack(),
-		SymbolTableStack: NewSymbolStack(),
-		Crc32Hash:        crc32.New(crc32.MakeTable(polySize)),
-		seed:             number.Uint64(),
-		stdinScanner:     bufio.NewScanner(stdin),
-		stdin:            stdin,
-		stdout:           stdout,
-		stderr:           stderr,
+		currentId:      1,
+		builtInContext: NewContext(),
+		Crc32Hash:      crc32.New(crc32.MakeTable(polySize)),
+		seed:           number.Uint64(),
+		stdinScanner:   bufio.NewScanner(stdin),
+		stdin:          stdin,
+		stdout:         stdout,
+		stderr:         stderr,
 	}
-	vm.setBuiltInSymbols()
+	vm.InitializeBuiltIn()
 	return vm
 }

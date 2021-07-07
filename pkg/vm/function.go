@@ -10,7 +10,7 @@ type Function struct {
 }
 
 func (p *Plasma) FunctionInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object Value) *Object {
+	return func(context *Context, object Value) *Object {
 		object.SetOnDemandSymbol(Hash,
 			func() Value {
 				return &Function{
@@ -23,7 +23,7 @@ func (p *Plasma) FunctionInitialize(isBuiltIn bool) ConstructorCallBack {
 					},
 					Callable: NewBuiltInClassFunction(object, 0,
 						func(self Value, _ ...Value) (Value, *Object) {
-							return p.NewInteger(false, p.PeekSymbolTable(), object.Id()), nil
+							return p.NewInteger(context, false, context.PeekSymbolTable(), object.Id()), nil
 						},
 					),
 				}
@@ -83,7 +83,7 @@ func (p *Plasma) FunctionInitialize(isBuiltIn bool) ConstructorCallBack {
 					},
 					Callable: NewBuiltInClassFunction(object, 0,
 						func(self Value, _ ...Value) (Value, *Object) {
-							return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("Function-%d", object.Id())), nil
+							return p.NewString(context, false, context.PeekSymbolTable(), fmt.Sprintf("Function-%d", object.Id())), nil
 						},
 					),
 				}
@@ -93,19 +93,16 @@ func (p *Plasma) FunctionInitialize(isBuiltIn bool) ConstructorCallBack {
 	}
 }
 
-func (p *Plasma) NewFunction(isBuiltIn bool, parentSymbols *SymbolTable, callable Callable) *Function {
+func (p *Plasma) NewFunction(context *Context, isBuiltIn bool, parentSymbols *SymbolTable, callable Callable) *Function {
 	function := &Function{
-		Object: &Object{
-			id:              p.NextId(),
-			typeName:        FunctionName,
-			subClasses:      nil,
-			symbols:         NewSymbolTable(parentSymbols),
-			isBuiltIn:       isBuiltIn,
-			onDemandSymbols: map[string]OnDemandLoader{},
-		},
+		Object:   p.NewObject(context, isBuiltIn, FunctionName, nil, parentSymbols),
 		Callable: callable,
 	}
-	function.Set(Self, function)
-	p.FunctionInitialize(isBuiltIn)(function)
+	function.SetOnDemandSymbol(Self,
+		func() Value {
+			return function
+		},
+	)
+	p.FunctionInitialize(isBuiltIn)(context, function)
 	return function
 }

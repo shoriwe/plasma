@@ -20,3 +20,60 @@ def help()
 end
 
 println(help() == None)
+
+def return_for()
+    for a in range(0, 10, 1)
+        for b in range(100, 110, 1)
+            return b
+        end
+        return a
+    end
+    return a
+end
+
+def return_while()
+    a = 0
+    while a < 10
+        b = 100
+        while b < 110
+            return b
+        end
+        return a
+        a += 1
+    end
+    return a
+end
+
+def return_do_while()
+    a = 0
+    do
+        b = 100
+        do
+            return b
+            b += 1
+        while a < 110
+        return a
+        a += 1
+    while a < 10
+    return a
+end
+
+def return_if()
+    if True
+        return True
+    end
+    return False
+end
+
+def return_unless()
+    unless False
+        return True
+    end
+    return False
+end
+
+println(return_for() == 100)
+println(return_while() == 100)
+println(return_do_while() == 100)
+println(return_if())
+println(return_unless())

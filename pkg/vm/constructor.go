@@ -1,32 +1,32 @@
 package vm
 
-func (p *Plasma) constructSubClass(subClass *Type, object Value) *Object {
+func (p *Plasma) constructSubClass(context *Context, subClass *Type, object Value) *Object {
 	for _, subSubClass := range subClass.subClasses {
 		object.SymbolTable().Parent = subSubClass.symbols.Parent
-		subSubClassConstructionError := p.constructSubClass(subSubClass, object)
+		subSubClassConstructionError := p.constructSubClass(context, subSubClass, object)
 		if subSubClassConstructionError != nil {
 			return subSubClassConstructionError
 		}
 	}
 	object.SymbolTable().Parent = subClass.symbols.Parent
-	baseInitializationError := subClass.Constructor.Construct(p, object)
+	baseInitializationError := subClass.Constructor.Construct(context, p, object)
 	if baseInitializationError != nil {
 		return baseInitializationError
 	}
 	return nil
 }
 
-func (p *Plasma) ConstructObject(type_ *Type, parent *SymbolTable) (Value, *Object) {
-	object := p.NewObject(false, type_.Name, type_.subClasses, parent)
+func (p *Plasma) ConstructObject(context *Context, type_ *Type, parent *SymbolTable) (Value, *Object) {
+	object := p.NewObject(context, false, type_.Name, type_.subClasses, parent)
 	for _, subclass := range object.subClasses {
-		subClassConstructionError := p.constructSubClass(subclass, object)
+		subClassConstructionError := p.constructSubClass(context, subclass, object)
 		if subClassConstructionError != nil {
 			return nil, subClassConstructionError
 		}
 	}
 	object.SymbolTable().Parent = parent
 	object.class = type_
-	baseInitializationError := type_.Constructor.Construct(p, object)
+	baseInitializationError := type_.Constructor.Construct(context, p, object)
 	if baseInitializationError != nil {
 		return nil, baseInitializationError
 	}
@@ -34,7 +34,7 @@ func (p *Plasma) ConstructObject(type_ *Type, parent *SymbolTable) (Value, *Obje
 }
 
 type Constructor interface {
-	Construct(*Plasma, Value) *Object
+	Construct(*Context, *Plasma, Value) *Object
 }
 
 type PlasmaConstructor struct {
@@ -42,13 +42,11 @@ type PlasmaConstructor struct {
 	Code []Code
 }
 
-func (c *PlasmaConstructor) Construct(vm *Plasma, object Value) *Object {
-	vm.PushBytecode(NewBytecodeFromArray(c.Code))
-	vm.PushSymbolTable(object.SymbolTable())
-	vm.PushObject(object)
-	_, executionError := vm.Execute()
-	vm.PopBytecode()
-	vm.PopSymbolTable()
+func (c *PlasmaConstructor) Construct(context *Context, vm *Plasma, object Value) *Object {
+	context.PushSymbolTable(object.SymbolTable())
+	context.PushObject(object)
+	_, executionError := vm.Execute(context, NewBytecodeFromArray(c.Code))
+	context.PopSymbolTable()
 	return executionError
 }
 
@@ -58,15 +56,15 @@ func NewPlasmaConstructor(code []Code) *PlasmaConstructor {
 	}
 }
 
-type ConstructorCallBack func(Value) *Object
+type ConstructorCallBack func(*Context, Value) *Object
 
 type BuiltInConstructor struct {
 	Constructor
 	callback ConstructorCallBack
 }
 
-func (c *BuiltInConstructor) Construct(_ *Plasma, object Value) *Object {
-	return c.callback(object)
+func (c *BuiltInConstructor) Construct(context *Context, _ *Plasma, object Value) *Object {
+	return c.callback(context, object)
 }
 
 func NewBuiltInConstructor(callback ConstructorCallBack) *BuiltInConstructor {

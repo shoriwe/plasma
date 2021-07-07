@@ -4,20 +4,24 @@ type Iterator struct {
 	*Object
 }
 
-func (p *Plasma) NewIterator(isBuiltIn bool, parentSymbols *SymbolTable) *Iterator {
+func (p *Plasma) NewIterator(context *Context, isBuiltIn bool, parentSymbols *SymbolTable) *Iterator {
 	iterator := &Iterator{
-		Object: p.NewObject(isBuiltIn, IteratorName, nil, parentSymbols),
+		Object: p.NewObject(context, isBuiltIn, IteratorName, nil, parentSymbols),
 	}
-	p.IteratorInitialize(isBuiltIn)(iterator)
-	iterator.Set(Self, iterator)
+	p.IteratorInitialize(isBuiltIn)(context, iterator)
+	iterator.SetOnDemandSymbol(Self,
+		func() Value {
+			return iterator
+		},
+	)
 	return iterator
 }
 
 func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object Value) *Object {
+	return func(context *Context, object Value) *Object {
 		object.SetOnDemandSymbol(HasNext,
 			func() Value {
-				return p.NewFunction(isBuiltIn, object.SymbolTable(),
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(_ Value, _ ...Value) (Value, *Object) {
 							return p.GetFalse(), nil
@@ -28,7 +32,7 @@ func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
 		)
 		object.SetOnDemandSymbol(Next,
 			func() Value {
-				return p.NewFunction(isBuiltIn, object.SymbolTable(),
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(_ Value, _ ...Value) (Value, *Object) {
 							return p.GetNone(), nil
@@ -39,7 +43,7 @@ func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
 		)
 		object.SetOnDemandSymbol(Iter,
 			func() Value {
-				return p.NewFunction(isBuiltIn, object.SymbolTable(),
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self Value, _ ...Value) (Value, *Object) {
 							return self, nil

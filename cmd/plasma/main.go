@@ -186,8 +186,9 @@ func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
 }
 
 func repl() {
-	virtualMachine.Reset()
 	stdinScanner := bufio.NewScanner(os.Stdin)
+	context := vm.NewContext()
+	virtualMachine.InitializeContext(context)
 	for {
 		fmt.Print(color.GreenString(">>>"))
 		bytecode, compilationError := compileCode(stdinScanner)
@@ -195,9 +196,8 @@ func repl() {
 			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), compilationError.Type(), compilationError.Message())
 			continue
 		}
-		virtualMachine.PushBytecode(vm.NewBytecodeFromArray(bytecode))
-		result, executionError := virtualMachine.Execute()
-		virtualMachine.PopBytecode()
+
+		result, executionError := virtualMachine.Execute(context, vm.NewBytecodeFromArray(bytecode))
 		if executionError != nil {
 			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), executionError.TypeName(), executionError.GetString())
 			continue
@@ -214,7 +214,9 @@ func repl() {
 			fmt.Println(result)
 			continue
 		}
-		resultString, callError := virtualMachine.CallFunction(resultToString.(*vm.Function), virtualMachine.PeekSymbolTable())
+		resultString, callError := virtualMachine.CallFunction(
+			context, resultToString.(*vm.Function), context.PeekSymbolTable(),
+		)
 		if callError != nil {
 			fmt.Println(result)
 			continue
@@ -224,7 +226,6 @@ func repl() {
 }
 
 func program() {
-	virtualMachine.InitializeBytecode(nil)
 	for _, file := range files {
 		fileHandler, readingError := os.Open(file)
 		if readingError != nil {
@@ -243,8 +244,9 @@ func program() {
 		/*
 			ToDo: Do intermediate stuff with other flags
 		*/
-		virtualMachine.InitializeBytecode(code)
-		_, executionError := virtualMachine.Execute()
+		context := vm.NewContext()
+		virtualMachine.InitializeContext(context)
+		_, executionError := virtualMachine.Execute(context, code)
 		if executionError != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), executionError.TypeName(), executionError.GetString())
 			os.Exit(1)

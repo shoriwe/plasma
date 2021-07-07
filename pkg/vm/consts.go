@@ -118,6 +118,8 @@ const (
 const (
 	Redo = iota
 	Break
+	Continue
+	Return
 	NoAction
 )
 
@@ -144,4 +146,44 @@ type TryInformation struct {
 	ExceptBlocks []*ExceptBlock
 	Else         []Code
 	Finally      []Code
+}
+
+type Context struct {
+	ToFunctionPropagationStack *PropagationStack
+	MemoryStack                *ObjectStack
+	StateStack                 *StateStack
+	SymbolTableStack           *SymbolStack
+}
+
+func NewContext() *Context {
+	result := &Context{
+		ToFunctionPropagationStack: NewPropagationStack(),
+		MemoryStack:                NewObjectStack(),
+		StateStack:                 NewStateStack(),
+		SymbolTableStack:           NewSymbolStack(),
+	}
+	return result
+}
+
+func (c *Context) PushObject(object Value) {
+	c.MemoryStack.Push(object)
+}
+func (c *Context) PeekObject() Value {
+	return c.MemoryStack.Peek()
+}
+
+func (c *Context) PopObject() Value {
+	return c.MemoryStack.Pop()
+}
+
+func (c *Context) PushSymbolTable(table *SymbolTable) {
+	c.SymbolTableStack.Push(table)
+}
+
+func (c *Context) PopSymbolTable() *SymbolTable {
+	return c.SymbolTableStack.Pop()
+}
+
+func (c *Context) PeekSymbolTable() *SymbolTable {
+	return c.SymbolTableStack.Peek()
 }

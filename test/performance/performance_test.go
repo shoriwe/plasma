@@ -42,9 +42,7 @@ func test(t *testing.T, script string) {
 	}
 	output := bytes.NewBuffer(make([]byte, 0))
 	plasmaVm := vm.NewPlasmaVM(nil, output, output)
-	plasmaVm.InitializeBytecode(code)
-	// result, executionError := plasmaVm.Execute()
-	_, executionError := plasmaVm.Execute()
+	_, executionError := plasmaVm.Execute(nil, code)
 	if executionError != nil {
 		t.Errorf("[+] %s: FAIL", script)
 		t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.GetString()))

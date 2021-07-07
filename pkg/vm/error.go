@@ -29,8 +29,8 @@ func (p *Plasma) ForceGetSelf(name string, parent Value) Value {
 	return object
 }
 
-func (p *Plasma) ForceAnyGetAny(name string) Value {
-	object, getError := p.PeekSymbolTable().GetAny(name)
+func (p *Plasma) ForceAnyGetAny(context *Context, name string) Value {
+	object, getError := context.PeekSymbolTable().GetAny(name)
 	if getError != nil {
 		panic(getError.String())
 	}
@@ -45,23 +45,23 @@ func (p *Plasma) ForceMasterGetAny(name string) Value {
 	return object
 }
 
-func (p *Plasma) ForceConstruction(type_ Value) Value {
+func (p *Plasma) ForceConstruction(context *Context, type_ Value) Value {
 	if _, ok := type_.(*Type); !ok {
 		panic("don't modify built-ins, or fatal errors like this one will ocurr")
 	}
-	result, constructionError := p.ConstructObject(type_.(*Type), NewSymbolTable(p.PeekSymbolTable()))
+	result, constructionError := p.ConstructObject(context, type_.(*Type), NewSymbolTable(context.PeekSymbolTable()))
 	if constructionError != nil {
 		panic(constructionError.typeName)
 	}
 	return result
 }
 
-func (p *Plasma) ForceInitialization(object Value, arguments ...Value) {
+func (p *Plasma) ForceInitialization(context *Context, object Value, arguments ...Value) {
 	initialize, getError := object.Get(Initialize)
 	if getError != nil {
 		panic(getError.String())
 	}
-	_, callError := p.CallFunction(
+	_, callError := p.CallFunction(context,
 		initialize, object.SymbolTable(),
 		arguments...,
 	)
@@ -70,92 +70,92 @@ func (p *Plasma) ForceInitialization(object Value, arguments ...Value) {
 	}
 }
 
-func (p *Plasma) NewFloatParsingError() *Object {
+func (p *Plasma) NewFloatParsingError(context *Context) *Object {
 	errorType := p.ForceMasterGetAny(FloatParsingError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError)
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewIntegerParsingError() *Object {
+func (p *Plasma) NewIntegerParsingError(context *Context) *Object {
 	errorType := p.ForceMasterGetAny(IntegerParsingError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError)
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewKeyNotFoundError(key Value) *Object {
+func (p *Plasma) NewKeyNotFoundError(context *Context, key Value) *Object {
 	errorType := p.ForceMasterGetAny(KeyNotFoundError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError,
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError,
 		key,
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewIndexOutOfRange(length int, index int64) *Object {
+func (p *Plasma) NewIndexOutOfRange(context *Context, length int, index int64) *Object {
 	errorType := p.ForceMasterGetAny(IndexOutOfRangeError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError,
-		p.NewInteger(
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError,
+		p.NewInteger(context,
 			false,
-			p.PeekSymbolTable(),
+			context.PeekSymbolTable(),
 			int64(length),
 		),
-		p.NewInteger(false, p.PeekSymbolTable(), index),
+		p.NewInteger(context, false, context.PeekSymbolTable(), index),
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewUnhashableTypeError(objectType *Type) *Object {
+func (p *Plasma) NewUnhashableTypeError(context *Context, objectType *Type) *Object {
 	errorType := p.ForceMasterGetAny(UnhashableTypeError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError,
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError,
 		objectType,
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewNotImplementedCallableError(methodName string) *Object {
+func (p *Plasma) NewNotImplementedCallableError(context *Context, methodName string) *Object {
 	errorType := p.ForceMasterGetAny(NotImplementedCallableError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError,
-		p.NewString(false, p.PeekSymbolTable(), methodName),
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError,
+		p.NewString(context, false, context.PeekSymbolTable(), methodName),
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewGoRuntimeError(er error) *Object {
+func (p *Plasma) NewGoRuntimeError(context *Context, er error) *Object {
 	errorType := p.ForceMasterGetAny(GoRuntimeError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError,
-		p.NewString(false, p.PeekSymbolTable(), er.Error()),
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError,
+		p.NewString(context, false, context.PeekSymbolTable(), er.Error()),
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewInvalidNumberOfArgumentsError(received int, expecting int) *Object {
+func (p *Plasma) NewInvalidNumberOfArgumentsError(context *Context, received int, expecting int) *Object {
 	errorType := p.ForceMasterGetAny(InvalidNumberOfArgumentsError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError,
-		p.NewInteger(false, p.PeekSymbolTable(), int64(received)),
-		p.NewInteger(false, p.PeekSymbolTable(), int64(expecting)),
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError,
+		p.NewInteger(context, false, context.PeekSymbolTable(), int64(received)),
+		p.NewInteger(context, false, context.PeekSymbolTable(), int64(expecting)),
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewObjectWithNameNotFoundError(objectType *Type, name string) *Object {
+func (p *Plasma) NewObjectWithNameNotFoundError(context *Context, objectType *Type, name string) *Object {
 	errorType := p.ForceMasterGetAny(ObjectWithNameNotFoundError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError,
-		objectType, p.NewString(false, p.PeekSymbolTable(), name),
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError,
+		objectType, p.NewString(context, false, context.PeekSymbolTable(), name),
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewInvalidTypeError(received string, expecting ...string) *Object {
+func (p *Plasma) NewInvalidTypeError(context *Context, received string, expecting ...string) *Object {
 	errorType := p.ForceMasterGetAny(InvalidTypeError)
-	instantiatedError := p.ForceConstruction(errorType)
+	instantiatedError := p.ForceConstruction(context, errorType)
 	instantiatedErrorInitialize, _ := instantiatedError.Get(Initialize)
 	expectingSum := ""
 	for index, s := range expecting {
@@ -164,48 +164,48 @@ func (p *Plasma) NewInvalidTypeError(received string, expecting ...string) *Obje
 		}
 		expectingSum += s
 	}
-	_, _ = p.CallFunction(
+	_, _ = p.CallFunction(context,
 		instantiatedErrorInitialize, instantiatedError.SymbolTable(),
-		p.NewString(false, p.PeekSymbolTable(), received),
-		p.NewString(false, p.PeekSymbolTable(), expectingSum),
+		p.NewString(context, false, context.PeekSymbolTable(), received),
+		p.NewString(context, false, context.PeekSymbolTable(), expectingSum),
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewObjectConstructionError(typeName string, errorMessage string) *Object {
+func (p *Plasma) NewObjectConstructionError(context *Context, typeName string, errorMessage string) *Object {
 	errorType := p.ForceMasterGetAny(ObjectConstructionError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError,
-		p.NewString(false, p.PeekSymbolTable(), typeName), p.NewString(false, p.PeekSymbolTable(), errorMessage),
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError,
+		p.NewString(context, false, context.PeekSymbolTable(), typeName), p.NewString(context, false, context.PeekSymbolTable(), errorMessage),
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewBuiltInSymbolProtectionError(symbolName string) *Object {
+func (p *Plasma) NewBuiltInSymbolProtectionError(context *Context, symbolName string) *Object {
 	errorType := p.ForceMasterGetAny(BuiltInSymbolProtectionError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError,
-		p.NewString(false, p.PeekSymbolTable(), symbolName),
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError,
+		p.NewString(context, false, context.PeekSymbolTable(), symbolName),
 	)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) NewObjectNotCallable(objectType *Type) *Object {
+func (p *Plasma) NewObjectNotCallable(context *Context, objectType *Type) *Object {
 	errorType := p.ForceMasterGetAny(ObjectNotCallableError)
-	instantiatedError := p.ForceConstruction(errorType)
-	p.ForceInitialization(instantiatedError, objectType)
+	instantiatedError := p.ForceConstruction(context, errorType)
+	p.ForceInitialization(context, instantiatedError, objectType)
 	return instantiatedError.(*Object)
 }
 
-func (p *Plasma) RuntimeErrorInitialize(object Value) *Object {
+func (p *Plasma) RuntimeErrorInitialize(context *Context, object Value) *Object {
 	object.SetOnDemandSymbol(Initialize,
 		func() Value {
-			return p.NewFunction(false, object.SymbolTable(),
+			return p.NewFunction(context, false, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 2,
 					func(self Value, arguments ...Value) (Value, *Object) {
 						message := arguments[0]
 						if _, ok := message.(*String); !ok {
-							return nil, p.NewInvalidTypeError(message.TypeName(), StringName)
+							return nil, p.NewInvalidTypeError(context, message.TypeName(), StringName)
 						}
 						self.SetString(message.GetString())
 						return p.GetNone(), nil
@@ -216,10 +216,10 @@ func (p *Plasma) RuntimeErrorInitialize(object Value) *Object {
 	)
 	object.SetOnDemandSymbol(ToString,
 		func() Value {
-			return p.NewFunction(false, object.SymbolTable(),
+			return p.NewFunction(context, false, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self Value, _ ...Value) (Value, *Object) {
-						return p.NewString(false, p.PeekSymbolTable(), fmt.Sprintf("%s: %s", self.TypeName(), self.GetString())), nil
+						return p.NewString(context, false, context.PeekSymbolTable(), fmt.Sprintf("%s: %s", self.TypeName(), self.GetString())), nil
 					},
 				),
 			)

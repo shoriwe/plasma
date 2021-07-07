@@ -1,6 +1,6 @@
 package vm
 
-func (p *Plasma) Repeat(content []Value, times int64) ([]Value, *Object) {
+func (p *Plasma) Repeat(context *Context, content []Value, times int64) ([]Value, *Object) {
 	copyFunctions := map[int64]Value{}
 	var result []Value
 	if times == 0 {
@@ -20,7 +20,7 @@ func (p *Plasma) Repeat(content []Value, times int64) ([]Value, *Object) {
 				result = append(result, object)
 				continue
 			}
-			objectCopy, callError := p.CallFunction(copyFunction, p.PeekSymbolTable())
+			objectCopy, callError := p.CallFunction(context, copyFunction, context.PeekSymbolTable())
 			if callError != nil {
 				return nil, callError
 			}

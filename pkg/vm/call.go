@@ -1,13 +1,13 @@
 package vm
 
 func (p *Plasma) CallableInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(object Value) *Object {
+	return func(context *Context, object Value) *Object {
 		object.SetOnDemandSymbol(Call,
 			func() Value {
-				return p.NewFunction(isBuiltIn, object.SymbolTable(),
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(_ Value, _ ...Value) (Value, *Object) {
-							return nil, p.NewNotImplementedCallableError(Call)
+							return nil, p.NewNotImplementedCallableError(context, Call)
 						},
 					),
 				)
@@ -17,15 +17,15 @@ func (p *Plasma) CallableInitialize(isBuiltIn bool) ConstructorCallBack {
 	}
 }
 
-func (p *Plasma) CallFunction(function Value, parent *SymbolTable, arguments ...Value) (Value, *Object) {
+func (p *Plasma) CallFunction(context *Context, function Value, parent *SymbolTable, arguments ...Value) (Value, *Object) {
 	var callFunction *Function
 	if _, ok := function.(*Function); !ok {
 		call, getError := function.Get(Call)
 		if getError != nil {
-			return nil, p.NewObjectNotCallable(function.GetClass(p))
+			return nil, p.NewObjectNotCallable(context, function.GetClass(p))
 		}
 		if _, ok = call.(*Function); !ok {
-			return nil, p.NewInvalidTypeError(function.TypeName(), CallableName)
+			return nil, p.NewInvalidTypeError(context, function.TypeName(), CallableName)
 		}
 		callFunction = call.(*Function)
 	} else {
@@ -33,7 +33,7 @@ func (p *Plasma) CallFunction(function Value, parent *SymbolTable, arguments ...
 	}
 	if callFunction.Callable.NumberOfArguments() != len(arguments) {
 		//  Return Here a error related to number of arguments
-		return nil, p.NewInvalidNumberOfArgumentsError(len(arguments), callFunction.Callable.NumberOfArguments())
+		return nil, p.NewInvalidNumberOfArgumentsError(context, len(arguments), callFunction.Callable.NumberOfArguments())
 	}
 	symbols := NewSymbolTable(parent)
 	self, callback, code := callFunction.Callable.Call()
@@ -42,23 +42,25 @@ func (p *Plasma) CallFunction(function Value, parent *SymbolTable, arguments ...
 	} else {
 		symbols.Set(Self, function)
 	}
-	p.PushSymbolTable(symbols)
+	context.PushSymbolTable(symbols)
 	var result Value
 	var callError *Object
 	if callback != nil {
+		context.ToFunctionPropagationStack.Push(0)
+		defer context.ToFunctionPropagationStack.Pop()
 		result, callError = callback(self, arguments...)
 	} else if code != nil {
 		// Load the arguments
 		for i := len(arguments) - 1; i > -1; i-- {
-			p.PushObject(arguments[i])
+			context.PushObject(arguments[i])
 		}
-		p.PushBytecode(NewBytecodeFromArray(code))
-		result, callError = p.Execute()
-		p.PopBytecode()
+		context.ToFunctionPropagationStack.Push(0)
+		defer context.ToFunctionPropagationStack.Pop()
+		result, callError = p.Execute(context, NewBytecodeFromArray(code))
 	} else {
 		panic("callback and code are nil")
 	}
-	p.PopSymbolTable()
+	context.PopSymbolTable()
 	if callError != nil {
 		return nil, callError
 	}
