@@ -143,7 +143,6 @@ bytecodeExecutionLoop:
 			break bytecodeExecutionLoop
 		case IfOP:
 			doContinue, withParent, executionError = p.ifOP(context, code)
-			fmt.Println(doContinue, withParent, executionError)
 			if !doContinue && executionError == nil {
 				if withParent {
 					// When Redo, Break, Continue or Return with parent, exit

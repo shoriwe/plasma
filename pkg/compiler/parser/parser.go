@@ -1537,7 +1537,8 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 						return nil, tokenizingError
 					}
 					if parser.directValueMatch(lexer.Else) ||
-						parser.directValueMatch(lexer.End) {
+						parser.directValueMatch(lexer.End) ||
+						parser.directValueMatch(lexer.Elif) {
 						break
 					}
 					continue
@@ -1655,7 +1656,8 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 					return nil, tokenizingError
 				}
 				if parser.directValueMatch(lexer.Else) ||
-					parser.directValueMatch(lexer.End) {
+					parser.directValueMatch(lexer.End) ||
+					parser.directValueMatch(lexer.Elif) {
 					break
 				}
 				continue
