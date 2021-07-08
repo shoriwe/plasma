@@ -920,7 +920,7 @@ func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatemen
 	bodyLength := len(body)
 	for index, instruction := range body {
 		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
-			body[index].Value = (bodyLength - index) + conditionLength + 1
+			body[index].Value = (bodyLength - index) + conditionLength
 		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
 			body[index].Value = (bodyLength - index) - 1
 		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
@@ -1013,7 +1013,7 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) (
 	bodyLength := len(body)
 	for index, instruction := range body {
 		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
-			body[index].Value = bodyLength - index + 1
+			body[index].Value = bodyLength - index
 		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
 			body[index].Value = -(index + 3)
 		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {

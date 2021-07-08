@@ -140,8 +140,6 @@ bytecodeExecutionLoop:
 			executionError = p.loadFunctionArgumentsOP(context, code)
 		case NewFunctionOP:
 			executionError = p.newFunctionOP(context, bytecode, code)
-		case JumpOP:
-			executionError = p.jumpOP(bytecode, code)
 		case IfJumpOP:
 			executionError = p.ifJumpOP(context, bytecode, code)
 		case UnlessJumpOP:
@@ -154,11 +152,7 @@ bytecodeExecutionLoop:
 			executionError = p.loadForLoopArguments(context)
 		case UnpackForLoopOP:
 			executionError = p.unpackForLoopOP(context, bytecode)
-		case RedoOP:
-			executionError = p.jumpOP(bytecode, code)
-		case BreakOP:
-			executionError = p.jumpOP(bytecode, code)
-		case ContinueOP:
+		case RedoOP, BreakOP, ContinueOP, JumpOP:
 			executionError = p.jumpOP(bytecode, code)
 		case PushOP:
 			if object != nil {

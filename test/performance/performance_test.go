@@ -48,7 +48,7 @@ func test(t *testing.T, script string) {
 		t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.GetString()))
 		return
 	}
-
+	fmt.Println(output.String())
 }
 
 func TestFibonacci(t *testing.T) {
