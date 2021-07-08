@@ -55,7 +55,8 @@ const (
 	AssignIdentifierOP
 	AssignSelectorOP
 	AssignIndexOP
-	IfOP
+	IfJumpOP
+	UnlessJumpOP
 	IfOneLinerOP
 	UnlessOP
 	UnlessOneLinerOP

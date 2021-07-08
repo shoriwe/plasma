@@ -128,13 +128,6 @@ type ForLoopSettings struct {
 	Receivers  []string
 }
 
-type IfInformation struct {
-	Condition  []Code
-	Body       []Code
-	ElifBlocks []*IfInformation
-	Else       []Code
-}
-
 type ExceptBlock struct {
 	TargetErrors [][]Code
 	Receiver     string

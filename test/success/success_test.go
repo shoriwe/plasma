@@ -134,12 +134,12 @@ func TestAssignStatement(t *testing.T) {
 	test(t, filepath.Join("success", statementSamples, assignStatement))
 }
 
-func TestFunctionDefinitionStatement(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, functionDefinition))
-}
-
 func TestIfStatement(t *testing.T) {
 	test(t, filepath.Join("success", statementSamples, ifStatement))
+}
+
+func TestFunctionDefinitionStatement(t *testing.T) {
+	test(t, filepath.Join("success", statementSamples, functionDefinition))
 }
 
 func TestBeginEndStatements(t *testing.T) {

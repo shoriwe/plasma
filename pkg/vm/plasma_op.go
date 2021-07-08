@@ -13,7 +13,6 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (Value, *Object) 
 	// defer fmt.Println(context.MemoryStack.HasNext())
 	var executionError *Object
 	var object Value
-	var withParent bool
 	var doContinue bool
 bytecodeExecutionLoop:
 	for ; bytecode.HasNext(); {
@@ -143,32 +142,7 @@ bytecodeExecutionLoop:
 				}
 			}
 			break bytecodeExecutionLoop
-		case IfOP:
-			doContinue, withParent, executionError = p.ifOP(context, code)
-			if !doContinue && executionError == nil {
-				if withParent {
-					// When Redo, Break, Continue or Return with parent, exit
-					return nil, nil
-				} else {
-					// When return and no parent break the loop
-					break bytecodeExecutionLoop
-				}
-			}
-		case IfOneLinerOP:
-			object, executionError = p.ifOneLinerOP(context, code)
-		case UnlessOP:
-			doContinue, withParent, executionError = p.unlessOP(context, code)
-			if !doContinue && executionError == nil {
-				if withParent {
-					// When Redo, Break, Continue or Return with parent, exit
-					return nil, nil
-				} else {
-					// When return and no parent break the loop
-					break bytecodeExecutionLoop
-				}
-			}
-		case UnlessOneLinerOP:
-			object, executionError = p.unlessOneLinerOP(context, code)
+
 		// Special Instructions
 		case LoadFunctionArgumentsOP:
 			executionError = p.loadFunctionArgumentsOP(context, code)
@@ -176,6 +150,10 @@ bytecodeExecutionLoop:
 			executionError = p.newFunctionOP(context, bytecode, code)
 		case JumpOP:
 			executionError = p.jumpOP(bytecode, code)
+		case IfJumpOP:
+			executionError = p.ifJumpOP(context, bytecode, code)
+		case UnlessJumpOP:
+			executionError = p.unlessJumpOP(context, bytecode, code)
 		case RedoOP:
 			// executionError = p.jumpOP(bytecode, code)
 			context.StateStack.Peek().Action = Redo
@@ -543,207 +521,6 @@ func (p *Plasma) returnOP(context *Context, code Code) *Object {
 	return nil
 }
 
-func (p *Plasma) ifOP(context *Context, code Code) (bool, bool, *Object) {
-	propagateToParent := context.StateStack.HasNext()
-	if context.ToFunctionPropagationStack.HasNext() {
-		context.ToFunctionPropagationStack.Peek().PropagationLevel++
-		defer context.ToFunctionPropagationStack.Peek().Decrement()
-	}
-
-	ifStatement := &stateEntry{
-		Action: NoAction,
-	}
-	context.StateStack.Push(
-		ifStatement,
-	)
-	defer context.StateStack.Pop()
-
-	ifInformation := code.Value.(*IfInformation)
-	condition, executionError := p.Execute(context, NewBytecodeFromArray(ifInformation.Condition))
-	if executionError != nil {
-		return true, propagateToParent, executionError
-	}
-	var conditionBool bool
-	conditionBool, executionError = p.QuickGetBool(context, condition)
-	if executionError != nil {
-		return true, propagateToParent, executionError
-	}
-	if conditionBool {
-		_, executionError = p.Execute(context, NewBytecodeFromArray(ifInformation.Body))
-		switch ifStatement.Action {
-		case Break, Continue, Redo:
-			// Should always have a parent
-			context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-			return false, propagateToParent, executionError
-		case Return:
-			// Some times without parent
-			if propagateToParent {
-				context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-			}
-			return false, propagateToParent, executionError
-		default:
-			break
-		}
-		return true, propagateToParent, executionError
-	}
-	for _, elif := range ifInformation.ElifBlocks {
-		condition, executionError = p.Execute(context, NewBytecodeFromArray(elif.Condition))
-		if executionError != nil {
-			return true, propagateToParent, executionError
-		}
-		conditionBool, executionError = p.QuickGetBool(context, condition)
-		if conditionBool {
-			_, executionError = p.Execute(context, NewBytecodeFromArray(elif.Body))
-			switch ifStatement.Action {
-			case Break, Continue, Redo:
-				// Should always have a parent
-				context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-				return false, propagateToParent, executionError
-			case Return:
-				// Some times without parent
-				if propagateToParent {
-					context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-				}
-				return false, propagateToParent, executionError
-			default:
-				break
-			}
-			return true, propagateToParent, executionError
-		}
-	}
-	_, executionError = p.Execute(context, NewBytecodeFromArray(ifInformation.Else))
-	switch ifStatement.Action {
-	case Break, Continue, Redo:
-		// Should always have a parent
-		context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-		return false, propagateToParent, executionError
-	case Return:
-		// Some times without parent
-		if propagateToParent {
-			context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-		}
-		return false, propagateToParent, executionError
-	default:
-		break
-	}
-	return true, propagateToParent, executionError
-}
-
-func (p *Plasma) ifOneLinerOP(context *Context, code Code) (Value, *Object) {
-	ifInformation := code.Value.(*IfInformation)
-	condition, executionError := p.Execute(context, NewBytecodeFromArray(ifInformation.Condition))
-	if executionError != nil {
-		return nil, executionError
-	}
-	var conditionBool bool
-	conditionBool, executionError = p.QuickGetBool(context, condition)
-	if conditionBool {
-		return p.Execute(context, NewBytecodeFromArray(ifInformation.Body))
-	} else if ifInformation.Else != nil {
-		return p.Execute(context, NewBytecodeFromArray(ifInformation.Else))
-	}
-	return p.GetNone(), nil
-}
-
-func (p *Plasma) unlessOP(context *Context, code Code) (bool, bool, *Object) {
-	propagateToParent := context.StateStack.HasNext()
-	if context.ToFunctionPropagationStack.HasNext() {
-		context.ToFunctionPropagationStack.Peek().PropagationLevel++
-		defer context.ToFunctionPropagationStack.Peek().Decrement()
-	}
-
-	ifStatement := &stateEntry{
-		Action: NoAction,
-	}
-	context.StateStack.Push(
-		ifStatement,
-	)
-	defer context.StateStack.Pop()
-
-	ifInformation := code.Value.(*IfInformation)
-	condition, executionError := p.Execute(context, NewBytecodeFromArray(ifInformation.Condition))
-	if executionError != nil {
-		return true, propagateToParent, executionError
-	}
-	var conditionBool bool
-	conditionBool, executionError = p.QuickGetBool(context, condition)
-	if !conditionBool {
-		_, executionError = p.Execute(context, NewBytecodeFromArray(ifInformation.Body))
-		switch ifStatement.Action {
-		case Break, Continue, Redo:
-			// Should always have a parent
-			context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-			return false, propagateToParent, executionError
-		case Return:
-			// Some times without parent
-			if propagateToParent {
-				context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-			}
-			return false, propagateToParent, executionError
-		default:
-			break
-		}
-		return true, propagateToParent, executionError
-	}
-	for _, elif := range ifInformation.ElifBlocks {
-		condition, executionError = p.Execute(context, NewBytecodeFromArray(elif.Condition))
-		if executionError != nil {
-			return true, propagateToParent, executionError
-		}
-		conditionBool, executionError = p.QuickGetBool(context, condition)
-		if !conditionBool {
-			_, executionError = p.Execute(context, NewBytecodeFromArray(elif.Body))
-			switch ifStatement.Action {
-			case Break, Continue, Redo:
-				// Should always have a parent
-				context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-				return false, propagateToParent, executionError
-			case Return:
-				// Some times without parent
-				if propagateToParent {
-					context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-				}
-				return false, propagateToParent, executionError
-			default:
-				break
-			}
-			return true, propagateToParent, executionError
-		}
-	}
-	_, executionError = p.Execute(context, NewBytecodeFromArray(ifInformation.Else))
-	switch ifStatement.Action {
-	case Break, Continue, Redo:
-		// Should always have a parent
-		context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-		return false, propagateToParent, executionError
-	case Return:
-		// Some times without parent
-		if propagateToParent {
-			context.StateStack.head.next.value.(*stateEntry).Action = context.StateStack.Peek().Action
-		}
-		return false, propagateToParent, executionError
-	default:
-		break
-	}
-	return true, propagateToParent, executionError
-}
-
-func (p *Plasma) unlessOneLinerOP(context *Context, code Code) (Value, *Object) {
-	ifInformation := code.Value.(*IfInformation)
-	condition, executionError := p.Execute(context, NewBytecodeFromArray(ifInformation.Condition))
-	if executionError != nil {
-		return nil, executionError
-	}
-	var conditionBool bool
-	conditionBool, executionError = p.QuickGetBool(context, condition)
-	if !conditionBool {
-		return p.Execute(context, NewBytecodeFromArray(ifInformation.Body))
-	} else if ifInformation.Else != nil {
-		return p.Execute(context, NewBytecodeFromArray(ifInformation.Else))
-	}
-	return p.GetNone(), nil
-}
-
 // Special Instructions
 
 func (p *Plasma) loadFunctionArgumentsOP(context *Context, code Code) *Object {
@@ -769,6 +546,30 @@ func (p *Plasma) newFunctionOP(context *Context, bytecode *Bytecode, code Code) 
 
 func (p *Plasma) jumpOP(bytecode *Bytecode, code Code) *Object {
 	bytecode.index += code.Value.(int)
+	return nil
+}
+
+func (p *Plasma) ifJumpOP(context *Context, bytecode *Bytecode, code Code) *Object {
+	condition := context.MemoryStack.Pop()
+	conditionBool, executionError := p.QuickGetBool(context, condition)
+	if executionError != nil {
+		return executionError
+	}
+	if !conditionBool {
+		bytecode.index += code.Value.(int)
+	}
+	return nil
+}
+
+func (p *Plasma) unlessJumpOP(context *Context, bytecode *Bytecode, code Code) *Object {
+	condition := context.MemoryStack.Pop()
+	conditionBool, executionError := p.QuickGetBool(context, condition)
+	if executionError != nil {
+		return executionError
+	}
+	if conditionBool {
+		bytecode.index += code.Value.(int)
+	}
 	return nil
 }
 
