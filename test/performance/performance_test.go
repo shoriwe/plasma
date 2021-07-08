@@ -48,17 +48,8 @@ func test(t *testing.T, script string) {
 		t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.GetString()))
 		return
 	}
-
+	fmt.Println(output.String())
 }
-
-// At this moment, all this tests are extremely slow to consider them successful
-
-/*
-
-func TestFibonacci(t *testing.T) {
-	test(t, filepath.Join("test", performance, fibonacci))
-}
-*/
 
 func TestWhile(t *testing.T) {
 	test(t, filepath.Join("test", performance, whileTest))
@@ -66,4 +57,8 @@ func TestWhile(t *testing.T) {
 
 func TestFor(t *testing.T) {
 	test(t, filepath.Join("test", performance, forTest))
+}
+
+func TestFibonacci(t *testing.T) {
+	test(t, filepath.Join("test", performance, fibonacci))
 }

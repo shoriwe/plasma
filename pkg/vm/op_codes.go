@@ -55,10 +55,12 @@ const (
 	AssignIdentifierOP
 	AssignSelectorOP
 	AssignIndexOP
-	IfOP
-	IfOneLinerOP
-	UnlessOP
-	UnlessOneLinerOP
+	IfJumpOP
+	LoadForReloadOP
+	UnlessJumpOP
+	SetupLoopOP
+	PopLoopOP
+	UnpackForLoopOP
 	BreakOP
 	RedoOP
 	ContinueOP
@@ -72,12 +74,11 @@ const (
 	PushOP
 	PopOP
 	NOP
-	ForLoopOP
-	WhileLoop
-	DoWhileLoop
 	NewIteratorOP
 
-	TryOP
+	SetupTryOP
+	PopTryOP
+	ExceptOP
 
 	NewModuleOP
 	NewClassOP

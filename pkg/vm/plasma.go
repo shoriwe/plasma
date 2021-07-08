@@ -16,15 +16,14 @@ const (
 type ObjectLoader func(*Context, *Plasma) Value
 
 type Plasma struct {
-	currentId          int64
-	builtInContext     *Context
-	builtInSymbolTable *SymbolTable
-	Crc32Hash          hash.Hash32
-	seed               uint64
-	stdinScanner       *bufio.Scanner
-	stdin              io.Reader
-	stdout             io.Writer
-	stderr             io.Writer
+	currentId      int64
+	builtInContext *Context
+	Crc32Hash      hash.Hash32
+	seed           uint64
+	stdinScanner   *bufio.Scanner
+	stdin          io.Reader
+	stdout         io.Writer
+	stderr         io.Writer
 }
 
 func (p *Plasma) HashString(s string) int64 {
@@ -56,12 +55,12 @@ func (p *Plasma) Seed() uint64 {
 	This function should be used to load custom object in the built-in symbol table
 */
 func (p *Plasma) LoadBuiltInObject(symbolName string, loader ObjectLoader) {
-	p.builtInSymbolTable.Set(symbolName, loader(p.builtInContext, p))
+	p.builtInContext.PeekSymbolTable().Set(symbolName, loader(p.builtInContext, p))
 }
 
 func (p *Plasma) LoadBuiltInSymbols(symbolMap map[string]ObjectLoader) {
 	for symbol, loader := range symbolMap {
-		p.builtInSymbolTable.Set(symbol, loader(p.builtInContext, p))
+		p.builtInContext.PeekSymbolTable().Set(symbol, loader(p.builtInContext, p))
 	}
 }
 
@@ -87,7 +86,7 @@ func (p *Plasma) StdErr() io.Writer {
 }
 
 func (p *Plasma) BuiltInSymbols() *SymbolTable {
-	return p.builtInSymbolTable
+	return p.builtInContext.PeekSymbolTable()
 }
 
 func (p *Plasma) NextId() int64 {
@@ -97,7 +96,7 @@ func (p *Plasma) NextId() int64 {
 }
 
 func (p *Plasma) InitializeContext(context *Context) {
-	symbols := NewSymbolTable(p.builtInSymbolTable)
+	symbols := NewSymbolTable(p.builtInContext.PeekSymbolTable())
 	symbols.Set("__built_in__",
 		&Object{
 			id:         p.NextId(),
@@ -105,7 +104,7 @@ func (p *Plasma) InitializeContext(context *Context) {
 			class:      nil,
 			subClasses: nil,
 			isBuiltIn:  true,
-			symbols:    p.builtInSymbolTable,
+			symbols:    p.builtInContext.PeekSymbolTable(),
 		},
 	)
 	symbols.Set(Self,
@@ -117,7 +116,7 @@ func (p *Plasma) InitializeContext(context *Context) {
 			symbols:    symbols,
 		},
 	)
-	context.SymbolTableStack.Push(symbols)
+	context.SymbolStack.Push(symbols)
 }
 
 func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
@@ -135,6 +134,7 @@ func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 		stdout:         stdout,
 		stderr:         stderr,
 	}
+	vm.builtInContext.PushSymbolTable(NewSymbolTable(nil))
 	vm.InitializeBuiltIn()
 	return vm
 }

@@ -115,75 +115,58 @@ const (
 	SetLength               = "SetLength"
 )
 
-const (
-	Redo = iota
-	Break
-	Continue
-	Return
-	NoAction
-)
+type LoopSettings struct {
+	Source            Value
+	Next              Value
+	HasNext           Value
+	Receivers         []string
+	MappedReceivers   map[string]Value
+	NumberOfReceivers int
+	Jump              int
+}
 
-type ForLoopSettings struct {
+type TrySettings struct {
+	StartIndex int
 	BodyLength int
-	Receivers  []string
-}
-
-type IfInformation struct {
-	Condition  []Code
-	Body       []Code
-	ElifBlocks []*IfInformation
-	Else       []Code
-}
-
-type ExceptBlock struct {
-	TargetErrors [][]Code
-	Receiver     string
-	Body         []Code
-}
-
-type TryInformation struct {
-	Body         []Code
-	ExceptBlocks []*ExceptBlock
-	Else         []Code
-	Finally      []Code
+	LastError  Value
 }
 
 type Context struct {
-	ToFunctionPropagationStack *PropagationStack
-	MemoryStack                *ObjectStack
-	StateStack                 *StateStack
-	SymbolTableStack           *SymbolStack
+	LoopStack   *LoopStack
+	ObjectStack *ObjectStack
+	TryStack    *TryStack
+	SymbolStack *SymbolStack
 }
 
 func NewContext() *Context {
 	result := &Context{
-		ToFunctionPropagationStack: NewPropagationStack(),
-		MemoryStack:                NewObjectStack(),
-		StateStack:                 NewStateStack(),
-		SymbolTableStack:           NewSymbolStack(),
+		LoopStack:   NewLoopStack(),
+		ObjectStack: NewObjectStack(),
+		TryStack:    NewTryStack(),
+		SymbolStack: NewSymbolStack(),
 	}
 	return result
 }
 
 func (c *Context) PushObject(object Value) {
-	c.MemoryStack.Push(object)
+	c.ObjectStack.Push(object)
 }
 func (c *Context) PeekObject() Value {
-	return c.MemoryStack.Peek()
+	return c.ObjectStack.Peek()
 }
 
 func (c *Context) PopObject() Value {
-	return c.MemoryStack.Pop()
+	return c.ObjectStack.Pop()
 }
 
 func (c *Context) PushSymbolTable(table *SymbolTable) {
-	c.SymbolTableStack.Push(table)
+	c.SymbolStack.Push(table)
 }
 
 func (c *Context) PopSymbolTable() *SymbolTable {
-	return c.SymbolTableStack.Pop()
+	return c.SymbolStack.Pop()
 }
 
 func (c *Context) PeekSymbolTable() *SymbolTable {
-	return c.SymbolTableStack.Peek()
+	return c.SymbolStack.Peek()
 }

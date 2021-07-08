@@ -259,7 +259,6 @@ func (c *Compiler) compileIfOneLinerExpression(ifOneLineExpression *ast.IfOneLin
 	if resultCompilationError != nil {
 		return nil, resultCompilationError
 	}
-
 	var elseResult []vm.Code
 	if ifOneLineExpression.ElseResult != nil {
 		var elseResultCompilationError *errors.Error
@@ -273,16 +272,15 @@ func (c *Compiler) compileIfOneLinerExpression(ifOneLineExpression *ast.IfOneLin
 			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
 		)
 	}
-	return []vm.Code{
-		vm.NewCode(vm.IfOneLinerOP, errors.UnknownLine,
-			&vm.IfInformation{
-				Condition:  condition,
-				Body:       ifResult,
-				ElifBlocks: nil,
-				Else:       elseResult,
-			},
-		),
-	}, nil
+	elseResultLength := len(elseResult)
+	result := condition
+	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(ifResult)+2))
+	result = append(result, ifResult...)
+	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
+	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseResultLength+1))
+	result = append(result, elseResult...)
+	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
+	return result, nil
 }
 
 func (c *Compiler) compileUnlessOneLinerExpression(ifOneLineExpression *ast.UnlessOneLinerExpression) ([]vm.Code, *errors.Error) {
@@ -309,16 +307,16 @@ func (c *Compiler) compileUnlessOneLinerExpression(ifOneLineExpression *ast.Unle
 			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
 		)
 	}
-	return []vm.Code{
-		vm.NewCode(vm.UnlessOneLinerOP, errors.UnknownLine,
-			&vm.IfInformation{
-				Condition:  condition,
-				Body:       ifResult,
-				ElifBlocks: nil,
-				Else:       elseResult,
-			},
-		),
-	}, nil
+	elseResultLength := len(elseResult)
+	result := condition
+	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(ifResult)+1))
+	result = append(result, ifResult...)
+	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
+	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseResultLength+1))
+	result = append(result, elseResult...)
+	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
+
+	return result, nil
 }
 
 func (c *Compiler) compileIndexExpression(indexExpression *ast.IndexExpression) ([]vm.Code, *errors.Error) {
@@ -742,16 +740,27 @@ func (c *Compiler) compileReturnStatement(returnStatement *ast.ReturnStatement) 
 	return append(result, vm.NewCode(vm.ReturnOP, errors.UnknownLine, numberOfResults)), nil
 }
 
+type ElifInformation struct {
+	Condition       []vm.Code
+	ConditionLength int
+	Body            []vm.Code
+	BodyLength      int
+}
+
 func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) ([]vm.Code, *errors.Error) {
 	condition, conditionCompilationError := c.compileExpression(true, ifStatement.Condition)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
+	totalLength := 0
 	body, bodyCompilationError := c.compileBody(ifStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var elifBlocks []*vm.IfInformation
+	bodyLength := len(body)
+	totalLength += bodyLength
+	numberOfElifBlocks := 0
+	var elifBlocks []ElifInformation
 	for _, elifBlock := range ifStatement.ElifBlocks {
 		elifCondition, elifConditionCompilationError := c.compileExpression(true, elifBlock.Condition)
 		if elifConditionCompilationError != nil {
@@ -761,13 +770,18 @@ func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) ([]vm.Code, 
 		if elifBodyCompilationError != nil {
 			return nil, elifBodyCompilationError
 		}
-		elifBlocks = append(elifBlocks, &vm.IfInformation{
-			Condition:  elifCondition,
-			Body:       elifBody,
-			ElifBlocks: nil,
-			Else:       nil,
+		elifConditionLength := len(elifCondition)
+		elifLength := len(elifBody)
+		totalLength += elifConditionLength + 1 + elifLength + 1
+		elifBlocks = append(elifBlocks, ElifInformation{
+			Condition:       elifCondition,
+			ConditionLength: elifConditionLength,
+			Body:            elifBody,
+			BodyLength:      elifLength,
 		})
+		numberOfElifBlocks++
 	}
+	elseBodyLength := 0
 	var elseBody []vm.Code
 	var elseCompilationError *errors.Error
 	if ifStatement.Else != nil {
@@ -775,14 +789,34 @@ func (c *Compiler) compileIfStatement(ifStatement *ast.IfStatement) ([]vm.Code, 
 		if elseCompilationError != nil {
 			return nil, elseCompilationError
 		}
+		elseBodyLength = len(elseBody)
 	}
-	ifInformation := &vm.IfInformation{
-		Condition:  condition,
-		Body:       body,
-		ElifBlocks: elifBlocks,
-		Else:       elseBody,
+	totalLength += elseBodyLength
+	result := condition
+	jump := 0
+	if numberOfElifBlocks > 0 || elseBodyLength > 0 {
+		jump = 1
 	}
-	return []vm.Code{vm.NewCode(vm.IfOP, errors.UnknownLine, ifInformation)}, nil
+	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyLength+jump))
+	result = append(result, body...)
+	if numberOfElifBlocks > 0 {
+		totalLength -= bodyLength
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, totalLength))
+		for _, elifBlock := range elifBlocks {
+			result = append(result, elifBlock.Condition...)
+			result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, elifBlock.BodyLength+1))
+			result = append(result, elifBlock.Body...)
+			totalLength -= elifBlock.ConditionLength - 1 - elifBlock.BodyLength - 1
+			result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, totalLength))
+		}
+		if elseBodyLength > 0 {
+			result = append(result, elseBody...)
+		}
+	} else if elseBodyLength > 0 {
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseBodyLength))
+		result = append(result, elseBody...)
+	}
+	return result, nil
 }
 
 func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) ([]vm.Code, *errors.Error) {
@@ -790,11 +824,15 @@ func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) 
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
+	totalLength := 0
 	body, bodyCompilationError := c.compileBody(unlessStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var elifBlocks []*vm.IfInformation
+	bodyLength := len(body)
+	totalLength += bodyLength
+	numberOfElifBlocks := 0
+	var elifBlocks []ElifInformation
 	for _, elifBlock := range unlessStatement.ElifBlocks {
 		elifCondition, elifConditionCompilationError := c.compileExpression(true, elifBlock.Condition)
 		if elifConditionCompilationError != nil {
@@ -804,13 +842,18 @@ func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) 
 		if elifBodyCompilationError != nil {
 			return nil, elifBodyCompilationError
 		}
-		elifBlocks = append(elifBlocks, &vm.IfInformation{
-			Condition:  elifCondition,
-			Body:       elifBody,
-			ElifBlocks: nil,
-			Else:       nil,
+		elifConditionLength := len(elifCondition)
+		elifLength := len(elifBody)
+		totalLength += elifConditionLength + 1 + elifLength + 1
+		elifBlocks = append(elifBlocks, ElifInformation{
+			Condition:       elifCondition,
+			ConditionLength: elifConditionLength,
+			Body:            elifBody,
+			BodyLength:      elifLength,
 		})
+		numberOfElifBlocks++
 	}
+	elseBodyLength := 0
 	var elseBody []vm.Code
 	var elseCompilationError *errors.Error
 	if unlessStatement.Else != nil {
@@ -818,14 +861,34 @@ func (c *Compiler) compileUnlessStatement(unlessStatement *ast.UnlessStatement) 
 		if elseCompilationError != nil {
 			return nil, elseCompilationError
 		}
+		elseBodyLength = len(elseBody)
 	}
-	ifInformation := &vm.IfInformation{
-		Condition:  condition,
-		Body:       body,
-		ElifBlocks: elifBlocks,
-		Else:       elseBody,
+	totalLength += elseBodyLength
+	result := condition
+	jump := 0
+	if numberOfElifBlocks > 0 || elseBodyLength > 0 {
+		jump = 1
 	}
-	return []vm.Code{vm.NewCode(vm.UnlessOP, errors.UnknownLine, ifInformation)}, nil
+	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, bodyLength+jump))
+	result = append(result, body...)
+	if numberOfElifBlocks > 0 {
+		totalLength -= bodyLength
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, totalLength))
+		for _, elifBlock := range elifBlocks {
+			result = append(result, elifBlock.Condition...)
+			result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, elifBlock.BodyLength+1))
+			result = append(result, elifBlock.Body...)
+			totalLength -= elifBlock.ConditionLength - 1 - elifBlock.BodyLength - 1
+			result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, totalLength))
+		}
+		if elseBodyLength > 0 {
+			result = append(result, elseBody...)
+		}
+	} else if elseBodyLength > 0 {
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseBodyLength))
+		result = append(result, elseBody...)
+	}
+	return result, nil
 }
 
 func (c *Compiler) compileRedoStatement() ([]vm.Code, *errors.Error) {
@@ -849,15 +912,26 @@ func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatemen
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
+	conditionLength := len(condition)
 	body, bodyCompilationError := c.compileBody(doWhileStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	result := []vm.Code{
-		vm.NewCode(vm.DoWhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
+	bodyLength := len(body)
+	for index, instruction := range body {
+		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
+			body[index].Value = (bodyLength - index) + conditionLength
+		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
+			body[index].Value = (bodyLength - index) - 1
+		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
+			body[index].Value = -(index + 1)
+		}
 	}
+	result := body
 	result = append(result, condition...)
-	result = append(result, body...)
+	result = append(result,
+		vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, -(bodyLength+conditionLength+1)),
+	)
 	return result, nil
 }
 
@@ -866,32 +940,35 @@ func (c *Compiler) compileWhileLoopStatement(whileStatement *ast.WhileLoopStatem
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
+	conditionLength := len(condition)
 	body, bodyCompilationError := c.compileBody(whileStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	result := []vm.Code{
-		vm.NewCode(vm.WhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
+	bodyLength := len(body)
+	for index, instruction := range body {
+		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
+			body[index].Value = bodyLength - index
+		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
+			body[index].Value = -(conditionLength + index + 2)
+		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
+			body[index].Value = -(index + 1)
+		}
 	}
-	result = append(result, condition...)
+	result := condition
+	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyLength+1))
 	result = append(result, body...)
+	result = append(result,
+		vm.NewCode(vm.ContinueOP, errors.UnknownLine,
+			-(conditionLength+1+bodyLength+1),
+		),
+	)
 	return result, nil
 }
 
 func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) ([]vm.Code, *errors.Error) {
-	condition, conditionCompilationError := c.compileExpression(true,
-		&ast.UnaryExpression{
-			Operator: &lexer.Token{
-				String:      "not",
-				DirectValue: lexer.Not,
-				Kind:        lexer.Operator,
-				Line:        0,
-				Column:      0,
-				Index:       0,
-			},
-			X: untilLoop.Condition,
-		},
-	)
+	condition, conditionCompilationError := c.compileExpression(true, untilLoop.Condition)
+	conditionLength := len(condition)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
@@ -899,16 +976,29 @@ func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) 
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	result := []vm.Code{
-		vm.NewCode(vm.WhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
+	bodyLength := len(body)
+	for index, instruction := range body {
+		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
+			body[index].Value = bodyLength - index
+		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
+			body[index].Value = -(conditionLength + index + 2)
+		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
+			body[index].Value = -(index + 1)
+		}
 	}
-	result = append(result, condition...)
+	result := condition
+	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, bodyLength+1))
 	result = append(result, body...)
+	result = append(result,
+		vm.NewCode(vm.ContinueOP, errors.UnknownLine,
+			-(conditionLength+1+bodyLength+1),
+		),
+	)
 	return result, nil
 }
 
 func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) ([]vm.Code, *errors.Error) {
-	result, sourceCompilationError := c.compileExpression(true, forStatement.Source)
+	source, sourceCompilationError := c.compileExpression(true, forStatement.Source)
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
 	}
@@ -920,16 +1010,37 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) (
 	if compilationError != nil {
 		return nil, compilationError
 	}
+	bodyLength := len(body)
+	for index, instruction := range body {
+		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
+			body[index].Value = bodyLength - index
+		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
+			body[index].Value = -(index + 3)
+		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
+			body[index].Value = -(index + 2)
+		}
+	}
+	result := source
 	result = append(result,
-		vm.NewCode(vm.ForLoopOP, errors.UnknownLine,
-			vm.ForLoopSettings{
-				BodyLength: len(body),
-				Receivers:  receivers,
+		vm.NewCode(vm.SetupLoopOP, errors.UnknownLine,
+			[2]interface{}{
+				receivers, bodyLength + 2,
 			},
 		),
 	)
+	result = append(result, vm.NewCode(vm.UnpackForLoopOP, errors.UnknownLine, nil))
+	result = append(result, vm.NewCode(vm.LoadForReloadOP, errors.UnknownLine, nil))
 	result = append(result, body...)
+	result = append(result, vm.NewCode(vm.ContinueOP, errors.UnknownLine, -(bodyLength+3)))
 	return result, nil
+}
+
+type exceptBlock struct {
+	Targets       []vm.Code
+	TargetsLength int
+	Receiver      string
+	Body          []vm.Code
+	BodyLength    int
 }
 
 func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) ([]vm.Code, *errors.Error) {
@@ -937,47 +1048,96 @@ func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) ([]vm.Cod
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var exceptBlocks []*vm.ExceptBlock
-	for _, exceptBlock := range tryStatement.ExceptBlocks {
-		var targets [][]vm.Code
-		for _, target := range exceptBlock.Targets {
-			targetCode, targetCompilationError := c.compileExpression(true, target)
-			if targetCompilationError != nil {
-				return nil, targetCompilationError
-			}
-			targets = append(targets, targetCode)
+	bodyLength := len(body)
+	totalLength := bodyLength
+	var exceptBlocks []*exceptBlock
+	var numberOfExceptBlocks int
+	for _, except := range tryStatement.ExceptBlocks {
+		targets, targetCompilationError := c.compileExpression(true,
+			&ast.TupleExpression{
+				Values: except.Targets,
+			},
+		)
+		if targetCompilationError != nil {
+			return nil, targetCompilationError
 		}
-		exceptBlockBody, exceptBlockBodyCompilationError := c.compileBody(exceptBlock.Body)
+		targetsLength := len(targets)
+
+		totalLength += targetsLength + 1
+
+		exceptBlockBody, exceptBlockBodyCompilationError := c.compileBody(except.Body)
 		if exceptBlockBodyCompilationError != nil {
 			return nil, exceptBlockBodyCompilationError
 		}
+		exceptBlockBodyLength := len(exceptBlockBody)
+		totalLength += exceptBlockBodyLength + 1
 		receiver := vm.JunkVariable
-		if exceptBlock.CaptureName != nil {
-			receiver = exceptBlock.CaptureName.Token.String
+		if except.CaptureName != nil {
+			receiver = except.CaptureName.Token.String
 		}
 		exceptBlocks = append(exceptBlocks,
-			&vm.ExceptBlock{
-				TargetErrors: targets,
-				Receiver:     receiver,
-				Body:         exceptBlockBody,
+			&exceptBlock{
+				Targets:       targets,
+				TargetsLength: targetsLength,
+				Receiver:      receiver,
+				Body:          exceptBlockBody,
+				BodyLength:    exceptBlockBodyLength,
 			},
 		)
+		numberOfExceptBlocks++
 	}
 	elseBody, elseCompilationError := c.compileBody(tryStatement.Else)
 	if elseCompilationError != nil {
 		return nil, elseCompilationError
 	}
+	elseLength := len(elseBody)
+	totalLength += elseLength
+
 	finallyBody, finallyCompilationError := c.compileBody(tryStatement.Finally)
 	if finallyCompilationError != nil {
 		return nil, finallyCompilationError
 	}
-	tryInformation := &vm.TryInformation{
-		Body:         body,
-		ExceptBlocks: exceptBlocks,
-		Else:         elseBody,
-		Finally:      finallyBody,
+	finallyLength := len(finallyBody)
+
+	var result []vm.Code
+	result = append(result, vm.NewCode(vm.SetupTryOP, errors.UnknownLine, bodyLength))
+	result = append(result, body...)
+	if numberOfExceptBlocks > 0 {
+		totalLength -= bodyLength
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, totalLength))
+		for _, except := range exceptBlocks {
+			result = append(result, except.Targets...)
+			result = append(result,
+				vm.NewCode(vm.ExceptOP, errors.UnknownLine,
+					[2]interface{}{except.Receiver, except.BodyLength + 1},
+				),
+			)
+			result = append(result, except.Body...)
+			totalLength -= except.TargetsLength + 1 + except.BodyLength + 1
+			result = append(result,
+				vm.NewCode(vm.JumpOP, errors.UnknownLine, totalLength),
+			)
+		}
+		if elseLength > 0 {
+			// result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseLength))
+			result = append(result, elseBody...)
+			if finallyLength > 0 {
+				result = append(result, finallyBody...)
+			}
+		} else if finallyLength > 0 {
+			result = append(result, finallyBody...)
+		}
+	} else if elseLength > 0 {
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseLength))
+		result = append(result, elseBody...)
+		if finallyLength > 0 {
+			result = append(result, finallyBody...)
+		}
+	} else if finallyLength > 0 {
+		result = append(result, finallyBody...)
 	}
-	return []vm.Code{vm.NewCode(vm.TryOP, errors.UnknownLine, tryInformation)}, nil
+	result = append(result, vm.NewCode(vm.PopTryOP, errors.UnknownLine, nil))
+	return result, nil
 }
 
 func (c *Compiler) compileModuleStatement(moduleStatement *ast.ModuleStatement) ([]vm.Code, *errors.Error) {

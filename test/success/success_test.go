@@ -134,20 +134,12 @@ func TestAssignStatement(t *testing.T) {
 	test(t, filepath.Join("success", statementSamples, assignStatement))
 }
 
-func TestFunctionDefinitionStatement(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, functionDefinition))
-}
-
 func TestIfStatement(t *testing.T) {
 	test(t, filepath.Join("success", statementSamples, ifStatement))
 }
 
-func TestBeginEndStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, beginEnd))
-}
-
-func TestDoWhileStatement(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, doWhileStatement))
+func TestForStatements(t *testing.T) {
+	test(t, filepath.Join("success", statementSamples, forStatement))
 }
 
 func TestWhileStatements(t *testing.T) {
@@ -158,8 +150,16 @@ func TestUntilStatements(t *testing.T) {
 	test(t, filepath.Join("success", statementSamples, untilStatement))
 }
 
-func TestForStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, forStatement))
+func TestDoWhileStatement(t *testing.T) {
+	test(t, filepath.Join("success", statementSamples, doWhileStatement))
+}
+
+func TestFunctionDefinitionStatement(t *testing.T) {
+	test(t, filepath.Join("success", statementSamples, functionDefinition))
+}
+
+func TestBeginEndStatements(t *testing.T) {
+	test(t, filepath.Join("success", statementSamples, beginEnd))
 }
 
 func TestTryStatements(t *testing.T) {

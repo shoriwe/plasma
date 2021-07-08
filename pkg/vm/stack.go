@@ -76,80 +76,66 @@ func NewSymbolStack() *SymbolStack {
 	}
 }
 
-type stateEntry struct {
-	Action uint8
-}
-
-type StateStack struct {
+type LoopStack struct {
 	head *stackNode
 }
 
-func (stack *StateStack) Pop() *stateEntry {
+func (stack *LoopStack) Pop() *LoopSettings {
 	result := stack.head.value
 	stack.head = stack.head.next
-	return result.(*stateEntry)
+	return result.(*LoopSettings)
 }
 
-func (stack *StateStack) Peek() *stateEntry {
-	return stack.head.value.(*stateEntry)
+func (stack *LoopStack) Peek() *LoopSettings {
+	return stack.head.value.(*LoopSettings)
 }
 
-func (stack *StateStack) Push(tryStackEntry *stateEntry) {
-	stack.head = NewStackNode(tryStackEntry, stack.head)
+func (stack *LoopStack) Push(loopSettings *LoopSettings) {
+	stack.head = NewStackNode(loopSettings, stack.head)
 }
 
-func (stack *StateStack) HasNext() bool {
+func (stack *LoopStack) HasNext() bool {
 	return stack.head != nil
 }
 
-func (stack *StateStack) Clear() {
+func (stack *LoopStack) Clear() {
 	stack.head = nil
 }
 
-func NewStateStack() *StateStack {
-	return &StateStack{
+func NewLoopStack() *LoopStack {
+	return &LoopStack{
 		head: nil,
 	}
 }
 
-type propagationEntry struct {
-	PropagationLevel int
-}
-
-func (p *propagationEntry) Decrement() {
-	p.PropagationLevel--
-}
-
-type PropagationStack struct {
+type TryStack struct {
 	head *stackNode
 }
 
-func (stack *PropagationStack) Pop() *propagationEntry {
+func (stack *TryStack) Pop() *TrySettings {
 	result := stack.head.value
 	stack.head = stack.head.next
-	return result.(*propagationEntry)
+	return result.(*TrySettings)
 }
 
-func (stack *PropagationStack) Peek() *propagationEntry {
-	return stack.head.value.(*propagationEntry)
+func (stack *TryStack) Peek() *TrySettings {
+	return stack.head.value.(*TrySettings)
 }
 
-func (stack *PropagationStack) Push(initialPropagation int) {
-	stack.head = NewStackNode(&propagationEntry{
-		PropagationLevel: initialPropagation,
-	}, stack.head)
+func (stack *TryStack) Push(loopSettings *TrySettings) {
+	stack.head = NewStackNode(loopSettings, stack.head)
 }
 
-func (stack *PropagationStack) HasNext() bool {
+func (stack *TryStack) HasNext() bool {
 	return stack.head != nil
 }
 
-func (stack *PropagationStack) Clear() {
+func (stack *TryStack) Clear() {
 	stack.head = nil
 }
 
-func NewPropagationStack() *PropagationStack {
-	return &PropagationStack{
+func NewTryStack() *TryStack {
+	return &TryStack{
 		head: nil,
 	}
 }

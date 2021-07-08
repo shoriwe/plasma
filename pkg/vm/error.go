@@ -38,7 +38,7 @@ func (p *Plasma) ForceAnyGetAny(context *Context, name string) Value {
 }
 
 func (p *Plasma) ForceMasterGetAny(name string) Value {
-	object, getError := p.builtInSymbolTable.GetAny(name)
+	object, getError := p.builtInContext.PeekSymbolTable().GetAny(name)
 	if getError != nil {
 		panic(getError.String())
 	}
