@@ -115,17 +115,14 @@ const (
 	SetLength               = "SetLength"
 )
 
-const (
-	Redo = iota
-	Break
-	Continue
-	Return
-	NoAction
-)
-
-type ForLoopSettings struct {
-	BodyLength int
-	Receivers  []string
+type LoopSettings struct {
+	Source            Value
+	Next              Value
+	HasNext           Value
+	Receivers         []string
+	MappedReceivers   map[string]Value
+	NumberOfReceivers int
+	Jump              int
 }
 
 type ExceptBlock struct {
@@ -142,18 +139,16 @@ type TryInformation struct {
 }
 
 type Context struct {
-	ToFunctionPropagationStack *PropagationStack
-	MemoryStack                *ObjectStack
-	StateStack                 *StateStack
-	SymbolTableStack           *SymbolStack
+	LoopStack        *LoopStack
+	MemoryStack      *ObjectStack
+	SymbolTableStack *SymbolStack
 }
 
 func NewContext() *Context {
 	result := &Context{
-		ToFunctionPropagationStack: NewPropagationStack(),
-		MemoryStack:                NewObjectStack(),
-		StateStack:                 NewStateStack(),
-		SymbolTableStack:           NewSymbolStack(),
+		LoopStack:        NewLoopStack(),
+		MemoryStack:      NewObjectStack(),
+		SymbolTableStack: NewSymbolStack(),
 	}
 	return result
 }

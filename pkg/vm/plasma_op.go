@@ -1,8 +1,9 @@
 package vm
 
 import (
+	"errors"
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/errors"
+	errors2 "github.com/shoriwe/gplasma/pkg/errors"
 )
 
 func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (Value, *Object) {
@@ -13,7 +14,6 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (Value, *Object) 
 	// defer fmt.Println(context.MemoryStack.HasNext())
 	var executionError *Object
 	var object Value
-	var doContinue bool
 bytecodeExecutionLoop:
 	for ; bytecode.HasNext(); {
 		code := bytecode.Next()
@@ -134,15 +134,7 @@ bytecodeExecutionLoop:
 			executionError = p.assignIndexOP(context)
 		case ReturnOP:
 			executionError = p.returnOP(context, code)
-			if context.StateStack.HasNext() {
-				if context.ToFunctionPropagationStack.Peek().PropagationLevel > 0 {
-					// Do not Pop the value from the stack
-					context.StateStack.Peek().Action = Return
-					return nil, executionError
-				}
-			}
 			break bytecodeExecutionLoop
-
 		// Special Instructions
 		case LoadFunctionArgumentsOP:
 			executionError = p.loadFunctionArgumentsOP(context, code)
@@ -154,17 +146,20 @@ bytecodeExecutionLoop:
 			executionError = p.ifJumpOP(context, bytecode, code)
 		case UnlessJumpOP:
 			executionError = p.unlessJumpOP(context, bytecode, code)
+		case SetupLoopOP:
+			executionError = p.setupForLoopOP(context, code)
+		case PopLoopOP:
+			context.LoopStack.Pop()
+		case LoadForReloadOP:
+			executionError = p.loadForLoopArguments(context)
+		case UnpackForLoopOP:
+			executionError = p.unpackForLoopOP(context, bytecode)
 		case RedoOP:
-			// executionError = p.jumpOP(bytecode, code)
-			context.StateStack.Peek().Action = Redo
-			return nil, nil
+			executionError = p.jumpOP(bytecode, code)
 		case BreakOP:
-			// executionError = p.jumpOP(bytecode, code)
-			context.StateStack.Peek().Action = Break
-			return nil, nil
+			executionError = p.jumpOP(bytecode, code)
 		case ContinueOP:
-			// executionError = p.jumpOP(bytecode, code)
-			return nil, nil
+			executionError = p.jumpOP(bytecode, code)
 		case PushOP:
 			if object != nil {
 				context.MemoryStack.Push(object)
@@ -174,43 +169,6 @@ bytecodeExecutionLoop:
 			context.MemoryStack.Pop()
 		case NOP:
 			break
-		case DoWhileLoop:
-			doContinue, executionError = p.setupDoWhileLoop(context, bytecode, code)
-			if !doContinue && executionError == nil {
-				if context.ToFunctionPropagationStack.HasNext() {
-					if context.ToFunctionPropagationStack.Peek().PropagationLevel == 0 {
-						if context.MemoryStack.HasNext() {
-							return context.MemoryStack.Pop(), nil
-						}
-					}
-				}
-				return nil, nil // Only called when Return is called in the body
-			}
-		case WhileLoop:
-			doContinue, executionError = p.setupWhileLoop(context, bytecode, code)
-			if !doContinue && executionError == nil {
-				// Only executed when Return is called in the body
-				if context.ToFunctionPropagationStack.HasNext() {
-					if context.ToFunctionPropagationStack.Peek().PropagationLevel == 0 {
-						if context.MemoryStack.HasNext() {
-							return context.MemoryStack.Pop(), nil
-						}
-					}
-				}
-				return nil, nil
-			}
-		case ForLoopOP:
-			doContinue, executionError = p.setupForLoopOP(context, bytecode, code)
-			if !doContinue && executionError == nil {
-				if context.ToFunctionPropagationStack.HasNext() {
-					if context.ToFunctionPropagationStack.Peek().PropagationLevel == 0 {
-						if context.MemoryStack.HasNext() {
-							return context.MemoryStack.Pop(), nil
-						}
-					}
-				}
-				return nil, nil // Only called when Return is called in the body
-			}
 		case TryOP:
 			executionError = p.tryOP(context, code)
 		case NewModuleOP:
@@ -463,6 +421,152 @@ func (p *Plasma) newIteratorOP(context *Context, bytecode *Bytecode, code Code) 
 	return generatorIterator, nil
 }
 
+func (p *Plasma) setupForLoopOP(context *Context, code Code) *Object {
+	source := context.MemoryStack.Pop()
+	sourceNext, nextGetError := source.Get(Next)
+	sourceHasNext, hasNextGetError := source.Get(HasNext)
+	var sourceIter Value
+	if nextGetError == nil && hasNextGetError == nil {
+		sourceIter = source
+	} else {
+		sourceToIter, getError := source.Get(Iter)
+		if getError != nil {
+			return p.NewObjectWithNameNotFoundError(context, source.GetClass(p), Iter)
+		}
+		var callError *Object
+		sourceIter, callError = p.CallFunction(context, sourceToIter, context.PeekSymbolTable())
+		if callError != nil {
+			return callError
+		}
+		sourceNext, nextGetError = sourceIter.Get(Next)
+		sourceHasNext, hasNextGetError = sourceIter.Get(HasNext)
+		if nextGetError != nil {
+			return p.NewObjectWithNameNotFoundError(context, sourceIter.GetClass(p), Next)
+		} else if hasNextGetError != nil {
+			return p.NewObjectWithNameNotFoundError(context, sourceIter.GetClass(p), HasNext)
+		}
+	}
+
+	context.LoopStack.Push(
+		&LoopSettings{
+			Receivers:         code.Value.([2]interface{})[0].([]string),
+			NumberOfReceivers: len(code.Value.([2]interface{})[0].([]string)),
+			Source:            sourceIter,
+			Next:              sourceNext,
+			HasNext:           sourceHasNext,
+			Jump:              code.Value.([2]interface{})[1].(int),
+			MappedReceivers:   map[string]Value{},
+		},
+	)
+	return nil
+}
+
+func (p *Plasma) loadForLoopArguments(context *Context) *Object {
+	for name, value := range context.LoopStack.Peek().MappedReceivers {
+		context.PeekSymbolTable().Set(name, value)
+	}
+	return nil
+}
+
+func (p *Plasma) unpackForArguments(context *Context, loopSettings *LoopSettings, result Value) *Object {
+	if loopSettings.NumberOfReceivers == 1 {
+		loopSettings.MappedReceivers[loopSettings.Receivers[0]] = result
+	} else if _, ok := result.(*String); ok {
+		if result.GetLength() != loopSettings.NumberOfReceivers {
+			return p.NewInvalidNumberOfArgumentsError(context, loopSettings.NumberOfReceivers, result.GetLength())
+		}
+		for index, name := range loopSettings.Receivers {
+			loopSettings.MappedReceivers[name] = p.NewString(context, false, context.PeekSymbolTable(), string(result.GetString()[index]))
+		}
+	} else if _, ok = result.(*Bytes); ok {
+		if result.GetLength() != loopSettings.NumberOfReceivers {
+			return p.NewInvalidNumberOfArgumentsError(context, loopSettings.NumberOfReceivers, result.GetLength())
+		}
+		for index, name := range loopSettings.Receivers {
+			loopSettings.MappedReceivers[name] = p.NewInteger(context, false, context.PeekSymbolTable(), int64(result.GetBytes()[index]))
+		}
+	} else if _, ok = result.(*Array); ok {
+		if result.GetLength() != loopSettings.NumberOfReceivers {
+			return p.NewInvalidNumberOfArgumentsError(context, loopSettings.NumberOfReceivers, result.GetLength())
+		}
+		for index, name := range loopSettings.Receivers {
+			loopSettings.MappedReceivers[name] = result.GetContent()[index]
+		}
+	} else if _, ok = result.(*Tuple); ok {
+		if result.GetLength() != loopSettings.NumberOfReceivers {
+			return p.NewInvalidNumberOfArgumentsError(context, loopSettings.NumberOfReceivers, result.GetLength())
+		}
+		for index, name := range loopSettings.Receivers {
+			loopSettings.MappedReceivers[name] = result.GetContent()[index]
+		}
+	} else if _, ok = result.(*HashTable); ok {
+		return p.NewGoRuntimeError(context, errors.New("HashTable doesn't support unpacking"))
+	} else {
+		var hasNext Value
+		var next Value
+		var resultAsIterator Value
+		var hasNextGetError *errors2.Error
+		var nextGetError *errors2.Error
+		hasNext, hasNextGetError = result.Get(HasNext)
+		next, nextGetError = result.Get(Next)
+		if hasNextGetError != nil || nextGetError != nil {
+			resultToIter, getError := result.Get(Iter)
+			if getError != nil {
+				return p.NewObjectWithNameNotFoundError(context, result.GetClass(p), Iter)
+			}
+			var callError *Object
+			resultAsIterator, callError = p.CallFunction(context, resultToIter, result.SymbolTable())
+			if callError != nil {
+				return callError
+			}
+		} else {
+			resultAsIterator = result
+		}
+		for index, name := range loopSettings.Receivers {
+			hasNextResult, callError := p.CallFunction(context, hasNext, resultAsIterator.SymbolTable())
+			if callError != nil {
+				return callError
+			}
+			var hasNextResultBool bool
+			hasNextResultBool, callError = p.QuickGetBool(context, hasNextResult)
+			if !hasNextResultBool {
+				return p.NewInvalidNumberOfArgumentsError(context, index, loopSettings.NumberOfReceivers)
+			}
+			var nextResult Value
+			nextResult, callError = p.CallFunction(context, next, context.PeekSymbolTable())
+			if callError != nil {
+				return callError
+			}
+			context.PeekSymbolTable().Set(name, nextResult)
+		}
+	}
+	return nil
+}
+
+func (p *Plasma) unpackForLoopOP(context *Context, bytecode *Bytecode) *Object {
+	loopSettings := context.LoopStack.Peek()
+	hasNext, callError := p.CallFunction(context, loopSettings.HasNext, loopSettings.Source.SymbolTable())
+	if callError != nil {
+		return callError
+	}
+	var hasNextBool bool
+	hasNextBool, callError = p.QuickGetBool(context, hasNext)
+	if callError != nil {
+		return callError
+	}
+	if !hasNextBool {
+		// Do the jump to outside the loop
+		bytecode.Jump(loopSettings.Jump)
+		return nil
+	}
+	var nextValue Value
+	nextValue, callError = p.CallFunction(context, loopSettings.Next, loopSettings.Source.SymbolTable())
+	if callError != nil {
+		return nil
+	}
+	return p.unpackForArguments(context, loopSettings, nextValue)
+}
+
 // Assign Statement
 
 func (p *Plasma) assignIdentifierOP(context *Context, code Code) *Object {
@@ -571,274 +675,6 @@ func (p *Plasma) unlessJumpOP(context *Context, bytecode *Bytecode, code Code) *
 		bytecode.index += code.Value.(int)
 	}
 	return nil
-}
-
-func (p *Plasma) setupDoWhileLoop(context *Context, bytecode *Bytecode, code Code) (bool, *Object) {
-	propagateToFunction := false
-	if context.ToFunctionPropagationStack.HasNext() { // We are inside a function call
-		propagateToFunction = context.ToFunctionPropagationStack.Peek().PropagationLevel > 0
-		context.ToFunctionPropagationStack.Peek().PropagationLevel++
-		defer context.ToFunctionPropagationStack.Peek().Decrement()
-	}
-	condition := NewBytecodeFromArray(bytecode.NextN(code.Value.([2]int)[0]))
-	body := NewBytecodeFromArray(bytecode.NextN(code.Value.([2]int)[1]))
-	doWhileLoopEntry := &stateEntry{
-		Action: NoAction,
-	}
-	context.StateStack.Push(
-		doWhileLoopEntry,
-	)
-	defer context.StateStack.Pop()
-loop:
-	for {
-	redoLocation:
-		// Execute the body
-		_, executionError := p.Execute(context, body)
-		body.index = 0
-		if executionError != nil {
-			return true, executionError
-		}
-		// Check continue, redo and break
-		switch doWhileLoopEntry.Action {
-		case Break:
-			break loop
-		case Redo:
-			doWhileLoopEntry.Action = NoAction
-			goto redoLocation
-		case Return:
-			if propagateToFunction {
-				context.StateStack.head.next.value.(*stateEntry).Action = Return
-			}
-			return false, nil
-		}
-
-		// Evaluate the condition
-		var result Value
-		result, executionError = p.Execute(context, condition)
-		condition.index = 0
-		if executionError != nil {
-			return true, executionError
-		}
-		var conditionBool bool
-		conditionBool, executionError = p.QuickGetBool(context, result)
-		if !conditionBool {
-			break
-		}
-	}
-	return true, nil
-}
-
-func (p *Plasma) setupWhileLoop(context *Context, bytecode *Bytecode, code Code) (bool, *Object) {
-	propagateToFunction := false
-	if context.ToFunctionPropagationStack.HasNext() { // We are inside a function call
-		propagateToFunction = context.ToFunctionPropagationStack.Peek().PropagationLevel > 0
-		context.ToFunctionPropagationStack.Peek().PropagationLevel++
-		defer context.ToFunctionPropagationStack.Peek().Decrement()
-	}
-	condition := NewBytecodeFromArray(bytecode.NextN(code.Value.([2]int)[0]))
-	body := NewBytecodeFromArray(bytecode.NextN(code.Value.([2]int)[1]))
-	whileLoopEntry := &stateEntry{
-		Action: NoAction,
-	}
-	context.StateStack.Push(
-		whileLoopEntry,
-	)
-	defer context.StateStack.Pop()
-loop:
-	for {
-		// First Evaluate the condition
-		result, executionError := p.Execute(context, condition)
-		condition.index = 0
-		if executionError != nil {
-			return true, executionError
-		}
-
-		var conditionBool bool
-		conditionBool, executionError = p.QuickGetBool(context, result)
-		if !conditionBool {
-			break
-		}
-	redoLocation:
-		// Execute the body
-		_, executionError = p.Execute(context, body)
-		body.index = 0
-		if executionError != nil {
-			return true, executionError
-		}
-		switch whileLoopEntry.Action {
-		case Break:
-			break loop
-		case Redo:
-			whileLoopEntry.Action = NoAction
-			goto redoLocation
-		case Return:
-			if propagateToFunction {
-				context.StateStack.head.next.value.(*stateEntry).Action = Return
-			}
-			return false, nil
-		}
-	}
-	return true, nil
-}
-
-func (p *Plasma) reloadForLoopContext(context *Context, loopContext *map[string]Value, numberOfReceivers int, receivers []string, sourceHasNext Value, sourceNext Value) (bool, *Object) {
-	hasNextObject, callError := p.CallFunction(context, sourceHasNext, sourceHasNext.SymbolTable().Parent)
-	if callError != nil {
-		return false, callError
-	}
-	hasNextObjectBool, executionError := p.QuickGetBool(context, hasNextObject)
-	if executionError != nil {
-		return false, executionError
-	}
-	if !hasNextObjectBool {
-		return false, nil
-	}
-	var value Value
-	value, callError = p.CallFunction(context, sourceNext, sourceNext.SymbolTable())
-	if callError != nil {
-		return false, callError
-	}
-	if numberOfReceivers == 1 {
-		(*loopContext)[receivers[0]] = value
-		return true, nil
-	}
-	// Unpack it as first calling to iter
-	valueIterFunc, getError := value.Get(Iter)
-	if getError != nil {
-		return false, p.NewObjectWithNameNotFoundError(context, value.GetClass(p), Iter)
-	}
-	var valueAsIter Value
-	valueAsIter, callError = p.CallFunction(context, valueIterFunc, valueIterFunc.SymbolTable())
-	if callError != nil {
-		return false, callError
-	}
-	var valueAsIterHasNext Value
-	valueAsIterHasNext, getError = valueAsIter.Get(HasNext)
-	if getError != nil {
-		return false, p.NewObjectWithNameNotFoundError(context, valueAsIter.GetClass(p), HasNext)
-	}
-	var valueAsIterNext Value
-	valueAsIterNext, getError = valueAsIter.Get(Next)
-	if getError != nil {
-		return false, p.NewObjectWithNameNotFoundError(context, valueAsIter.GetClass(p), Next)
-	}
-	for index, receiver := range receivers {
-		hasNextObject, callError = p.CallFunction(context, valueAsIterHasNext, valueAsIterHasNext.SymbolTable())
-		if callError != nil {
-			return false, callError
-		}
-		hasNextObjectBool, executionError = p.QuickGetBool(context, hasNextObject)
-		if executionError != nil {
-			return false, executionError
-		}
-		if !hasNextObjectBool {
-			return false, p.NewInvalidNumberOfArgumentsError(context, numberOfReceivers, index+1)
-		}
-		value, callError = p.CallFunction(context, valueAsIterNext, valueAsIterNext.SymbolTable())
-		if callError != nil {
-			return false, callError
-		}
-		(*loopContext)[receiver] = value
-	}
-	return true, nil
-}
-
-func (p *Plasma) setupForLoopOP(context *Context, bytecode *Bytecode, code Code) (bool, *Object) {
-	propagateToFunction := false
-	if context.ToFunctionPropagationStack.HasNext() { // We are inside a function call
-		propagateToFunction = context.ToFunctionPropagationStack.Peek().PropagationLevel > 0
-		context.ToFunctionPropagationStack.Peek().PropagationLevel++
-		defer context.ToFunctionPropagationStack.Peek().Decrement()
-	}
-	source := context.PopObject()
-	var sourceAsIter Value
-	var getError *errors.Error
-	var callError *Object
-	if _, ok := source.(*Iterator); ok {
-		sourceAsIter = source
-	} else {
-		// Check if it implements HasNext and Next
-
-		_, implementsHasNext := source.Dir()[HasNext]
-		_, implementsNext := source.Dir()[Next]
-		if implementsHasNext && implementsNext {
-			sourceAsIter = source
-		} else {
-			// If Not
-			var sourceIter Value
-			sourceIter, getError = source.Get(Iter)
-			if getError != nil {
-				return true, p.NewObjectWithNameNotFoundError(context, source.GetClass(p), Iter)
-			}
-			sourceAsIter, callError = p.CallFunction(context, sourceIter, sourceIter.SymbolTable())
-			if callError != nil {
-				return true, callError
-			}
-		}
-	}
-
-	loopSettings := code.Value.(ForLoopSettings)
-
-	bodyBytecode := NewBytecodeFromArray(bytecode.NextN(loopSettings.BodyLength))
-	receivers := loopSettings.Receivers
-	forLoopEntry := &stateEntry{
-		Action: NoAction,
-	}
-	context.StateStack.Push(
-		forLoopEntry,
-	)
-	defer context.StateStack.Pop()
-	loopContext := map[string]Value{}
-	var sourceHasNext Value
-	sourceHasNext, getError = sourceAsIter.Get(HasNext)
-	if getError != nil {
-		return true, p.NewObjectWithNameNotFoundError(context, sourceAsIter.GetClass(p), HasNext)
-	}
-	var sourceNext Value
-	sourceNext, getError = sourceAsIter.Get(Next)
-	if getError != nil {
-		return true, p.NewObjectWithNameNotFoundError(context, sourceAsIter.GetClass(p), Next)
-	}
-	receiversLength := len(receivers)
-loop:
-	for {
-		// Update receivers
-		// Check if the iteration can continue
-		hasNext, loadSymbolsError := p.reloadForLoopContext(context, &loopContext, receiversLength, receivers, sourceHasNext, sourceNext)
-		if loadSymbolsError != nil {
-			return true, loadSymbolsError
-		}
-		if !hasNext {
-			break
-		}
-	redoLocation:
-		// Load the receivers
-		for receiver, object := range loopContext {
-			context.PeekSymbolTable().Set(receiver, object)
-		}
-		// Execute body
-		_, bodyExecutionError := p.Execute(context, bodyBytecode)
-		bodyBytecode.index = 0
-		// If fail return return error
-		if bodyExecutionError != nil {
-			return true, bodyExecutionError
-		}
-		// Check continue, redo and break
-		switch forLoopEntry.Action {
-		case Break:
-			break loop
-		case Redo:
-			forLoopEntry.Action = NoAction
-			goto redoLocation
-		case Return:
-			// How I should propagateToFunction it?
-			if propagateToFunction {
-				context.StateStack.head.next.value.(*stateEntry).Action = Return
-			}
-			return false, nil // Do not continue executing the OP codes next to this for loop
-		}
-	}
-	return true, nil
 }
 
 func (p *Plasma) executeFinally(context *Context, finally []Code) *Object {

@@ -912,15 +912,26 @@ func (c *Compiler) compileDoWhileStatement(doWhileStatement *ast.DoWhileStatemen
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
+	conditionLength := len(condition)
 	body, bodyCompilationError := c.compileBody(doWhileStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	result := []vm.Code{
-		vm.NewCode(vm.DoWhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
+	bodyLength := len(body)
+	for index, instruction := range body {
+		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
+			body[index].Value = (bodyLength - index) + conditionLength + 1
+		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
+			body[index].Value = (bodyLength - index) - 1
+		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
+			body[index].Value = -(index + 1)
+		}
 	}
+	result := body
 	result = append(result, condition...)
-	result = append(result, body...)
+	result = append(result,
+		vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, -(bodyLength+conditionLength+1)),
+	)
 	return result, nil
 }
 
@@ -929,32 +940,35 @@ func (c *Compiler) compileWhileLoopStatement(whileStatement *ast.WhileLoopStatem
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
+	conditionLength := len(condition)
 	body, bodyCompilationError := c.compileBody(whileStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	result := []vm.Code{
-		vm.NewCode(vm.WhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
+	bodyLength := len(body)
+	for index, instruction := range body {
+		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
+			body[index].Value = bodyLength - index
+		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
+			body[index].Value = -(conditionLength + index + 2)
+		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
+			body[index].Value = -(index + 1)
+		}
 	}
-	result = append(result, condition...)
+	result := condition
+	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyLength+1))
 	result = append(result, body...)
+	result = append(result,
+		vm.NewCode(vm.ContinueOP, errors.UnknownLine,
+			-(conditionLength+1+bodyLength+1),
+		),
+	)
 	return result, nil
 }
 
 func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) ([]vm.Code, *errors.Error) {
-	condition, conditionCompilationError := c.compileExpression(true,
-		&ast.UnaryExpression{
-			Operator: &lexer.Token{
-				String:      "not",
-				DirectValue: lexer.Not,
-				Kind:        lexer.Operator,
-				Line:        0,
-				Column:      0,
-				Index:       0,
-			},
-			X: untilLoop.Condition,
-		},
-	)
+	condition, conditionCompilationError := c.compileExpression(true, untilLoop.Condition)
+	conditionLength := len(condition)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
@@ -962,16 +976,29 @@ func (c *Compiler) compileUntilLoopStatement(untilLoop *ast.UntilLoopStatement) 
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	result := []vm.Code{
-		vm.NewCode(vm.WhileLoop, errors.UnknownLine, [2]int{len(condition), len(body)}),
+	bodyLength := len(body)
+	for index, instruction := range body {
+		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
+			body[index].Value = bodyLength - index
+		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
+			body[index].Value = -(conditionLength + index + 2)
+		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
+			body[index].Value = -(index + 1)
+		}
 	}
-	result = append(result, condition...)
+	result := condition
+	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, bodyLength+1))
 	result = append(result, body...)
+	result = append(result,
+		vm.NewCode(vm.ContinueOP, errors.UnknownLine,
+			-(conditionLength+1+bodyLength+1),
+		),
+	)
 	return result, nil
 }
 
 func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) ([]vm.Code, *errors.Error) {
-	result, sourceCompilationError := c.compileExpression(true, forStatement.Source)
+	source, sourceCompilationError := c.compileExpression(true, forStatement.Source)
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
 	}
@@ -983,15 +1010,28 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) (
 	if compilationError != nil {
 		return nil, compilationError
 	}
+	bodyLength := len(body)
+	for index, instruction := range body {
+		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
+			body[index].Value = bodyLength - index + 1
+		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
+			body[index].Value = -(index + 3)
+		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
+			body[index].Value = -(index + 2)
+		}
+	}
+	result := source
 	result = append(result,
-		vm.NewCode(vm.ForLoopOP, errors.UnknownLine,
-			vm.ForLoopSettings{
-				BodyLength: len(body),
-				Receivers:  receivers,
+		vm.NewCode(vm.SetupLoopOP, errors.UnknownLine,
+			[2]interface{}{
+				receivers, bodyLength + 2,
 			},
 		),
 	)
+	result = append(result, vm.NewCode(vm.UnpackForLoopOP, errors.UnknownLine, nil))
+	result = append(result, vm.NewCode(vm.LoadForReloadOP, errors.UnknownLine, nil))
 	result = append(result, body...)
+	result = append(result, vm.NewCode(vm.ContinueOP, errors.UnknownLine, -(bodyLength+3)))
 	return result, nil
 }
 

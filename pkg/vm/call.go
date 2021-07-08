@@ -46,16 +46,12 @@ func (p *Plasma) CallFunction(context *Context, function Value, parent *SymbolTa
 	var result Value
 	var callError *Object
 	if callback != nil {
-		context.ToFunctionPropagationStack.Push(0)
-		defer context.ToFunctionPropagationStack.Pop()
 		result, callError = callback(self, arguments...)
 	} else if code != nil {
 		// Load the arguments
 		for i := len(arguments) - 1; i > -1; i-- {
 			context.PushObject(arguments[i])
 		}
-		context.ToFunctionPropagationStack.Push(0)
-		defer context.ToFunctionPropagationStack.Pop()
 		result, callError = p.Execute(context, NewBytecodeFromArray(code))
 	} else {
 		panic("callback and code are nil")

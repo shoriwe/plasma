@@ -76,80 +76,34 @@ func NewSymbolStack() *SymbolStack {
 	}
 }
 
-type stateEntry struct {
-	Action uint8
-}
-
-type StateStack struct {
+type LoopStack struct {
 	head *stackNode
 }
 
-func (stack *StateStack) Pop() *stateEntry {
+func (stack *LoopStack) Pop() *LoopSettings {
 	result := stack.head.value
 	stack.head = stack.head.next
-	return result.(*stateEntry)
+	return result.(*LoopSettings)
 }
 
-func (stack *StateStack) Peek() *stateEntry {
-	return stack.head.value.(*stateEntry)
+func (stack *LoopStack) Peek() *LoopSettings {
+	return stack.head.value.(*LoopSettings)
 }
 
-func (stack *StateStack) Push(tryStackEntry *stateEntry) {
-	stack.head = NewStackNode(tryStackEntry, stack.head)
+func (stack *LoopStack) Push(loopSettings *LoopSettings) {
+	stack.head = NewStackNode(loopSettings, stack.head)
 }
 
-func (stack *StateStack) HasNext() bool {
+func (stack *LoopStack) HasNext() bool {
 	return stack.head != nil
 }
 
-func (stack *StateStack) Clear() {
+func (stack *LoopStack) Clear() {
 	stack.head = nil
 }
 
-func NewStateStack() *StateStack {
-	return &StateStack{
-		head: nil,
-	}
-}
-
-type propagationEntry struct {
-	PropagationLevel int
-}
-
-func (p *propagationEntry) Decrement() {
-	p.PropagationLevel--
-}
-
-type PropagationStack struct {
-	head *stackNode
-}
-
-func (stack *PropagationStack) Pop() *propagationEntry {
-	result := stack.head.value
-	stack.head = stack.head.next
-	return result.(*propagationEntry)
-}
-
-func (stack *PropagationStack) Peek() *propagationEntry {
-	return stack.head.value.(*propagationEntry)
-}
-
-func (stack *PropagationStack) Push(initialPropagation int) {
-	stack.head = NewStackNode(&propagationEntry{
-		PropagationLevel: initialPropagation,
-	}, stack.head)
-}
-
-func (stack *PropagationStack) HasNext() bool {
-	return stack.head != nil
-}
-
-func (stack *PropagationStack) Clear() {
-	stack.head = nil
-}
-
-func NewPropagationStack() *PropagationStack {
-	return &PropagationStack{
+func NewLoopStack() *LoopStack {
+	return &LoopStack{
 		head: nil,
 	}
 }

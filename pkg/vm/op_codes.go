@@ -56,10 +56,11 @@ const (
 	AssignSelectorOP
 	AssignIndexOP
 	IfJumpOP
+	LoadForReloadOP
 	UnlessJumpOP
-	IfOneLinerOP
-	UnlessOP
-	UnlessOneLinerOP
+	SetupLoopOP
+	PopLoopOP
+	UnpackForLoopOP
 	BreakOP
 	RedoOP
 	ContinueOP
@@ -73,9 +74,6 @@ const (
 	PushOP
 	PopOP
 	NOP
-	ForLoopOP
-	WhileLoop
-	DoWhileLoop
 	NewIteratorOP
 
 	TryOP
