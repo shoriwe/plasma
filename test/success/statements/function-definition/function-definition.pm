@@ -72,8 +72,19 @@ def return_unless()
     return False
 end
 
+def fib(n)
+    if n == 0
+        return 0
+    end
+    if n == 1
+        return 1
+    end
+    return fib(n-1) + fib(n-2)
+end
+
 println(return_for() == 100)
 println(return_while() == 100)
 println(return_do_while() == 100)
 println(return_if())
 println(return_unless())
+println(fib(10) == 55)

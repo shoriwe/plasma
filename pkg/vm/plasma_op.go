@@ -10,6 +10,7 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (Value, *Object) 
 		context = NewContext()
 		p.InitializeContext(context)
 	}
+	// defer fmt.Println(context.MemoryStack.HasNext())
 	var executionError *Object
 	var object Value
 	var withParent bool
@@ -17,6 +18,7 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (Value, *Object) 
 bytecodeExecutionLoop:
 	for ; bytecode.HasNext(); {
 		code := bytecode.Next()
+
 		/*
 			if code.Line != 0 {
 				fmt.Println(color.GreenString(strconv.Itoa(code.Line)), code.Instruction, code.Value)

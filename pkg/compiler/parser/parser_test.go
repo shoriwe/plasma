@@ -548,6 +548,16 @@ var basicSamples = []string{
 	"do\n" +
 		"\tprint(\"Hello\")\n" +
 		"while a > b",
+	"def fib(n)\n" +
+		"\tif n == 0\n" +
+		"\t\treturn 0\n" +
+		"\tend\n" +
+		"\tif n == 1\n" +
+		"\t\treturn 1\n" +
+		"\tend\n" +
+		"\treturn fib(n - 1) + fib(n - 2)\n" +
+		"end\n" +
+		"println(fib(35))",
 }
 
 func TestParseBasic(t *testing.T) {

@@ -25,43 +25,47 @@ func (p *Plasma) NewTuple(context *Context, isBuiltIn bool, parentSymbols *Symbo
 
 func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(context *Context, object Value) *Object {
-		object.SymbolTable().Set(Mul,
-			p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-				NewBuiltInClassFunction(object, 1,
-					func(self Value, arguments ...Value) (Value, *Object) {
-						right := arguments[0]
-						switch right.(type) {
-						case *Integer:
-							content, repetitionError := p.Repeat(context, self.GetContent(), right.GetInteger())
-							if repetitionError != nil {
-								return nil, repetitionError
+		object.SetOnDemandSymbol(Mul,
+			func() Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self Value, arguments ...Value) (Value, *Object) {
+							right := arguments[0]
+							switch right.(type) {
+							case *Integer:
+								content, repetitionError := p.Repeat(context, self.GetContent(), right.GetInteger())
+								if repetitionError != nil {
+									return nil, repetitionError
+								}
+								return p.NewTuple(context, false, context.PeekSymbolTable(), content), nil
+							default:
+								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
 							}
-							return p.NewTuple(context, false, context.PeekSymbolTable(), content), nil
-						default:
-							return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
-						}
-					},
-				),
-			),
+						},
+					),
+				)
+			},
 		)
-		object.SymbolTable().Set(RightMul,
-			p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-				NewBuiltInClassFunction(object, 1,
-					func(self Value, arguments ...Value) (Value, *Object) {
-						left := arguments[0]
-						switch left.(type) {
-						case *Integer:
-							content, repetitionError := p.Repeat(context, self.GetContent(), left.GetInteger())
-							if repetitionError != nil {
-								return nil, repetitionError
+		object.SetOnDemandSymbol(RightMul,
+			func() Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self Value, arguments ...Value) (Value, *Object) {
+							left := arguments[0]
+							switch left.(type) {
+							case *Integer:
+								content, repetitionError := p.Repeat(context, self.GetContent(), left.GetInteger())
+								if repetitionError != nil {
+									return nil, repetitionError
+								}
+								return p.NewTuple(context, false, context.PeekSymbolTable(), content), nil
+							default:
+								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
 							}
-							return p.NewTuple(context, false, context.PeekSymbolTable(), content), nil
-						default:
-							return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
-						}
-					},
-				),
-			),
+						},
+					),
+				)
+			},
 		)
 		object.SetOnDemandSymbol(Equals,
 			func() Value {
