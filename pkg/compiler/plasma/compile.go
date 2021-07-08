@@ -1035,52 +1035,109 @@ func (c *Compiler) compileForLoopStatement(forStatement *ast.ForLoopStatement) (
 	return result, nil
 }
 
+type exceptBlock struct {
+	Targets       []vm.Code
+	TargetsLength int
+	Receiver      string
+	Body          []vm.Code
+	BodyLength    int
+}
+
 func (c *Compiler) compileTryStatement(tryStatement *ast.TryStatement) ([]vm.Code, *errors.Error) {
 	body, bodyCompilationError := c.compileBody(tryStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var exceptBlocks []*vm.ExceptBlock
-	for _, exceptBlock := range tryStatement.ExceptBlocks {
-		var targets [][]vm.Code
-		for _, target := range exceptBlock.Targets {
-			targetCode, targetCompilationError := c.compileExpression(true, target)
-			if targetCompilationError != nil {
-				return nil, targetCompilationError
-			}
-			targets = append(targets, targetCode)
+	bodyLength := len(body)
+	totalLength := bodyLength
+	var exceptBlocks []*exceptBlock
+	var numberOfExceptBlocks int
+	for _, except := range tryStatement.ExceptBlocks {
+		targets, targetCompilationError := c.compileExpression(true,
+			&ast.TupleExpression{
+				Values: except.Targets,
+			},
+		)
+		if targetCompilationError != nil {
+			return nil, targetCompilationError
 		}
-		exceptBlockBody, exceptBlockBodyCompilationError := c.compileBody(exceptBlock.Body)
+		targetsLength := len(targets)
+
+		totalLength += targetsLength + 1
+
+		exceptBlockBody, exceptBlockBodyCompilationError := c.compileBody(except.Body)
 		if exceptBlockBodyCompilationError != nil {
 			return nil, exceptBlockBodyCompilationError
 		}
+		exceptBlockBodyLength := len(exceptBlockBody)
+		totalLength += exceptBlockBodyLength + 1
 		receiver := vm.JunkVariable
-		if exceptBlock.CaptureName != nil {
-			receiver = exceptBlock.CaptureName.Token.String
+		if except.CaptureName != nil {
+			receiver = except.CaptureName.Token.String
 		}
 		exceptBlocks = append(exceptBlocks,
-			&vm.ExceptBlock{
-				TargetErrors: targets,
-				Receiver:     receiver,
-				Body:         exceptBlockBody,
+			&exceptBlock{
+				Targets:       targets,
+				TargetsLength: targetsLength,
+				Receiver:      receiver,
+				Body:          exceptBlockBody,
+				BodyLength:    exceptBlockBodyLength,
 			},
 		)
+		numberOfExceptBlocks++
 	}
 	elseBody, elseCompilationError := c.compileBody(tryStatement.Else)
 	if elseCompilationError != nil {
 		return nil, elseCompilationError
 	}
+	elseLength := len(elseBody)
+	totalLength += elseLength
+
 	finallyBody, finallyCompilationError := c.compileBody(tryStatement.Finally)
 	if finallyCompilationError != nil {
 		return nil, finallyCompilationError
 	}
-	tryInformation := &vm.TryInformation{
-		Body:         body,
-		ExceptBlocks: exceptBlocks,
-		Else:         elseBody,
-		Finally:      finallyBody,
+	finallyLength := len(finallyBody)
+
+	var result []vm.Code
+	result = append(result, vm.NewCode(vm.SetupTryOP, errors.UnknownLine, bodyLength))
+	result = append(result, body...)
+	if numberOfExceptBlocks > 0 {
+		totalLength -= bodyLength
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, totalLength))
+		for _, except := range exceptBlocks {
+			result = append(result, except.Targets...)
+			result = append(result,
+				vm.NewCode(vm.ExceptOP, errors.UnknownLine,
+					[2]interface{}{except.Receiver, except.BodyLength + 1},
+				),
+			)
+			result = append(result, except.Body...)
+			totalLength -= except.TargetsLength + 1 + except.BodyLength + 1
+			result = append(result,
+				vm.NewCode(vm.JumpOP, errors.UnknownLine, totalLength),
+			)
+		}
+		if elseLength > 0 {
+			// result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseLength))
+			result = append(result, elseBody...)
+			if finallyLength > 0 {
+				result = append(result, finallyBody...)
+			}
+		} else if finallyLength > 0 {
+			result = append(result, finallyBody...)
+		}
+	} else if elseLength > 0 {
+		result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseLength))
+		result = append(result, elseBody...)
+		if finallyLength > 0 {
+			result = append(result, finallyBody...)
+		}
+	} else if finallyLength > 0 {
+		result = append(result, finallyBody...)
 	}
-	return []vm.Code{vm.NewCode(vm.TryOP, errors.UnknownLine, tryInformation)}, nil
+	result = append(result, vm.NewCode(vm.PopTryOP, errors.UnknownLine, nil))
+	return result, nil
 }
 
 func (c *Compiler) compileModuleStatement(moduleStatement *ast.ModuleStatement) ([]vm.Code, *errors.Error) {

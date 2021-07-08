@@ -107,3 +107,35 @@ func NewLoopStack() *LoopStack {
 		head: nil,
 	}
 }
+
+type TryStack struct {
+	head *stackNode
+}
+
+func (stack *TryStack) Pop() *TrySettings {
+	result := stack.head.value
+	stack.head = stack.head.next
+	return result.(*TrySettings)
+}
+
+func (stack *TryStack) Peek() *TrySettings {
+	return stack.head.value.(*TrySettings)
+}
+
+func (stack *TryStack) Push(loopSettings *TrySettings) {
+	stack.head = NewStackNode(loopSettings, stack.head)
+}
+
+func (stack *TryStack) HasNext() bool {
+	return stack.head != nil
+}
+
+func (stack *TryStack) Clear() {
+	stack.head = nil
+}
+
+func NewTryStack() *TryStack {
+	return &TryStack{
+		head: nil,
+	}
+}

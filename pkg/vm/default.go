@@ -31,7 +31,7 @@ import (
 	ToBool       - (Done)
 */
 func (p *Plasma) InitializeBuiltIn() {
-	if !p.builtInContext.SymbolTableStack.HasNext() {
+	if !p.builtInContext.SymbolStack.HasNext() {
 
 	}
 	/*

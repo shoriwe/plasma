@@ -11,7 +11,7 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (Value, *Object) 
 		context = NewContext()
 		p.InitializeContext(context)
 	}
-	// defer fmt.Println(context.MemoryStack.HasNext())
+	// defer fmt.Println(context.ObjectStack.HasNext())
 	var executionError *Object
 	var object Value
 bytecodeExecutionLoop:
@@ -24,8 +24,8 @@ bytecodeExecutionLoop:
 			} else {
 				fmt.Println(color.RedString("UL"), code.Instruction, code.Value)
 			}
-			if context.MemoryStack.head != nil {
-				fmt.Println("Head:", context.MemoryStack.head.value)
+			if context.ObjectStack.head != nil {
+				fmt.Println("Head:", context.ObjectStack.head.value)
 			}
 			fmt.Println("Object:", object)
 		*/
@@ -156,15 +156,19 @@ bytecodeExecutionLoop:
 			executionError = p.jumpOP(bytecode, code)
 		case PushOP:
 			if object != nil {
-				context.MemoryStack.Push(object)
+				context.ObjectStack.Push(object)
 				object = nil
 			}
 		case PopOP:
-			context.MemoryStack.Pop()
+			context.ObjectStack.Pop()
 		case NOP:
 			break
-		case TryOP:
-			executionError = p.tryOP(context, code)
+		case SetupTryOP:
+			executionError = p.setupTryOP(context, bytecode, code)
+		case PopTryOP:
+			executionError = p.popTryOP(context)
+		case ExceptOP:
+			executionError = p.exceptOP(context, bytecode, code)
 		case NewModuleOP:
 			executionError = p.newModuleOP(context, bytecode, code)
 		case RaiseOP:
@@ -179,34 +183,87 @@ bytecodeExecutionLoop:
 			panic(fmt.Sprintf("Unknown VM instruction %d", code.Instruction.OpCode))
 		}
 		if executionError != nil {
+			// Handle Try and excepts
+			if context.TryStack.HasNext() {
+				p.tryJumpOP(context, bytecode, executionError)
+				continue
+			}
 			return nil, executionError
 		}
 	}
-	if context.MemoryStack.HasNext() {
+	if context.ObjectStack.HasNext() {
 		return context.PopObject(), nil
 	}
 	return p.GetNone(), nil
 }
 
+func (p *Plasma) setupTryOP(context *Context, bytecode *Bytecode, code Code) *Object {
+	context.TryStack.Push(
+		&TrySettings{
+			StartIndex: bytecode.index,
+			BodyLength: code.Value.(int),
+		},
+	)
+	return nil
+}
+
+func (p *Plasma) popTryOP(context *Context) *Object {
+	context.TryStack.Pop()
+	return nil
+}
+
+func (p *Plasma) exceptOP(context *Context, bytecode *Bytecode, code Code) *Object {
+	executionError := context.TryStack.Peek().LastError
+	targets := context.PopObject()
+	runtimeError := p.ForceMasterGetAny(RuntimeError).(*Type)
+	if targets.GetLength() == 0 {
+		context.TryStack.Peek().LastError = nil
+		return nil
+	}
+	for _, target := range targets.GetContent() {
+		if _, ok := target.(*Type); !ok {
+			return p.NewInvalidTypeError(context, target.TypeName(), TypeName)
+		}
+		if !target.Implements(runtimeError) {
+			return p.NewInvalidTypeError(context, target.TypeName(), RuntimeError)
+		}
+		if executionError.Implements(target.(*Type)) {
+			// Assign the error to the receiver
+			context.TryStack.Peek().LastError = nil
+			context.PeekSymbolTable().Set(code.Value.([2]interface{})[0].(string), executionError)
+			return nil
+		}
+	}
+	// Jump to the next except, else or finally
+	bytecode.Jump(code.Value.([2]interface{})[1].(int))
+	return nil
+}
+
+func (p *Plasma) tryJumpOP(context *Context, bytecode *Bytecode, executionError Value) {
+	bytecode.index = context.TryStack.Peek().StartIndex
+	bytecode.Jump(context.TryStack.Peek().BodyLength + 1)
+	context.TryStack.head.value.(*TrySettings).LastError = executionError
+}
+
 func (p *Plasma) newStringOP(context *Context, code Code) (Value, *Object) {
 	value := code.Value.(string)
-	stringObject := p.NewString(context, false, context.SymbolTableStack.Peek(), value)
+	stringObject := p.NewString(context, false, context.SymbolStack.Peek(), value)
 	return stringObject, nil
 }
 
 func (p *Plasma) newBytesOP(context *Context, code Code) (Value, *Object) {
 	value := code.Value.([]byte)
-	return p.NewBytes(context, false, context.SymbolTableStack.Peek(), value), nil
+	return p.NewBytes(context, false, context.SymbolStack.Peek(), value), nil
 }
 
 func (p *Plasma) newIntegerOP(context *Context, code Code) (Value, *Object) {
 	value := code.Value.(int64)
-	return p.NewInteger(context, false, context.SymbolTableStack.Peek(), value), nil
+	return p.NewInteger(context, false, context.SymbolStack.Peek(), value), nil
 }
 
 func (p *Plasma) newFloatOP(context *Context, code Code) (Value, *Object) {
 	value := code.Value.(float64)
-	return p.NewFloat(context, false, context.SymbolTableStack.Peek(), value), nil
+	return p.NewFloat(context, false, context.SymbolStack.Peek(), value), nil
 }
 
 func (p *Plasma) newTrueBoolOP() (Value, *Object) {
@@ -339,7 +396,7 @@ func (p *Plasma) methodInvocationOP(context *Context, code Code) (Value, *Object
 	function := context.PopObject()
 	var arguments []Value
 	for i := 0; i < numberOfArguments; i++ {
-		if !context.MemoryStack.HasNext() {
+		if !context.ObjectStack.HasNext() {
 			return nil, p.NewInvalidNumberOfArgumentsError(context, i, numberOfArguments)
 		}
 		arguments = append(arguments, context.PopObject())
@@ -416,7 +473,7 @@ func (p *Plasma) newIteratorOP(context *Context, bytecode *Bytecode, code Code) 
 }
 
 func (p *Plasma) setupForLoopOP(context *Context, code Code) *Object {
-	source := context.MemoryStack.Pop()
+	source := context.ObjectStack.Pop()
 	sourceNext, nextGetError := source.Get(Next)
 	sourceHasNext, hasNextGetError := source.Get(HasNext)
 	var sourceIter Value
@@ -602,7 +659,7 @@ func (p *Plasma) returnOP(context *Context, code Code) *Object {
 		return nil
 	}
 	if numberOfReturnValues == 1 {
-		if !context.MemoryStack.HasNext() {
+		if !context.ObjectStack.HasNext() {
 			return p.NewInvalidNumberOfArgumentsError(context, 1, numberOfReturnValues)
 		}
 		return nil
@@ -610,7 +667,7 @@ func (p *Plasma) returnOP(context *Context, code Code) *Object {
 
 	var values []Value
 	for i := 0; i < numberOfReturnValues; i++ {
-		if !context.MemoryStack.HasNext() {
+		if !context.ObjectStack.HasNext() {
 			return p.NewInvalidNumberOfArgumentsError(context, i, numberOfReturnValues)
 		}
 		values = append(values, context.PopObject())
@@ -648,7 +705,7 @@ func (p *Plasma) jumpOP(bytecode *Bytecode, code Code) *Object {
 }
 
 func (p *Plasma) ifJumpOP(context *Context, bytecode *Bytecode, code Code) *Object {
-	condition := context.MemoryStack.Pop()
+	condition := context.ObjectStack.Pop()
 	conditionBool, executionError := p.QuickGetBool(context, condition)
 	if executionError != nil {
 		return executionError
@@ -660,7 +717,7 @@ func (p *Plasma) ifJumpOP(context *Context, bytecode *Bytecode, code Code) *Obje
 }
 
 func (p *Plasma) unlessJumpOP(context *Context, bytecode *Bytecode, code Code) *Object {
-	condition := context.MemoryStack.Pop()
+	condition := context.ObjectStack.Pop()
 	conditionBool, executionError := p.QuickGetBool(context, condition)
 	if executionError != nil {
 		return executionError
@@ -669,59 +726,6 @@ func (p *Plasma) unlessJumpOP(context *Context, bytecode *Bytecode, code Code) *
 		bytecode.index += code.Value.(int)
 	}
 	return nil
-}
-
-func (p *Plasma) executeFinally(context *Context, finally []Code) *Object {
-	if finally != nil {
-		_, executionError := p.Execute(context, NewBytecodeFromArray(finally))
-		return executionError
-	}
-	return nil
-}
-
-func (p *Plasma) tryOP(context *Context, code Code) *Object {
-	tryInformation := code.Value.(*TryInformation)
-	_, executionError := p.Execute(context, NewBytecodeFromArray(tryInformation.Body))
-	if executionError == nil {
-		return p.executeFinally(context, tryInformation.Finally)
-	}
-	var targetError Value
-	var executionError2 *Object
-	for _, exceptBlock := range tryInformation.ExceptBlocks {
-		if exceptBlock.TargetErrors != nil {
-			for _, targetErrorCode := range exceptBlock.TargetErrors {
-				targetError, executionError2 = p.Execute(context, NewBytecodeFromArray(targetErrorCode))
-				if executionError2 != nil {
-					return executionError
-				}
-				if !targetError.Implements(p.ForceMasterGetAny(RuntimeError).(*Type)) {
-					return p.NewInvalidTypeError(context, targetError.TypeName(), RuntimeError)
-				}
-				if executionError.Implements(targetError.(*Type)) {
-					context.PeekSymbolTable().Set(exceptBlock.Receiver, executionError)
-					_, executionError2 = p.Execute(context, NewBytecodeFromArray(exceptBlock.Body))
-					if executionError2 == nil {
-						return p.executeFinally(context, tryInformation.Finally)
-					}
-					return executionError2
-				}
-			}
-		} else {
-			context.PeekSymbolTable().Set(exceptBlock.Receiver, executionError)
-			_, executionError2 = p.Execute(context, NewBytecodeFromArray(exceptBlock.Body))
-			if executionError2 == nil {
-				return p.executeFinally(context, tryInformation.Finally)
-			}
-			return executionError2
-		}
-	}
-	if tryInformation.Else != nil {
-		_, executionError2 = p.Execute(context, NewBytecodeFromArray(tryInformation.Else))
-		if executionError2 != nil {
-			return executionError2
-		}
-	}
-	return p.executeFinally(context, tryInformation.Finally)
 }
 
 type ModuleInformation struct {

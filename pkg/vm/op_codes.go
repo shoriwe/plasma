@@ -76,7 +76,9 @@ const (
 	NOP
 	NewIteratorOP
 
-	TryOP
+	SetupTryOP
+	PopTryOP
+	ExceptOP
 
 	NewModuleOP
 	NewClassOP

@@ -116,7 +116,7 @@ func (p *Plasma) InitializeContext(context *Context) {
 			symbols:    symbols,
 		},
 	)
-	context.SymbolTableStack.Push(symbols)
+	context.SymbolStack.Push(symbols)
 }
 
 func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {

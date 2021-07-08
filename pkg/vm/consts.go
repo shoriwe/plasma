@@ -125,53 +125,48 @@ type LoopSettings struct {
 	Jump              int
 }
 
-type ExceptBlock struct {
-	TargetErrors [][]Code
-	Receiver     string
-	Body         []Code
-}
-
-type TryInformation struct {
-	Body         []Code
-	ExceptBlocks []*ExceptBlock
-	Else         []Code
-	Finally      []Code
+type TrySettings struct {
+	StartIndex int
+	BodyLength int
+	LastError  Value
 }
 
 type Context struct {
-	LoopStack        *LoopStack
-	MemoryStack      *ObjectStack
-	SymbolTableStack *SymbolStack
+	LoopStack   *LoopStack
+	ObjectStack *ObjectStack
+	TryStack    *TryStack
+	SymbolStack *SymbolStack
 }
 
 func NewContext() *Context {
 	result := &Context{
-		LoopStack:        NewLoopStack(),
-		MemoryStack:      NewObjectStack(),
-		SymbolTableStack: NewSymbolStack(),
+		LoopStack:   NewLoopStack(),
+		ObjectStack: NewObjectStack(),
+		TryStack:    NewTryStack(),
+		SymbolStack: NewSymbolStack(),
 	}
 	return result
 }
 
 func (c *Context) PushObject(object Value) {
-	c.MemoryStack.Push(object)
+	c.ObjectStack.Push(object)
 }
 func (c *Context) PeekObject() Value {
-	return c.MemoryStack.Peek()
+	return c.ObjectStack.Peek()
 }
 
 func (c *Context) PopObject() Value {
-	return c.MemoryStack.Pop()
+	return c.ObjectStack.Pop()
 }
 
 func (c *Context) PushSymbolTable(table *SymbolTable) {
-	c.SymbolTableStack.Push(table)
+	c.SymbolStack.Push(table)
 }
 
 func (c *Context) PopSymbolTable() *SymbolTable {
-	return c.SymbolTableStack.Pop()
+	return c.SymbolStack.Pop()
 }
 
 func (c *Context) PeekSymbolTable() *SymbolTable {
-	return c.SymbolTableStack.Peek()
+	return c.SymbolStack.Peek()
 }
