@@ -8,7 +8,7 @@ const (
 
 const (
 	TypeName          = "Type"
-	ObjectName        = "Object"
+	ValueName         = "Value"
 	FunctionName      = "Function"
 	StringName        = "String"
 	BoolName          = "Bool"
@@ -116,11 +116,11 @@ const (
 )
 
 type LoopSettings struct {
-	Source            Value
-	Next              Value
-	HasNext           Value
+	Source            *Value
+	Next              *Value
+	HasNext           *Value
 	Receivers         []string
-	MappedReceivers   map[string]Value
+	MappedReceivers   map[string]*Value
 	NumberOfReceivers int
 	Jump              int
 }
@@ -128,7 +128,7 @@ type LoopSettings struct {
 type TrySettings struct {
 	StartIndex int
 	BodyLength int
-	LastError  Value
+	LastError  *Value
 }
 
 type Context struct {
@@ -148,14 +148,14 @@ func NewContext() *Context {
 	return result
 }
 
-func (c *Context) PushObject(object Value) {
+func (c *Context) PushObject(object *Value) {
 	c.ObjectStack.Push(object)
 }
-func (c *Context) PeekObject() Value {
+func (c *Context) PeekObject() *Value {
 	return c.ObjectStack.Peek()
 }
 
-func (c *Context) PopObject() Value {
+func (c *Context) PopObject() *Value {
 	return c.ObjectStack.Pop()
 }
 

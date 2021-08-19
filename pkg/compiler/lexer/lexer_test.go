@@ -9,7 +9,7 @@ func test(t *testing.T, samples map[string][]*Token) {
 	for sample, result := range samples {
 		lexer := NewLexer(reader2.NewStringReader(sample))
 		var computedTokens []*Token
-		for ; lexer.HasNext(); {
+		for lexer.HasNext() {
 			token, tokenizationError := lexer.Next()
 			if tokenizationError != nil {
 				t.Error(tokenizationError.String())

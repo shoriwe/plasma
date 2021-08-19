@@ -16,17 +16,17 @@ type ObjectStack struct {
 	head *stackNode
 }
 
-func (stack *ObjectStack) Pop() Value {
+func (stack *ObjectStack) Pop() *Value {
 	result := stack.head.value
 	stack.head = stack.head.next
-	return result.(Value)
+	return result.(*Value)
 }
 
-func (stack *ObjectStack) Peek() Value {
-	return stack.head.value.(Value)
+func (stack *ObjectStack) Peek() *Value {
+	return stack.head.value.(*Value)
 }
 
-func (stack *ObjectStack) Push(object Value) {
+func (stack *ObjectStack) Push(object *Value) {
 	stack.head = NewStackNode(object, stack.head)
 }
 

@@ -6,14 +6,14 @@ import (
 
 type SymbolTable struct {
 	Parent  *SymbolTable
-	Symbols map[string]Value
+	Symbols map[string]*Value
 }
 
-func (symbolTable *SymbolTable) Set(s string, object Value) {
+func (symbolTable *SymbolTable) Set(s string, object *Value) {
 	symbolTable.Symbols[s] = object
 }
 
-func (symbolTable *SymbolTable) GetSelf(symbol string) (Value, *errors.Error) {
+func (symbolTable *SymbolTable) GetSelf(symbol string) (*Value, *errors.Error) {
 	result, found := symbolTable.Symbols[symbol]
 	if !found {
 		return nil, errors.NewNameNotFoundError()
@@ -21,7 +21,7 @@ func (symbolTable *SymbolTable) GetSelf(symbol string) (Value, *errors.Error) {
 	return result, nil
 }
 
-func (symbolTable *SymbolTable) GetAny(symbol string) (Value, *errors.Error) {
+func (symbolTable *SymbolTable) GetAny(symbol string) (*Value, *errors.Error) {
 	for source := symbolTable; source != nil; source = source.Parent {
 		result, found := source.Symbols[symbol]
 		if found {
@@ -31,15 +31,9 @@ func (symbolTable *SymbolTable) GetAny(symbol string) (Value, *errors.Error) {
 	return nil, errors.NewNameNotFoundError()
 }
 
-func (symbolTable *SymbolTable) Update(newEntries map[string]Value) {
-	for key, value := range newEntries {
-		symbolTable.Symbols[key] = value
-	}
-}
-
 func NewSymbolTable(parentSymbols *SymbolTable) *SymbolTable {
 	return &SymbolTable{
 		Parent:  parentSymbols,
-		Symbols: map[string]Value{},
+		Symbols: map[string]*Value{},
 	}
 }

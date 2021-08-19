@@ -139,8 +139,7 @@ func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
 	scanner.Scan()
 	sourceCode := scanner.Text()
 	compiler := plasma.NewCompiler(reader.NewStringReader(sourceCode),
-		plasma.Options{
-		},
+		plasma.Options{},
 	)
 	bytecode, compilationError := compiler.CompileToArray()
 	if compilationError != nil {
@@ -197,9 +196,9 @@ func repl() {
 			continue
 		}
 
-		result, executionError := virtualMachine.Execute(context, vm.NewBytecodeFromArray(bytecode))
-		if executionError != nil {
-			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), executionError.TypeName(), executionError.GetString())
+		result, success := virtualMachine.Execute(context, vm.NewBytecodeFromArray(bytecode))
+		if !success {
+			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.GetString())
 			continue
 		}
 		if result.TypeName() == vm.NoneName {
@@ -210,14 +209,14 @@ func repl() {
 			fmt.Println(result)
 			continue
 		}
-		if _, ok := resultToString.(*vm.Function); !ok {
+		if !resultToString.IsTypeById(vm.FunctionId) {
 			fmt.Println(result)
 			continue
 		}
-		resultString, callError := virtualMachine.CallFunction(
-			context, resultToString.(*vm.Function), context.PeekSymbolTable(),
+		resultString, successToString := virtualMachine.CallFunction(
+			context, resultToString,
 		)
-		if callError != nil {
+		if !successToString {
 			fmt.Println(result)
 			continue
 		}
@@ -246,9 +245,9 @@ func program() {
 		*/
 		context := vm.NewContext()
 		virtualMachine.InitializeContext(context)
-		_, executionError := virtualMachine.Execute(context, code)
-		if executionError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), executionError.TypeName(), executionError.GetString())
+		result, success := virtualMachine.Execute(context, code)
+		if !success {
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.GetString())
 			os.Exit(1)
 		}
 	}

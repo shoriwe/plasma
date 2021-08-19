@@ -62,61 +62,61 @@ func getScriptHash(r io.ReadSeekCloser) (string, error) {
 }
 
 func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorCallBack {
-	return func(context *vm.Context, object vm.Value) *vm.Object {
+	return func(context *vm.Context, object *vm.Value) *vm.Value {
 		object.SetOnDemandSymbol("Read",
-			func() vm.Value {
+			func() *vm.Value {
 				return p.NewFunction(context, false, object.SymbolTable(),
 					vm.NewBuiltInClassFunction(object, 1,
-						func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+						func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 							bytesToRead := arguments[0]
-							if _, ok := bytesToRead.(*vm.Integer); !ok {
-								return p.NewInvalidTypeError(context, bytesToRead.TypeName(), vm.IntegerName), nil
+							if !bytesToRead.IsTypeById(vm.IntegerId) {
+								return p.NewInvalidTypeError(context, bytesToRead.TypeName(), vm.IntegerName), false
 							}
 							bytes := make([]byte, bytesToRead.GetInteger())
 							numberOfBytes, readError := r.Read(bytes)
 							if readError != nil {
 								if readError == io.EOF {
-									return p.GetNone(), nil
+									return p.GetNone(), true
 								} else {
-									return nil, p.NewGoRuntimeError(context, readError)
+									return p.NewGoRuntimeError(context, readError), false
 								}
 							}
 							bytes = bytes[:numberOfBytes]
-							return p.NewBytes(context, false, context.PeekSymbolTable(), bytes), nil
+							return p.NewBytes(context, false, context.PeekSymbolTable(), bytes), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol("Seek",
-			func() vm.Value {
+			func() *vm.Value {
 				return p.NewFunction(context, false, object.SymbolTable(),
 					vm.NewBuiltInClassFunction(object, 1,
-						func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+						func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 							seek := arguments[0]
-							if _, ok := seek.(*vm.Integer); !ok {
-								return p.NewInvalidTypeError(context, seek.TypeName(), vm.IntegerName), nil
+							if !seek.IsTypeById(vm.IntegerId) {
+								return p.NewInvalidTypeError(context, seek.TypeName(), vm.IntegerName), false
 							}
 							_, seekError := r.Seek(seek.GetInteger(), io.SeekStart)
 							if seekError != nil {
-								return nil, p.NewGoRuntimeError(context, seekError)
+								return p.NewGoRuntimeError(context, seekError), false
 							}
-							return p.GetNone(), nil
+							return p.GetNone(), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol("Close",
-			func() vm.Value {
+			func() *vm.Value {
 				return p.NewFunction(context, false, object.SymbolTable(),
 					vm.NewBuiltInClassFunction(object, 0,
-						func(self vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
+						func(self *vm.Value, _ ...*vm.Value) (*vm.Value, bool) {
 							closeError := r.Close()
 							if closeError != nil {
-								return nil, p.NewGoRuntimeError(context, closeError)
+								return p.NewGoRuntimeError(context, closeError), false
 							}
-							return p.GetNone(), nil
+							return p.GetNone(), true
 						},
 					),
 				)
@@ -126,75 +126,75 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 	}
 }
 
-func newResourceReader(context *vm.Context, p *vm.Plasma, r io.ReadSeekCloser) vm.Value {
-	resourceReader := p.NewObject(context, false, ResourceReader, nil,
+func newResourceReader(context *vm.Context, p *vm.Plasma, r io.ReadSeekCloser) *vm.Value {
+	resourceReader := p.NewValue(context, false, ResourceReader, nil,
 		context.PeekSymbolTable(),
 	)
 	resourceReaderInitialize(p, r)(context, resourceReader)
 	return resourceReader
 }
 
-func newResourceNotFoundError(context *vm.Context, p *vm.Plasma, path string) *vm.Object {
+func newResourceNotFoundError(context *vm.Context, p *vm.Plasma, path string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ResourceNotFoundError))
 	p.ForceInitialization(context, result,
 		p.NewString(context, false, context.PeekSymbolTable(), path),
 	)
-	return result.(*vm.Object)
+	return result
 }
 
-func newNotInsideModuleError(context *vm.Context, p *vm.Plasma) *vm.Object {
+func newNotInsideModuleError(context *vm.Context, p *vm.Plasma) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(NotInsideModuleError))
 	p.ForceInitialization(context, result)
-	return result.(*vm.Object)
+	return result
 }
 
-func newScriptNotFoundError(context *vm.Context, p *vm.Plasma, path string) *vm.Object {
+func newScriptNotFoundError(context *vm.Context, p *vm.Plasma, path string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ScriptNotFoundError))
 	p.ForceInitialization(context, result,
 		p.NewString(context, false, context.PeekSymbolTable(), path),
 	)
-	return result.(*vm.Object)
+	return result
 }
 
-func newCompilationError(context *vm.Context, p *vm.Plasma, compilationError *errors.Error) *vm.Object {
+func newCompilationError(context *vm.Context, p *vm.Plasma, compilationError *errors.Error) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(CompilationError))
 	p.ForceInitialization(context, result,
 		p.NewString(context, false, context.PeekSymbolTable(), compilationError.Message()),
 	)
-	return result.(*vm.Object)
+	return result
 }
 
-func newModuleNotFoundError(context *vm.Context, p *vm.Plasma, moduleName string) *vm.Object {
+func newModuleNotFoundError(context *vm.Context, p *vm.Plasma, moduleName string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ModuleNotFoundError))
 	p.ForceInitialization(context, result,
 		p.NewString(context, false, context.PeekSymbolTable(), moduleName),
 	)
-	return result.(*vm.Object)
+	return result
 }
 
-func newChangeDirectoryError(context *vm.Context, p *vm.Plasma, compilationError *errors.Error) *vm.Object {
+func newChangeDirectoryError(context *vm.Context, p *vm.Plasma, compilationError *errors.Error) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ChangeDirectoryError))
 	p.ForceInitialization(context, result,
 		p.NewString(context, false, context.PeekSymbolTable(), compilationError.Message()),
 	)
-	return result.(*vm.Object)
+	return result
 }
 
-func newModuleNomenclatureError(context *vm.Context, p *vm.Plasma, moduleName string) *vm.Object {
+func newModuleNomenclatureError(context *vm.Context, p *vm.Plasma, moduleName string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ModuleNomenclatureError))
 	p.ForceInitialization(context, result,
 		p.NewString(context, false, context.PeekSymbolTable(), moduleName),
 	)
-	return result.(*vm.Object)
+	return result
 }
 
-func newNoVersionFoundError(context *vm.Context, p *vm.Plasma, moduleName string, version string) *vm.Object {
+func newNoVersionFoundError(context *vm.Context, p *vm.Plasma, moduleName string, version string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(NoVersionFoundError))
 	p.ForceInitialization(context, result,
 		p.NewString(context, false, context.PeekSymbolTable(), moduleName),
 		p.NewString(context, false, context.PeekSymbolTable(), version),
 	)
-	return result.(*vm.Object)
+	return result
 }
 
 func (c *importContext) isSet() bool {
@@ -202,17 +202,17 @@ func (c *importContext) isSet() bool {
 }
 
 func getResource(ctx *importContext, sitePackages FileSystem) vm.ObjectLoader {
-	return func(context *vm.Context, p *vm.Plasma) vm.Value {
+	return func(context *vm.Context, p *vm.Plasma) *vm.Value {
 		return p.NewFunction(context, true, p.BuiltInSymbols(),
 			vm.NewBuiltInFunction(1,
-				func(_ vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+				func(_ *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 					if !ctx.isSet() {
-						return nil, newNotInsideModuleError(context, p)
+						return newNotInsideModuleError(context, p), false
 					}
 
 					resourcePathObject := arguments[0]
-					if _, ok := resourcePathObject.(*vm.String); !ok {
-						return nil, p.NewInvalidTypeError(context, resourcePathObject.TypeName(), vm.StringName)
+					if !resourcePathObject.IsTypeById(vm.StringId) {
+						return p.NewInvalidTypeError(context, resourcePathObject.TypeName(), vm.StringName), false
 					}
 
 					oldLocation := sitePackages.RelativePwd()
@@ -221,13 +221,13 @@ func getResource(ctx *importContext, sitePackages FileSystem) vm.ObjectLoader {
 
 					resourcePath := resourcePathObject.GetString()
 					if !sitePackages.ExistsRelative(resourcePath) {
-						return nil, newResourceNotFoundError(context, p, resourcePath)
+						return newResourceNotFoundError(context, p, resourcePath), false
 					}
 					resourceHandler, openError := sitePackages.OpenRelative(resourcePath)
 					if openError != nil {
-						return nil, p.NewGoRuntimeError(context, openError)
+						return p.NewGoRuntimeError(context, openError), false
 					}
-					return newResourceReader(context, p, resourceHandler), nil
+					return newResourceReader(context, p, resourceHandler), true
 				},
 			),
 		)
@@ -235,13 +235,13 @@ func getResource(ctx *importContext, sitePackages FileSystem) vm.ObjectLoader {
 }
 
 func getResourcePath(ctx *importContext, sitePackages FileSystem) vm.ObjectLoader {
-	return func(context *vm.Context, p *vm.Plasma) vm.Value {
+	return func(context *vm.Context, p *vm.Plasma) *vm.Value {
 		return p.NewFunction(context, true, p.BuiltInSymbols(),
 			vm.NewBuiltInFunction(1,
-				func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+				func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 					resource := arguments[0]
-					if _, ok := resource.(*vm.String); !ok {
-						return nil, p.NewInvalidTypeError(context, resource.TypeName(), vm.StringName)
+					if !resource.IsTypeById(vm.StringId) {
+						return p.NewInvalidTypeError(context, resource.TypeName(), vm.StringName), false
 					}
 
 					oldLocation := sitePackages.RelativePwd()
@@ -249,24 +249,24 @@ func getResourcePath(ctx *importContext, sitePackages FileSystem) vm.ObjectLoade
 					sitePackages.ChangeDirectoryRelative(ctx.resources)
 
 					if !sitePackages.ExistsRelative(resource.GetString()) {
-						return nil, newResourceNotFoundError(context, p, resource.GetString())
+						return newResourceNotFoundError(context, p, resource.GetString()), false
 					}
 					resourcePath := filepath.Join(sitePackages.AbsolutePwd(), ctx.root, ctx.resources, resource.GetString())
-					return p.NewString(context, false, context.PeekSymbolTable(), resourcePath), nil
+					return p.NewString(context, false, context.PeekSymbolTable(), resourcePath), true
 				},
 			),
 		)
 	}
 }
 
-func scriptImport(memory map[string]vm.Value, ctx *importContext, sitePackages FileSystem, pwd FileSystem) vm.ObjectLoader {
-	return func(context *vm.Context, p *vm.Plasma) vm.Value {
+func scriptImport(memory map[string]*vm.Value, ctx *importContext, sitePackages FileSystem, pwd FileSystem) vm.ObjectLoader {
+	return func(context *vm.Context, p *vm.Plasma) *vm.Value {
 		return p.NewFunction(context, true, p.BuiltInSymbols(),
 			vm.NewBuiltInFunction(1,
-				func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+				func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 					scriptPath := arguments[0]
-					if _, ok := scriptPath.(*vm.String); !ok {
-						return nil, p.NewInvalidTypeError(context, scriptPath.TypeName(), vm.StringName)
+					if !scriptPath.IsTypeById(vm.StringId) {
+						return p.NewInvalidTypeError(context, scriptPath.TypeName(), vm.StringName), false
 					}
 					// First try to get the content of the file
 					var (
@@ -278,7 +278,7 @@ func scriptImport(memory map[string]vm.Value, ctx *importContext, sitePackages F
 						// If it is, import the scriptFile relative the root of the module
 						// Check if file exists
 						if !sitePackages.ExistsRelative(scriptPath.GetString()) {
-							return nil, newScriptNotFoundError(context, p, scriptPath.GetString())
+							return newScriptNotFoundError(context, p, scriptPath.GetString()), false
 						}
 						scriptFile, openError = sitePackages.OpenRelative(scriptPath.GetString())
 
@@ -289,7 +289,7 @@ func scriptImport(memory map[string]vm.Value, ctx *importContext, sitePackages F
 						// If not import the scriptFile from the immediate filesystem of the running scriptFile
 						// Check if file exists
 						if !pwd.ExistsRelative(scriptPath.GetString()) {
-							return nil, newScriptNotFoundError(context, p, scriptPath.GetString())
+							return newScriptNotFoundError(context, p, scriptPath.GetString()), false
 						}
 						scriptFile, openError = pwd.OpenRelative(scriptPath.GetString())
 						oldLocation := pwd.RelativePwd()
@@ -297,15 +297,15 @@ func scriptImport(memory map[string]vm.Value, ctx *importContext, sitePackages F
 						pwd.ChangeDirectoryToFileLocation(scriptPath.GetString())
 					}
 					if openError != nil {
-						return nil, p.NewGoRuntimeError(context, openError)
+						return p.NewGoRuntimeError(context, openError), false
 					}
 					// Check if the script was already imported
 					scriptHash, hashingError := getScriptHash(scriptFile)
 					if hashingError != nil {
-						return nil, p.NewGoRuntimeError(context, hashingError)
+						return p.NewGoRuntimeError(context, hashingError), false
 					}
 					if _, ok := memory[scriptHash]; ok {
-						return memory[scriptHash], nil
+						return memory[scriptHash], true
 					}
 					// ToDo: Fix this, use a better file reader object
 					scriptCode, compilationError := plasma.NewCompiler(reader.NewStringReaderFromFile(scriptFile),
@@ -314,38 +314,38 @@ func scriptImport(memory map[string]vm.Value, ctx *importContext, sitePackages F
 						},
 					).Compile()
 					if compilationError != nil {
-						return nil, newCompilationError(context, p, compilationError)
+						return newCompilationError(context, p, compilationError), false
 					}
 					// Prepare the module object that will receive the namespace
 					script := p.NewModule(context, false, context.PeekSymbolTable())
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
-					_, executionError := p.Execute(context, scriptCode)
-					if executionError != nil {
-						return nil, executionError
+					executionError, success := p.Execute(context, scriptCode)
+					if !success {
+						return executionError, false
 					}
 					context.PopSymbolTable()
 					// Return the initialized module object
-					return script, nil
+					return script, true
 				},
 			),
 		)
 	}
 }
 
-func moduleImport(memory map[string]vm.Value, ctx *importContext, sitePackages FileSystem) vm.ObjectLoader {
-	return func(context *vm.Context, p *vm.Plasma) vm.Value {
+func moduleImport(memory map[string]*vm.Value, ctx *importContext, sitePackages FileSystem) vm.ObjectLoader {
+	return func(context *vm.Context, p *vm.Plasma) *vm.Value {
 		return p.NewFunction(context, true, p.BuiltInSymbols(),
 			vm.NewBuiltInFunction(1,
-				func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+				func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 					module := arguments[0]
-					if _, ok := module.(*vm.String); !ok {
-						return nil, p.NewInvalidTypeError(context, module.TypeName(), vm.StringName)
+					if !module.IsTypeById(vm.StringId) {
+						return p.NewInvalidTypeError(context, module.TypeName(), vm.StringName), false
 					}
 					nameParts := strings.Split(module.GetString(), "@")
 					numberOfParts := len(nameParts)
 					if numberOfParts > 2 {
-						return nil, newModuleNomenclatureError(context, p, module.GetString())
+						return newModuleNomenclatureError(context, p, module.GetString()), false
 					}
 					moduleName := nameParts[0]
 					var version string
@@ -361,39 +361,39 @@ func moduleImport(memory map[string]vm.Value, ctx *importContext, sitePackages F
 					sitePackages.ResetPath()
 
 					if !sitePackages.ExistsRelative(moduleName) {
-						return nil, newModuleNotFoundError(context, p, moduleName)
+						return newModuleNotFoundError(context, p, moduleName), false
 					}
 					changeDirectoryError := sitePackages.ChangeDirectoryRelative(moduleName)
 					if changeDirectoryError != nil {
-						return nil, newChangeDirectoryError(context, p, changeDirectoryError)
+						return newChangeDirectoryError(context, p, changeDirectoryError), false
 					}
 					if version == "latest" {
 						moduleVersions, listingError := sitePackages.ListDirectory()
 						if listingError != nil {
-							return nil, p.NewGoRuntimeError(context, listingError)
+							return p.NewGoRuntimeError(context, listingError), false
 						}
 						if len(moduleVersions) == 0 {
-							return nil, newNoVersionFoundError(context, p, moduleName, "latest")
+							return newNoVersionFoundError(context, p, moduleName, "latest"), false
 						}
 						version = moduleVersions[0]
 					}
 					changeDirectoryError = sitePackages.ChangeDirectoryRelative(version)
 					if changeDirectoryError != nil {
-						return nil, newChangeDirectoryError(context, p, changeDirectoryError)
+						return newChangeDirectoryError(context, p, changeDirectoryError), false
 					}
 					// Load the new importContext
 					settingsHandler, openError := sitePackages.OpenRelative("settings.json")
 					if openError != nil {
-						return nil, p.NewGoRuntimeError(context, openError)
+						return p.NewGoRuntimeError(context, openError), false
 					}
 					jsonContent, readingError := io.ReadAll(settingsHandler)
 					if readingError != nil {
-						return nil, p.NewGoRuntimeError(context, readingError)
+						return p.NewGoRuntimeError(context, readingError), false
 					}
 					var moduleSettings Settings
 					jsonParsingError := json.Unmarshal(jsonContent, &moduleSettings)
 					if jsonParsingError != nil {
-						return nil, p.NewGoRuntimeError(context, jsonParsingError)
+						return p.NewGoRuntimeError(context, jsonParsingError), false
 					}
 					ctx.moduleName = moduleSettings.Name
 					ctx.resources = moduleSettings.Resources
@@ -402,20 +402,20 @@ func moduleImport(memory map[string]vm.Value, ctx *importContext, sitePackages F
 					ctx.root = filepath.Join(moduleName, version)
 					// Open the entry script
 					if !sitePackages.ExistsRelative(ctx.entryScript) {
-						return nil, newScriptNotFoundError(context, p, ctx.entryScript)
+						return newScriptNotFoundError(context, p, ctx.entryScript), false
 					}
 					var scriptFile io.ReadSeekCloser
 					scriptFile, openError = sitePackages.OpenRelative(ctx.entryScript)
 					if openError != nil {
-						return nil, p.NewGoRuntimeError(context, openError)
+						return p.NewGoRuntimeError(context, openError), false
 					}
 					// Check if the script was already imported
 					scriptHash, hashingError := getScriptHash(scriptFile)
 					if hashingError != nil {
-						return nil, p.NewGoRuntimeError(context, hashingError)
+						return p.NewGoRuntimeError(context, hashingError), false
 					}
 					if _, ok := memory[scriptHash]; ok {
-						return memory[scriptHash], nil
+						return memory[scriptHash], true
 					}
 					// Run the entry script
 					scriptCode, compilationError := plasma.NewCompiler(reader.NewStringReaderFromFile(scriptFile),
@@ -424,15 +424,15 @@ func moduleImport(memory map[string]vm.Value, ctx *importContext, sitePackages F
 						},
 					).Compile()
 					if compilationError != nil {
-						return nil, newCompilationError(context, p, compilationError)
+						return newCompilationError(context, p, compilationError), false
 					}
 					// Prepare the module object that will receive the namespace
 					script := p.NewModule(context, false, context.PeekSymbolTable())
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
-					_, executionError := p.Execute(context, scriptCode)
-					if executionError != nil {
-						return nil, executionError
+					executionError, success := p.Execute(context, scriptCode)
+					if !success {
+						return executionError, false
 					}
 					context.PopSymbolTable()
 					// Restore the backed importContext
@@ -440,7 +440,7 @@ func moduleImport(memory map[string]vm.Value, ctx *importContext, sitePackages F
 					sitePackages.ChangeDirectoryFullPath(oldLocation)
 					*ctx = ctxBackup
 					// Return the module object
-					return script, nil
+					return script, true
 				},
 			),
 		)
@@ -455,23 +455,23 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 		entryScript: "",
 		root:        "",
 	}
-	memory := map[string]vm.Value{}
+	memory := map[string]*vm.Value{}
 	return map[string]vm.ObjectLoader{
 		"open_resource":     getResource(ctx, sitePackages),
 		"get_resource_path": getResourcePath(ctx, sitePackages),
 		"import_script":     scriptImport(memory, ctx, sitePackages, pwd),
 		"import_module":     moduleImport(memory, ctx, sitePackages),
 
-		ResourceReader: func(context *vm.Context, p *vm.Plasma) vm.Value {
-			return p.NewType(context, true, ResourceReader, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
+		ResourceReader: func(context *vm.Context, p *vm.Plasma) *vm.Value {
+			return p.NewType(context, true, ResourceReader, p.BuiltInSymbols(), nil,
 				vm.NewBuiltInConstructor(
-					func(context *vm.Context, object vm.Value) *vm.Object {
+					func(context *vm.Context, object *vm.Value) *vm.Value {
 						object.SetOnDemandSymbol(vm.Initialize,
-							func() vm.Value {
+							func() *vm.Value {
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 0,
-										func(_ vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
-											return p.GetNone(), nil
+										func(_ *vm.Value, _ ...*vm.Value) (*vm.Value, bool) {
+											return p.GetNone(), true
 										},
 									),
 								)
@@ -483,21 +483,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			)
 		},
 
-		ResourceNotFoundError: func(context *vm.Context, p *vm.Plasma) vm.Value {
-			return p.NewType(context, true, ResourceNotFoundError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
+		ResourceNotFoundError: func(context *vm.Context, p *vm.Plasma) *vm.Value {
+			return p.NewType(context, true, ResourceNotFoundError, p.BuiltInSymbols(), []*vm.Value{p.ForceMasterGetAny(vm.RuntimeError)},
 				vm.NewBuiltInConstructor(
-					func(context *vm.Context, object vm.Value) *vm.Object {
+					func(context *vm.Context, object *vm.Value) *vm.Value {
 						object.SetOnDemandSymbol(vm.Initialize,
-							func() vm.Value {
+							func() *vm.Value {
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 1,
-										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+										func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 											resourceName := arguments[0]
-											if _, ok := resourceName.(*vm.String); !ok {
-												return nil, p.NewInvalidTypeError(context, resourceName.TypeName(), vm.StringName)
+											if !resourceName.IsTypeById(vm.StringId) {
+												return p.NewInvalidTypeError(context, resourceName.TypeName(), vm.StringName), false
 											}
 											self.SetString(fmt.Sprintf("Resource with name %s not found", resourceName.GetString()))
-											return p.GetNone(), nil
+											return p.GetNone(), true
 										},
 									),
 								)
@@ -510,17 +510,17 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			)
 
 		},
-		NotInsideModuleError: func(context *vm.Context, p *vm.Plasma) vm.Value {
-			return p.NewType(context, true, NotInsideModuleError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
+		NotInsideModuleError: func(context *vm.Context, p *vm.Plasma) *vm.Value {
+			return p.NewType(context, true, NotInsideModuleError, p.BuiltInSymbols(), []*vm.Value{p.ForceMasterGetAny(vm.RuntimeError)},
 				vm.NewBuiltInConstructor(
-					func(context *vm.Context, object vm.Value) *vm.Object {
+					func(context *vm.Context, object *vm.Value) *vm.Value {
 						object.SetOnDemandSymbol(vm.Initialize,
-							func() vm.Value {
+							func() *vm.Value {
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 0,
-										func(self vm.Value, _ ...vm.Value) (vm.Value, *vm.Object) {
+										func(self *vm.Value, _ ...*vm.Value) (*vm.Value, bool) {
 											self.SetString("Not inside a module importContext")
-											return p.GetNone(), nil
+											return p.GetNone(), true
 										},
 									),
 								)
@@ -533,21 +533,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			)
 
 		},
-		ScriptNotFoundError: func(context *vm.Context, p *vm.Plasma) vm.Value {
-			return p.NewType(context, true, ScriptNotFoundError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
+		ScriptNotFoundError: func(context *vm.Context, p *vm.Plasma) *vm.Value {
+			return p.NewType(context, true, ScriptNotFoundError, p.BuiltInSymbols(), []*vm.Value{p.ForceMasterGetAny(vm.RuntimeError)},
 				vm.NewBuiltInConstructor(
-					func(context *vm.Context, object vm.Value) *vm.Object {
+					func(context *vm.Context, object *vm.Value) *vm.Value {
 						object.SetOnDemandSymbol(vm.Initialize,
-							func() vm.Value {
+							func() *vm.Value {
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 1,
-										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+										func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 											script := arguments[0]
-											if _, ok := script.(*vm.String); !ok {
-												return nil, p.NewInvalidTypeError(context, script.TypeName(), vm.StringName)
+											if !script.IsTypeById(vm.StringId) {
+												return p.NewInvalidTypeError(context, script.TypeName(), vm.StringName), false
 											}
 											self.SetString(fmt.Sprintf("Script %s not found", script.GetString()))
-											return p.GetNone(), nil
+											return p.GetNone(), true
 										},
 									),
 								)
@@ -559,21 +559,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			)
 
 		},
-		CompilationError: func(context *vm.Context, p *vm.Plasma) vm.Value {
-			return p.NewType(context, true, CompilationError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
+		CompilationError: func(context *vm.Context, p *vm.Plasma) *vm.Value {
+			return p.NewType(context, true, CompilationError, p.BuiltInSymbols(), []*vm.Value{p.ForceMasterGetAny(vm.RuntimeError)},
 				vm.NewBuiltInConstructor(
-					func(context *vm.Context, object vm.Value) *vm.Object {
+					func(context *vm.Context, object *vm.Value) *vm.Value {
 						object.SetOnDemandSymbol(vm.Initialize,
-							func() vm.Value {
+							func() *vm.Value {
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 1,
-										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+										func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 											compilationError := arguments[0]
-											if _, ok := compilationError.(*vm.String); !ok {
-												return nil, p.NewInvalidTypeError(context, compilationError.TypeName(), vm.StringName)
+											if !compilationError.IsTypeById(vm.StringId) {
+												return p.NewInvalidTypeError(context, compilationError.TypeName(), vm.StringName), false
 											}
 											self.SetString(compilationError.GetString())
-											return p.GetNone(), nil
+											return p.GetNone(), true
 										},
 									),
 								)
@@ -586,21 +586,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			)
 
 		},
-		ModuleNotFoundError: func(context *vm.Context, p *vm.Plasma) vm.Value {
-			return p.NewType(context, true, ModuleNotFoundError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
+		ModuleNotFoundError: func(context *vm.Context, p *vm.Plasma) *vm.Value {
+			return p.NewType(context, true, ModuleNotFoundError, p.BuiltInSymbols(), []*vm.Value{p.ForceMasterGetAny(vm.RuntimeError)},
 				vm.NewBuiltInConstructor(
-					func(context *vm.Context, object vm.Value) *vm.Object {
+					func(context *vm.Context, object *vm.Value) *vm.Value {
 						object.SetOnDemandSymbol(vm.Initialize,
-							func() vm.Value {
+							func() *vm.Value {
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 1,
-										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+										func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 											moduleName := arguments[0]
-											if _, ok := moduleName.(*vm.String); !ok {
-												return nil, p.NewInvalidTypeError(context, moduleName.TypeName(), vm.StringName)
+											if !moduleName.IsTypeById(vm.StringId) {
+												return p.NewInvalidTypeError(context, moduleName.TypeName(), vm.StringName), false
 											}
 											self.SetString(fmt.Sprintf("No module with name %s found", moduleName.GetString()))
-											return p.GetNone(), nil
+											return p.GetNone(), true
 										},
 									),
 								)
@@ -613,21 +613,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			)
 
 		},
-		ChangeDirectoryError: func(context *vm.Context, p *vm.Plasma) vm.Value {
-			return p.NewType(context, true, ChangeDirectoryError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
+		ChangeDirectoryError: func(context *vm.Context, p *vm.Plasma) *vm.Value {
+			return p.NewType(context, true, ChangeDirectoryError, p.BuiltInSymbols(), []*vm.Value{p.ForceMasterGetAny(vm.RuntimeError)},
 				vm.NewBuiltInConstructor(
-					func(context *vm.Context, object vm.Value) *vm.Object {
+					func(context *vm.Context, object *vm.Value) *vm.Value {
 						object.SetOnDemandSymbol(vm.Initialize,
-							func() vm.Value {
+							func() *vm.Value {
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 1,
-										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+										func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 											message := arguments[0]
-											if _, ok := message.(*vm.String); !ok {
-												return nil, p.NewInvalidTypeError(context, message.TypeName(), vm.StringName)
+											if !message.IsTypeById(vm.StringId) {
+												return p.NewInvalidTypeError(context, message.TypeName(), vm.StringName), false
 											}
 											self.SetString(message.GetString())
-											return p.GetNone(), nil
+											return p.GetNone(), true
 										},
 									),
 								)
@@ -640,21 +640,21 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			)
 
 		},
-		ModuleNomenclatureError: func(context *vm.Context, p *vm.Plasma) vm.Value {
-			return p.NewType(context, true, ModuleNomenclatureError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
+		ModuleNomenclatureError: func(context *vm.Context, p *vm.Plasma) *vm.Value {
+			return p.NewType(context, true, ModuleNomenclatureError, p.BuiltInSymbols(), []*vm.Value{p.ForceMasterGetAny(vm.RuntimeError)},
 				vm.NewBuiltInConstructor(
-					func(context *vm.Context, object vm.Value) *vm.Object {
+					func(context *vm.Context, object *vm.Value) *vm.Value {
 						object.SetOnDemandSymbol(vm.Initialize,
-							func() vm.Value {
+							func() *vm.Value {
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 1,
-										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+										func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 											moduleName := arguments[0]
-											if _, ok := moduleName.(*vm.String); !ok {
-												return nil, p.NewInvalidTypeError(context, moduleName.TypeName(), vm.StringName)
+											if !moduleName.IsTypeById(vm.StringId) {
+												return p.NewInvalidTypeError(context, moduleName.TypeName(), vm.StringName), false
 											}
 											self.SetString(fmt.Sprintf("Invalid module nomenclature for %s, expecting estructure like \"NAME\" or \"NAME@VERSION\"", moduleName.GetString()))
-											return p.GetNone(), nil
+											return p.GetNone(), true
 										},
 									),
 								)
@@ -667,25 +667,25 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 			)
 
 		},
-		NoVersionFoundError: func(context *vm.Context, p *vm.Plasma) vm.Value {
-			return p.NewType(context, true, NoVersionFoundError, p.BuiltInSymbols(), []*vm.Type{p.ForceMasterGetAny(vm.TypeName).(*vm.Type)},
+		NoVersionFoundError: func(context *vm.Context, p *vm.Plasma) *vm.Value {
+			return p.NewType(context, true, NoVersionFoundError, p.BuiltInSymbols(), []*vm.Value{p.ForceMasterGetAny(vm.RuntimeError)},
 				vm.NewBuiltInConstructor(
-					func(context *vm.Context, object vm.Value) *vm.Object {
+					func(context *vm.Context, object *vm.Value) *vm.Value {
 						object.SetOnDemandSymbol(vm.Initialize,
-							func() vm.Value {
+							func() *vm.Value {
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 2,
-										func(self vm.Value, arguments ...vm.Value) (vm.Value, *vm.Object) {
+										func(self *vm.Value, arguments ...*vm.Value) (*vm.Value, bool) {
 											moduleName := arguments[0]
-											if _, ok := moduleName.(*vm.String); !ok {
-												return nil, p.NewInvalidTypeError(context, moduleName.TypeName(), vm.StringName)
+											if !moduleName.IsTypeById(vm.StringId) {
+												return p.NewInvalidTypeError(context, moduleName.TypeName(), vm.StringName), false
 											}
 											version := arguments[1]
-											if _, ok := version.(*vm.String); !ok {
-												return nil, p.NewInvalidTypeError(context, version.TypeName(), vm.StringName)
+											if !version.IsTypeById(vm.StringId) {
+												return p.NewInvalidTypeError(context, version.TypeName(), vm.StringName), false
 											}
 											self.SetString(fmt.Sprintf("no module found with name: %s and version %s", moduleName.GetString(), version.GetString()))
-											return p.GetNone(), nil
+											return p.GetNone(), true
 										},
 									),
 								)

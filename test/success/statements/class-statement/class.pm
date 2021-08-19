@@ -1,5 +1,5 @@
 module Business
-    class Person(Object)
+    class Person( Value)
         def Initialize(name)
             self.name = name
         end

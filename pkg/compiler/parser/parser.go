@@ -36,7 +36,6 @@ const (
 	SwitchStatement             = "Switch Statement"
 	CaseBlock                   = "Case Block"
 	DefaultBlock                = "Default Block"
-	DeferStatement              = "Defer Statement"
 	ReturnStatement             = "Return Statement"
 	YieldStatement              = "Yield Statement"
 	SuperStatement              = "Super Statement"
@@ -138,7 +137,7 @@ func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, *errors.Error)
 		return nil, newLinesRemoveError
 	}
 	var receivers []*ast.Identifier
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.directValueMatch(lexer.In) {
 			break
 		} else if !parser.kindMatch(lexer.IdentifierKind) {
@@ -201,7 +200,7 @@ func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, *errors.Error)
 	}
 	var body []ast.Node
 	var bodyNode ast.Node
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -257,7 +256,7 @@ func (parser *Parser) parseUntilStatement() (*ast.UntilLoopStatement, *errors.Er
 	}
 	var bodyNode ast.Node
 	var body []ast.Node
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -312,7 +311,7 @@ func (parser *Parser) parseModuleStatement() (*ast.ModuleStatement, *errors.Erro
 	var body []ast.Node
 	var bodyNode ast.Node
 	var parsingError *errors.Error
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -373,7 +372,7 @@ func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitio
 		return nil, tokenizingError
 	}
 	var arguments []*ast.Identifier
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.directValueMatch(lexer.CloseParentheses) {
 			break
 		}
@@ -420,7 +419,7 @@ func (parser *Parser) parseFunctionDefinitionStatement() (*ast.FunctionDefinitio
 	var body []ast.Node
 	var bodyNode ast.Node
 	var parsingError *errors.Error
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -478,7 +477,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, *errors.Error)
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			newLinesRemoveError = parser.removeNewLines()
 			if newLinesRemoveError != nil {
 				return nil, newLinesRemoveError
@@ -519,7 +518,7 @@ func (parser *Parser) parseClassStatement() (*ast.ClassStatement, *errors.Error)
 	}
 	var body []ast.Node
 	var bodyNode ast.Node
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -578,7 +577,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, *errors.Error) {
 	var body []ast.Node
 	var bodyNode ast.Node
 	var parsingError *errors.Error
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -599,7 +598,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, *errors.Error) {
 		body = append(body, bodyNode)
 	}
 	var exceptBlocks []*ast.ExceptBlock
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if !parser.directValueMatch(lexer.Except) {
 			break
 		}
@@ -609,7 +608,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, *errors.Error) {
 		}
 		var targets []ast.Expression
 		var target ast.Node
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.directValueMatch(lexer.NewLine) ||
 				parser.directValueMatch(lexer.As) {
 				break
@@ -655,7 +654,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, *errors.Error) {
 		}
 		var exceptBody []ast.Node
 		var exceptBodyNode ast.Node
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
@@ -691,7 +690,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, *errors.Error) {
 		if !parser.directValueMatch(lexer.NewLine) {
 			return nil, newSyntaxError(parser.currentLine(), ElseBlock)
 		}
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
@@ -720,7 +719,7 @@ func (parser *Parser) parseTryStatement() (*ast.TryStatement, *errors.Error) {
 		if !parser.directValueMatch(lexer.NewLine) {
 			return nil, newSyntaxError(parser.currentLine(), FinallyBlock)
 		}
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
@@ -764,7 +763,7 @@ func (parser *Parser) parseBeginStatement() (*ast.BeginStatement, *errors.Error)
 	var body []ast.Node
 	var bodyNode ast.Node
 	var parsingError *errors.Error
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -804,7 +803,7 @@ func (parser *Parser) parseEndStatement() (*ast.EndStatement, *errors.Error) {
 	var body []ast.Node
 	var bodyNode ast.Node
 	var parsingError *errors.Error
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -860,7 +859,7 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, *error
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			newLinesRemoveError = parser.removeNewLines()
 			if newLinesRemoveError != nil {
 				return nil, newLinesRemoveError
@@ -905,7 +904,7 @@ func (parser *Parser) parseInterfaceStatement() (*ast.InterfaceStatement, *error
 	}
 	var methods []*ast.FunctionDefinitionStatement
 	var node ast.Node
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -980,7 +979,7 @@ func (parser *Parser) parseBinaryExpression(precedence uint8) (ast.Node, *errors
 	if _, ok := leftHandSide.(ast.Statement); ok {
 		return leftHandSide, nil
 	}
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if !parser.kindMatch(lexer.Operator) &&
 			!parser.kindMatch(lexer.Comparator) {
 			break
@@ -1059,7 +1058,7 @@ func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, *errors.Er
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.directValueMatch(lexer.Colon) {
 			break
 		}
@@ -1167,11 +1166,11 @@ func (parser *Parser) parseParentheses() (ast.Expression, *errors.Error) {
 		return nil, tokenizingError
 	}
 	var nextValue ast.Node
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.directValueMatch(lexer.CloseParentheses) {
 			break
 		}
-		newLinesRemoveError := parser.removeNewLines()
+		newLinesRemoveError = parser.removeNewLines()
 		if newLinesRemoveError != nil {
 			return nil, newLinesRemoveError
 		}
@@ -1222,7 +1221,7 @@ func (parser *Parser) parseArrayExpression() (*ast.ArrayExpression, *errors.Erro
 		return nil, newLinesRemoveError
 	}
 	var values []ast.Expression
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.directValueMatch(lexer.CloseSquareBracket) {
 			break
 		}
@@ -1274,7 +1273,7 @@ func (parser *Parser) parseHashExpression() (*ast.HashExpression, *errors.Error)
 	var leftHandSide ast.Node
 	var rightHandSide ast.Node
 	var parsingError *errors.Error
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.directValueMatch(lexer.CloseBrace) {
 			break
 		}
@@ -1301,7 +1300,7 @@ func (parser *Parser) parseHashExpression() (*ast.HashExpression, *errors.Error)
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
-		newLinesRemoveError := parser.removeNewLines()
+		newLinesRemoveError = parser.removeNewLines()
 		if newLinesRemoveError != nil {
 			return nil, newLinesRemoveError
 		}
@@ -1362,7 +1361,7 @@ func (parser *Parser) parseWhileStatement() (*ast.WhileLoopStatement, *errors.Er
 	}
 	var whileChild ast.Node
 	var body []ast.Node
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -1404,7 +1403,7 @@ func (parser *Parser) parseDoWhileStatement() (*ast.DoWhileStatement, *errors.Er
 		return nil, newSyntaxError(parser.currentLine(), DoWhileStatement)
 	}
 	// Parse Body
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -1471,7 +1470,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 	// Parse If
 	var body []ast.Node
 	var bodyNode ast.Node
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -1494,7 +1493,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 	var elifBlocks []*ast.ElifBlock
 	if parser.directValueMatch(lexer.Elif) {
 	parsingElifLoop:
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
@@ -1530,7 +1529,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 			}
 			var elifBody []ast.Node
 			var elifBodyNode ast.Node
-			for ; parser.hasNext(); {
+			for parser.hasNext() {
 				if parser.kindMatch(lexer.Separator) {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
@@ -1570,7 +1569,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 		if !parser.directValueMatch(lexer.NewLine) {
 			return nil, newSyntaxError(parser.currentLine(), ElseBlock)
 		}
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
@@ -1626,7 +1625,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 	// Parse If
 	var body []ast.Node
 	var bodyNode ast.Node
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -1649,7 +1648,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 	var elifBlocks []*ast.ElifBlock
 	if parser.directValueMatch(lexer.Elif) {
 	parsingElifLoop:
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
@@ -1669,7 +1668,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 			if tokenizingError != nil {
 				return nil, tokenizingError
 			}
-			newLinesRemoveError := parser.removeNewLines()
+			newLinesRemoveError = parser.removeNewLines()
 			if newLinesRemoveError != nil {
 				return nil, newLinesRemoveError
 			}
@@ -1686,7 +1685,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 			}
 			var elifBody []ast.Node
 			var elifBodyNode ast.Node
-			for ; parser.hasNext(); {
+			for parser.hasNext() {
 				if parser.kindMatch(lexer.Separator) {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
@@ -1725,7 +1724,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 		if !parser.directValueMatch(lexer.NewLine) {
 			return nil, newSyntaxError(parser.currentLine(), ElseBlock)
 		}
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
@@ -1785,7 +1784,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Erro
 	// parse Cases
 	var caseBlocks []*ast.CaseBlock
 	if parser.directValueMatch(lexer.Case) {
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.directValueMatch(lexer.Default) ||
 				parser.directValueMatch(lexer.End) {
 				break
@@ -1800,7 +1799,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Erro
 			}
 			var cases []ast.Expression
 			var caseTarget ast.Node
-			for ; parser.hasNext(); {
+			for parser.hasNext() {
 				caseTarget, parsingError = parser.parseBinaryExpression(0)
 				if parsingError != nil {
 					return nil, parsingError
@@ -1826,7 +1825,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Erro
 			// Case Body
 			var caseBody []ast.Node
 			var caseBodyNode ast.Node
-			for ; parser.hasNext(); {
+			for parser.hasNext() {
 				if parser.kindMatch(lexer.Separator) {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
@@ -1863,7 +1862,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Erro
 			return nil, newSyntaxError(parser.currentLine(), DefaultBlock)
 		}
 		var defaultBodyNode ast.Node
-		for ; parser.hasNext(); {
+		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
@@ -1906,7 +1905,7 @@ func (parser *Parser) parseReturnStatement() (*ast.ReturnStatement, *errors.Erro
 		return nil, newLinesRemoveError
 	}
 	var results []ast.Expression
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) || parser.kindMatch(lexer.EOF) {
 			break
 		}
@@ -1943,7 +1942,7 @@ func (parser *Parser) parseYieldStatement() (*ast.YieldStatement, *errors.Error)
 		return nil, newLinesRemoveError
 	}
 	var results []ast.Expression
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) || parser.kindMatch(lexer.EOF) {
 			break
 		}
@@ -1987,7 +1986,7 @@ func (parser *Parser) parseSuperStatement() (*ast.SuperInvocationStatement, *err
 		return nil, newLinesRemoveError
 	}
 	var arguments []ast.Expression
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.directValueMatch(lexer.CloseParentheses) {
 			break
 		}
@@ -2134,7 +2133,7 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 
 func (parser *Parser) parseSelectorExpression(expression ast.Expression) (*ast.SelectorExpression, *errors.Error) {
 	selector := expression
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if !parser.directValueMatch(lexer.Dot) {
 			break
 		}
@@ -2171,7 +2170,7 @@ func (parser *Parser) parseMethodInvocationExpression(expression ast.Expression)
 	if newLinesRemoveError != nil {
 		return nil, newLinesRemoveError
 	}
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.directValueMatch(lexer.CloseParentheses) {
 			break
 		}
@@ -2351,7 +2350,7 @@ func (parser *Parser) parseGeneratorExpression(operation ast.Expression) (*ast.G
 	}
 	var variables []*ast.Identifier
 	numberOfVariables := 0
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.directValueMatch(lexer.In) {
 			break
 		}
@@ -2494,7 +2493,7 @@ func (parser *Parser) Parse() (*ast.Program, *errors.Error) {
 	var endStatement *ast.EndStatement
 	var parsedExpression ast.Node
 	var parsingError *errors.Error
-	for ; parser.hasNext(); {
+	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {

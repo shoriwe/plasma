@@ -1,6 +1,6 @@
 package vm
 
-func (p *Plasma) constructSubClass(context *Context, subClass *Type, object Value) *Object {
+func (p *Plasma) constructSubClass(context *Context, subClass *Value, object *Value) *Value {
 	for _, subSubClass := range subClass.subClasses {
 		object.SymbolTable().Parent = subSubClass.symbols.Parent
 		subSubClassConstructionError := p.constructSubClass(context, subSubClass, object)
@@ -16,25 +16,25 @@ func (p *Plasma) constructSubClass(context *Context, subClass *Type, object Valu
 	return nil
 }
 
-func (p *Plasma) ConstructObject(context *Context, type_ *Type, parent *SymbolTable) (Value, *Object) {
-	object := p.NewObject(context, false, type_.Name, type_.subClasses, parent)
+func (p *Plasma) ConstructObject(context *Context, type_ *Value, parent *SymbolTable) (*Value, bool) {
+	object := p.NewValue(context, false, type_.Name, type_.subClasses, parent)
 	for _, subclass := range object.subClasses {
 		subClassConstructionError := p.constructSubClass(context, subclass, object)
 		if subClassConstructionError != nil {
-			return nil, subClassConstructionError
+			return subClassConstructionError, false
 		}
 	}
 	object.SymbolTable().Parent = parent
 	object.class = type_
 	baseInitializationError := type_.Constructor.Construct(context, p, object)
 	if baseInitializationError != nil {
-		return nil, baseInitializationError
+		return baseInitializationError, false
 	}
-	return object, nil
+	return object, true
 }
 
 type Constructor interface {
-	Construct(*Context, *Plasma, Value) *Object
+	Construct(*Context, *Plasma, *Value) *Value
 }
 
 type PlasmaConstructor struct {
@@ -42,12 +42,15 @@ type PlasmaConstructor struct {
 	Code []Code
 }
 
-func (c *PlasmaConstructor) Construct(context *Context, vm *Plasma, object Value) *Object {
+func (c *PlasmaConstructor) Construct(context *Context, vm *Plasma, object *Value) *Value {
 	context.PushSymbolTable(object.SymbolTable())
 	context.PushObject(object)
-	_, executionError := vm.Execute(context, NewBytecodeFromArray(c.Code))
+	executionError, success := vm.Execute(context, NewBytecodeFromArray(c.Code))
 	context.PopSymbolTable()
-	return executionError
+	if !success {
+		return executionError
+	}
+	return nil
 }
 
 func NewPlasmaConstructor(code []Code) *PlasmaConstructor {
@@ -56,14 +59,14 @@ func NewPlasmaConstructor(code []Code) *PlasmaConstructor {
 	}
 }
 
-type ConstructorCallBack func(*Context, Value) *Object
+type ConstructorCallBack func(*Context, *Value) *Value
 
 type BuiltInConstructor struct {
 	Constructor
 	callback ConstructorCallBack
 }
 
-func (c *BuiltInConstructor) Construct(context *Context, _ *Plasma, object Value) *Object {
+func (c *BuiltInConstructor) Construct(context *Context, _ *Plasma, object *Value) *Value {
 	return c.callback(context, object)
 }
 

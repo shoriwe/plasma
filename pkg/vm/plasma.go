@@ -13,7 +13,7 @@ const (
 	polySize = 0xffffffff
 )
 
-type ObjectLoader func(*Context, *Plasma) Value
+type ObjectLoader func(*Context, *Plasma) *Value
 
 type Plasma struct {
 	currentId      int64
@@ -98,9 +98,9 @@ func (p *Plasma) NextId() int64 {
 func (p *Plasma) InitializeContext(context *Context) {
 	symbols := NewSymbolTable(p.builtInContext.PeekSymbolTable())
 	symbols.Set("__built_in__",
-		&Object{
+		&Value{
 			id:         p.NextId(),
-			typeName:   ObjectName,
+			typeName:   ValueName,
 			class:      nil,
 			subClasses: nil,
 			isBuiltIn:  true,
@@ -108,9 +108,9 @@ func (p *Plasma) InitializeContext(context *Context) {
 		},
 	)
 	symbols.Set(Self,
-		&Object{
+		&Value{
 			id:         p.NextId(),
-			typeName:   ObjectName,
+			typeName:   ValueName,
 			class:      nil,
 			subClasses: nil,
 			symbols:    symbols,

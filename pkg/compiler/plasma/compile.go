@@ -239,14 +239,14 @@ func (c *Compiler) compileBinaryExpression(binaryExpression *ast.BinaryExpressio
 }
 
 func (c *Compiler) compileParenthesesExpression(parenthesesExpression *ast.ParenthesesExpression) ([]vm.Code, *errors.Error) {
-	result, resultError := c.compileExpression(true, parenthesesExpression.X)
-	if resultError != nil {
-		return nil, resultError
-	}
-	result = append(result,
-		vm.NewCode(vm.NewParenthesesOP, errors.UnknownLine, nil),
-	)
-	return result, nil
+	return c.compileExpression(false, parenthesesExpression.X)
+	// if resultError != nil {
+	// 	return nil, resultError
+	// }
+	// result = append(result,
+	// 	vm.NewCode(vm.NewParenthesesOP, errors.UnknownLine, nil),
+	// )
+	// return result, nil
 }
 
 func (c *Compiler) compileIfOneLinerExpression(ifOneLineExpression *ast.IfOneLinerExpression) ([]vm.Code, *errors.Error) {
@@ -381,6 +381,10 @@ func (c *Compiler) compileLambdaExpression(lambdaExpression *ast.LambdaExpressio
 }
 
 func (c *Compiler) compileGeneratorExpression(generatorExpression *ast.GeneratorExpression) ([]vm.Code, *errors.Error) {
+	/*
+		FixMe:
+		This code is horrible, fix this, find a way to create the object in the VM and not directly in the bytecode
+	*/
 	// Compile the HasNext function
 	hasNextCode, hasNextCallCompilationError := c.compileMethodInvocationExpression(
 		&ast.MethodInvocationExpression{
