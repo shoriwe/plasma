@@ -95,7 +95,18 @@ func (p *Plasma) NextId() int64 {
 	return result
 }
 
-func (p *Plasma) InitializeContext(context *Context) {
+func newContext() *Context {
+	result := &Context{
+		LoopStack:   NewLoopStack(),
+		ObjectStack: NewObjectStack(),
+		TryStack:    NewTryStack(),
+		SymbolStack: NewSymbolStack(),
+	}
+	return result
+}
+
+func (p *Plasma) NewContext() *Context {
+	result := newContext()
 	symbols := NewSymbolTable(p.builtInContext.PeekSymbolTable())
 	symbols.Set("__built_in__",
 		&Value{
@@ -116,7 +127,8 @@ func (p *Plasma) InitializeContext(context *Context) {
 			symbols:    symbols,
 		},
 	)
-	context.SymbolStack.Push(symbols)
+	result.SymbolStack.Push(symbols)
+	return result
 }
 
 func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
@@ -126,7 +138,7 @@ func NewPlasmaVM(stdin io.Reader, stdout io.Writer, stderr io.Writer) *Plasma {
 	}
 	vm := &Plasma{
 		currentId:      1,
-		builtInContext: NewContext(),
+		builtInContext: newContext(),
 		Crc32Hash:      crc32.New(crc32.MakeTable(polySize)),
 		seed:           number.Uint64(),
 		stdinScanner:   bufio.NewScanner(stdin),

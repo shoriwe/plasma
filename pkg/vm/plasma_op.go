@@ -8,8 +8,7 @@ import (
 
 func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 	if context == nil {
-		context = NewContext()
-		p.InitializeContext(context)
+		context = p.NewContext()
 	}
 	// defer fmt.Println(context.ObjectStack.HasNext())
 	var success bool

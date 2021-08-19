@@ -186,8 +186,7 @@ func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
 
 func repl() {
 	stdinScanner := bufio.NewScanner(os.Stdin)
-	context := vm.NewContext()
-	virtualMachine.InitializeContext(context)
+	context := virtualMachine.NewContext()
 	for {
 		fmt.Print(color.GreenString(">>>"))
 		bytecode, compilationError := compileCode(stdinScanner)
@@ -243,8 +242,7 @@ func program() {
 		/*
 			ToDo: Do intermediate stuff with other flags
 		*/
-		context := vm.NewContext()
-		virtualMachine.InitializeContext(context)
+		context := virtualMachine.NewContext()
 		result, success := virtualMachine.Execute(context, code)
 		if !success {
 			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.GetString())
