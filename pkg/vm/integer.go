@@ -6,18 +6,13 @@ import (
 	"math"
 )
 
-type Integer struct {
-	*Object
-}
-
-func (p *Plasma) NewInteger(context *Context, isBuiltIn bool, parentSymbols *SymbolTable, value int64) *Integer {
-	integer := &Integer{
-		p.NewObject(context, isBuiltIn, IntegerName, nil, parentSymbols),
-	}
+func (p *Plasma) NewInteger(context *Context, isBuiltIn bool, parentSymbols *SymbolTable, value int64) *Value {
+	integer := p.NewValue(context, isBuiltIn, IntegerName, nil, parentSymbols)
+	integer.BuiltInTypeId = IntegerId
 	integer.SetInteger(value)
 	p.IntegerInitialize(isBuiltIn)(context, integer)
 	integer.SetOnDemandSymbol(Self,
-		func() Value {
+		func() *Value {
 			return integer
 		},
 	)
@@ -25,50 +20,50 @@ func (p *Plasma) NewInteger(context *Context, isBuiltIn bool, parentSymbols *Sym
 }
 
 func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object Value) *Object {
+	return func(context *Context, object *Value) *Value {
 		object.SetOnDemandSymbol(NegBits,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								^self.GetInteger(),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Negative,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								-self.GetInteger(),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Add,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
+							switch right.BuiltInTypeId {
+							case IntegerId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									self.GetInteger()+right.GetInteger(),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									float64(self.GetInteger())+right.GetFloat(),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -76,22 +71,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightAdd,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
+							switch left.BuiltInTypeId {
+							case IntegerId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									left.GetInteger()+self.GetInteger(),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									left.GetFloat()+float64(self.GetInteger()),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -99,22 +94,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(Sub,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
+							switch right.BuiltInTypeId {
+							case IntegerId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									self.GetInteger()-right.GetInteger(),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									float64(self.GetInteger())-right.GetFloat(),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -122,22 +117,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightSub,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
+							switch left.BuiltInTypeId {
+							case IntegerId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									left.GetInteger()-self.GetInteger(),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									left.GetFloat()-float64(self.GetInteger()),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -145,36 +140,36 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(Mul,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
+							switch right.BuiltInTypeId {
+							case IntegerId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									self.GetInteger()*right.GetInteger(),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									float64(self.GetInteger())*right.GetFloat(),
-								), nil
-							case *String:
-								return p.NewString(context, false, context.PeekSymbolTable(), tools.Repeat(right.GetString(), self.GetInteger())), nil
-							case *Tuple:
+								), true
+							case StringId:
+								return p.NewString(context, false, context.PeekSymbolTable(), tools.Repeat(right.GetString(), self.GetInteger())), true
+							case BytesId:
 								content, repetitionError := p.Repeat(context, right.GetContent(), self.GetInteger())
 								if repetitionError != nil {
-									return nil, repetitionError
+									return repetitionError, false
 								}
-								return p.NewTuple(context, false, context.PeekSymbolTable(), content), nil
-							case *Array:
+								return p.NewTuple(context, false, context.PeekSymbolTable(), content), true
+							case ArrayId:
 								content, repetitionError := p.Repeat(context, right.GetContent(), self.GetInteger())
 								if repetitionError != nil {
-									return nil, repetitionError
+									return repetitionError, false
 								}
-								return p.NewArray(context, false, context.PeekSymbolTable(), content), nil
+								return p.NewArray(context, false, context.PeekSymbolTable(), content), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName), false
 							}
 						},
 					),
@@ -182,36 +177,36 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightMul,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
+							switch left.BuiltInTypeId {
+							case IntegerId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									left.GetInteger()*self.GetInteger(),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									left.GetFloat()*float64(self.GetInteger()),
-								), nil
-							case *String:
-								return p.NewString(context, false, context.PeekSymbolTable(), tools.Repeat(left.GetString(), self.GetInteger())), nil
-							case *Tuple:
+								), true
+							case StringId:
+								return p.NewString(context, false, context.PeekSymbolTable(), tools.Repeat(left.GetString(), self.GetInteger())), true
+							case BytesId:
 								content, repetitionError := p.Repeat(context, left.GetContent(), self.GetInteger())
 								if repetitionError != nil {
-									return nil, repetitionError
+									return repetitionError, false
 								}
-								return p.NewTuple(context, false, context.PeekSymbolTable(), content), nil
-							case *Array:
+								return p.NewTuple(context, false, context.PeekSymbolTable(), content), true
+							case ArrayId:
 								content, repetitionError := p.Repeat(context, left.GetContent(), self.GetInteger())
 								if repetitionError != nil {
-									return nil, repetitionError
+									return repetitionError, false
 								}
-								return p.NewArray(context, false, context.PeekSymbolTable(), content), nil
+								return p.NewArray(context, false, context.PeekSymbolTable(), content), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName), false
 							}
 						},
 					),
@@ -219,22 +214,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(Div,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
+							switch right.BuiltInTypeId {
+							case IntegerId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									float64(self.GetInteger())/float64(right.GetInteger()),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									float64(self.GetInteger())/right.GetFloat(),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -242,22 +237,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightDiv,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
+							switch left.BuiltInTypeId {
+							case IntegerId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									float64(left.GetInteger())/float64(self.GetInteger()),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									left.GetFloat()/float64(self.GetInteger()),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -265,22 +260,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(FloorDiv,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
+							switch right.BuiltInTypeId {
+							case IntegerId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									self.GetInteger()/right.GetInteger(),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									self.GetInteger()/int64(right.GetFloat()),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -288,22 +283,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightFloorDiv,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
+							switch left.BuiltInTypeId {
+							case IntegerId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									left.GetInteger()/self.GetInteger(),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									int64(left.GetFloat())/self.GetInteger(),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -311,22 +306,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(Mod,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
+							switch right.BuiltInTypeId {
+							case IntegerId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									math.Mod(float64(self.GetInteger()), float64(right.GetInteger())),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									math.Mod(float64(self.GetInteger()), right.GetFloat()),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -334,22 +329,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightMod,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
+							switch left.BuiltInTypeId {
+							case IntegerId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									left.GetInteger()%self.GetInteger(),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewInteger(context, false, context.PeekSymbolTable(),
 									int64(left.GetFloat())%self.GetInteger(),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -357,22 +352,22 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(Pow,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
+							switch right.BuiltInTypeId {
+							case IntegerId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									math.Pow(float64(self.GetInteger()), float64(right.GetInteger())),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									math.Pow(float64(self.GetInteger()), right.GetFloat()),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -380,30 +375,28 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightPow,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
+							switch left.BuiltInTypeId {
+							case IntegerId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									math.Pow(
 										float64(left.GetInteger()),
-										float64(self.GetInteger(),
-										),
+										float64(self.GetInteger()),
 									),
-								), nil
-							case *Float:
+								), true
+							case FloatId:
 								return p.NewFloat(context, false, context.PeekSymbolTable(),
 									math.Pow(
 										left.GetFloat(),
-										float64(self.GetInteger(),
-										),
+										float64(self.GetInteger()),
 									),
-								), nil
+								), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -411,194 +404,188 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(BitXor,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName)
+							if !right.IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								self.GetInteger()^right.GetInteger(),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightBitXor,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName)
+							if !left.IsTypeById(IntegerId) {
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								left.GetInteger()^self.GetInteger(),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(BitAnd,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName)
+							if !right.IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								self.GetInteger()&right.GetInteger(),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightBitAnd,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName)
+							if !left.IsTypeById(IntegerId) {
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								left.GetInteger()&self.GetInteger(),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(BitOr,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName)
+							if !right.IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								self.GetInteger()|right.GetInteger(),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightBitOr,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName)
+							if !left.IsTypeById(IntegerId) {
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								left.GetInteger()|self.GetInteger(),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(BitLeft,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName)
+							if !right.IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								self.GetInteger()<<uint(right.GetInteger()),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightBitLeft,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName)
+							if !left.IsTypeById(IntegerId) {
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								left.GetInteger()<<uint(self.GetInteger()),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(BitRight,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName)
+							if !right.IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								self.GetInteger()>>uint(right.GetInteger()),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightBitRight,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName)
+							if !left.IsTypeById(IntegerId) {
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName), false
 							}
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								left.GetInteger()>>uint(self.GetInteger()),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Equals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
-								if self.GetInteger() == right.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if float64(self.GetInteger()) == right.GetFloat() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch right.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(self.GetInteger() == right.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(float64(self.GetInteger()) == right.GetFloat()), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -606,24 +593,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
-								if left.GetInteger() == self.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if left.GetFloat() == float64(self.GetInteger()) {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch left.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(left.GetInteger() == self.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(left.GetFloat() == float64(self.GetInteger())), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -631,24 +612,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(NotEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
-								if self.GetInteger() != right.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if float64(self.GetInteger()) != (right.GetFloat()) {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch right.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(self.GetInteger() != right.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(float64(self.GetInteger()) != (right.GetFloat())), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -656,24 +631,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightNotEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
-								if left.GetInteger() != self.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if left.GetFloat() != float64(self.GetInteger()) {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch left.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(left.GetInteger() != self.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(left.GetFloat() != float64(self.GetInteger())), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -681,24 +650,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(GreaterThan,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
-								if self.GetInteger() > right.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if float64(self.GetInteger()) > right.GetFloat() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch right.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(self.GetInteger() > right.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(float64(self.GetInteger()) > right.GetFloat()), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -706,24 +669,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightGreaterThan,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
-								if left.GetInteger() > self.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if left.GetFloat() > float64(self.GetInteger()) {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch left.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(left.GetInteger() > self.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(left.GetFloat() > float64(self.GetInteger())), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -731,24 +688,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(LessThan,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
-								if self.GetInteger() < right.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if float64(self.GetInteger()) < right.GetFloat() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch right.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(self.GetInteger() < right.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(float64(self.GetInteger()) < right.GetFloat()), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -756,24 +707,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightLessThan,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
-								if left.GetInteger() < self.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if left.GetFloat() < float64(self.GetInteger()) {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch left.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(left.GetInteger() < self.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(left.GetFloat() < float64(self.GetInteger())), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -781,24 +726,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(GreaterThanOrEqual,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
-								if self.GetInteger() >= right.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if float64(self.GetInteger()) >= right.GetFloat() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch right.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(self.GetInteger() >= right.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(float64(self.GetInteger()) >= right.GetFloat()), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -806,24 +745,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightGreaterThanOrEqual,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
-								if left.GetInteger() >= self.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if left.GetFloat() >= float64(self.GetInteger()) {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch left.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(left.GetInteger() >= self.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(left.GetFloat() >= float64(self.GetInteger())), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -831,24 +764,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(LessThanOrEqual,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							switch right.(type) {
-							case *Integer:
-								if self.GetInteger() <= right.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if float64(self.GetInteger()) <= right.GetFloat() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch right.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(self.GetInteger() <= right.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(float64(self.GetInteger()) <= right.GetFloat()), true
 							default:
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -856,24 +783,18 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(RightLessThanOrEqual,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							switch left.(type) {
-							case *Integer:
-								if left.GetInteger() <= self.GetInteger() {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
-							case *Float:
-								if left.GetFloat() <= float64(self.GetInteger()) {
-									return p.GetTrue(), nil
-								}
-								return p.GetFalse(), nil
+							switch left.BuiltInTypeId {
+							case IntegerId:
+								return p.InterpretAsBool(left.GetInteger() <= self.GetInteger()), true
+							case FloatId:
+								return p.InterpretAsBool(left.GetFloat() <= float64(self.GetInteger())), true
 							default:
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName)
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
 						},
 					),
@@ -881,71 +802,68 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(Hash,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetInteger()), nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetInteger()), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Copy,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetInteger()), nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetInteger()), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToInteger,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetInteger()), nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetInteger()), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToFloat,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							return p.NewFloat(context, false, context.PeekSymbolTable(),
 								float64(self.GetInteger()),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToString,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							return p.NewString(context, false, context.PeekSymbolTable(), fmt.Sprint(self.GetInteger())), nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.NewString(context, false, context.PeekSymbolTable(), fmt.Sprint(self.GetInteger())), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToBool,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							if self.GetInteger() != 0 {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.InterpretAsBool(self.GetInteger() != 0), true
 						},
 					),
 				)

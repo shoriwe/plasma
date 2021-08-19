@@ -1,16 +1,11 @@
 package vm
 
-type Iterator struct {
-	*Object
-}
-
-func (p *Plasma) NewIterator(context *Context, isBuiltIn bool, parentSymbols *SymbolTable) *Iterator {
-	iterator := &Iterator{
-		Object: p.NewObject(context, isBuiltIn, IteratorName, nil, parentSymbols),
-	}
+func (p *Plasma) NewIterator(context *Context, isBuiltIn bool, parentSymbols *SymbolTable) *Value {
+	iterator := p.NewValue(context, isBuiltIn, IteratorName, nil, parentSymbols)
+	iterator.BuiltInTypeId = IteratorId
 	p.IteratorInitialize(isBuiltIn)(context, iterator)
 	iterator.SetOnDemandSymbol(Self,
-		func() Value {
+		func() *Value {
 			return iterator
 		},
 	)
@@ -18,35 +13,35 @@ func (p *Plasma) NewIterator(context *Context, isBuiltIn bool, parentSymbols *Sy
 }
 
 func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object Value) *Object {
+	return func(context *Context, object *Value) *Value {
 		object.SetOnDemandSymbol(HasNext,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(_ Value, _ ...Value) (Value, *Object) {
-							return p.GetFalse(), nil
+						func(_ *Value, _ ...*Value) (*Value, bool) {
+							return p.GetFalse(), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Next,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(_ Value, _ ...Value) (Value, *Object) {
-							return p.GetNone(), nil
+						func(_ *Value, _ ...*Value) (*Value, bool) {
+							return p.GetNone(), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Iter,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							return self, nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return self, true
 						},
 					),
 				)

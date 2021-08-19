@@ -1,13 +1,13 @@
 package vm
 
 func (p *Plasma) CallableInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object Value) *Object {
+	return func(context *Context, object *Value) *Value {
 		object.SetOnDemandSymbol(Call,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(_ Value, _ ...Value) (Value, *Object) {
-							return nil, p.NewNotImplementedCallableError(context, Call)
+						func(_ *Value, _ ...*Value) (*Value, bool) {
+							return p.NewNotImplementedCallableError(context, Call), false
 						},
 					),
 				)
@@ -17,25 +17,46 @@ func (p *Plasma) CallableInitialize(isBuiltIn bool) ConstructorCallBack {
 	}
 }
 
-func (p *Plasma) CallFunction(context *Context, function Value, parent *SymbolTable, arguments ...Value) (Value, *Object) {
-	var callFunction *Function
-	if _, ok := function.(*Function); !ok {
+func (p *Plasma) CallFunction(context *Context, function *Value, arguments ...*Value) (*Value, bool) {
+	var (
+		callFunction *Value
+		result       *Value
+		callError    *Value
+		success      bool
+	)
+	switch function.BuiltInTypeId {
+	case FunctionId:
+		callFunction = function
+	case TypeId:
+		result, success = p.ConstructObject(context, function, function.SymbolTable().Parent)
+		if !success {
+			return result, false
+		}
+		resultInitialize, getError := result.Get(Initialize)
+		if getError != nil {
+			return p.NewObjectWithNameNotFoundError(context, result.GetClass(p), Initialize), false
+		}
+		callError, success = p.CallFunction(context, resultInitialize, arguments...)
+		// Construct the object and initialize it
+		if !success {
+			return callError, false
+		}
+		return result, true
+	default:
 		call, getError := function.Get(Call)
 		if getError != nil {
-			return nil, p.NewObjectNotCallable(context, function.GetClass(p))
+			return p.NewObjectNotCallable(context, function.GetClass(p)), false
 		}
-		if _, ok = call.(*Function); !ok {
-			return nil, p.NewInvalidTypeError(context, function.TypeName(), CallableName)
+		if !call.IsTypeById(FunctionId) {
+			return p.NewInvalidTypeError(context, function.TypeName(), CallableName), false
 		}
-		callFunction = call.(*Function)
-	} else {
-		callFunction = function.(*Function)
+		callFunction = call
 	}
 	if callFunction.Callable.NumberOfArguments() != len(arguments) {
 		//  Return Here a error related to number of arguments
-		return nil, p.NewInvalidNumberOfArgumentsError(context, len(arguments), callFunction.Callable.NumberOfArguments())
+		return p.NewInvalidNumberOfArgumentsError(context, len(arguments), callFunction.Callable.NumberOfArguments()), false
 	}
-	symbols := NewSymbolTable(parent)
+	symbols := NewSymbolTable(function.SymbolTable().Parent)
 	self, callback, code := callFunction.Callable.Call()
 	if self != nil {
 		symbols.Set(Self, self)
@@ -43,31 +64,29 @@ func (p *Plasma) CallFunction(context *Context, function Value, parent *SymbolTa
 		symbols.Set(Self, function)
 	}
 	context.PushSymbolTable(symbols)
-	var result Value
-	var callError *Object
 	if callback != nil {
-		result, callError = callback(self, arguments...)
+		result, success = callback(self, arguments...)
 	} else if code != nil {
 		// Load the arguments
 		for i := len(arguments) - 1; i > -1; i-- {
 			context.PushObject(arguments[i])
 		}
-		result, callError = p.Execute(context, NewBytecodeFromArray(code))
+		result, success = p.Execute(context, NewBytecodeFromArray(code))
 	} else {
 		panic("callback and code are nil")
 	}
 	context.PopSymbolTable()
-	if callError != nil {
-		return nil, callError
+	if !success {
+		return result, false
 	}
-	return result, nil
+	return result, true
 }
 
-type FunctionCallback func(Value, ...Value) (Value, *Object)
+type FunctionCallback func(*Value, ...*Value) (*Value, bool)
 
 type Callable interface {
 	NumberOfArguments() int
-	Call() (Value, FunctionCallback, []Code) // self should return directly the object or the code of the function
+	Call() (*Value, FunctionCallback, []Code) // self should return directly the object or the code of the function
 }
 
 type PlasmaFunction struct {
@@ -79,7 +98,7 @@ func (p *PlasmaFunction) NumberOfArguments() int {
 	return p.numberOfArguments
 }
 
-func (p *PlasmaFunction) Call() (Value, FunctionCallback, []Code) {
+func (p *PlasmaFunction) Call() (*Value, FunctionCallback, []Code) {
 	return nil, nil, p.Code
 }
 
@@ -93,18 +112,18 @@ func NewPlasmaFunction(numberOfArguments int, code []Code) *PlasmaFunction {
 type PlasmaClassFunction struct {
 	numberOfArguments int
 	Code              []Code
-	Self              Value
+	Self              *Value
 }
 
 func (p *PlasmaClassFunction) NumberOfArguments() int {
 	return p.numberOfArguments
 }
 
-func (p *PlasmaClassFunction) Call() (Value, FunctionCallback, []Code) {
+func (p *PlasmaClassFunction) Call() (*Value, FunctionCallback, []Code) {
 	return p.Self, nil, p.Code
 }
 
-func NewPlasmaClassFunction(self Value, numberOfArguments int, code []Code) *PlasmaClassFunction {
+func NewPlasmaClassFunction(self *Value, numberOfArguments int, code []Code) *PlasmaClassFunction {
 	return &PlasmaClassFunction{
 		numberOfArguments: numberOfArguments,
 		Code:              code,
@@ -121,7 +140,7 @@ func (g *BuiltInFunction) NumberOfArguments() int {
 	return g.numberOfArguments
 }
 
-func (g *BuiltInFunction) Call() (Value, FunctionCallback, []Code) {
+func (g *BuiltInFunction) Call() (*Value, FunctionCallback, []Code) {
 	return nil, g.callback, nil
 }
 
@@ -135,18 +154,18 @@ func NewBuiltInFunction(numberOfArguments int, callback FunctionCallback) *Built
 type BuiltInClassFunction struct {
 	numberOfArguments int
 	callback          FunctionCallback
-	Self              Value
+	Self              *Value
 }
 
 func (g *BuiltInClassFunction) NumberOfArguments() int {
 	return g.numberOfArguments
 }
 
-func (g *BuiltInClassFunction) Call() (Value, FunctionCallback, []Code) {
+func (g *BuiltInClassFunction) Call() (*Value, FunctionCallback, []Code) {
 	return g.Self, g.callback, nil
 }
 
-func NewBuiltInClassFunction(self Value, numberOfArguments int, callback FunctionCallback) *BuiltInClassFunction {
+func NewBuiltInClassFunction(self *Value, numberOfArguments int, callback FunctionCallback) *BuiltInClassFunction {
 	return &BuiltInClassFunction{
 		numberOfArguments: numberOfArguments,
 		callback:          callback,

@@ -6,19 +6,14 @@ import (
 	"github.com/shoriwe/gplasma/pkg/tools"
 )
 
-type Bytes struct {
-	*Object
-}
-
-func (p *Plasma) NewBytes(context *Context, isBuiltIn bool, parent *SymbolTable, content []uint8) Value {
-	bytes_ := &Bytes{
-		Object: p.NewObject(context, isBuiltIn, BytesName, nil, parent),
-	}
+func (p *Plasma) NewBytes(context *Context, isBuiltIn bool, parent *SymbolTable, content []uint8) *Value {
+	bytes_ := p.NewValue(context, isBuiltIn, BytesName, nil, parent)
+	bytes_.BuiltInTypeId = BytesId
 	bytes_.SetBytes(content)
 	bytes_.SetLength(len(content))
 	p.BytesInitialize(isBuiltIn)(context, bytes_)
 	bytes_.SetOnDemandSymbol(Self,
-		func() Value {
+		func() *Value {
 			return bytes_
 		},
 	)
@@ -26,211 +21,198 @@ func (p *Plasma) NewBytes(context *Context, isBuiltIn bool, parent *SymbolTable,
 }
 
 func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object Value) *Object {
+	return func(context *Context, object *Value) *Value {
 		object.SetOnDemandSymbol(Add,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Bytes); !ok {
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), BytesName)
+							if !right.IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, right.TypeName(), BytesName), false
 							}
 							var newContent []uint8
 							copy(newContent, self.GetBytes())
 							newContent = append(newContent, right.GetBytes()...)
-							return p.NewBytes(context, false, context.PeekSymbolTable(), newContent), nil
+							return p.NewBytes(context, false, context.PeekSymbolTable(), newContent), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightAdd,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Bytes); !ok {
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), BytesName)
+							if !left.IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, left.TypeName(), BytesName), false
 							}
 							var newContent []uint8
 							copy(newContent, left.GetBytes())
 							newContent = append(newContent, self.GetBytes()...)
-							return p.NewBytes(context, false, context.PeekSymbolTable(), newContent), nil
+							return p.NewBytes(context, false, context.PeekSymbolTable(), newContent), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Mul,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, right.TypeName(), IntegerName)
+							if !right.IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName), false
 							}
-							return p.NewBytes(context, false, context.PeekSymbolTable(), bytes.Repeat(self.GetBytes(), int(right.GetInteger()))), nil
+							return p.NewBytes(context, false, context.PeekSymbolTable(), bytes.Repeat(self.GetBytes(), int(right.GetInteger()))), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightMul,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Integer); !ok {
-								return nil, p.NewInvalidTypeError(context, left.TypeName(), IntegerName)
+							if !left.IsTypeById(IntegerId) {
+								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName), false
 							}
-							return p.NewBytes(context, false, context.PeekSymbolTable(), bytes.Repeat(left.GetBytes(), int(self.GetInteger()))), nil
+							return p.NewBytes(context, false, context.PeekSymbolTable(), bytes.Repeat(left.GetBytes(), int(self.GetInteger()))), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Equals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Bytes); !ok {
-								return p.GetFalse(), nil
+							if !right.IsTypeById(BytesId) {
+								return p.GetFalse(), true
 							}
 							if self.GetLength() != right.GetLength() {
-								return p.GetFalse(), nil
+								return p.GetFalse(), true
 							}
-							if bytes.Compare(self.GetBytes(), right.GetBytes()) == 0 {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(bytes.Compare(self.GetBytes(), right.GetBytes()) == 0), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Bytes); !ok {
-								return p.GetFalse(), nil
+							if !left.IsTypeById(BytesId) {
+								return p.GetFalse(), true
 							}
 							if left.GetLength() != self.GetLength() {
-								return p.GetFalse(), nil
+								return p.GetFalse(), true
 							}
-							if bytes.Compare(left.GetBytes(), self.GetBytes()) == 0 {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(bytes.Compare(left.GetBytes(), self.GetBytes()) == 0), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(NotEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Bytes); !ok {
-								return p.GetFalse(), nil
+							if !right.IsTypeById(BytesId) {
+								return p.GetFalse(), true
 							}
 							if self.GetLength() != right.GetLength() {
-								return p.GetFalse(), nil
+								return p.GetFalse(), true
 							}
-							if bytes.Compare(self.GetBytes(), right.GetBytes()) != 0 {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(bytes.Compare(self.GetBytes(), right.GetBytes()) != 0), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightNotEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Bytes); !ok {
-								return p.GetFalse(), nil
+							if !left.IsTypeById(BytesId) {
+								return p.GetFalse(), true
 							}
 							if left.GetLength() != self.GetLength() {
-								return p.GetFalse(), nil
+								return p.GetFalse(), true
 							}
-							if bytes.Compare(left.GetBytes(), self.GetBytes()) != 0 {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(bytes.Compare(left.GetBytes(), self.GetBytes()) != 0), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Hash,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							selfHash := p.HashBytes(append(self.GetBytes(), []byte("Bytes")...))
-							return p.NewInteger(context, false, context.PeekSymbolTable(), selfHash), nil
+							return p.NewInteger(context, false, context.PeekSymbolTable(), selfHash), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Copy,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							var newBytes []uint8
 							copy(newBytes, self.GetBytes())
-							return p.NewBytes(context, false, context.PeekSymbolTable(), newBytes), nil
+							return p.NewBytes(context, false, context.PeekSymbolTable(), newBytes), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Index,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							indexObject := arguments[0]
-							var ok bool
-							if _, ok = indexObject.(*Integer); ok {
+							if indexObject.IsTypeById(IntegerId) {
 								index, calcError := tools.CalcIndex(indexObject.GetInteger(), self.GetLength())
 								if calcError != nil {
-									return nil, p.NewIndexOutOfRange(context, self.GetLength(), indexObject.GetInteger())
+									return p.NewIndexOutOfRange(context, self.GetLength(), indexObject.GetInteger()), false
 								}
-								return p.NewInteger(context, false, context.PeekSymbolTable(), int64(self.GetBytes()[index])), nil
-							} else if _, ok = indexObject.(*Tuple); ok {
+								return p.NewInteger(context, false, context.PeekSymbolTable(), int64(self.GetBytes()[index])), true
+							} else if indexObject.IsTypeById(TupleId) {
 								if len(indexObject.GetContent()) != 2 {
-									return nil, p.NewInvalidNumberOfArgumentsError(context, len(indexObject.GetContent()), 2)
+									return p.NewInvalidNumberOfArgumentsError(context, len(indexObject.GetContent()), 2), false
 								}
 								startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger(), self.GetLength())
 								if calcError != nil {
-									return nil, p.NewIndexOutOfRange(context, self.GetLength(), indexObject.GetContent()[0].GetInteger())
+									return p.NewIndexOutOfRange(context, self.GetLength(), indexObject.GetContent()[0].GetInteger()), false
 								}
 								var targetIndex int
 								targetIndex, calcError = tools.CalcIndex(indexObject.GetContent()[1].GetInteger(), self.GetLength())
 								if calcError != nil {
-									return nil, p.NewIndexOutOfRange(context, self.GetLength(), indexObject.GetContent()[1].GetInteger())
+									return p.NewIndexOutOfRange(context, self.GetLength(), indexObject.GetContent()[1].GetInteger()), false
 								}
-								return p.NewBytes(context, false, context.PeekSymbolTable(), self.GetBytes()[startIndex:targetIndex]), nil
+								return p.NewBytes(context, false, context.PeekSymbolTable(), self.GetBytes()[startIndex:targetIndex]), true
 							} else {
-								return nil, p.NewInvalidTypeError(context, indexObject.TypeName(), IntegerName, TupleName)
+								return p.NewInvalidTypeError(context, indexObject.TypeName(), IntegerName, TupleName), false
 							}
 						},
 					),
@@ -238,10 +220,10 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 			},
 		)
 		object.SetOnDemandSymbol(Iter,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							iterator := p.NewIterator(context, false, context.PeekSymbolTable())
 							iterator.SetInteger(0) // This is the index
 							iterator.SetBytes(self.GetBytes())
@@ -250,11 +232,8 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 								p.NewFunction(context, isBuiltIn, iterator.SymbolTable(),
 									NewBuiltInClassFunction(iterator,
 										0,
-										func(funcSelf Value, _ ...Value) (Value, *Object) {
-											if int(funcSelf.GetInteger()) < funcSelf.GetLength() {
-												return p.GetTrue(), nil
-											}
-											return p.GetFalse(), nil
+										func(funcSelf *Value, _ ...*Value) (*Value, bool) {
+											return p.InterpretAsBool(int(funcSelf.GetInteger()) < funcSelf.GetLength()), true
 										},
 									),
 								),
@@ -263,64 +242,61 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 								p.NewFunction(context, isBuiltIn, iterator.SymbolTable(),
 									NewBuiltInClassFunction(iterator,
 										0,
-										func(funcSelf Value, _ ...Value) (Value, *Object) {
+										func(funcSelf *Value, _ ...*Value) (*Value, bool) {
 											char := funcSelf.GetBytes()[int(funcSelf.GetInteger())]
 											funcSelf.SetInteger(funcSelf.GetInteger() + 1)
-											return p.NewInteger(context, false, context.PeekSymbolTable(), int64(char)), nil
+											return p.NewInteger(context, false, context.PeekSymbolTable(), int64(char)), true
 										},
 									),
 								),
 							)
-							return iterator, nil
+							return iterator, true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToInteger,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							return p.NewInteger(context, false, context.PeekSymbolTable(),
 								int64(binary.BigEndian.Uint32(self.GetBytes())),
-							), nil
+							), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToString,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							return p.NewString(context, false, context.PeekSymbolTable(), string(self.GetBytes())), nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.NewString(context, false, context.PeekSymbolTable(), string(self.GetBytes())), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToBool,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							if self.GetLength() != 0 {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.InterpretAsBool(self.GetLength() != 0), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToArray,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							var newContent []Value
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							var newContent []*Value
 							for _, byte_ := range self.GetBytes() {
 								newContent = append(newContent,
 									p.NewInteger(context, false, context.PeekSymbolTable(),
@@ -328,18 +304,18 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 									),
 								)
 							}
-							return p.NewArray(context, false, context.PeekSymbolTable(), newContent), nil
+							return p.NewArray(context, false, context.PeekSymbolTable(), newContent), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToTuple,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							var newContent []Value
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							var newContent []*Value
 							for _, byte_ := range self.GetBytes() {
 								newContent = append(newContent,
 									p.NewInteger(context, false, context.PeekSymbolTable(),
@@ -347,7 +323,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 									),
 								)
 							}
-							return p.NewTuple(context, false, context.PeekSymbolTable(), newContent), nil
+							return p.NewTuple(context, false, context.PeekSymbolTable(), newContent), true
 						},
 					),
 				)

@@ -1,202 +1,179 @@
 package vm
 
-type Bool struct {
-	*Object
-}
-
-func (p *Plasma) QuickGetBool(context *Context, value Value) (bool, *Object) {
-	if _, ok := value.(*Bool); ok {
-		return value.GetBool(), nil
+func (p *Plasma) QuickGetBool(context *Context, value *Value) (bool, *Value) {
+	if value.BuiltInTypeId == BoolId {
+		return value.Bool, nil
 	}
 	valueToBool, getError := value.Get(ToBool)
 	if getError != nil {
 		return false, p.NewObjectWithNameNotFoundError(context, value.GetClass(p), ToBool)
 	}
-	valueBool, callError := p.CallFunction(context, valueToBool, valueToBool.SymbolTable().Parent)
-	if callError != nil {
-		return false, callError
+	valueBool, success := p.CallFunction(context, valueToBool)
+	if !success {
+		return false, valueBool
 	}
-	if _, ok := valueBool.(*Bool); !ok {
+	if !valueBool.IsTypeById(BoolId) {
 		return false, p.NewInvalidTypeError(context, value.TypeName(), BoolName)
 	}
-	return valueBool.GetBool(), nil
+	return valueBool.Bool, nil
 }
 
-func (p *Plasma) NewBool(context *Context, isBuiltIn bool, parentSymbols *SymbolTable, value bool) *Bool {
-	bool_ := &Bool{
-		Object: p.NewObject(context, isBuiltIn, BoolName, nil, parentSymbols),
-	}
+func (p *Plasma) NewBool(context *Context, isBuiltIn bool, parentSymbols *SymbolTable, value bool) *Value {
+	bool_ := p.NewValue(context, isBuiltIn, BoolName, nil, parentSymbols)
+	bool_.BuiltInTypeId = BoolId
 	bool_.SetBool(value)
 	p.BoolInitialize(isBuiltIn)(context, bool_)
 	bool_.SetOnDemandSymbol(Self,
-		func() Value {
+		func() *Value {
 			return bool_
 		},
 	)
 	return bool_
 }
 
-func (p *Plasma) GetFalse() *Bool {
-	return p.ForceMasterGetAny(FalseName).(*Bool)
+func (p *Plasma) GetFalse() *Value {
+	return p.ForceMasterGetAny(FalseName)
 }
 
-func (p *Plasma) GetTrue() *Bool {
-	return p.ForceMasterGetAny(TrueName).(*Bool)
+func (p *Plasma) GetTrue() *Value {
+	return p.ForceMasterGetAny(TrueName)
 }
 
 func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object Value) *Object {
+	return func(context *Context, object *Value) *Value {
 		object.SetOnDemandSymbol(Equals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Bool); !ok {
-								return p.GetFalse(), nil
+							if !right.IsTypeById(BoolId) {
+								return p.GetFalse(), true
 							}
-							if self.GetBool() == right.GetBool() {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(self.GetBool() == right.GetBool()), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Bool); !ok {
-								return p.GetFalse(), nil
+							if !left.IsTypeById(BoolId) {
+								return p.GetFalse(), true
 							}
-							if left.GetBool() == self.GetBool() {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(left.GetBool() == self.GetBool()), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(NotEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if _, ok := right.(*Bool); !ok {
-								return p.GetFalse(), nil
+							if right.BuiltInTypeId != BoolId {
+								return p.GetFalse(), true
 							}
-							if self.GetBool() != right.GetBool() {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(self.GetBool() != right.GetBool()), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(RightNotEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(self Value, arguments ...Value) (Value, *Object) {
+						func(self *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if _, ok := left.(*Bool); !ok {
-								return p.GetFalse(), nil
+							if left.BuiltInTypeId != BoolId {
+								return p.GetFalse(), true
 							}
-							if left.GetBool() != self.GetBool() {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(left.GetBool() != self.GetBool()), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Copy,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							if self.GetBool() {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.InterpretAsBool(self.GetBool()), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(Hash,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							if self.GetBool() {
-								return p.NewInteger(context, false, context.PeekSymbolTable(), 1), nil
+								return p.NewInteger(context, false, context.PeekSymbolTable(), 1), true
 							}
-							return p.NewInteger(context, false, context.PeekSymbolTable(), 0), nil
+							return p.NewInteger(context, false, context.PeekSymbolTable(), 0), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToInteger,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							if self.GetBool() {
-								return p.NewInteger(context, false, context.PeekSymbolTable(), 1), nil
+								return p.NewInteger(context, false, context.PeekSymbolTable(), 1), true
 							}
-							return p.NewInteger(context, false, context.PeekSymbolTable(), 0), nil
+							return p.NewInteger(context, false, context.PeekSymbolTable(), 0), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToFloat,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							if self.GetBool() {
-								return p.NewFloat(context, false, context.PeekSymbolTable(), 1), nil
+								return p.NewFloat(context, false, context.PeekSymbolTable(), 1), true
 							}
-							return p.NewFloat(context, false, context.PeekSymbolTable(), 0), nil
+							return p.NewFloat(context, false, context.PeekSymbolTable(), 0), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToString,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
+						func(self *Value, _ ...*Value) (*Value, bool) {
 							if self.GetBool() {
-								return p.NewString(context, false, context.PeekSymbolTable(), TrueName), nil
+								return p.NewString(context, false, context.PeekSymbolTable(), TrueName), true
 							}
-							return p.NewString(context, false, context.PeekSymbolTable(), FalseName), nil
+							return p.NewString(context, false, context.PeekSymbolTable(), FalseName), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToBool,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(self Value, _ ...Value) (Value, *Object) {
-							if self.GetBool() {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.InterpretAsBool(self.GetBool()), true
 						},
 					),
 				)

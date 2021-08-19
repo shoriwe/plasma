@@ -1,14 +1,15 @@
 package vm
 
-func (p *Plasma) GetNone() *Object {
-	return p.ForceMasterGetAny(None).(*Object)
+func (p *Plasma) GetNone() *Value {
+	return p.ForceMasterGetAny(None)
 }
 
-func (p *Plasma) NewNone(context *Context, isBuiltIn bool, parent *SymbolTable) *Object {
-	result := p.NewObject(context, isBuiltIn, NoneName, nil, parent)
+func (p *Plasma) NewNone(context *Context, isBuiltIn bool, parent *SymbolTable) *Value {
+	result := p.NewValue(context, isBuiltIn, NoneName, nil, parent)
+	result.BuiltInTypeId = NoneId
 	p.NoneInitialize(isBuiltIn)(context, result)
 	result.SetOnDemandSymbol(Self,
-		func() Value {
+		func() *Value {
 			return result
 		},
 	)
@@ -16,54 +17,48 @@ func (p *Plasma) NewNone(context *Context, isBuiltIn bool, parent *SymbolTable) 
 }
 
 func (p *Plasma) NoneInitialize(isBuiltIn bool) ConstructorCallBack {
-	return func(context *Context, object Value) *Object {
+	return func(context *Context, object *Value) *Value {
 		object.SetOnDemandSymbol(Equals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(_ Value, arguments ...Value) (Value, *Object) {
+						func(_ *Value, arguments ...*Value) (*Value, bool) {
 							right := arguments[0]
-							if right.GetClass(p) == p.ForceMasterGetAny(NoneName).(*Type) {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(right.IsTypeById(NoneId)), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(NotEquals,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
-						func(_ Value, arguments ...Value) (Value, *Object) {
+						func(_ *Value, arguments ...*Value) (*Value, bool) {
 							left := arguments[0]
-							if left.GetClass(p) == p.ForceMasterGetAny(NoneName).(*Type) {
-								return p.GetTrue(), nil
-							}
-							return p.GetFalse(), nil
+							return p.InterpretAsBool(left.IsTypeById(NoneId)), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToString,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(_ Value, _ ...Value) (Value, *Object) {
-							return p.NewString(context, false, context.PeekSymbolTable(), "None"), nil
+						func(_ *Value, _ ...*Value) (*Value, bool) {
+							return p.NewString(context, false, context.PeekSymbolTable(), "None"), true
 						},
 					),
 				)
 			},
 		)
 		object.SetOnDemandSymbol(ToBool,
-			func() Value {
+			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
-						func(_ Value, _ ...Value) (Value, *Object) {
-							return p.GetFalse(), nil
+						func(_ *Value, _ ...*Value) (*Value, bool) {
+							return p.GetFalse(), true
 						},
 					),
 				)

@@ -1,9 +1,10 @@
 package vm
 
-func (p *Plasma) NewModule(context *Context, isBuiltIn bool, parent *SymbolTable) Value {
-	module := p.NewObject(context, isBuiltIn, ModuleName, nil, parent)
+func (p *Plasma) NewModule(context *Context, isBuiltIn bool, parent *SymbolTable) *Value {
+	module := p.NewValue(context, isBuiltIn, ModuleName, nil, parent)
+	module.BuiltInTypeId = ModuleId
 	module.SetOnDemandSymbol(Self,
-		func() Value {
+		func() *Value {
 			return module
 		},
 	)
