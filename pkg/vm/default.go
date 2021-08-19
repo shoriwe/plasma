@@ -38,18 +38,12 @@ func (p *Plasma) InitializeBuiltIn() {
 		This is the master symbol table that is protected from writes
 	*/
 
+	valueType := p.NewType(p.builtInContext, true, ValueName,
+		nil, nil,
+		NewBuiltInConstructor(p.ObjectInitialize(false)))
 	// Types
-	type_ := p.NewType(p.builtInContext, true, TypeName, nil, nil, NewBuiltInConstructor(p.ObjectInitialize(true)))
+	type_ := p.NewType(p.builtInContext, true, TypeName, nil, []*Value{valueType}, NewBuiltInConstructor(p.ObjectInitialize(true)))
 
-	type_.Set(ToString,
-		p.NewFunction(p.builtInContext, true, type_.symbols,
-			NewBuiltInClassFunction(type_, 0,
-				func(_ *Value, _ ...*Value) (*Value, bool) {
-					return p.NewString(p.builtInContext, false, p.builtInContext.PeekSymbolTable(), "Type@ Value"), true
-				},
-			),
-		),
-	)
 	p.builtInContext.PeekSymbolTable().Set(TypeName, type_)
 	//// Default Error Types
 	exception := p.NewType(p.builtInContext, true, RuntimeError, p.builtInContext.PeekSymbolTable(), []*Value{type_},
@@ -441,11 +435,7 @@ func (p *Plasma) InitializeBuiltIn() {
 			NewBuiltInConstructor(p.FloatInitialize(false)),
 		),
 	)
-	p.builtInContext.PeekSymbolTable().Set(ValueName,
-		p.NewType(p.builtInContext, true, ValueName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
-			NewBuiltInConstructor(p.ObjectInitialize(false)),
-		),
-	)
+	p.builtInContext.PeekSymbolTable().Set(ValueName, valueType)
 	p.builtInContext.PeekSymbolTable().Set(FunctionName,
 		p.NewType(p.builtInContext, true, FunctionName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
 			NewBuiltInConstructor(p.ObjectInitialize(false)),

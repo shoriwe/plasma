@@ -138,16 +138,6 @@ type Context struct {
 	SymbolStack *SymbolStack
 }
 
-func NewContext() *Context {
-	result := &Context{
-		LoopStack:   NewLoopStack(),
-		ObjectStack: NewObjectStack(),
-		TryStack:    NewTryStack(),
-		SymbolStack: NewSymbolStack(),
-	}
-	return result
-}
-
 func (c *Context) PushObject(object *Value) {
 	c.ObjectStack.Push(object)
 }
