@@ -16,16 +16,20 @@ go install github.com/shoriwe/gplasma/cmd/plasma@latest
 ```
 
 ```
-...> plasma.exe -h
-plasma.exe [FLAG [FLAG [FLAG]]] [PROGRAM [PROGRAM [PROGRAM]]]
+...>plasma [MODE] [FLAG [FLAG [FLAG]]] [PROGRAM [PROGRAM [PROGRAM]]]
 
 [+] Notes
+        - No PROGRAM arguments will spawn a REPL
 
 [+] Flags
-	-h, --help		Show this help message
+        -h, --help              Show this help message
+
+[+] Modes
+        module          tool to install, uninstall and initialize modules
 
 [+] Environment Variables
-	NoColor -> TRUE or FALSE		Disable color printing for this CLI
+        NoColor -> TRUE or FALSE                Disable color printing for this CLI
+        SitePackages -> PATH            This is the path to the Site-Packages of the running VM; Default is PATH/TO/PLASMA/EXECUTABLE/site-packages
 ```
 
 ## Features
@@ -35,31 +39,31 @@ plasma.exe [FLAG [FLAG [FLAG]]] [PROGRAM [PROGRAM [PROGRAM]]]
 **`plasma`** was designed to be embedded in other go applications, you should do it like:
 
 ```go
-package main
-
-import (
-	"fmt"
-	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
-	"github.com/shoriwe/gplasma/pkg/reader"
-	"github.com/shoriwe/gplasma/pkg/vm"
-	"os"
-)
-
-func main() {
-	virtualMachine := vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
-	compiler := plasma.NewCompiler(reader.NewStringReader("println('Hello world')"),
-		map[uint8]uint8{
-			plasma.PopRawExpressions: plasma.PopRawExpressions,
-		},
-	)
-	code, compilationError := compiler.Compile()
-	if compilationError != nil {
-		panic(compilationError.String())
-	}
-	virtualMachine.InitializeByteCode(code)
-	_, executionError := virtualMachine.Execute()
-	if executionError != nil {
-		panic(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.GetString()))
+func program() {
+	for _, file := range files {
+		fileHandler, readingError := os.Open(file)
+		if readingError != nil {
+			panic(readingError)
+		}
+		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
+			plasma.Options{
+				Debug: false,
+			},
+		)
+		code, compilationError := compiler.Compile()
+		if compilationError != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), compilationError.String())
+			os.Exit(1)
+		}
+		/*
+			ToDo: Do intermediate stuff with other flags
+		*/
+		context := virtualMachine.NewContext()
+		result, success := virtualMachine.Execute(context, code)
+		if !success {
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.GetString())
+			os.Exit(1)
+		}
 	}
 }
 ```
