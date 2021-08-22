@@ -40,6 +40,7 @@ go install github.com/shoriwe/gplasma/cmd/plasma@latest
 
 ```go
 func program() {
+	virtualMachine = vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
 	for _, file := range files {
 		fileHandler, readingError := os.Open(file)
 		if readingError != nil {

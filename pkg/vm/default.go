@@ -38,15 +38,10 @@ func (p *Plasma) InitializeBuiltIn() {
 		This is the master symbol table that is protected from writes
 	*/
 
-	valueType := p.NewType(p.builtInContext, true, ValueName,
-		nil, nil,
-		NewBuiltInConstructor(p.ObjectInitialize(false)))
 	// Types
-	type_ := p.NewType(p.builtInContext, true, TypeName, nil, []*Value{valueType}, NewBuiltInConstructor(p.ObjectInitialize(true)))
-
-	p.builtInContext.PeekSymbolTable().Set(TypeName, type_)
+	p.builtInContext.PeekSymbolTable().Set(TypeName, p.NewType(p.builtInContext, true, TypeName, nil, nil, NewBuiltInConstructor(p.ObjectInitialize(true))))
 	//// Default Error Types
-	exception := p.NewType(p.builtInContext, true, RuntimeError, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+	exception := p.NewType(p.builtInContext, true, RuntimeError, p.builtInContext.PeekSymbolTable(), nil,
 		NewBuiltInConstructor(p.RuntimeErrorInitialize),
 	)
 	p.builtInContext.PeekSymbolTable().Set(RuntimeError, exception)
@@ -406,68 +401,73 @@ func (p *Plasma) InitializeBuiltIn() {
 	)
 	//// Default Types
 	p.builtInContext.PeekSymbolTable().Set(CallableName,
-		p.NewType(p.builtInContext, true, CallableName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, CallableName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.CallableInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(NoneName,
-		p.NewType(p.builtInContext, true, NoneName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, NoneName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.NoneInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(ModuleName,
-		p.NewType(p.builtInContext, true, ModuleName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, ModuleName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.ObjectInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(BoolName,
-		p.NewType(p.builtInContext, true, BoolName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, BoolName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.BoolInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(IteratorName,
-		p.NewType(p.builtInContext, true, IteratorName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, IteratorName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.IteratorInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(FloatName,
-		p.NewType(p.builtInContext, true, FloatName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, FloatName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.FloatInitialize(false)),
 		),
 	)
-	p.builtInContext.PeekSymbolTable().Set(ValueName, valueType)
+	p.builtInContext.PeekSymbolTable().Set(ValueName,
+		p.NewType(p.builtInContext, true, ValueName,
+			nil, nil,
+			NewBuiltInConstructor(p.ObjectInitialize(false)),
+		),
+	)
 	p.builtInContext.PeekSymbolTable().Set(FunctionName,
-		p.NewType(p.builtInContext, true, FunctionName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, FunctionName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.ObjectInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(IntegerName,
-		p.NewType(p.builtInContext, true, IntegerName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, IntegerName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.IntegerInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(StringName,
-		p.NewType(p.builtInContext, true, StringName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, StringName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.StringInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(BytesName,
-		p.NewType(p.builtInContext, true, BytesName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, BytesName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.BytesInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(TupleName,
-		p.NewType(p.builtInContext, true, TupleName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, TupleName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.TupleInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(ArrayName,
-		p.NewType(p.builtInContext, true, ArrayName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, ArrayName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.ArrayInitialize(false)),
 		),
 	)
 	p.builtInContext.PeekSymbolTable().Set(HashName,
-		p.NewType(p.builtInContext, true, HashName, p.builtInContext.PeekSymbolTable(), []*Value{type_},
+		p.NewType(p.builtInContext, true, HashName, p.builtInContext.PeekSymbolTable(), nil,
 			NewBuiltInConstructor(p.HashTableInitialize(false)),
 		),
 	)
@@ -650,20 +650,6 @@ func (p *Plasma) InitializeBuiltIn() {
 			),
 		),
 	)
-	p.builtInContext.PeekSymbolTable().Set("hash",
-		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
-			NewBuiltInFunction(1,
-				func(_ *Value, arguments ...*Value) (*Value, bool) {
-					object := arguments[0]
-					objectHashFunc, getError := object.Get(Hash)
-					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, object.GetClass(p), Hash), false
-					}
-					return p.CallFunction(p.builtInContext, objectHashFunc)
-				},
-			),
-		),
-	)
 	p.builtInContext.PeekSymbolTable().Set("range",
 		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
 			NewBuiltInFunction(3,
@@ -715,110 +701,6 @@ func (p *Plasma) InitializeBuiltIn() {
 					)
 
 					return rangeIterator, true
-				},
-			),
-		),
-	)
-	p.builtInContext.PeekSymbolTable().Set("len",
-		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
-			NewBuiltInFunction(1,
-				func(_ *Value, arguments ...*Value) (*Value, bool) {
-					object := arguments[0]
-					getLength, getError := object.Get(GetLength)
-					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, object.GetClass(p), GetLength), false
-					}
-					length, success := p.CallFunction(p.builtInContext, getLength)
-					if !success {
-						return length, false
-					}
-					if !length.IsTypeById(IntegerId) {
-						return p.NewInvalidTypeError(p.builtInContext, length.TypeName(), IntegerName), false
-					}
-					return length, true
-				},
-			),
-		),
-	)
-	// To... (Transformations)
-	p.builtInContext.PeekSymbolTable().Set(ToFloat,
-		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
-			NewBuiltInFunction(1,
-				func(_ *Value, arguments ...*Value) (*Value, bool) {
-					toFloat, getError := arguments[0].Get(ToFloat)
-					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, arguments[0].GetClass(p), ToFloat), false
-					}
-					return p.CallFunction(p.builtInContext, toFloat)
-				},
-			),
-		),
-	)
-	p.builtInContext.PeekSymbolTable().Set(ToString,
-		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
-			NewBuiltInFunction(1,
-				func(_ *Value, arguments ...*Value) (*Value, bool) {
-					toString, getError := arguments[0].Get(ToString)
-					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, arguments[0].GetClass(p), ToString), false
-					}
-					return p.CallFunction(p.builtInContext, toString)
-				},
-			),
-		),
-	)
-	p.builtInContext.PeekSymbolTable().Set(ToInteger,
-		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
-			NewBuiltInFunction(1,
-				func(_ *Value, arguments ...*Value) (*Value, bool) {
-					toInteger, getError := arguments[0].Get(ToInteger)
-					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, arguments[0].GetClass(p), ToInteger), false
-					}
-					return p.CallFunction(p.builtInContext, toInteger)
-				},
-			),
-		),
-	)
-	p.builtInContext.PeekSymbolTable().Set(ToArray,
-		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
-			NewBuiltInFunction(1,
-				func(_ *Value, arguments ...*Value) (*Value, bool) {
-					// First check if it is iterable
-					// If not call its ToArray
-					toArray, getError := arguments[0].Get(ToArray)
-					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, arguments[0].GetClass(p), ToArray), false
-					}
-					return p.CallFunction(p.builtInContext, toArray)
-				},
-			),
-		),
-	)
-	p.builtInContext.PeekSymbolTable().Set(ToTuple,
-		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
-			NewBuiltInFunction(1,
-				func(_ *Value, arguments ...*Value) (*Value, bool) {
-					// First check if it is iterable
-					// If not call its ToTuple
-					toTuple, getError := arguments[0].Get(ToTuple)
-					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, arguments[0].GetClass(p), ToTuple), false
-					}
-					return p.CallFunction(p.builtInContext, toTuple)
-				},
-			),
-		),
-	)
-	p.builtInContext.PeekSymbolTable().Set(ToBool,
-		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
-			NewBuiltInFunction(1,
-				func(_ *Value, arguments ...*Value) (*Value, bool) {
-					toBool, getError := arguments[0].Get(ToBool)
-					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, arguments[0].GetClass(p), ToBool), false
-					}
-					return p.CallFunction(p.builtInContext, toBool)
 				},
 			),
 		),
