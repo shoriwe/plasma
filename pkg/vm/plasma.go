@@ -108,26 +108,30 @@ func newContext() *Context {
 func (p *Plasma) NewContext() *Context {
 	result := newContext()
 	symbols := NewSymbolTable(p.builtInContext.PeekSymbolTable())
-	symbols.Set("__built_in__",
-		&Value{
-			id:         p.NextId(),
-			typeName:   ValueName,
-			class:      nil,
-			subClasses: nil,
-			isBuiltIn:  true,
-			symbols:    p.builtInContext.PeekSymbolTable(),
-		},
-	)
-	symbols.Set(Self,
-		&Value{
-			id:         p.NextId(),
-			typeName:   ValueName,
-			class:      nil,
-			subClasses: nil,
-			symbols:    symbols,
-		},
-	)
 	result.SymbolStack.Push(symbols)
+
+	builtIn := &Value{
+		id:              p.NextId(),
+		typeName:        ValueName,
+		class:           nil,
+		subClasses:      nil,
+		onDemandSymbols: map[string]OnDemandLoader{},
+		isBuiltIn:       true,
+		symbols:         p.builtInContext.PeekSymbolTable(),
+	}
+	p.ObjectInitialize(true)(result, builtIn)
+	symbols.Set("__built_in__", builtIn)
+
+	self := &Value{
+		id:              p.NextId(),
+		typeName:        ValueName,
+		class:           nil,
+		onDemandSymbols: map[string]OnDemandLoader{},
+		subClasses:      nil,
+		symbols:         symbols,
+	}
+	p.ObjectInitialize(true)(result, self)
+	symbols.Set(Self, self)
 	return result
 }
 
