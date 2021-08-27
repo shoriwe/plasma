@@ -40,32 +40,32 @@ go install github.com/shoriwe/gplasma/cmd/plasma@latest
 
 ```go
 func program() {
-	virtualMachine = vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
-	for _, file := range files {
-		fileHandler, readingError := os.Open(file)
-		if readingError != nil {
-			panic(readingError)
-		}
-		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
-			plasma.Options{
-				Debug: false,
-			},
-		)
-		code, compilationError := compiler.Compile()
-		if compilationError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), compilationError.String())
-			os.Exit(1)
-		}
-		/*
-			ToDo: Do intermediate stuff with other flags
-		*/
-		context := virtualMachine.NewContext()
-		result, success := virtualMachine.Execute(context, code)
-		if !success {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.GetString())
-			os.Exit(1)
-		}
-	}
+virtualMachine = vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
+for _, file := range files {
+fileHandler, readingError := os.Open(file)
+if readingError != nil {
+panic(readingError)
+}
+compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
+plasma.Options{
+Debug: false,
+},
+)
+code, compilationError := compiler.Compile()
+if compilationError != nil {
+_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), compilationError.String())
+os.Exit(1)
+}
+/*
+	ToDo: Do intermediate stuff with other flags
+*/
+context := virtualMachine.NewContext()
+result, success := virtualMachine.Execute(context, code)
+if !success {
+_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
+os.Exit(1)
+}
+}
 }
 ```
 

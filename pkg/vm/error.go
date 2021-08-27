@@ -21,10 +21,10 @@ const (
 	ObjectNotCallableError        = "ObjectNotCallableError"        // Done
 )
 
-func (p *Plasma) ForceGetSelf(name string, parent *Value) *Value {
-	object, getError := parent.Get(name)
+func (p *Plasma) ForceGetSelf(context *Context, name string, parent *Value) *Value {
+	object, getError := parent.Get(p, context, name)
 	if getError != nil {
-		panic(getError.String())
+		panic(getError)
 	}
 	return object
 }
@@ -49,16 +49,16 @@ func (p *Plasma) ForceConstruction(context *Context, type_ *Value) *Value {
 }
 
 func (p *Plasma) ForceInitialization(context *Context, object *Value, arguments ...*Value) {
-	initialize, getError := object.Get(Initialize)
+	initialize, getError := object.Get(p, context, Initialize)
 	if getError != nil {
-		panic(getError.String())
+		panic(getError)
 	}
 	callError, success := p.CallFunction(context,
 		initialize,
 		arguments...,
 	)
 	if !success {
-		panic(fmt.Sprintf("%s: %s", callError.TypeName(), callError.GetString()))
+		panic(fmt.Sprintf("%s: %s", callError.TypeName(), callError.String))
 	}
 }
 
@@ -89,12 +89,8 @@ func (p *Plasma) NewIndexOutOfRange(context *Context, length int, index int64) *
 	errorType := p.ForceMasterGetAny(IndexOutOfRangeError)
 	instantiatedError := p.ForceConstruction(context, errorType)
 	p.ForceInitialization(context, instantiatedError,
-		p.NewInteger(context,
-			false,
-			context.PeekSymbolTable(),
-			int64(length),
-		),
-		p.NewInteger(context, false, context.PeekSymbolTable(), index),
+		p.NewInteger(context, false, int64(length)),
+		p.NewInteger(context, false, index),
 	)
 	return instantiatedError
 }
@@ -112,7 +108,7 @@ func (p *Plasma) NewNotImplementedCallableError(context *Context, methodName str
 	errorType := p.ForceMasterGetAny(NotImplementedCallableError)
 	instantiatedError := p.ForceConstruction(context, errorType)
 	p.ForceInitialization(context, instantiatedError,
-		p.NewString(context, false, context.PeekSymbolTable(), methodName),
+		p.NewString(context, false, methodName),
 	)
 	return instantiatedError
 }
@@ -121,7 +117,7 @@ func (p *Plasma) NewGoRuntimeError(context *Context, er error) *Value {
 	errorType := p.ForceMasterGetAny(GoRuntimeError)
 	instantiatedError := p.ForceConstruction(context, errorType)
 	p.ForceInitialization(context, instantiatedError,
-		p.NewString(context, false, context.PeekSymbolTable(), er.Error()),
+		p.NewString(context, false, er.Error()),
 	)
 	return instantiatedError
 }
@@ -130,8 +126,8 @@ func (p *Plasma) NewInvalidNumberOfArgumentsError(context *Context, received int
 	errorType := p.ForceMasterGetAny(InvalidNumberOfArgumentsError)
 	instantiatedError := p.ForceConstruction(context, errorType)
 	p.ForceInitialization(context, instantiatedError,
-		p.NewInteger(context, false, context.PeekSymbolTable(), int64(received)),
-		p.NewInteger(context, false, context.PeekSymbolTable(), int64(expecting)),
+		p.NewInteger(context, false, int64(received)),
+		p.NewInteger(context, false, int64(expecting)),
 	)
 	return instantiatedError
 }
@@ -140,7 +136,7 @@ func (p *Plasma) NewObjectWithNameNotFoundError(context *Context, objectType *Va
 	errorType := p.ForceMasterGetAny(ObjectWithNameNotFoundError)
 	instantiatedError := p.ForceConstruction(context, errorType)
 	p.ForceInitialization(context, instantiatedError,
-		objectType, p.NewString(context, false, context.PeekSymbolTable(), name),
+		objectType, p.NewString(context, false, name),
 	)
 	return instantiatedError
 }
@@ -148,7 +144,7 @@ func (p *Plasma) NewObjectWithNameNotFoundError(context *Context, objectType *Va
 func (p *Plasma) NewInvalidTypeError(context *Context, received string, expecting ...string) *Value {
 	errorType := p.ForceMasterGetAny(InvalidTypeError)
 	instantiatedError := p.ForceConstruction(context, errorType)
-	instantiatedErrorInitialize, _ := instantiatedError.Get(Initialize)
+	instantiatedErrorInitialize, _ := instantiatedError.Get(p, context, Initialize)
 	expectingSum := ""
 	for index, s := range expecting {
 		if index != 0 {
@@ -158,8 +154,8 @@ func (p *Plasma) NewInvalidTypeError(context *Context, received string, expectin
 	}
 	_, _ = p.CallFunction(context,
 		instantiatedErrorInitialize,
-		p.NewString(context, false, context.PeekSymbolTable(), received),
-		p.NewString(context, false, context.PeekSymbolTable(), expectingSum),
+		p.NewString(context, false, received),
+		p.NewString(context, false, expectingSum),
 	)
 	return instantiatedError
 }
@@ -168,7 +164,7 @@ func (p *Plasma) NewObjectConstructionError(context *Context, typeName string, e
 	errorType := p.ForceMasterGetAny(ObjectConstructionError)
 	instantiatedError := p.ForceConstruction(context, errorType)
 	p.ForceInitialization(context, instantiatedError,
-		p.NewString(context, false, context.PeekSymbolTable(), typeName), p.NewString(context, false, context.PeekSymbolTable(), errorMessage),
+		p.NewString(context, false, typeName), p.NewString(context, false, errorMessage),
 	)
 	return instantiatedError
 }
@@ -177,7 +173,7 @@ func (p *Plasma) NewBuiltInSymbolProtectionError(context *Context, symbolName st
 	errorType := p.ForceMasterGetAny(BuiltInSymbolProtectionError)
 	instantiatedError := p.ForceConstruction(context, errorType)
 	p.ForceInitialization(context, instantiatedError,
-		p.NewString(context, false, context.PeekSymbolTable(), symbolName),
+		p.NewString(context, false, symbolName),
 	)
 	return instantiatedError
 }
@@ -199,7 +195,7 @@ func (p *Plasma) RuntimeErrorInitialize(context *Context, object *Value) *Value 
 						if !message.IsTypeById(StringId) {
 							return p.NewInvalidTypeError(context, message.TypeName(), StringName), false
 						}
-						self.SetString(message.GetString())
+						self.String = message.String
 						return p.GetNone(), true
 					},
 				),
@@ -211,7 +207,7 @@ func (p *Plasma) RuntimeErrorInitialize(context *Context, object *Value) *Value 
 			return p.NewFunction(context, false, object.SymbolTable(),
 				NewBuiltInClassFunction(object, 0,
 					func(self *Value, _ ...*Value) (*Value, bool) {
-						return p.NewString(context, false, context.PeekSymbolTable(), fmt.Sprintf("%s: %s", self.TypeName(), self.GetString())), true
+						return p.NewString(context, false, fmt.Sprintf("%s: %s", self.TypeName(), self.String)), true
 					},
 				),
 			)

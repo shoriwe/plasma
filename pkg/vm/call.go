@@ -32,9 +32,9 @@ func (p *Plasma) CallFunction(context *Context, function *Value, arguments ...*V
 		if !success {
 			return result, false
 		}
-		resultInitialize, getError := result.Get(Initialize)
+		resultInitialize, getError := result.Get(p, context, Initialize)
 		if getError != nil {
-			return p.NewObjectWithNameNotFoundError(context, result.GetClass(p), Initialize), false
+			return getError, false
 		}
 		callError, success = p.CallFunction(context, resultInitialize, arguments...)
 		// Construct the object and initialize it
@@ -43,9 +43,9 @@ func (p *Plasma) CallFunction(context *Context, function *Value, arguments ...*V
 		}
 		return result, true
 	default:
-		call, getError := function.Get(Call)
+		call, getError := function.Get(p, context, Call)
 		if getError != nil {
-			return p.NewObjectNotCallable(context, function.GetClass(p)), false
+			return getError, false
 		}
 		if !call.IsTypeById(FunctionId) {
 			return p.NewInvalidTypeError(context, function.TypeName(), CallableName), false

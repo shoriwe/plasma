@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-func (p *Plasma) NewString(context *Context, isBuiltIn bool, parentSymbols *SymbolTable, value string) *Value {
-	string_ := p.NewValue(context, isBuiltIn, StringName, nil, parentSymbols)
+func (p *Plasma) NewString(context *Context, isBuiltIn bool, value string) *Value {
+	string_ := p.NewValue(context, isBuiltIn, StringName, nil, context.PeekSymbolTable())
 	string_.BuiltInTypeId = StringId
-	string_.SetString(value)
-	string_.SetLength(len(value))
+	string_.String = value
+
 	p.StringInitialize(isBuiltIn)(context, string_)
 	string_.SetOnDemandSymbol(Self,
 		func() *Value {
@@ -33,8 +33,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 								return p.NewInvalidTypeError(context, right.TypeName(), StringName), false
 							}
 							return p.NewString(context, false,
-								context.PeekSymbolTable(),
-								self.GetString()+right.GetString(),
+								self.String+right.String,
 							), true
 						},
 					),
@@ -51,8 +50,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 								return p.NewInvalidTypeError(context, left.TypeName(), StringName), false
 							}
 							return p.NewString(context, false,
-								context.PeekSymbolTable(),
-								left.GetString()+self.GetString(),
+								left.String+self.String,
 							), true
 						},
 					),
@@ -69,8 +67,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName), false
 							}
 							return p.NewString(context, false,
-								context.PeekSymbolTable(),
-								tools.Repeat(self.GetString(), right.GetInteger()),
+								tools.Repeat(self.String, right.Integer),
 							), true
 						},
 					),
@@ -87,8 +84,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName), false
 							}
 							return p.NewString(context, false,
-								context.PeekSymbolTable(),
-								tools.Repeat(self.GetString(), left.GetInteger()),
+								tools.Repeat(self.String, left.Integer),
 							), true
 						},
 					),
@@ -104,7 +100,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 							if !right.IsTypeById(StringId) {
 								return p.GetFalse(), true
 							}
-							return p.InterpretAsBool(self.GetString() == right.GetString()), true
+							return p.InterpretAsBool(self.String == right.String), true
 						},
 					),
 				)
@@ -119,7 +115,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 							if !left.IsTypeById(StringId) {
 								return p.GetFalse(), true
 							}
-							return p.InterpretAsBool(left.GetString() == self.GetString()), true
+							return p.InterpretAsBool(left.String == self.String), true
 						},
 					),
 				)
@@ -134,7 +130,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 							if !right.IsTypeById(StringId) {
 								return p.GetTrue(), true
 							}
-							return p.InterpretAsBool(self.GetString() != right.GetString()), true
+							return p.InterpretAsBool(self.String != right.String), true
 						},
 					),
 				)
@@ -149,7 +145,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 							if !left.IsTypeById(StringId) {
 								return p.GetTrue(), true
 							}
-							return p.InterpretAsBool(left.GetString() != self.GetString()), true
+							return p.InterpretAsBool(left.String != self.String), true
 						},
 					),
 				)
@@ -161,10 +157,10 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
 							if self.GetHash() == 0 {
-								stringHash := p.HashString(fmt.Sprintf("%s-%s", self.GetString(), StringName))
+								stringHash := p.HashString(fmt.Sprintf("%s-%s", self.String, StringName))
 								self.SetHash(stringHash)
 							}
-							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetHash()), true
+							return p.NewInteger(context, false, self.GetHash()), true
 						},
 					),
 				)
@@ -176,8 +172,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
 							return p.NewString(context, false,
-								context.PeekSymbolTable(),
-								self.GetString(),
+								self.String,
 							), true
 						},
 					),
@@ -189,30 +184,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
-							indexObject := arguments[0]
-							if indexObject.IsTypeById(IntegerId) {
-								index, getIndexError := tools.CalcIndex(indexObject.GetInteger(), self.GetLength())
-								if getIndexError != nil {
-									return p.NewIndexOutOfRange(context, self.GetLength(), indexObject.GetInteger()), false
-								}
-								return p.NewString(context, false, context.PeekSymbolTable(), string(self.GetString()[index])), true
-							} else if indexObject.IsTypeById(TupleId) {
-								if len(indexObject.GetContent()) != 2 {
-									return p.NewInvalidNumberOfArgumentsError(context, len(indexObject.GetContent()), 2), false
-								}
-								startIndex, calcError := tools.CalcIndex(indexObject.GetContent()[0].GetInteger(), self.GetLength())
-								if calcError != nil {
-									return p.NewIndexOutOfRange(context, self.GetLength(), indexObject.GetContent()[0].GetInteger()), false
-								}
-								var targetIndex int
-								targetIndex, calcError = tools.CalcIndex(indexObject.GetContent()[1].GetInteger(), self.GetLength())
-								if calcError != nil {
-									return p.NewIndexOutOfRange(context, self.GetLength(), indexObject.GetContent()[1].GetInteger()), false
-								}
-								return p.NewString(context, false, context.PeekSymbolTable(), self.GetString()[startIndex:targetIndex]), true
-							} else {
-								return p.NewInvalidTypeError(context, indexObject.TypeName(), IntegerName, TupleName), false
-							}
+							return p.StringIndex(context, self, arguments[0])
 						},
 					),
 				)
@@ -223,33 +195,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							iterator := p.NewIterator(context, false, context.PeekSymbolTable())
-							iterator.SetInteger(0) // This is the index
-							iterator.SetString(self.GetString())
-							iterator.SetLength(self.GetLength())
-							iterator.Set(HasNext,
-								p.NewFunction(context, isBuiltIn, iterator.SymbolTable(),
-									NewBuiltInClassFunction(iterator,
-										0,
-										func(funcSelf *Value, _ ...*Value) (*Value, bool) {
-											return p.InterpretAsBool(funcSelf.GetInteger() < int64(funcSelf.GetLength())), true
-										},
-									),
-								),
-							)
-							iterator.Set(Next,
-								p.NewFunction(context, isBuiltIn, iterator.SymbolTable(),
-									NewBuiltInClassFunction(iterator,
-										0,
-										func(funcSelf *Value, _ ...*Value) (*Value, bool) {
-											char := string([]rune(funcSelf.GetString())[int(funcSelf.GetInteger())])
-											funcSelf.SetInteger(funcSelf.GetInteger() + 1)
-											return p.NewString(context, false, context.PeekSymbolTable(), char), true
-										},
-									),
-								),
-							)
-							return iterator, true
+							return p.StringIterator(context, self)
 						},
 					),
 				)
@@ -260,11 +206,11 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							number, parsingError := strconv.ParseInt(strings.ReplaceAll(self.GetString(), "_", ""), 10, 64)
+							number, parsingError := strconv.ParseInt(strings.ReplaceAll(self.String, "_", ""), 10, 64)
 							if parsingError != nil {
 								return p.NewIntegerParsingError(context), false
 							}
-							return p.NewInteger(context, false, context.PeekSymbolTable(), number), true
+							return p.NewInteger(context, false, number), true
 						},
 					),
 				)
@@ -275,11 +221,11 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							number, parsingError := strconv.ParseFloat(strings.ReplaceAll(self.GetString(), "_", ""), 64)
+							number, parsingError := strconv.ParseFloat(strings.ReplaceAll(self.String, "_", ""), 64)
 							if parsingError != nil {
 								return p.NewFloatParsingError(context), false
 							}
-							return p.NewFloat(context, false, context.PeekSymbolTable(), number), true
+							return p.NewFloat(context, false, number), true
 						},
 					),
 				)
@@ -291,8 +237,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
 							return p.NewString(context, false,
-								context.PeekSymbolTable(),
-								self.GetString(),
+								self.String,
 							), true
 						},
 					),
@@ -304,7 +249,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.InterpretAsBool(self.GetLength() > 0), true
+							return p.InterpretAsBool(len(self.String) > 0), true
 						},
 					),
 				)
@@ -316,13 +261,10 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
 							var content []*Value
-							for _, char := range self.GetString() {
-								content = append(content, p.NewString(context, false,
-									context.PeekSymbolTable(), string(char),
-								),
-								)
+							for _, char := range []rune(self.String) {
+								content = append(content, p.NewString(context, false, string(char)))
 							}
-							return p.NewArray(context, false, context.PeekSymbolTable(), content), true
+							return p.NewArray(context, false, content), true
 						},
 					),
 				)
@@ -334,13 +276,10 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
 							var content []*Value
-							for _, char := range self.GetString() {
-								content = append(content, p.NewString(context, false,
-									context.PeekSymbolTable(), string(char),
-								),
-								)
+							for _, char := range []rune(self.String) {
+								content = append(content, p.NewString(context, false, string(char)))
 							}
-							return p.NewTuple(context, false, context.PeekSymbolTable(), content), true
+							return p.NewTuple(context, false, content), true
 						},
 					),
 				)

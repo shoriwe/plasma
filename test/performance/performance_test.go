@@ -45,7 +45,7 @@ func test(t *testing.T, script string) {
 	executionError, success := plasmaVm.Execute(nil, code)
 	if !success {
 		t.Errorf("[+] %s: FAIL", script)
-		t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.GetString()))
+		t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.String))
 		return
 	}
 	fmt.Println(output.String())

@@ -1,7 +1,7 @@
 package vm
 
-func (p *Plasma) NewIterator(context *Context, isBuiltIn bool, parentSymbols *SymbolTable) *Value {
-	iterator := p.NewValue(context, isBuiltIn, IteratorName, nil, parentSymbols)
+func (p *Plasma) NewIterator(context *Context, isBuiltIn bool) *Value {
+	iterator := p.NewValue(context, isBuiltIn, IteratorName, nil, context.PeekSymbolTable())
 	iterator.BuiltInTypeId = IteratorId
 	p.IteratorInitialize(isBuiltIn)(context, iterator)
 	iterator.SetOnDemandSymbol(Self,

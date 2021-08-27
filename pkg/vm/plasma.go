@@ -97,10 +97,9 @@ func (p *Plasma) NextId() int64 {
 
 func newContext() *Context {
 	result := &Context{
-		LoopStack:   NewLoopStack(),
 		ObjectStack: NewObjectStack(),
-		TryStack:    NewTryStack(),
 		SymbolStack: NewSymbolStack(),
+		LastState:   NoState,
 	}
 	return result
 }
@@ -116,7 +115,7 @@ func (p *Plasma) NewContext() *Context {
 		class:           nil,
 		subClasses:      nil,
 		onDemandSymbols: map[string]OnDemandLoader{},
-		isBuiltIn:       true,
+		IsBuiltIn:       true,
 		symbols:         p.builtInContext.PeekSymbolTable(),
 	}
 	p.ObjectInitialize(true)(result, builtIn)

@@ -17,7 +17,7 @@ func (p *Plasma) NewType(
 			return p.NewFunction(context, isBuiltIn, result.symbols,
 				NewBuiltInClassFunction(result, 0,
 					func(_ *Value, _ ...*Value) (*Value, bool) {
-						return p.NewString(context, false, context.PeekSymbolTable(), "Type@"+typeName), true
+						return p.NewString(context, false, "Type@"+typeName), true
 					},
 				),
 			)

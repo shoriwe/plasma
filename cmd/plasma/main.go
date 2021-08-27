@@ -197,7 +197,7 @@ func repl() {
 
 		result, success := virtualMachine.Execute(context, vm.NewBytecodeFromArray(bytecode))
 		if !success {
-			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.GetString())
+			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
 			continue
 		}
 		if result.TypeName() == vm.NoneName {
@@ -219,7 +219,7 @@ func repl() {
 			fmt.Println(result)
 			continue
 		}
-		fmt.Println(resultString.GetString())
+		fmt.Println(resultString.String)
 	}
 }
 
@@ -245,7 +245,7 @@ func program() {
 		context := virtualMachine.NewContext()
 		result, success := virtualMachine.Execute(context, code)
 		if !success {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.GetString())
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
 			os.Exit(1)
 		}
 	}
