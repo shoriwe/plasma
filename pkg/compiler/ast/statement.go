@@ -372,16 +372,37 @@ func (functionDefinition *FunctionDefinitionStatement) Compile() ([]vm.Code, *er
 	if functionDefinitionBodyCompilationError != nil {
 		return nil, functionDefinitionBodyCompilationError
 	}
-	var result []vm.Code
-	result = append(result, vm.NewCode(vm.NewFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(functionDefinition.Arguments)}))
 	var arguments []string
 	for _, argument := range functionDefinition.Arguments {
 		arguments = append(arguments, argument.Token.String)
 	}
-	result = append(result, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
-	result = append(result, functionCode...)
-	result = append(result, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
-	return append(result, vm.NewCode(vm.AssignIdentifierOP, functionDefinition.Name.Token.Line, functionDefinition.Name.Token.String)), nil
+
+	var body []vm.Code
+	body = append(body, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
+	body = append(body, functionCode...)
+	body = append(body, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
+
+	var result []vm.Code
+	result = append(result, vm.NewCode(vm.NewFunctionOP, errors.UnknownLine,
+		vm.FunctionInformation{
+			Name:              functionDefinition.Name.Token.String,
+			BodyLength:        len(body),
+			NumberOfArguments: len(functionDefinition.Arguments),
+		},
+	))
+	result = append(result, body...)
+	result = append(result,
+		vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
+	)
+	result = append(
+		result,
+		vm.NewCode(
+			vm.AssignIdentifierOP,
+			functionDefinition.Name.Token.Line,
+			functionDefinition.Name.Token.String,
+		),
+	)
+	return result, nil
 }
 
 func (functionDefinition *FunctionDefinitionStatement) CompileAsClassFunction() ([]vm.Code, *errors.Error, bool) {
@@ -389,16 +410,40 @@ func (functionDefinition *FunctionDefinitionStatement) CompileAsClassFunction() 
 	if functionDefinitionBodyCompilationError != nil {
 		return nil, functionDefinitionBodyCompilationError, false
 	}
-	var result []vm.Code
-	result = append(result, vm.NewCode(vm.NewClassFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(functionDefinition.Arguments)}))
+
 	var arguments []string
 	for _, argument := range functionDefinition.Arguments {
 		arguments = append(arguments, argument.Token.String)
 	}
-	result = append(result, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
-	result = append(result, functionCode...)
-	result = append(result, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
-	result = append(result, vm.NewCode(vm.AssignIdentifierOP, functionDefinition.Name.Token.Line, functionDefinition.Name.Token.String))
+	var body []vm.Code
+	body = append(body, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
+	body = append(body, functionCode...)
+	body = append(body, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
+	var result []vm.Code
+	result = append(
+		result,
+		vm.NewCode(
+			vm.NewClassFunctionOP,
+			errors.UnknownLine,
+			vm.FunctionInformation{
+				Name:              functionDefinition.Name.Token.String,
+				BodyLength:        len(body),
+				NumberOfArguments: len(arguments),
+			},
+		),
+	)
+	result = append(result, body...)
+	result = append(result,
+		vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
+	)
+	result = append(
+		result,
+		vm.NewCode(
+			vm.AssignIdentifierOP,
+			functionDefinition.Name.Token.Line,
+			functionDefinition.Name.Token.String,
+		),
+	)
 	return result, nil, functionDefinition.Name.Token.String == vm.Initialize
 }
 
@@ -421,7 +466,29 @@ type ClassStatement struct {
 }
 
 func (classStatement *ClassStatement) Compile() ([]vm.Code, *errors.Error) {
-	panic(1)
+	basesAsTuple := &TupleExpression{
+		Values: classStatement.Bases,
+	}
+	bases, basesCompilationError := basesAsTuple.CompilePush(true)
+	if basesCompilationError != nil {
+		return nil, basesCompilationError
+	}
+	body, bodyCompilationError := compileClassBody(classStatement.Body)
+	if bodyCompilationError != nil {
+		return nil, bodyCompilationError
+	}
+	var result []vm.Code
+	result = append(result, bases...)
+	result = append(result, vm.NewCode(vm.NewClassOP, errors.UnknownLine,
+		vm.ClassInformation{
+			Name:       classStatement.Name.Token.String,
+			BodyLength: len(body),
+		},
+	))
+	result = append(result, body...)
+	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
+	result = append(result, vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, classStatement.Name.Token.String))
+	return result, nil
 }
 
 type ExceptBlock struct {

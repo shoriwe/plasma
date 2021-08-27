@@ -24,8 +24,8 @@ const (
 )
 
 type Value struct {
-	IsBuiltIn bool
-	id        int64
+	IsBuiltIn       bool
+	id              int64
 	typeName        string
 	BuiltInTypeId   uint16
 	class           *Value

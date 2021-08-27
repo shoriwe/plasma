@@ -55,9 +55,20 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 			executionError = p.indexOP(context)
 		case PushOP:
 			executionError = p.pushOP(context)
+		case AssignIdentifierOP:
+			executionError = p.assignIdentifierOP(context, code.Value.(string))
+		case NewClassOP:
+			executionError = p.newClassOP(context, bytecode, code.Value.(ClassInformation))
+		case NewClassFunctionOP:
+			executionError = p.newClassFunctionOP(context, bytecode, code.Value.(FunctionInformation))
+		case NewFunctionOP:
+			executionError = p.newFunctionOP(context, bytecode, code.Value.(FunctionInformation))
+		default:
+			panic(instructionNames[code.Instruction.OpCode])
 		}
 		if executionError != nil {
 			// Do Something with the error
+			panic(executionError.GetClass(p).Name)
 		}
 	}
 	return p.GetNone(), true

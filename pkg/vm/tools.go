@@ -1,6 +1,8 @@
 package vm
 
-import "github.com/shoriwe/gplasma/pkg/tools"
+import (
+	"github.com/shoriwe/gplasma/pkg/tools"
+)
 
 func (p *Plasma) Repeat(context *Context, content []*Value, times int64) ([]*Value, *Value) {
 	copyFunctions := map[int64]*Value{}
@@ -225,7 +227,7 @@ func (p *Plasma) ContentToString(context *Context, source *Value) (*Value, bool)
 		closing = "]"
 	case TupleId:
 		opening = "("
-		opening = ")"
+		closing = ")"
 	}
 	var objectString *Value
 	var success bool
@@ -249,7 +251,7 @@ func (p *Plasma) ContentToString(context *Context, source *Value) (*Value, bool)
 
 func (p *Plasma) ContentAssign(context *Context, source, indexObject *Value, value *Value) (*Value, bool) {
 	if !indexObject.IsTypeById(IntegerId) {
-		return p.NewInvalidTypeError(context, indexObject.GetClass(p).typeName, IntegerName), false
+		return p.NewInvalidTypeError(context, indexObject.GetClass(p).Name, IntegerName), false
 	}
 	index, calcError := tools.CalcIndex(indexObject.Integer, len(source.Content))
 	if calcError != nil {
@@ -474,11 +476,7 @@ func (p *Plasma) Hash(context *Context, value *Value) (*Value, bool) {
 }
 
 func (p *Plasma) HashIndexAssign(context *Context, hash *Value, key *Value, value *Value) (*Value, bool) {
-	indexObjectHash, getError := key.Get(p, context, Hash)
-	if getError != nil {
-		return getError, false
-	}
-	indexHash, success := p.CallFunction(context, indexObjectHash)
+	indexHash, success := p.Hash(context, key)
 	if !success {
 		return indexHash, false
 	}
@@ -493,8 +491,7 @@ func (p *Plasma) HashIndexAssign(context *Context, hash *Value, key *Value, valu
 		})
 		return p.GetNone(), true
 	}
-	var indexObjectEquals *Value
-	indexObjectEquals, getError = key.Get(p, context, Equals)
+	indexObjectEquals, getError := key.Get(p, context, Equals)
 	if getError != nil {
 		return getError, false
 	}
@@ -525,7 +522,7 @@ func (p *Plasma) HashIndexAssign(context *Context, hash *Value, key *Value, valu
 
 func (p *Plasma) HashEquals(context *Context, leftHandSide *Value, rightHandSide *Value) (*Value, bool) {
 	if !leftHandSide.IsTypeById(HashTableId) && !rightHandSide.IsTypeById(HashTableId) {
-		return p.NewInvalidTypeError(context, leftHandSide.typeName, HashName), false
+		return p.NewInvalidTypeError(context, leftHandSide.Name, HashName), false
 	} else if !leftHandSide.IsTypeById(HashTableId) {
 		return p.GetFalse(), true
 	} else if !rightHandSide.IsTypeById(HashTableId) {
@@ -558,7 +555,7 @@ func (p *Plasma) HashEquals(context *Context, leftHandSide *Value, rightHandSide
 
 func (p *Plasma) HashNotEquals(context *Context, leftHandSide *Value, rightHandSide *Value) (*Value, bool) {
 	if !leftHandSide.IsTypeById(HashTableId) && !rightHandSide.IsTypeById(HashTableId) {
-		return p.NewInvalidTypeError(context, leftHandSide.typeName, HashName), false
+		return p.NewInvalidTypeError(context, leftHandSide.Name, HashName), false
 	} else if !leftHandSide.IsTypeById(HashTableId) {
 		return p.GetTrue(), true
 	} else if !rightHandSide.IsTypeById(HashTableId) {

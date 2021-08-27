@@ -68,7 +68,7 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
-							return p.HashContains(context, self, arguments[1])
+							return p.HashContains(context, self, arguments[0])
 						},
 					),
 				)

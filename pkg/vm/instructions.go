@@ -21,18 +21,18 @@ func (p *Plasma) newFloatOP(context *Context, f float64) *Value {
 }
 
 func (p *Plasma) newArrayOP(context *Context, length int) *Value {
-	var content []*Value
+	content := make([]*Value, length)
 	for index := 0; index < length; index++ {
-		content = append(content, context.PopObject())
+		content[index] = context.PopObject()
 	}
 	context.LastObject = p.NewArray(context, false, content)
 	return nil
 }
 
 func (p *Plasma) newTupleOP(context *Context, length int) *Value {
-	var content []*Value
+	content := make([]*Value, length)
 	for index := 0; index < length; index++ {
-		content = append(content, context.PopObject())
+		content[index] = context.PopObject()
 	}
 	context.LastObject = p.NewTuple(context, false, content)
 	return nil
@@ -86,7 +86,7 @@ func (p *Plasma) binaryOP(context *Context, binaryOperation uint8) *Value {
 	rightHandSide := context.PopObject()
 	leftHandSideOperation, getError := leftHandSide.Get(p, context, binaryNames[0])
 	if getError != nil {
-		return getError
+		return p.binaryOPRightHandSide(context, leftHandSide, rightHandSide, binaryNames[1])
 	}
 	result, success := p.CallFunction(context, leftHandSideOperation, rightHandSide)
 	if !success {
@@ -145,5 +145,50 @@ func (p *Plasma) pushOP(context *Context) *Value {
 		context.PushObject(context.LastObject)
 		context.LastObject = nil
 	}
+	return nil
+}
+
+func (p *Plasma) assignIdentifierOP(context *Context, symbol string) *Value {
+	value := context.PopObject()
+	context.PeekSymbolTable().Set(symbol, value)
+	return nil
+}
+
+func (p *Plasma) newClassOP(context *Context, bytecode *Bytecode, classInformation ClassInformation) *Value {
+	bases := context.PopObject()
+	body := bytecode.NextN(classInformation.BodyLength)
+	result := p.NewType(context, false, classInformation.Name, context.PeekSymbolTable(), bases.Content,
+		NewPlasmaConstructor(body),
+	)
+	context.LastObject = result
+	return nil
+}
+
+func (p *Plasma) newClassFunctionOP(context *Context, bytecode *Bytecode, functionInformation FunctionInformation) *Value {
+	body := bytecode.NextN(functionInformation.BodyLength)
+	context.LastObject = p.NewFunction(
+		context,
+		false,
+		context.PeekObject().SymbolTable().Parent,
+		NewPlasmaClassFunction(
+			context.PeekObject(),
+			functionInformation.NumberOfArguments,
+			body,
+		),
+	)
+	return nil
+}
+
+func (p *Plasma) newFunctionOP(context *Context, bytecode *Bytecode, functionInformation FunctionInformation) *Value {
+	body := bytecode.NextN(functionInformation.BodyLength)
+	context.LastObject = p.NewFunction(
+		context,
+		false,
+		context.PeekSymbolTable(),
+		NewPlasmaFunction(
+			functionInformation.NumberOfArguments,
+			body,
+		),
+	)
 	return nil
 }

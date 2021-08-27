@@ -43,7 +43,7 @@ func (p *Plasma) ForceConstruction(context *Context, type_ *Value) *Value {
 	}
 	result, success := p.ConstructObject(context, type_, NewSymbolTable(context.PeekSymbolTable()))
 	if !success {
-		panic(result.typeName)
+		panic(result.Name)
 	}
 	return result
 }

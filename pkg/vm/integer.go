@@ -21,7 +21,7 @@ func (p *Plasma) NewInteger(context *Context, isBuiltIn bool, value int64) *Valu
 
 func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(context *Context, object *Value) *Value {
-		object.SetOnDemandSymbol(NegBits,
+		object.SetOnDemandSymbol(NegateBits,
 			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,

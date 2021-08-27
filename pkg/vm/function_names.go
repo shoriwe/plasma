@@ -2,9 +2,9 @@ package vm
 
 const (
 	Self                    = "self"
-	Initialize              = "Initialize"
-	NegBits                 = "NegBits"
-	Negate                  = "Negate"
+	Initialize = "Initialize"
+	NegateBits = "NegateBits"
+	Negate     = "Negate"
 	Negative                = "Negative"
 	Add                     = "Add"
 	RightAdd                = "RightAdd"

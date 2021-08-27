@@ -117,7 +117,7 @@ func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.Hash(context, self)
+							return p.HashContent(context, self)
 						},
 					),
 				)
