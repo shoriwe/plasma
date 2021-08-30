@@ -91,6 +91,7 @@ func (o *Value) Dir() map[string]byte {
 	}
 	return result
 }
+
 func (o *Value) Set(p *Plasma, context *Context, symbol string, object *Value) *Value {
 	if o.IsBuiltIn {
 		return p.NewBuiltInSymbolProtectionError(context, symbol)

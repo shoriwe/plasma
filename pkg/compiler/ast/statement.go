@@ -625,6 +625,6 @@ type PassStatement struct {
 	Statement
 }
 
-func (_ *PassStatement) compilePassStatement() ([]vm.Code, *errors.Error) {
+func (_ *PassStatement) Compile() ([]vm.Code, *errors.Error) {
 	return []vm.Code{vm.NewCode(vm.NOP, errors.UnknownLine, nil)}, nil
 }

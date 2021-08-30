@@ -658,29 +658,36 @@ func (p *Plasma) InitializeBuiltIn() {
 					if !start.IsTypeById(IntegerId) {
 						return p.NewInvalidTypeError(p.builtInContext, start.TypeName(), IntegerName), false
 					}
-					startValue := start.Integer
 
 					end := arguments[1]
 					if !end.IsTypeById(IntegerId) {
 						return p.NewInvalidTypeError(p.builtInContext, end.TypeName(), IntegerName), false
 					}
-					endValue := end.Integer
 
 					step := arguments[2]
 					if !step.IsTypeById(IntegerId) {
 						return p.NewInvalidTypeError(p.builtInContext, step.TypeName(), IntegerName), false
 					}
-					stepValue := step.Integer
+
+					rangeInformation := struct {
+						current int64
+						end     int64
+						step    int64
+					}{
+						current: start.Integer,
+						end:     end.Integer,
+						step:    step.Integer,
+					}
 
 					// This should return a iterator
-					rangeIterator := p.NewIterator(p.builtInContext, true)
-					rangeIterator.Integer = startValue
+					rangeIterator := p.NewIterator(p.builtInContext, false)
 
 					rangeIterator.Set(p, p.builtInContext, HasNext,
 						p.NewFunction(p.builtInContext, true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self *Value, _ ...*Value) (*Value, bool) {
-									if self.Integer < endValue {
+									fmt.Println("HERE")
+									if rangeInformation.current < rangeInformation.end {
 										return p.GetTrue(), true
 									}
 									return p.GetFalse(), true
@@ -692,14 +699,13 @@ func (p *Plasma) InitializeBuiltIn() {
 						p.NewFunction(p.builtInContext, true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self *Value, _ ...*Value) (*Value, bool) {
-									number := self.Integer
-									self.Integer = number + stepValue
+									number := rangeInformation.current
+									rangeInformation.current += rangeInformation.step
 									return p.NewInteger(p.builtInContext, false, number), true
 								},
 							),
 						),
 					)
-
 					return rangeIterator, true
 				},
 			),

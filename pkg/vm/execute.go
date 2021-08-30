@@ -1,5 +1,11 @@
 package vm
 
+import (
+	"fmt"
+	"github.com/fatih/color"
+	"strconv"
+)
+
 func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 	if context == nil {
 		context = p.NewContext()
@@ -8,20 +14,17 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 	for bytecode.HasNext() {
 		code := bytecode.Next()
 
-		/*
-			if code.Line != 0 {
-				fmt.Println(color.GreenString(strconv.Itoa(code.Line)), instructionNames[code.Instruction.OpCode], code.Value)
-			} else {
-				fmt.Println(color.RedString("UL"), instructionNames[code.Instruction.OpCode], code.Value)
+		if code.Line != 0 {
+			fmt.Println(color.GreenString(strconv.Itoa(code.Line)), instructionNames[code.Instruction.OpCode], code.Value)
+		} else {
+			fmt.Println(color.RedString("UL"), instructionNames[code.Instruction.OpCode], code.Value)
+		}
+		if context.ObjectStack.head != nil {
+			current := context.ObjectStack.head
+			for ; current != nil; current = current.next {
+				fmt.Println(current.value.(*Value).GetClass(p).Name)
 			}
-			if context.ObjectStack.head != nil {
-				current := context.ObjectStack.head
-				for ; current != nil; current = current.next {
-					fmt.Println(current.value.(*Value).GetClass(p).Name)
-				}
-			}
-
-		*/
+		}
 
 		switch code.Instruction.OpCode {
 		case GetFalseOP:

@@ -3,7 +3,7 @@ package performance
 import (
 	"bytes"
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
+	"github.com/shoriwe/gplasma/pkg/compiler"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
@@ -12,10 +12,9 @@ import (
 )
 
 const (
-	performance = "performance"
-	fibonacci   = "fibo.pm"
-	whileTest   = "while.pm"
-	forTest     = "for.pm"
+	fibonacci = "fibo.pm"
+	whileTest = "while.pm"
+	forTest   = "for.pm"
 )
 
 func test(t *testing.T, script string) {
@@ -30,19 +29,14 @@ func test(t *testing.T, script string) {
 		t.Fatal(openError)
 		return
 	}
-	compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
-		plasma.Options{
-			Debug: false,
-		},
-	)
-	code, compilingError := compiler.Compile()
-	if compilingError != nil {
-		t.Fatal(compilingError)
+	bytecode, compilationError := compiler.Compile(reader.NewStringReaderFromFile(fileHandler))
+	if compilationError != nil {
+		t.Fatal(compilationError)
 		return
 	}
 	output := bytes.NewBuffer(make([]byte, 0))
 	plasmaVm := vm.NewPlasmaVM(nil, output, output)
-	executionError, success := plasmaVm.Execute(nil, code)
+	executionError, success := plasmaVm.Execute(nil, bytecode)
 	if !success {
 		t.Errorf("[+] %s: FAIL", script)
 		t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.String))
@@ -52,13 +46,13 @@ func test(t *testing.T, script string) {
 }
 
 func TestWhile(t *testing.T) {
-	test(t, filepath.Join("test", performance, whileTest))
+	test(t, filepath.Join(whileTest))
 }
 
 func TestFor(t *testing.T) {
-	test(t, filepath.Join("test", performance, forTest))
+	test(t, filepath.Join(forTest))
 }
 
 func TestFibonacci(t *testing.T) {
-	test(t, filepath.Join("test", performance, fibonacci))
+	test(t, filepath.Join(fibonacci))
 }

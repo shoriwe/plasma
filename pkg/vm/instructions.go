@@ -359,6 +359,7 @@ loop:
 		if !doesHasNextAsBool {
 			break
 		}
+
 		// Get the value
 		nextValue, success = p.CallFunction(context, next)
 		if !success {
