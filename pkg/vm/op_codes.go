@@ -65,13 +65,17 @@ const (
 	RedoOP
 	ContinueOP
 	ReturnOP
+
 	ForLoopOP
+	WhileLoopOP
+	DoWhileLoopOP
+	UntilLoopOP
+
+	NOP
+
 	LoadFunctionArgumentsOP
 	NewFunctionOP
-	JumpOP
 	PushOP
-	PopOP
-	NOP
 	NewGeneratorOP
 	TryOP
 	NewModuleOP
@@ -157,24 +161,28 @@ var instructionNames = map[uint8]string{
 	UnlessOP:         "UnlessOP",
 	UnlessOneLinerOP: "UnlessOneLinerOP",
 
-	GetIdentifierOP:         "GetIdentifierOP",
-	IndexOP:                 "IndexOP",
-	SelectNameFromObjectOP:  "SelectNameFromObjectOP",
-	MethodInvocationOP:      "MethodInvocationOP",
-	AssignIdentifierOP:      "AssignIdentifierOP",
-	AssignSelectorOP:        "AssignSelectorOP",
-	AssignIndexOP:           "AssignIndexOP",
-	BreakOP:                 "BreakOP",
-	RedoOP:                  "RedoOP",
-	ContinueOP:              "ContinueOP",
-	ReturnOP:                "ReturnOP",
-	ForLoopOP:               "ForLoopOP",
+	GetIdentifierOP:        "GetIdentifierOP",
+	IndexOP:                "IndexOP",
+	SelectNameFromObjectOP: "SelectNameFromObjectOP",
+	MethodInvocationOP:     "MethodInvocationOP",
+	AssignIdentifierOP:     "AssignIdentifierOP",
+	AssignSelectorOP:       "AssignSelectorOP",
+	AssignIndexOP:          "AssignIndexOP",
+	BreakOP:                "BreakOP",
+	RedoOP:                 "RedoOP",
+	ContinueOP:             "ContinueOP",
+	ReturnOP:               "ReturnOP",
+
+	ForLoopOP:     "ForLoopOP",
+	WhileLoopOP:   "WhileLoopOP",
+	DoWhileLoopOP: "DoWhileLoopOP",
+	UntilLoopOP:   "UntilLoopOP",
+
+	NOP: "NOP",
+
 	LoadFunctionArgumentsOP: "LoadFunctionArgumentsOP",
 	NewFunctionOP:           "NewFunctionOP",
-	JumpOP:                  "JumpOP",
 	PushOP:                  "PushOP",
-	PopOP:                   "PopOP",
-	NOP:                     "NOP",
 	NewGeneratorOP:          "NewGeneratorOP",
 	TryOP:                   "TryOP",
 	NewModuleOP:             "NewModuleOP",

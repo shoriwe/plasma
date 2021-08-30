@@ -160,7 +160,27 @@ type DoWhileStatement struct {
 }
 
 func (doWhileStatement *DoWhileStatement) Compile() ([]vm.Code, *errors.Error) {
-	panic("IMPLEMENT ME!!!")
+	condition, conditionCompilationError := doWhileStatement.Condition.CompilePush(true)
+	if conditionCompilationError != nil {
+		return nil, conditionCompilationError
+	}
+	body, bodyCompilationError := compileBody(doWhileStatement.Body)
+	if bodyCompilationError != nil {
+		return nil, bodyCompilationError
+	}
+	var result []vm.Code
+	result = append(result,
+		vm.NewCode(vm.DoWhileLoopOP, errors.UnknownLine,
+			vm.LoopInformation{
+				BodyLength:      len(body),
+				ConditionLength: len(condition),
+				Receivers:       nil,
+			},
+		),
+	)
+	result = append(result, condition...)
+	result = append(result, body...)
+	return result, nil
 }
 
 type WhileLoopStatement struct {
@@ -170,7 +190,27 @@ type WhileLoopStatement struct {
 }
 
 func (whileStatement *WhileLoopStatement) Compile() ([]vm.Code, *errors.Error) {
-	panic("IMPLEMENT ME!!!")
+	condition, conditionCompilationError := whileStatement.Condition.CompilePush(true)
+	if conditionCompilationError != nil {
+		return nil, conditionCompilationError
+	}
+	body, bodyCompilationError := compileBody(whileStatement.Body)
+	if bodyCompilationError != nil {
+		return nil, bodyCompilationError
+	}
+	var result []vm.Code
+	result = append(result,
+		vm.NewCode(vm.WhileLoopOP, errors.UnknownLine,
+			vm.LoopInformation{
+				BodyLength:      len(body),
+				ConditionLength: len(condition),
+				Receivers:       nil,
+			},
+		),
+	)
+	result = append(result, condition...)
+	result = append(result, body...)
+	return result, nil
 }
 
 type UntilLoopStatement struct {
@@ -180,7 +220,27 @@ type UntilLoopStatement struct {
 }
 
 func (untilLoop *UntilLoopStatement) Compile() ([]vm.Code, *errors.Error) {
-	panic("IMPLEMENT ME!!!")
+	condition, conditionCompilationError := untilLoop.Condition.CompilePush(true)
+	if conditionCompilationError != nil {
+		return nil, conditionCompilationError
+	}
+	body, bodyCompilationError := compileBody(untilLoop.Body)
+	if bodyCompilationError != nil {
+		return nil, bodyCompilationError
+	}
+	var result []vm.Code
+	result = append(result,
+		vm.NewCode(vm.UntilLoopOP, errors.UnknownLine,
+			vm.LoopInformation{
+				BodyLength:      len(body),
+				ConditionLength: len(condition),
+				Receivers:       nil,
+			},
+		),
+	)
+	result = append(result, condition...)
+	result = append(result, body...)
+	return result, nil
 }
 
 type ForLoopStatement struct {
@@ -240,9 +300,13 @@ func (ifStatement *IfStatement) Compile() ([]vm.Code, *errors.Error) {
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	elseBody, elseBodyCompilationError := compileBody(ifStatement.Else)
-	if elseBodyCompilationError != nil {
-		return nil, elseBodyCompilationError
+	var elseBody []vm.Code
+	if ifStatement.Else != nil {
+		var elseBodyCompilationError *errors.Error
+		elseBody, elseBodyCompilationError = compileBody(ifStatement.Else)
+		if elseBodyCompilationError != nil {
+			return nil, elseBodyCompilationError
+		}
 	}
 	var result []vm.Code
 	result = append(result, condition...)
@@ -275,9 +339,13 @@ func (unlessStatement *UnlessStatement) Compile() ([]vm.Code, *errors.Error) {
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	elseBody, elseBodyCompilationError := compileBody(unlessStatement.Else)
-	if elseBodyCompilationError != nil {
-		return nil, elseBodyCompilationError
+	var elseBody []vm.Code
+	if unlessStatement.Body != nil {
+		var elseBodyCompilationError *errors.Error
+		elseBody, elseBodyCompilationError = compileBody(unlessStatement.Else)
+		if elseBodyCompilationError != nil {
+			return nil, elseBodyCompilationError
+		}
 	}
 	var result []vm.Code
 	result = append(result, condition...)
@@ -531,6 +599,10 @@ type SuperInvocationStatement struct {
 
 type ContinueStatement struct {
 	Statement
+}
+
+func (_ *ContinueStatement) Compile() ([]vm.Code, *errors.Error) {
+	return []vm.Code{vm.NewCode(vm.ContinueOP, errors.UnknownLine, nil)}, nil
 }
 
 type BreakStatement struct {

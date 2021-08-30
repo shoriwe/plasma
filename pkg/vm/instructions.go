@@ -344,7 +344,7 @@ func (p *Plasma) forLoopOP(context *Context, bytecode *Bytecode, information Loo
 		nextValue   *Value
 		result      *Value
 	)
-forLoop:
+loop:
 	for {
 	continueState:
 		// Check  if the iter has a next value
@@ -389,13 +389,14 @@ forLoop:
 			context.LastObject = result
 			return nil
 		case BreakState:
-			break forLoop
+			break loop
 		case ContinueState:
 			goto continueState
 		case RedoState:
 			goto redoState
 		}
 	}
+	context.LastState = NoState
 	return nil
 }
 
@@ -448,5 +449,160 @@ func (p *Plasma) newGeneratorOP(context *Context, numberOfReceivers int) *Value 
 		},
 	)
 	context.LastObject = result
+	return nil
+}
+
+func (p *Plasma) whileLoopOP(context *Context, bytecode *Bytecode, information LoopInformation) *Value {
+	conditionCode := bytecode.NextN(information.ConditionLength)
+	conditionBytecode := NewBytecodeFromArray(conditionCode)
+
+	body := bytecode.NextN(information.BodyLength)
+	bodyBytecode := NewBytecodeFromArray(body)
+
+	var (
+		result *Value
+	)
+loop:
+	for {
+	continueState:
+		// Reset condition bytecode
+		conditionBytecode.index = 0
+		// Check the condition
+		condition, success := p.Execute(context, conditionBytecode)
+		if !success {
+			return condition
+		}
+		// Interpret as boolean
+		conditionAsBool, interpretationError := p.QuickGetBool(context, condition)
+		if interpretationError != nil {
+			return interpretationError
+		}
+		if !conditionAsBool {
+			break
+		}
+	redoState:
+		// Reset  the bytecode
+		bodyBytecode.index = 0
+		// Execute the body
+		result, success = p.Execute(context, bodyBytecode)
+		if !success {
+			return result
+		}
+		switch context.LastState {
+		case ReturnState:
+			context.LastObject = result
+			return nil
+		case BreakState:
+			break loop
+		case ContinueState:
+			goto continueState
+		case RedoState:
+			goto redoState
+		}
+	}
+	context.LastState = NoState
+	return nil
+}
+
+func (p *Plasma) doWhileLoopOP(context *Context, bytecode *Bytecode, information LoopInformation) *Value {
+	conditionCode := bytecode.NextN(information.ConditionLength)
+	conditionBytecode := NewBytecodeFromArray(conditionCode)
+
+	body := bytecode.NextN(information.BodyLength)
+	bodyBytecode := NewBytecodeFromArray(body)
+
+	var (
+		condition *Value
+	)
+loop:
+	for {
+	redoState:
+		// Execute code
+		// Reset  the bytecode
+		bodyBytecode.index = 0
+		// Execute the body
+		result, success := p.Execute(context, bodyBytecode)
+		if !success {
+			return result
+		}
+		// Check state
+		switch context.LastState {
+		case ReturnState:
+			context.LastObject = result
+			return nil
+		case BreakState:
+			break loop
+		case RedoState:
+			goto redoState
+		}
+		// Reset condition bytecode
+		conditionBytecode.index = 0
+		// Check the condition
+		condition, success = p.Execute(context, conditionBytecode)
+		if !success {
+			return condition
+		}
+		// Interpret as boolean
+		conditionAsBool, interpretationError := p.QuickGetBool(context, condition)
+		if interpretationError != nil {
+			return interpretationError
+		}
+		if !conditionAsBool {
+			break
+		}
+	}
+	context.LastState = NoState
+	return nil
+}
+
+func (p *Plasma) untilLoopOP(context *Context, bytecode *Bytecode, information LoopInformation) *Value {
+	conditionCode := bytecode.NextN(information.ConditionLength)
+	conditionBytecode := NewBytecodeFromArray(conditionCode)
+
+	body := bytecode.NextN(information.BodyLength)
+	bodyBytecode := NewBytecodeFromArray(body)
+
+	var (
+		result *Value
+	)
+loop:
+	for {
+	continueState:
+		// Reset condition bytecode
+		conditionBytecode.index = 0
+		// Check the condition
+		condition, success := p.Execute(context, conditionBytecode)
+		if !success {
+			return condition
+		}
+		// Interpret as boolean
+		conditionAsBool, interpretationError := p.QuickGetBool(context, condition)
+		if interpretationError != nil {
+			return interpretationError
+		}
+		if conditionAsBool {
+			break
+		}
+	redoState:
+		// Reset  the bytecode
+		bodyBytecode.index = 0
+		// Execute the body
+		result, success = p.Execute(context, bodyBytecode)
+		if !success {
+			return result
+		}
+		switch context.LastState {
+		case ReturnState:
+			context.LastObject = result
+			return nil
+		case BreakState:
+			break loop
+		case ContinueState:
+			goto continueState
+		case RedoState:
+			goto redoState
+		}
+	}
+	context.LastState = NoState
 	return nil
 }
