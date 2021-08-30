@@ -93,7 +93,7 @@ func compileAssignStatementMiddleBinaryExpression(leftHandSide IExpression, assi
 	default:
 		panic(errors.NewUnknownVMOperationError(operation))
 	}
-	return append(result, vm.NewCode(operation, assignOperator.Line, nil)), nil
+	return append(result, vm.NewCode(vm.BinaryOP, assignOperator.Line, operation)), nil
 }
 
 func compileIdentifierAssign(identifier *Identifier) ([]vm.Code, *errors.Error) {
@@ -160,31 +160,7 @@ type DoWhileStatement struct {
 }
 
 func (doWhileStatement *DoWhileStatement) Compile() ([]vm.Code, *errors.Error) {
-	condition, conditionCompilationError := doWhileStatement.Condition.CompilePush(true)
-	if conditionCompilationError != nil {
-		return nil, conditionCompilationError
-	}
-	conditionLength := len(condition)
-	body, bodyCompilationError := compileBody(doWhileStatement.Body)
-	if bodyCompilationError != nil {
-		return nil, bodyCompilationError
-	}
-	bodyLength := len(body)
-	for index, instruction := range body {
-		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
-			body[index].Value = (bodyLength - index) + conditionLength
-		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
-			body[index].Value = (bodyLength - index) - 1
-		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
-			body[index].Value = -(index + 1)
-		}
-	}
-	result := body
-	result = append(result, condition...)
-	result = append(result,
-		vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, -(bodyLength+conditionLength+1)),
-	)
-	return result, nil
+	panic("IMPLEMENT ME!!!")
 }
 
 type WhileLoopStatement struct {
@@ -194,34 +170,7 @@ type WhileLoopStatement struct {
 }
 
 func (whileStatement *WhileLoopStatement) Compile() ([]vm.Code, *errors.Error) {
-	condition, conditionCompilationError := whileStatement.Condition.CompilePush(true)
-	if conditionCompilationError != nil {
-		return nil, conditionCompilationError
-	}
-	conditionLength := len(condition)
-	body, bodyCompilationError := compileBody(whileStatement.Body)
-	if bodyCompilationError != nil {
-		return nil, bodyCompilationError
-	}
-	bodyLength := len(body)
-	for index, instruction := range body {
-		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
-			body[index].Value = bodyLength - index
-		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
-			body[index].Value = -(conditionLength + index + 2)
-		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
-			body[index].Value = -(index + 1)
-		}
-	}
-	result := condition
-	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, bodyLength+1))
-	result = append(result, body...)
-	result = append(result,
-		vm.NewCode(vm.ContinueOP, errors.UnknownLine,
-			-(conditionLength+1+bodyLength+1),
-		),
-	)
-	return result, nil
+	panic("IMPLEMENT ME!!!")
 }
 
 type UntilLoopStatement struct {
@@ -231,34 +180,7 @@ type UntilLoopStatement struct {
 }
 
 func (untilLoop *UntilLoopStatement) Compile() ([]vm.Code, *errors.Error) {
-	condition, conditionCompilationError := untilLoop.Condition.CompilePush(true)
-	conditionLength := len(condition)
-	if conditionCompilationError != nil {
-		return nil, conditionCompilationError
-	}
-	body, bodyCompilationError := compileBody(untilLoop.Body)
-	if bodyCompilationError != nil {
-		return nil, bodyCompilationError
-	}
-	bodyLength := len(body)
-	for index, instruction := range body {
-		if instruction.Instruction.OpCode == vm.BreakOP && instruction.Value == nil {
-			body[index].Value = bodyLength - index
-		} else if instruction.Instruction.OpCode == vm.ContinueOP && instruction.Value == nil {
-			body[index].Value = -(conditionLength + index + 2)
-		} else if instruction.Instruction.OpCode == vm.RedoOP && instruction.Value == nil {
-			body[index].Value = -(index + 1)
-		}
-	}
-	result := condition
-	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, bodyLength+1))
-	result = append(result, body...)
-	result = append(result,
-		vm.NewCode(vm.ContinueOP, errors.UnknownLine,
-			-(conditionLength+1+bodyLength+1),
-		),
-	)
-	return result, nil
+	panic("IMPLEMENT ME!!!")
 }
 
 type ForLoopStatement struct {
@@ -269,17 +191,14 @@ type ForLoopStatement struct {
 }
 
 func (forStatement *ForLoopStatement) Compile() ([]vm.Code, *errors.Error) {
-	var result []vm.Code
 	source, compilationError := forStatement.Source.CompilePush(true)
 	if compilationError != nil {
 		return nil, compilationError
 	}
-	result = append(result, source...)
 	body, bodyCompilationError := compileBody(forStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	result = append(result, body...)
 	var receivers []string
 	for _, receiver := range forStatement.Receivers {
 		receivers = append(
@@ -287,51 +206,92 @@ func (forStatement *ForLoopStatement) Compile() ([]vm.Code, *errors.Error) {
 			receiver.Token.String,
 		)
 	}
+	var result []vm.Code
+	result = append(result, source...)
 	result = append(
 		result,
 		vm.NewCode(
 			vm.ForLoopOP,
 			errors.UnknownLine,
-			receivers,
+			vm.LoopInformation{
+				BodyLength:      len(body),
+				ConditionLength: 0,
+				Receivers:       receivers,
+			},
 		),
 	)
+	result = append(result, body...)
 	return result, nil
-}
-
-type ElifBlock struct {
-	Condition IExpression
-	Body      []Node
-}
-
-type ElifInformation struct {
-	Condition       []vm.Code
-	ConditionLength int
-	Body            []vm.Code
-	BodyLength      int
 }
 
 type IfStatement struct {
 	Statement
-	Condition  IExpression
-	Body       []Node
-	ElifBlocks []*ElifBlock
-	Else       []Node
+	Condition IExpression
+	Body      []Node
+	Else      []Node
 }
 
 func (ifStatement *IfStatement) Compile() ([]vm.Code, *errors.Error) {
-	panic(1)
+	condition, conditionCompilationError := ifStatement.Condition.CompilePush(true)
+	if conditionCompilationError != nil {
+		return nil, conditionCompilationError
+	}
+	body, bodyCompilationError := compileBody(ifStatement.Body)
+	if bodyCompilationError != nil {
+		return nil, bodyCompilationError
+	}
+	elseBody, elseBodyCompilationError := compileBody(ifStatement.Else)
+	if elseBodyCompilationError != nil {
+		return nil, elseBodyCompilationError
+	}
+	var result []vm.Code
+	result = append(result, condition...)
+	result = append(result,
+		vm.NewCode(vm.IfOP, errors.UnknownLine,
+			vm.ConditionInformation{
+				BodyLength:     len(body),
+				ElseBodyLength: len(elseBody),
+			},
+		),
+	)
+	result = append(result, body...)
+	result = append(result, elseBody...)
+	return result, nil
 }
 
 type UnlessStatement struct {
 	Statement
-	Condition  IExpression
-	Body       []Node
-	ElifBlocks []*ElifBlock
-	Else       []Node
+	Condition IExpression
+	Body      []Node
+	Else      []Node
 }
 
 func (unlessStatement *UnlessStatement) Compile() ([]vm.Code, *errors.Error) {
-	panic(1)
+	condition, conditionCompilationError := unlessStatement.Condition.CompilePush(true)
+	if conditionCompilationError != nil {
+		return nil, conditionCompilationError
+	}
+	body, bodyCompilationError := compileBody(unlessStatement.Body)
+	if bodyCompilationError != nil {
+		return nil, bodyCompilationError
+	}
+	elseBody, elseBodyCompilationError := compileBody(unlessStatement.Else)
+	if elseBodyCompilationError != nil {
+		return nil, elseBodyCompilationError
+	}
+	var result []vm.Code
+	result = append(result, condition...)
+	result = append(result,
+		vm.NewCode(vm.UnlessOP, errors.UnknownLine,
+			vm.ConditionInformation{
+				BodyLength:     len(body),
+				ElseBodyLength: len(elseBody),
+			},
+		),
+	)
+	result = append(result, body...)
+	result = append(result, elseBody...)
+	return result, nil
 }
 
 type CaseBlock struct {

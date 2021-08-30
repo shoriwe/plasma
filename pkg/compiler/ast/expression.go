@@ -387,11 +387,21 @@ func (lambdaExpression *LambdaExpression) Compile() ([]vm.Code, *errors.Error) {
 	if lambdaCodeCompilationError != nil {
 		return nil, lambdaCodeCompilationError
 	}
-	result = append(result, vm.NewCode(vm.NewLambdaFunctionOP, errors.UnknownLine, [2]int{len(functionCode) + 2, len(lambdaExpression.Arguments)}))
 	var arguments []string
 	for _, argument := range lambdaExpression.Arguments {
 		arguments = append(arguments, argument.Token.String)
 	}
+	result = append(result,
+		vm.NewCode(
+			vm.NewFunctionOP,
+			errors.UnknownLine,
+			vm.FunctionInformation{
+				Name:              "",
+				BodyLength:        len(functionCode),
+				NumberOfArguments: len(arguments),
+			},
+		),
+	)
 	result = append(result, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
 	result = append(result, functionCode...)
 	result = append(result, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
@@ -554,10 +564,9 @@ func (ifOneLinerExpression *IfOneLinerExpression) Compile() ([]vm.Code, *errors.
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
-
-	ifResult, resultCompilationError := ifOneLinerExpression.Result.CompilePush(true)
-	if resultCompilationError != nil {
-		return nil, resultCompilationError
+	ifResult, ifResultCompilationError := ifOneLinerExpression.Result.CompilePush(true)
+	if ifResultCompilationError != nil {
+		return nil, ifResultCompilationError
 	}
 	var elseResult []vm.Code
 	if ifOneLinerExpression.ElseResult != nil {
@@ -567,19 +576,24 @@ func (ifOneLinerExpression *IfOneLinerExpression) Compile() ([]vm.Code, *errors.
 			return nil, elseResultCompilationError
 		}
 	} else {
-		elseResult = append(elseResult,
+		elseResult = []vm.Code{
 			vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil),
 			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
-		)
+		}
 	}
-	elseResultLength := len(elseResult)
-	result := condition
-	result = append(result, vm.NewCode(vm.IfJumpOP, errors.UnknownLine, len(ifResult)+2))
+	var result []vm.Code
+	result = append(result, condition...)
+	result = append(result,
+		vm.NewCode(vm.IfOneLinerOP,
+			errors.UnknownLine,
+			vm.ConditionInformation{
+				BodyLength:     len(ifResult),
+				ElseBodyLength: len(elseResult),
+			},
+		),
+	)
 	result = append(result, ifResult...)
-	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
-	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseResultLength+1))
 	result = append(result, elseResult...)
-	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
 	return result, nil
 }
 
@@ -606,12 +620,10 @@ func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]vm.Code, 
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
-
-	ifResult, resultCompilationError := unlessOneLinerExpression.Result.CompilePush(true)
-	if resultCompilationError != nil {
-		return nil, resultCompilationError
+	unlessResult, unlessResultCompilationError := unlessOneLinerExpression.Result.CompilePush(true)
+	if unlessResultCompilationError != nil {
+		return nil, unlessResultCompilationError
 	}
-
 	var elseResult []vm.Code
 	if unlessOneLinerExpression.ElseResult != nil {
 		var elseResultCompilationError *errors.Error
@@ -620,19 +632,23 @@ func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]vm.Code, 
 			return nil, elseResultCompilationError
 		}
 	} else {
-		elseResult = append(elseResult,
+		elseResult = []vm.Code{
 			vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil),
 			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
-		)
+		}
 	}
-	elseResultLength := len(elseResult)
-	result := condition
-	result = append(result, vm.NewCode(vm.UnlessJumpOP, errors.UnknownLine, len(ifResult)+1))
-	result = append(result, ifResult...)
-	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
-	result = append(result, vm.NewCode(vm.JumpOP, errors.UnknownLine, elseResultLength+1))
+	var result []vm.Code
+	result = append(result, condition...)
+	result = append(result,
+		vm.NewCode(vm.UnlessOneLinerOP,
+			errors.UnknownLine,
+			vm.ConditionInformation{
+				BodyLength:     len(unlessResult),
+				ElseBodyLength: len(elseResult),
+			},
+		),
+	)
+	result = append(result, unlessResult...)
 	result = append(result, elseResult...)
-	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
-
 	return result, nil
 }

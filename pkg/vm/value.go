@@ -65,7 +65,7 @@ func (o *Value) Get(p *Plasma, context *Context, symbol string) (*Value, *Value)
 			return nil, p.NewObjectWithNameNotFoundError(context, o.GetClass(p), symbol)
 		}
 		result = loader()
-		o.Set(symbol, result)
+		o.Set(p, context, symbol, result)
 	}
 	return result, nil
 }
@@ -91,8 +91,12 @@ func (o *Value) Dir() map[string]byte {
 	}
 	return result
 }
-func (o *Value) Set(symbol string, object *Value) {
+func (o *Value) Set(p *Plasma, context *Context, symbol string, object *Value) *Value {
+	if o.IsBuiltIn {
+		return p.NewBuiltInSymbolProtectionError(context, symbol)
+	}
 	o.symbols.Set(symbol, object)
+	return nil
 }
 
 func (o *Value) TypeName() string {

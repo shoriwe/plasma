@@ -482,7 +482,7 @@ func (p *Plasma) InitializeBuiltIn() {
 				func(_ *Value, arguments ...*Value) (*Value, bool) {
 					receiver := arguments[0]
 					for symbol, object := range arguments[1].SymbolTable().Symbols {
-						receiver.Set(symbol, object)
+						receiver.Set(p, p.builtInContext, symbol, object)
 					}
 					return p.GetNone(), true
 				},
@@ -516,7 +516,7 @@ func (p *Plasma) InitializeBuiltIn() {
 					if source.IsBuiltIn {
 						return p.NewBuiltInSymbolProtectionError(p.builtInContext, symbol.String), false
 					}
-					source.Set(symbol.String, value)
+					source.Set(p, p.builtInContext, symbol.String, value)
 					return p.GetNone(), true
 				},
 			),
@@ -676,7 +676,7 @@ func (p *Plasma) InitializeBuiltIn() {
 					rangeIterator := p.NewIterator(p.builtInContext, true)
 					rangeIterator.Integer = startValue
 
-					rangeIterator.Set(HasNext,
+					rangeIterator.Set(p, p.builtInContext, HasNext,
 						p.NewFunction(p.builtInContext, true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self *Value, _ ...*Value) (*Value, bool) {
@@ -688,7 +688,7 @@ func (p *Plasma) InitializeBuiltIn() {
 							),
 						),
 					)
-					rangeIterator.Set(Next,
+					rangeIterator.Set(p, p.builtInContext, Next,
 						p.NewFunction(p.builtInContext, true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self *Value, _ ...*Value) (*Value, bool) {

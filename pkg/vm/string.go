@@ -260,11 +260,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							var content []*Value
-							for _, char := range []rune(self.String) {
-								content = append(content, p.NewString(context, false, string(char)))
-							}
-							return p.NewArray(context, false, content), true
+							return p.StringToContent(context, self, ArrayId)
 						},
 					),
 				)
@@ -275,11 +271,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							var content []*Value
-							for _, char := range []rune(self.String) {
-								content = append(content, p.NewString(context, false, string(char)))
-							}
-							return p.NewTuple(context, false, content), true
+							return p.StringToContent(context, self, TupleId)
 						},
 					),
 				)

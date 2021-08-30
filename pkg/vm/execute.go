@@ -19,6 +19,12 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 		} else {
 			fmt.Println(color.RedString("UL"), instructionNames[code.Instruction.OpCode], code.Value)
 		}
+		if context.ObjectStack.head != nil {
+			current := context.ObjectStack.head
+			for ; current != nil; current = current.next {
+				fmt.Println(current.value.(*Value).GetClass(p).Name)
+			}
+		}
 
 		switch code.Instruction.OpCode {
 		case GetFalseOP:
@@ -63,13 +69,66 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 			executionError = p.newClassFunctionOP(context, bytecode, code.Value.(FunctionInformation))
 		case NewFunctionOP:
 			executionError = p.newFunctionOP(context, bytecode, code.Value.(FunctionInformation))
+		case LoadFunctionArgumentsOP:
+			executionError = p.loadFunctionArgumentsOP(context, code.Value.([]string))
+		case ReturnOP:
+			returnResult := p.returnOP(context, code.Value.(int))
+			context.ReturnState()
+			return returnResult, true
+		case IfOneLinerOP:
+			executionError = p.ifOneLinerOP(context, bytecode, code.Value.(ConditionInformation))
+		case UnlessOneLinerOP:
+			executionError = p.unlessOneLinerOP(context, bytecode, code.Value.(ConditionInformation))
+		case AssignSelectorOP:
+			executionError = p.assignSelectorOP(context, code.Value.(string))
+		case AssignIndexOP:
+			executionError = p.assignIndexOP(context)
+		case IfOP:
+			executionError = p.ifOP(context, bytecode, code.Value.(ConditionInformation))
+			switch context.LastState {
+			case BreakState, RedoState, ContinueState:
+				return p.GetNone(), true
+			case ReturnState:
+				result := context.LastObject
+				context.LastObject = nil
+				return result, true
+			}
+		case UnlessOP:
+			executionError = p.unlessOP(context, bytecode, code.Value.(ConditionInformation))
+			switch context.LastState {
+			case BreakState, RedoState, ContinueState:
+				return p.GetNone(), true
+			case ReturnState:
+				result := context.LastObject
+				context.LastObject = nil
+				return result, true
+			}
+		case ForLoopOP:
+			executionError = p.forLoopOP(context, bytecode, code.Value.(LoopInformation))
+			if context.LastState == ReturnState {
+				result := context.LastObject
+				context.LastObject = nil
+				return result, true
+			}
 		default:
 			panic(instructionNames[code.Instruction.OpCode])
 		}
 		if executionError != nil {
 			// Do Something with the error
-			panic(executionError.GetClass(p).Name)
+			toString, getError := executionError.Get(p, context, ToString)
+			if getError != nil {
+				return toString, false
+			}
+			asString, callError := p.CallFunction(context, toString)
+			if !callError {
+				return asString, false
+			}
+			panic(asString.String)
 		}
+	}
+	context.NoState()
+	if context.ObjectStack.HasNext() {
+		return context.PopObject(), true
 	}
 	return p.GetNone(), true
 }

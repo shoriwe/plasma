@@ -271,6 +271,7 @@ func (p *Plasma) ContentIterator(context *Context, source *Value) (*Value, bool)
 		len(source.Content),
 	}
 	result.Set(
+		p, context,
 		Next,
 		p.NewFunction(
 			context,
@@ -283,7 +284,7 @@ func (p *Plasma) ContentIterator(context *Context, source *Value) (*Value, bool)
 					if information.index >= information.length {
 						return p.NewIndexOutOfRange(context, information.length, int64(information.index)), false
 					}
-					r := self.Content[information.index]
+					r := source.Content[information.index]
 					information.index++
 					return r, true
 				},
@@ -291,6 +292,7 @@ func (p *Plasma) ContentIterator(context *Context, source *Value) (*Value, bool)
 		),
 	)
 	result.Set(
+		p, context,
 		HasNext,
 		p.NewFunction(
 			context,
@@ -318,6 +320,7 @@ func (p *Plasma) BytesIterator(context *Context, source *Value) (*Value, bool) {
 		len(source.Bytes),
 	}
 	result.Set(
+		p, context,
 		Next,
 		p.NewFunction(
 			context,
@@ -338,6 +341,7 @@ func (p *Plasma) BytesIterator(context *Context, source *Value) (*Value, bool) {
 		),
 	)
 	result.Set(
+		p, context,
 		HasNext,
 		p.NewFunction(
 			context,
@@ -366,6 +370,7 @@ func (p *Plasma) StringIterator(context *Context, source *Value) (*Value, bool) 
 		len(asRune),
 	}
 	result.Set(
+		p, context,
 		Next,
 		p.NewFunction(
 			context,
@@ -386,6 +391,7 @@ func (p *Plasma) StringIterator(context *Context, source *Value) (*Value, bool) 
 		),
 	)
 	result.Set(
+		p, context,
 		HasNext,
 		p.NewFunction(
 			context,
@@ -632,6 +638,7 @@ func (p *Plasma) HashIterator(context *Context, source *Value) (*Value, bool) {
 	}
 	result := p.NewIterator(context, false)
 	result.Set(
+		p, context,
 		Next,
 		p.NewFunction(
 			context,
@@ -652,6 +659,7 @@ func (p *Plasma) HashIterator(context *Context, source *Value) (*Value, bool) {
 		),
 	)
 	result.Set(
+		p, context,
 		HasNext,
 		p.NewFunction(
 			context,
@@ -752,4 +760,140 @@ func (p *Plasma) IndexCall(context *Context, source *Value, index *Value) (*Valu
 		return getError, false
 	}
 	return p.CallFunction(context, indexOperation, index)
+}
+
+func (p *Plasma) StringToContent(context *Context, s *Value, target uint8) (*Value, bool) {
+	var content []*Value
+	for _, char := range []rune(s.String) {
+		content = append(content, p.NewString(context, false, string(char)))
+	}
+	if target == ArrayId {
+		return p.NewArray(context, false, content), true
+	} else if target == TupleId {
+		return p.NewTuple(context, false, content), true
+	}
+	panic("String to content only support ArrayId and TupleId")
+}
+
+func (p *Plasma) InterpretAsIterator(context *Context, value *Value) (*Value, bool) {
+	_, foundNext := value.Get(p, context, Next)
+	_, foundHasNext := value.Get(p, context, HasNext)
+	if foundNext == nil && foundHasNext == nil {
+		return value, true
+	}
+	iter, getError := value.Get(p, context, Iter)
+	if getError != nil {
+		return getError, false
+	}
+	asIter, success := p.CallFunction(context, iter)
+	if !success {
+		return asIter, false
+	}
+	return asIter, true
+}
+
+func (p *Plasma) BytesToContent(context *Context, s *Value, target uint8) (*Value, bool) {
+	var newContent []*Value
+	for _, byte_ := range s.Bytes {
+		newContent = append(newContent,
+			p.NewInteger(context, false,
+				int64(byte_),
+			),
+		)
+	}
+	if target == ArrayId {
+		return p.NewArray(context, false, newContent), true
+	} else if target == TupleId {
+		return p.NewTuple(context, false, newContent), true
+	}
+	panic("Bytes to content only support ArrayId and TupleId")
+}
+
+func (p *Plasma) IterToContent(context *Context, s *Value, target uint8) (*Value, bool) {
+	next, nextGetError := s.Get(p, context, Next)
+	if nextGetError != nil {
+		return nextGetError, false
+	}
+	hasNext, hasNextGetError := s.Get(p, context, HasNext)
+	if hasNextGetError != nil {
+		return hasNextGetError, false
+	}
+	var content []*Value
+	for {
+		doesHasNext, success := p.CallFunction(context, hasNext)
+		if !success {
+			return doesHasNext, false
+		}
+		doesHasNextAsBool, interpretationError := p.QuickGetBool(context, doesHasNext)
+		if interpretationError != nil {
+			return interpretationError, false
+		}
+		if !doesHasNextAsBool {
+			break
+		}
+		var nextValue *Value
+		nextValue, success = p.CallFunction(context, next)
+		if !success {
+			return nextValue, false
+		}
+		content = append(content, nextValue)
+	}
+	if target == ArrayId {
+		return p.NewArray(context, false, content), true
+	} else if target == TupleId {
+		return p.NewTuple(context, false, content), true
+	}
+	panic("Iter to content only support ArrayId and TupleId")
+}
+
+func (p *Plasma) UnpackValues(context *Context, source *Value, numberOfReceivers int) ([]*Value, *Value) {
+	if numberOfReceivers <= 1 {
+		return []*Value{source}, nil
+	}
+	switch source.BuiltInTypeId {
+	case TupleId, ArrayId:
+		return source.Content, nil
+	case HashTableId:
+		hashAsTuple, success := p.HashToContent(context, source, TupleId)
+		if !success {
+			return nil, hashAsTuple
+		}
+		return hashAsTuple.Content, nil
+	case StringId:
+		stringAsTuple, success := p.StringToContent(context, source, TupleId)
+		if !success {
+			return nil, stringAsTuple
+		}
+		return stringAsTuple.Content, nil
+	case BytesId:
+		bytesAsTuple, success := p.BytesToContent(context, source, TupleId)
+		if !success {
+			return nil, bytesAsTuple
+		}
+		return bytesAsTuple.Content, nil
+	case IteratorId:
+		iterAsTuple, success := p.IterToContent(context, source, TupleId)
+		if !success {
+			return nil, iterAsTuple
+		}
+		return iterAsTuple.Content, nil
+	}
+	// Transform the type to iter
+	asIterInterpretation, success := p.InterpretAsIterator(context, source)
+	if !success {
+		return nil, asIterInterpretation
+	}
+	var sourceAsIter *Value
+	sourceAsIter, success = p.CallFunction(context, asIterInterpretation)
+	if !success {
+		return nil, sourceAsIter
+	}
+	// The to Tuple
+	var sourceIterAsTuple *Value
+	sourceIterAsTuple, success = p.IterToContent(context, sourceAsIter, TupleId)
+	if !success {
+		return nil, sourceIterAsTuple
+	}
+	// Return its content
+	return sourceIterAsTuple.Content, nil
 }

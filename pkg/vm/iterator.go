@@ -47,6 +47,28 @@ func (p *Plasma) IteratorInitialize(isBuiltIn bool) ConstructorCallBack {
 				)
 			},
 		)
+		object.SetOnDemandSymbol(ToTuple,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.IterToContent(context, self, TupleId)
+						},
+					),
+				)
+			},
+		)
+		object.SetOnDemandSymbol(ToArray,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.IterToContent(context, self, ArrayId)
+						},
+					),
+				)
+			},
+		)
 		return nil
 	}
 }

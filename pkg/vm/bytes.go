@@ -245,15 +245,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							var newContent []*Value
-							for _, byte_ := range self.Bytes {
-								newContent = append(newContent,
-									p.NewInteger(context, false,
-										int64(byte_),
-									),
-								)
-							}
-							return p.NewArray(context, false, newContent), true
+							return p.BytesToContent(context, self, ArrayId)
 						},
 					),
 				)
@@ -264,15 +256,7 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							var newContent []*Value
-							for _, byte_ := range self.Bytes {
-								newContent = append(newContent,
-									p.NewInteger(context, false,
-										int64(byte_),
-									),
-								)
-							}
-							return p.NewTuple(context, false, newContent), true
+							return p.BytesToContent(context, self, TupleId)
 						},
 					),
 				)

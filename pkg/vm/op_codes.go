@@ -15,7 +15,6 @@ const (
 	NewFloatOP
 	GetTrueOP
 	GetFalseOP
-	NewLambdaFunctionOP
 	GetNoneOP
 	NewTupleOP
 	NewArrayOP
@@ -50,6 +49,11 @@ const (
 	LessThanOrEqualOP
 	ContainsOP
 
+	IfOP
+	IfOneLinerOP
+	UnlessOP
+	UnlessOneLinerOP
+
 	GetIdentifierOP
 	IndexOP
 	SelectNameFromObjectOP
@@ -57,8 +61,6 @@ const (
 	AssignIdentifierOP
 	AssignSelectorOP
 	AssignIndexOP
-	IfJumpOP
-	UnlessJumpOP
 	BreakOP
 	RedoOP
 	ContinueOP
@@ -110,17 +112,16 @@ var binaryInstructionsFunctions = map[uint8][2]string{
 }
 
 var instructionNames = map[uint8]string{
-	NewStringOP:         "NewStringOP",
-	NewBytesOP:          "NewBytesOP",
-	NewIntegerOP:        "NewIntegerOP",
-	NewFloatOP:          "NewFloatOP",
-	GetTrueOP:           "GetTrueOP",
-	GetFalseOP:          "GetFalseOP",
-	NewLambdaFunctionOP: "NewLambdaFunctionOP",
-	GetNoneOP:           "GetNoneOP",
-	NewTupleOP:          "NewTupleOP",
-	NewArrayOP:          "NewArrayOP",
-	NewHashOP:           "NewHashOP",
+	NewStringOP:  "NewStringOP",
+	NewBytesOP:   "NewBytesOP",
+	NewIntegerOP: "NewIntegerOP",
+	NewFloatOP:   "NewFloatOP",
+	GetTrueOP:    "GetTrueOP",
+	GetFalseOP:   "GetFalseOP",
+	GetNoneOP:    "GetNoneOP",
+	NewTupleOP:   "NewTupleOP",
+	NewArrayOP:   "NewArrayOP",
+	NewHashOP:    "NewHashOP",
 
 	UnaryOP:      "UnaryOP",
 	NegateBitsOP: "NegateBitsOP",
@@ -151,6 +152,11 @@ var instructionNames = map[uint8]string{
 	LessThanOrEqualOP:    "LessThanOrEqualOP",
 	ContainsOP:           "ContainsOP",
 
+	IfOP:             "IfOP",
+	IfOneLinerOP:     "IfOneLinerOP",
+	UnlessOP:         "UnlessOP",
+	UnlessOneLinerOP: "UnlessOneLinerOP",
+
 	GetIdentifierOP:         "GetIdentifierOP",
 	IndexOP:                 "IndexOP",
 	SelectNameFromObjectOP:  "SelectNameFromObjectOP",
@@ -158,8 +164,6 @@ var instructionNames = map[uint8]string{
 	AssignIdentifierOP:      "AssignIdentifierOP",
 	AssignSelectorOP:        "AssignSelectorOP",
 	AssignIndexOP:           "AssignIndexOP",
-	IfJumpOP:                "IfJumpOP",
-	UnlessJumpOP:            "UnlessJumpOP",
 	BreakOP:                 "BreakOP",
 	RedoOP:                  "RedoOP",
 	ContinueOP:              "ContinueOP",

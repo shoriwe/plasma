@@ -1468,7 +1468,11 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 		return nil, newSyntaxError(line, IfStatement)
 	}
 	// Parse If
-	var body []ast.Node
+	root := &ast.IfStatement{
+		Condition: condition.(ast.IExpression),
+		Body:      []ast.Node{},
+		Else:      []ast.Node{},
+	}
 	var bodyNode ast.Node
 	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
@@ -1487,11 +1491,12 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		body = append(body, bodyNode)
+		root.Body = append(root.Body, bodyNode)
 	}
 	// Parse Elifs
-	var elifBlocks []*ast.ElifBlock
+	lastCondition := root
 	if parser.directValueMatch(lexer.Elif) {
+		var elifBody []ast.Node
 	parsingElifLoop:
 		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
@@ -1527,7 +1532,6 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 			if !parser.directValueMatch(lexer.NewLine) {
 				return nil, newSyntaxError(line, ElifBlock)
 			}
-			var elifBody []ast.Node
 			var elifBodyNode ast.Node
 			for parser.hasNext() {
 				if parser.kindMatch(lexer.Separator) {
@@ -1548,10 +1552,14 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 				}
 				elifBody = append(elifBody, elifBodyNode)
 			}
-			elifBlocks = append(elifBlocks, &ast.ElifBlock{
-				Condition: elifCondition.(ast.IExpression),
-				Body:      elifBody,
-			})
+			lastCondition.Else = append(
+				lastCondition.Else,
+				&ast.IfStatement{
+					Condition: elifCondition.(ast.IExpression),
+					Body:      elifBody,
+				},
+			)
+			lastCondition = lastCondition.Else[0].(*ast.IfStatement)
 			if parser.directValueMatch(lexer.Else) ||
 				parser.directValueMatch(lexer.End) {
 				break parsingElifLoop
@@ -1559,7 +1567,6 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 		}
 	}
 	// Parse Default
-	var elseBody []ast.Node
 	if parser.directValueMatch(lexer.Else) {
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
@@ -1584,7 +1591,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 			if parsingError != nil {
 				return nil, parsingError
 			}
-			elseBody = append(elseBody, elseBodyNode)
+			lastCondition.Else = append(lastCondition.Else, elseBodyNode)
 		}
 	}
 	if !parser.directValueMatch(lexer.End) {
@@ -1594,12 +1601,7 @@ func (parser *Parser) parseIfStatement() (*ast.IfStatement, *errors.Error) {
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	return &ast.IfStatement{
-		Condition:  condition.(ast.IExpression),
-		Body:       body,
-		ElifBlocks: elifBlocks,
-		Else:       elseBody,
-	}, nil
+	return root, nil
 }
 
 func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Error) {
@@ -1620,10 +1622,14 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 		return nil, newNonExpressionReceivedError(line, UnlessStatement)
 	}
 	if !parser.directValueMatch(lexer.NewLine) {
-		return nil, newSyntaxError(parser.currentLine(), UnlessStatement)
+		return nil, newSyntaxError(line, UnlessStatement)
 	}
-	// Parse If
-	var body []ast.Node
+	// Parse Unless
+	root := &ast.UnlessStatement{
+		Condition: condition.(ast.IExpression),
+		Body:      []ast.Node{},
+		Else:      []ast.Node{},
+	}
 	var bodyNode ast.Node
 	for parser.hasNext() {
 		if parser.kindMatch(lexer.Separator) {
@@ -1642,11 +1648,12 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		body = append(body, bodyNode)
+		root.Body = append(root.Body, bodyNode)
 	}
 	// Parse Elifs
-	var elifBlocks []*ast.ElifBlock
+	lastCondition := root
 	if parser.directValueMatch(lexer.Elif) {
+		var elifBody []ast.Node
 	parsingElifLoop:
 		for parser.hasNext() {
 			if parser.kindMatch(lexer.Separator) {
@@ -1655,14 +1662,13 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 					return nil, tokenizingError
 				}
 				if parser.directValueMatch(lexer.Else) ||
-					parser.directValueMatch(lexer.End) ||
-					parser.directValueMatch(lexer.Elif) {
+					parser.directValueMatch(lexer.End) {
 					break
 				}
 				continue
 			}
 			if !parser.directValueMatch(lexer.Elif) {
-				return nil, newSyntaxError(parser.currentLine(), ElifBlock)
+				return nil, newSyntaxError(line, ElifBlock)
 			}
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
@@ -1678,12 +1684,11 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 				return nil, parsingError
 			}
 			if _, ok := elifCondition.(ast.IExpression); !ok {
-				return nil, newSyntaxError(parser.currentLine(), ElifBlock)
+				return nil, newSyntaxError(line, ElifBlock)
 			}
 			if !parser.directValueMatch(lexer.NewLine) {
-				return nil, newSyntaxError(parser.currentLine(), ElifBlock)
+				return nil, newSyntaxError(line, ElifBlock)
 			}
-			var elifBody []ast.Node
 			var elifBodyNode ast.Node
 			for parser.hasNext() {
 				if parser.kindMatch(lexer.Separator) {
@@ -1692,7 +1697,8 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 						return nil, tokenizingError
 					}
 					if parser.directValueMatch(lexer.Else) ||
-						parser.directValueMatch(lexer.End) {
+						parser.directValueMatch(lexer.End) ||
+						parser.directValueMatch(lexer.Elif) {
 						break
 					}
 					continue
@@ -1703,10 +1709,14 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 				}
 				elifBody = append(elifBody, elifBodyNode)
 			}
-			elifBlocks = append(elifBlocks, &ast.ElifBlock{
-				Condition: elifCondition.(ast.IExpression),
-				Body:      elifBody,
-			})
+			lastCondition.Else = append(
+				lastCondition.Else,
+				&ast.UnlessStatement{
+					Condition: elifCondition.(ast.IExpression),
+					Body:      elifBody,
+				},
+			)
+			lastCondition = lastCondition.Else[0].(*ast.UnlessStatement)
 			if parser.directValueMatch(lexer.Else) ||
 				parser.directValueMatch(lexer.End) {
 				break parsingElifLoop
@@ -1714,7 +1724,6 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 		}
 	}
 	// Parse Default
-	var elseBody []ast.Node
 	if parser.directValueMatch(lexer.Else) {
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
@@ -1739,7 +1748,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 			if parsingError != nil {
 				return nil, parsingError
 			}
-			elseBody = append(elseBody, elseBodyNode)
+			lastCondition.Else = append(lastCondition.Else, elseBodyNode)
 		}
 	}
 	if !parser.directValueMatch(lexer.End) {
@@ -1749,12 +1758,7 @@ func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, *errors.Erro
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	return &ast.UnlessStatement{
-		Condition:  condition.(ast.IExpression),
-		Body:       body,
-		ElifBlocks: elifBlocks,
-		Else:       elseBody,
-	}, nil
+	return root, nil
 }
 
 func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Error) {

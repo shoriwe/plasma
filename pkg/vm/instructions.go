@@ -192,3 +192,209 @@ func (p *Plasma) newFunctionOP(context *Context, bytecode *Bytecode, functionInf
 	)
 	return nil
 }
+
+func (p *Plasma) loadFunctionArgumentsOP(context *Context, receivers []string) *Value {
+	for _, receiver := range receivers {
+		context.PeekSymbolTable().Set(receiver, context.PopObject())
+	}
+	return nil
+}
+
+func (p *Plasma) returnOP(context *Context, numberOfResults int) *Value {
+	if numberOfResults == 0 {
+		return p.GetNone()
+	} else if numberOfResults == 1 {
+		return context.PopObject()
+	}
+	resultValues := make([]*Value, numberOfResults)
+	for i := 0; i < numberOfResults; i++ {
+		resultValues[i] = context.PopObject()
+	}
+	return p.NewTuple(context, false, resultValues)
+}
+
+func (p *Plasma) ifOneLinerOP(context *Context, bytecode *Bytecode, information ConditionInformation) *Value {
+	condition := context.PopObject()
+	ifBody := bytecode.NextN(information.BodyLength)
+	elseBody := bytecode.NextN(information.ElseBodyLength)
+	asBool, asBoolError := p.QuickGetBool(context, condition)
+	if asBoolError != nil {
+		return asBoolError
+	}
+	var codeToExecute []Code
+	if asBool {
+		codeToExecute = ifBody
+	} else {
+		codeToExecute = elseBody
+	}
+	result, success := p.Execute(context, NewBytecodeFromArray(codeToExecute))
+	if !success {
+		return result
+	}
+	context.LastObject = result
+	return nil
+}
+
+func (p *Plasma) unlessOneLinerOP(context *Context, bytecode *Bytecode, information ConditionInformation) *Value {
+	condition := context.PopObject()
+	unlessBody := bytecode.NextN(information.BodyLength)
+	elseBody := bytecode.NextN(information.ElseBodyLength)
+	asBool, asBoolError := p.QuickGetBool(context, condition)
+	if asBoolError != nil {
+		return asBoolError
+	}
+	var codeToExecute []Code
+	if !asBool {
+		codeToExecute = unlessBody
+	} else {
+		codeToExecute = elseBody
+	}
+	result, success := p.Execute(context, NewBytecodeFromArray(codeToExecute))
+	if !success {
+		return result
+	}
+	context.LastObject = result
+	return nil
+}
+
+func (p *Plasma) assignSelectorOP(context *Context, symbol string) *Value {
+	source := context.PopObject()
+	value := context.PopObject()
+	source.Set(p, context, symbol, value)
+	return nil
+}
+
+func (p *Plasma) assignIndexOP(context *Context) *Value {
+	index := context.PopObject()
+	source := context.PopObject()
+	value := context.PopObject()
+	assign, getError := source.Get(p, context, Assign)
+	if getError != nil {
+		return getError
+	}
+	result, success := p.CallFunction(context, assign, index, value)
+	if !success {
+		return result
+	}
+	return nil
+}
+
+func (p *Plasma) ifOP(context *Context, bytecode *Bytecode, information ConditionInformation) *Value {
+	condition := context.PopObject()
+	ifBody := bytecode.NextN(information.BodyLength)
+	elseBody := bytecode.NextN(information.ElseBodyLength)
+	conditionAsBool, transformationError := p.QuickGetBool(context, condition)
+	if transformationError != nil {
+		return transformationError
+	}
+	var codeToExecute []Code
+	if conditionAsBool {
+		codeToExecute = ifBody
+	} else {
+		codeToExecute = elseBody
+	}
+	result, success := p.Execute(context, NewBytecodeFromArray(codeToExecute))
+	if !success {
+		return result
+	}
+	context.LastObject = result
+	return nil
+}
+
+func (p *Plasma) unlessOP(context *Context, bytecode *Bytecode, information ConditionInformation) *Value {
+	condition := context.PopObject()
+	ifBody := bytecode.NextN(information.BodyLength)
+	elseBody := bytecode.NextN(information.ElseBodyLength)
+	conditionAsBool, transformationError := p.QuickGetBool(context, condition)
+	if transformationError != nil {
+		return transformationError
+	}
+	var codeToExecute []Code
+	if !conditionAsBool {
+		codeToExecute = ifBody
+	} else {
+		codeToExecute = elseBody
+	}
+	result, success := p.Execute(context, NewBytecodeFromArray(codeToExecute))
+	if !success {
+		return result
+	}
+	context.LastObject = result
+	return nil
+}
+
+func (p *Plasma) forLoopOP(context *Context, bytecode *Bytecode, information LoopInformation) *Value {
+	source, success := p.InterpretAsIterator(context, context.PopObject())
+	if !success {
+		return source
+	}
+	next, nextGetError := source.Get(p, context, Next)
+	if nextGetError != nil {
+		return nextGetError
+	}
+	hasNext, hasNextGetError := source.Get(p, context, HasNext)
+	if hasNextGetError != nil {
+		return hasNextGetError
+	}
+	body := bytecode.NextN(information.BodyLength)
+	numberOfReceivers := len(information.Receivers)
+	bodyBytecode := NewBytecodeFromArray(body)
+	var (
+		doesHasNext *Value
+		nextValue   *Value
+		result      *Value
+	)
+forLoop:
+	for {
+	continueState:
+		// Check  if the iter has a next value
+		doesHasNext, success = p.CallFunction(context, hasNext)
+		if !success {
+			return doesHasNext
+		}
+		doesHasNextAsBool, boolInterpretationError := p.QuickGetBool(context, doesHasNext)
+		if boolInterpretationError != nil {
+			return boolInterpretationError
+		}
+		if !doesHasNextAsBool {
+			break
+		}
+		// Get the value
+		nextValue, success = p.CallFunction(context, next)
+		if !success {
+			return nextValue
+		}
+	redoState:
+		// Unpack the value
+		unpackedValues, unpackError := p.UnpackValues(context, nextValue, numberOfReceivers)
+		if unpackError != nil {
+			return unpackError
+		}
+		numberOfUnpackedValues := len(unpackedValues)
+		if numberOfUnpackedValues != numberOfReceivers {
+			return p.NewIndexOutOfRange(context, numberOfUnpackedValues, int64(numberOfReceivers))
+		}
+		for index, symbol := range information.Receivers {
+			context.PeekSymbolTable().Set(symbol, unpackedValues[index])
+		}
+		// Reset  the bytecode
+		bodyBytecode.index = 0
+		// Execute the body
+		result, success = p.Execute(context, bodyBytecode)
+		if !success {
+			return result
+		}
+		switch context.LastState {
+		case ReturnState:
+			context.LastObject = result
+			return nil
+		case BreakState:
+			break forLoop
+		case ContinueState:
+			goto continueState
+		case RedoState:
+			goto redoState
+		}
+	}
+	return nil
+}
