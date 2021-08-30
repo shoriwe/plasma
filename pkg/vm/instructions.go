@@ -398,3 +398,55 @@ forLoop:
 	}
 	return nil
 }
+
+func (p *Plasma) newGeneratorOP(context *Context, numberOfReceivers int) *Value {
+	operation := context.PopObject()
+	source := context.PopObject()
+	sourceAsIter, interpretationSuccess := p.InterpretAsIterator(context, source)
+	if !interpretationSuccess {
+		return sourceAsIter
+	}
+	sourceAsIterHasNext, hasNextError := sourceAsIter.Get(p, context, HasNext)
+	if hasNextError != nil {
+		return hasNextError
+	}
+	sourceAsIterNext, nextGetError := sourceAsIter.Get(p, context, Next)
+	if nextGetError != nil {
+		return nextGetError
+	}
+	result := p.NewIterator(context, false)
+	result.SetOnDemandSymbol(
+		HasNext,
+		func() *Value {
+			return p.NewFunction(context, false, result.SymbolTable(),
+				NewBuiltInFunction(0,
+					func(self *Value, _ ...*Value) (*Value, bool) {
+						return p.CallFunction(context, sourceAsIterHasNext)
+					},
+				),
+			)
+		},
+	)
+	result.SetOnDemandSymbol(
+		Next,
+		func() *Value {
+			return p.NewFunction(context, false, result.SymbolTable(),
+				NewBuiltInFunction(0,
+					func(self *Value, _ ...*Value) (*Value, bool) {
+						nextValues, success := p.CallFunction(context, sourceAsIterNext)
+						if !success {
+							return nextValues, false
+						}
+						unpackedValues, unpackError := p.UnpackValues(context, nextValues, numberOfReceivers)
+						if unpackError != nil {
+							return unpackError, false
+						}
+						return p.CallFunction(context, operation, unpackedValues...)
+					},
+				),
+			)
+		},
+	)
+	context.LastObject = result
+	return nil
+}

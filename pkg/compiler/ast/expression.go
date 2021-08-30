@@ -382,7 +382,6 @@ func (lambdaExpression *LambdaExpression) CompilePush(push bool) ([]vm.Code, *er
 }
 
 func (lambdaExpression *LambdaExpression) Compile() ([]vm.Code, *errors.Error) {
-	var result []vm.Code
 	functionCode, lambdaCodeCompilationError := lambdaExpression.Code.CompilePush(true)
 	if lambdaCodeCompilationError != nil {
 		return nil, lambdaCodeCompilationError
@@ -391,20 +390,22 @@ func (lambdaExpression *LambdaExpression) Compile() ([]vm.Code, *errors.Error) {
 	for _, argument := range lambdaExpression.Arguments {
 		arguments = append(arguments, argument.Token.String)
 	}
+	functionBody := []vm.Code{vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments)}
+	functionBody = append(functionBody, functionCode...)
+	functionBody = append(functionBody, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
+	var result []vm.Code
 	result = append(result,
 		vm.NewCode(
 			vm.NewFunctionOP,
 			errors.UnknownLine,
 			vm.FunctionInformation{
 				Name:              "",
-				BodyLength:        len(functionCode),
+				BodyLength:        len(functionBody),
 				NumberOfArguments: len(arguments),
 			},
 		),
 	)
-	result = append(result, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
-	result = append(result, functionCode...)
-	result = append(result, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
+	result = append(result, functionBody...)
 	return result, nil
 }
 
@@ -427,13 +428,10 @@ func (generatorExpression *GeneratorExpression) CompilePush(push bool) ([]vm.Cod
 }
 
 func (generatorExpression *GeneratorExpression) Compile() ([]vm.Code, *errors.Error) {
-	var result []vm.Code
 	source, sourceCompilationError := generatorExpression.Source.CompilePush(true)
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
 	}
-	result = append(result, source...)
-
 	operationAsLambda := &LambdaExpression{
 		Arguments: generatorExpression.Receivers,
 		Code:      generatorExpression.Operation,
@@ -442,8 +440,10 @@ func (generatorExpression *GeneratorExpression) Compile() ([]vm.Code, *errors.Er
 	if operationCompilationError != nil {
 		return nil, operationCompilationError
 	}
-	result = append(result, operation...)
 
+	var result []vm.Code
+	result = append(result, source...)
+	result = append(result, operation...)
 	result = append(result,
 		vm.NewCode(vm.NewGeneratorOP, errors.UnknownLine, len(generatorExpression.Receivers)),
 	)

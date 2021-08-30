@@ -110,6 +110,8 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 				context.LastObject = nil
 				return result, true
 			}
+		case NewGeneratorOP:
+			executionError = p.newGeneratorOP(context, code.Value.(int))
 		default:
 			panic(instructionNames[code.Instruction.OpCode])
 		}
