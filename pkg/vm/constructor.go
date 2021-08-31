@@ -47,6 +47,7 @@ func (c *PlasmaConstructor) Construct(context *Context, vm *Plasma, object *Valu
 	context.PushObject(object)
 	executionError, success := vm.Execute(context, NewBytecodeFromArray(c.Code))
 	context.PopSymbolTable()
+	context.PopObject()
 	if !success {
 		return executionError
 	}

@@ -686,7 +686,6 @@ func (p *Plasma) InitializeBuiltIn() {
 						p.NewFunction(p.builtInContext, true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self *Value, _ ...*Value) (*Value, bool) {
-									fmt.Println("HERE")
 									if rangeInformation.current < rangeInformation.end {
 										return p.GetTrue(), true
 									}

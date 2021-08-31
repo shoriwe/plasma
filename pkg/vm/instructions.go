@@ -201,6 +201,7 @@ func (p *Plasma) loadFunctionArgumentsOP(context *Context, receivers []string) *
 }
 
 func (p *Plasma) returnOP(context *Context, numberOfResults int) *Value {
+	// fmt.Println("Number of results:", numberOfResults)
 	if numberOfResults == 0 {
 		return p.GetNone()
 	} else if numberOfResults == 1 {

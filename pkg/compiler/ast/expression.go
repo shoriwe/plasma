@@ -564,14 +564,20 @@ func (ifOneLinerExpression *IfOneLinerExpression) Compile() ([]vm.Code, *errors.
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
-	ifResult, ifResultCompilationError := ifOneLinerExpression.Result.CompilePush(true)
+	ifReturnResult := &ReturnStatement{
+		Results: []IExpression{ifOneLinerExpression.Result},
+	}
+	ifResult, ifResultCompilationError := ifReturnResult.Compile()
 	if ifResultCompilationError != nil {
 		return nil, ifResultCompilationError
 	}
 	var elseResult []vm.Code
 	if ifOneLinerExpression.ElseResult != nil {
+		elseReturnResult := &ReturnStatement{
+			Results: []IExpression{ifOneLinerExpression.ElseResult},
+		}
 		var elseResultCompilationError *errors.Error
-		elseResult, elseResultCompilationError = ifOneLinerExpression.ElseResult.CompilePush(true)
+		elseResult, elseResultCompilationError = elseReturnResult.Compile()
 		if elseResultCompilationError != nil {
 			return nil, elseResultCompilationError
 		}
@@ -579,6 +585,7 @@ func (ifOneLinerExpression *IfOneLinerExpression) Compile() ([]vm.Code, *errors.
 		elseResult = []vm.Code{
 			vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil),
 			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
+			vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1),
 		}
 	}
 	var result []vm.Code
@@ -620,14 +627,20 @@ func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]vm.Code, 
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
-	unlessResult, unlessResultCompilationError := unlessOneLinerExpression.Result.CompilePush(true)
-	if unlessResultCompilationError != nil {
-		return nil, unlessResultCompilationError
+	ifReturnResult := &ReturnStatement{
+		Results: []IExpression{unlessOneLinerExpression.Result},
+	}
+	ifResult, ifResultCompilationError := ifReturnResult.Compile()
+	if ifResultCompilationError != nil {
+		return nil, ifResultCompilationError
 	}
 	var elseResult []vm.Code
 	if unlessOneLinerExpression.ElseResult != nil {
+		elseReturnResult := &ReturnStatement{
+			Results: []IExpression{unlessOneLinerExpression.ElseResult},
+		}
 		var elseResultCompilationError *errors.Error
-		elseResult, elseResultCompilationError = unlessOneLinerExpression.ElseResult.CompilePush(true)
+		elseResult, elseResultCompilationError = elseReturnResult.Compile()
 		if elseResultCompilationError != nil {
 			return nil, elseResultCompilationError
 		}
@@ -635,6 +648,7 @@ func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]vm.Code, 
 		elseResult = []vm.Code{
 			vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil),
 			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
+			vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1),
 		}
 	}
 	var result []vm.Code
@@ -643,12 +657,12 @@ func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]vm.Code, 
 		vm.NewCode(vm.UnlessOneLinerOP,
 			errors.UnknownLine,
 			vm.ConditionInformation{
-				BodyLength:     len(unlessResult),
+				BodyLength:     len(ifResult),
 				ElseBodyLength: len(elseResult),
 			},
 		),
 	)
-	result = append(result, unlessResult...)
+	result = append(result, ifResult...)
 	result = append(result, elseResult...)
 	return result, nil
 }

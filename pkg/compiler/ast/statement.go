@@ -160,7 +160,10 @@ type DoWhileStatement struct {
 }
 
 func (doWhileStatement *DoWhileStatement) Compile() ([]vm.Code, *errors.Error) {
-	condition, conditionCompilationError := doWhileStatement.Condition.CompilePush(true)
+	conditionReturn := &ReturnStatement{
+		Results: []IExpression{doWhileStatement.Condition},
+	}
+	condition, conditionCompilationError := conditionReturn.Compile()
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
@@ -190,7 +193,10 @@ type WhileLoopStatement struct {
 }
 
 func (whileStatement *WhileLoopStatement) Compile() ([]vm.Code, *errors.Error) {
-	condition, conditionCompilationError := whileStatement.Condition.CompilePush(true)
+	conditionReturn := &ReturnStatement{
+		Results: []IExpression{whileStatement.Condition},
+	}
+	condition, conditionCompilationError := conditionReturn.Compile()
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
@@ -220,7 +226,10 @@ type UntilLoopStatement struct {
 }
 
 func (untilLoop *UntilLoopStatement) Compile() ([]vm.Code, *errors.Error) {
-	condition, conditionCompilationError := untilLoop.Condition.CompilePush(true)
+	conditionReturn := &ReturnStatement{
+		Results: []IExpression{untilLoop.Condition},
+	}
+	condition, conditionCompilationError := conditionReturn.Compile()
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
 	}
@@ -555,7 +564,7 @@ type TryStatement struct {
 	Finally      []Node
 }
 
-func (tryStatement *TryStatement) compileTryStatement() ([]vm.Code, *errors.Error) {
+func (tryStatement *TryStatement) Compile() ([]vm.Code, *errors.Error) {
 	panic("IMPLEMENT ME!!!")
 }
 
@@ -564,9 +573,17 @@ type BeginStatement struct {
 	Body []Node
 }
 
+func (beginStatement *BeginStatement) Compile() ([]vm.Code, *errors.Error) {
+	return compileBody(beginStatement.Body)
+}
+
 type EndStatement struct {
 	Statement
 	Body []Node
+}
+
+func (endStatement *EndStatement) Compile() ([]vm.Code, *errors.Error) {
+	return compileBody(endStatement.Body)
 }
 
 type ReturnStatement struct {
