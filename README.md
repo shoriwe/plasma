@@ -39,33 +39,72 @@ go install github.com/shoriwe/gplasma/cmd/plasma@latest
 **`plasma`** was designed to be embedded in other go applications, you should do it like:
 
 ```go
-func program() {
-virtualMachine = vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
-for _, file := range files {
-fileHandler, readingError := os.Open(file)
-if readingError != nil {
-panic(readingError)
-}
-compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
-plasma.Options{
-Debug: false,
-},
+package main
+
+import (
+	"bufio"
+	"encoding/json"
+	"flag"
+	"fmt"
+	"github.com/fatih/color"
+	"github.com/otiai10/copy"
+	"github.com/shoriwe/gplasma/pkg/compiler"
+	"github.com/shoriwe/gplasma/pkg/errors"
+	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/shoriwe/gplasma/pkg/std/importlib"
+	"github.com/shoriwe/gplasma/pkg/vm"
+	"io"
+	"os"
+	"path/filepath"
+	"strings"
 )
-code, compilationError := compiler.Compile()
-if compilationError != nil {
-_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), compilationError.String())
-os.Exit(1)
+
+var (
+	files                   []string
+	virtualMachine          *vm.Plasma
+	flagOptions             map[string]configOption
+	envOptions              map[string]configOption
+	defaultSitePackagesPath = true
+	sitePackagesPath        = "site-packages"
+)
+
+func setupVm() {
+	virtualMachine = vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
+	currentDir, err := os.Getwd()
+	if err != nil {
+		currentDir = "."
+	}
+	virtualMachine.LoadBuiltInSymbols(
+		importlib.NewImporter(
+			importlib.NewRealFileSystem(sitePackagesPath),
+			importlib.NewRealFileSystem(currentDir),
+		),
+	)
+	// Setup from here the other flags
 }
-/*
-	ToDo: Do intermediate stuff with other flags
-*/
-context := virtualMachine.NewContext()
-result, success := virtualMachine.Execute(context, code)
-if !success {
-_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
-os.Exit(1)
-}
-}
+
+func program() {
+	setupVM()
+	for _, file := range files {
+		fileHandler, readingError := os.Open(file)
+		if readingError != nil {
+			panic(readingError)
+		}
+		code, compilationError := compiler.Compile(reader.NewStringReaderFromFile(fileHandler))
+		if compilationError != nil {
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), compilationError.String())
+			os.Exit(1)
+		}
+		/*
+			ToDo: Do intermediate stuff with other flags
+		*/
+		context := virtualMachine.NewContext()
+		result, success := virtualMachine.Execute(context, code)
+		if !success {
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
+			os.Exit(1)
+		}
+	}
 }
 ```
 
