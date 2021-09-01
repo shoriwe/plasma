@@ -17,8 +17,8 @@ type Code struct {
 	Line        int
 }
 
-func NewCode(opCode uint8, line int, value interface{}) Code {
-	return Code{
+func NewCode(opCode uint8, line int, value interface{}) *Code {
+	return &Code{
 		Instruction: NewInstruction(opCode),
 		Value:       value,
 		Line:        line,
@@ -26,7 +26,7 @@ func NewCode(opCode uint8, line int, value interface{}) Code {
 }
 
 type Bytecode struct {
-	instructions []Code
+	instructions []*Code
 	length       int
 	index        int
 }
@@ -35,17 +35,17 @@ func (bytecode *Bytecode) HasNext() bool {
 	return bytecode.index < bytecode.length
 }
 
-func (bytecode *Bytecode) Peek() Code {
+func (bytecode *Bytecode) Peek() *Code {
 	return bytecode.instructions[bytecode.index]
 }
 
-func (bytecode *Bytecode) Next() Code {
+func (bytecode *Bytecode) Next() *Code {
 	result := bytecode.instructions[bytecode.index]
 	bytecode.index++
 	return result
 }
 
-func (bytecode *Bytecode) NextN(n int) []Code {
+func (bytecode *Bytecode) NextN(n int) []*Code {
 	result := bytecode.instructions[bytecode.index : bytecode.index+n]
 	bytecode.index += n
 	return result
@@ -55,7 +55,7 @@ func (bytecode *Bytecode) Jump(offset int) {
 	bytecode.index += offset
 }
 
-func NewBytecodeFromArray(codes []Code) *Bytecode {
+func NewBytecodeFromArray(codes []*Code) *Bytecode {
 	return &Bytecode{
 		instructions: codes,
 		length:       len(codes),

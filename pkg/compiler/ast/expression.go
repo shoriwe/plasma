@@ -19,9 +19,9 @@ type ArrayExpression struct {
 	Values []IExpression
 }
 
-func (arrayExpression *ArrayExpression) Compile() ([]vm.Code, *errors.Error) {
+func (arrayExpression *ArrayExpression) Compile() ([]*vm.Code, *errors.Error) {
 	valuesLength := len(arrayExpression.Values)
-	var result []vm.Code
+	var result []*vm.Code
 	for i := valuesLength - 1; i > -1; i-- {
 		childExpression, valueCompilationError := arrayExpression.Values[i].CompilePush(true)
 		if valueCompilationError != nil {
@@ -32,7 +32,7 @@ func (arrayExpression *ArrayExpression) Compile() ([]vm.Code, *errors.Error) {
 	return append(result, vm.NewCode(vm.NewArrayOP, errors.UnknownLine, len(arrayExpression.Values))), nil
 }
 
-func (arrayExpression *ArrayExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (arrayExpression *ArrayExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := arrayExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -48,9 +48,9 @@ type TupleExpression struct {
 	Values []IExpression
 }
 
-func (tupleExpression *TupleExpression) Compile() ([]vm.Code, *errors.Error) {
+func (tupleExpression *TupleExpression) Compile() ([]*vm.Code, *errors.Error) {
 	valuesLength := len(tupleExpression.Values)
-	var result []vm.Code
+	var result []*vm.Code
 	for i := valuesLength - 1; i > -1; i-- {
 		childExpression, valueCompilationError := tupleExpression.Values[i].CompilePush(true)
 		if valueCompilationError != nil {
@@ -61,7 +61,7 @@ func (tupleExpression *TupleExpression) Compile() ([]vm.Code, *errors.Error) {
 	return append(result, vm.NewCode(vm.NewTupleOP, errors.UnknownLine, len(tupleExpression.Values))), nil
 }
 
-func (tupleExpression *TupleExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (tupleExpression *TupleExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := tupleExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -82,7 +82,7 @@ type HashExpression struct {
 	Values []*KeyValue
 }
 
-func (hashExpression *HashExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (hashExpression *HashExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := hashExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -93,9 +93,9 @@ func (hashExpression *HashExpression) CompilePush(push bool) ([]vm.Code, *errors
 	return result, nil
 }
 
-func (hashExpression *HashExpression) Compile() ([]vm.Code, *errors.Error) {
+func (hashExpression *HashExpression) Compile() ([]*vm.Code, *errors.Error) {
 	valuesLength := len(hashExpression.Values)
-	var result []vm.Code
+	var result []*vm.Code
 	for i := valuesLength - 1; i > -1; i-- {
 		key, valueCompilationError := hashExpression.Values[i].Value.CompilePush(true)
 		if valueCompilationError != nil {
@@ -116,7 +116,7 @@ type Identifier struct {
 	Token *lexer.Token
 }
 
-func (identifier *Identifier) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (identifier *Identifier) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := identifier.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -127,8 +127,8 @@ func (identifier *Identifier) CompilePush(push bool) ([]vm.Code, *errors.Error) 
 	return result, nil
 }
 
-func (identifier *Identifier) Compile() ([]vm.Code, *errors.Error) {
-	return []vm.Code{vm.NewCode(vm.GetIdentifierOP, identifier.Token.Line, identifier.Token.String)}, nil
+func (identifier *Identifier) Compile() ([]*vm.Code, *errors.Error) {
+	return []*vm.Code{vm.NewCode(vm.GetIdentifierOP, identifier.Token.Line, identifier.Token.String)}, nil
 }
 
 type BasicLiteralExpression struct {
@@ -138,7 +138,7 @@ type BasicLiteralExpression struct {
 	DirectValue uint8
 }
 
-func (basicLiteral *BasicLiteralExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (basicLiteral *BasicLiteralExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := basicLiteral.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -149,7 +149,7 @@ func (basicLiteral *BasicLiteralExpression) CompilePush(push bool) ([]vm.Code, *
 	return result, nil
 }
 
-func (basicLiteral *BasicLiteralExpression) Compile() ([]vm.Code, *errors.Error) {
+func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error) {
 	switch basicLiteral.DirectValue {
 	case lexer.Integer:
 		numberString := basicLiteral.Token.String
@@ -158,7 +158,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]vm.Code, *errors.Error)
 		if success != nil {
 			return nil, errors.New(basicLiteral.Token.Line, "Error parsing Integer", errors.GoRuntimeError)
 		}
-		return []vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
+		return []*vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
 	case lexer.HexadecimalInteger:
 		numberString := basicLiteral.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
@@ -167,7 +167,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]vm.Code, *errors.Error)
 		if parsingError != nil {
 			return nil, errors.New(basicLiteral.Token.Line, "Error parsing Hexadecimal Integer", errors.GoRuntimeError)
 		}
-		return []vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
+		return []*vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
 	case lexer.OctalInteger:
 		numberString := basicLiteral.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
@@ -176,7 +176,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]vm.Code, *errors.Error)
 		if parsingError != nil {
 			return nil, errors.New(basicLiteral.Token.Line, "Error parsing Octal Integer", errors.GoRuntimeError)
 		}
-		return []vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
+		return []*vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
 	case lexer.BinaryInteger:
 		numberString := basicLiteral.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
@@ -185,7 +185,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]vm.Code, *errors.Error)
 		if parsingError != nil {
 			return nil, errors.New(basicLiteral.Token.Line, "Error parsing Binary Integer", errors.GoRuntimeError)
 		}
-		return []vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
+		return []*vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
 	case lexer.Float, lexer.ScientificFloat:
 		numberString := basicLiteral.Token.String
 		numberString = strings.ReplaceAll(numberString, "_", "")
@@ -193,9 +193,9 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]vm.Code, *errors.Error)
 		if parsingError != nil {
 			return nil, errors.New(basicLiteral.Token.Line, parsingError.Error(), errors.GoRuntimeError)
 		}
-		return []vm.Code{vm.NewCode(vm.NewFloatOP, basicLiteral.Token.Line, number)}, nil
+		return []*vm.Code{vm.NewCode(vm.NewFloatOP, basicLiteral.Token.Line, number)}, nil
 	case lexer.SingleQuoteString, lexer.DoubleQuoteString:
-		return []vm.Code{vm.NewCode(
+		return []*vm.Code{vm.NewCode(
 			vm.NewStringOP, basicLiteral.Token.Line,
 
 			string(
@@ -205,7 +205,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]vm.Code, *errors.Error)
 		),
 		}, nil
 	case lexer.ByteString:
-		return []vm.Code{vm.NewCode(vm.NewBytesOP, basicLiteral.Token.Line,
+		return []*vm.Code{vm.NewCode(vm.NewBytesOP, basicLiteral.Token.Line,
 			[]byte(
 				string(
 					tools.ReplaceEscaped(
@@ -216,11 +216,11 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]vm.Code, *errors.Error)
 		),
 		}, nil
 	case lexer.True:
-		return []vm.Code{vm.NewCode(vm.GetTrueOP, basicLiteral.Token.Line, nil)}, nil
+		return []*vm.Code{vm.NewCode(vm.GetTrueOP, basicLiteral.Token.Line, nil)}, nil
 	case lexer.False:
-		return []vm.Code{vm.NewCode(vm.GetFalseOP, basicLiteral.Token.Line, nil)}, nil
+		return []*vm.Code{vm.NewCode(vm.GetFalseOP, basicLiteral.Token.Line, nil)}, nil
 	case lexer.None:
-		return []vm.Code{vm.NewCode(vm.GetNoneOP, basicLiteral.Token.Line, nil)}, nil
+		return []*vm.Code{vm.NewCode(vm.GetNoneOP, basicLiteral.Token.Line, nil)}, nil
 	}
 	panic(errors.NewUnknownVMOperationError(basicLiteral.Token.DirectValue))
 }
@@ -232,7 +232,7 @@ type BinaryExpression struct {
 	RightHandSide IExpression
 }
 
-func (binaryExpression *BinaryExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (binaryExpression *BinaryExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := binaryExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -243,8 +243,8 @@ func (binaryExpression *BinaryExpression) CompilePush(push bool) ([]vm.Code, *er
 	return result, nil
 }
 
-func (binaryExpression *BinaryExpression) Compile() ([]vm.Code, *errors.Error) {
-	var result []vm.Code
+func (binaryExpression *BinaryExpression) Compile() ([]*vm.Code, *errors.Error) {
+	var result []*vm.Code
 	// CompilePush first right hand side
 	right, rightHandSideCompileError := binaryExpression.RightHandSide.CompilePush(true)
 	if rightHandSideCompileError != nil {
@@ -317,7 +317,7 @@ type UnaryExpression struct {
 	X        IExpression
 }
 
-func (unaryExpression *UnaryExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (unaryExpression *UnaryExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := unaryExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -328,7 +328,7 @@ func (unaryExpression *UnaryExpression) CompilePush(push bool) ([]vm.Code, *erro
 	return result, nil
 }
 
-func (unaryExpression *UnaryExpression) Compile() ([]vm.Code, *errors.Error) {
+func (unaryExpression *UnaryExpression) Compile() ([]*vm.Code, *errors.Error) {
 	result, expressionCompileError := unaryExpression.X.CompilePush(true)
 	if expressionCompileError != nil {
 		return nil, expressionCompileError
@@ -349,7 +349,7 @@ type ParenthesesExpression struct {
 	X IExpression
 }
 
-func (parenthesesExpression *ParenthesesExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (parenthesesExpression *ParenthesesExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := parenthesesExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -360,7 +360,7 @@ func (parenthesesExpression *ParenthesesExpression) CompilePush(push bool) ([]vm
 	return result, nil
 }
 
-func (parenthesesExpression *ParenthesesExpression) Compile() ([]vm.Code, *errors.Error) {
+func (parenthesesExpression *ParenthesesExpression) Compile() ([]*vm.Code, *errors.Error) {
 	return parenthesesExpression.X.CompilePush(false)
 }
 
@@ -370,7 +370,7 @@ type LambdaExpression struct {
 	Code      IExpression
 }
 
-func (lambdaExpression *LambdaExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (lambdaExpression *LambdaExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := lambdaExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -381,7 +381,7 @@ func (lambdaExpression *LambdaExpression) CompilePush(push bool) ([]vm.Code, *er
 	return result, nil
 }
 
-func (lambdaExpression *LambdaExpression) Compile() ([]vm.Code, *errors.Error) {
+func (lambdaExpression *LambdaExpression) Compile() ([]*vm.Code, *errors.Error) {
 	functionCode, lambdaCodeCompilationError := lambdaExpression.Code.CompilePush(true)
 	if lambdaCodeCompilationError != nil {
 		return nil, lambdaCodeCompilationError
@@ -390,10 +390,10 @@ func (lambdaExpression *LambdaExpression) Compile() ([]vm.Code, *errors.Error) {
 	for _, argument := range lambdaExpression.Arguments {
 		arguments = append(arguments, argument.Token.String)
 	}
-	functionBody := []vm.Code{vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments)}
+	functionBody := []*vm.Code{vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments)}
 	functionBody = append(functionBody, functionCode...)
 	functionBody = append(functionBody, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1))
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result,
 		vm.NewCode(
 			vm.NewFunctionOP,
@@ -415,7 +415,7 @@ type GeneratorExpression struct {
 	Source    IExpression
 }
 
-func (generatorExpression *GeneratorExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (generatorExpression *GeneratorExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := generatorExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -426,7 +426,7 @@ func (generatorExpression *GeneratorExpression) CompilePush(push bool) ([]vm.Cod
 	return result, nil
 }
 
-func (generatorExpression *GeneratorExpression) Compile() ([]vm.Code, *errors.Error) {
+func (generatorExpression *GeneratorExpression) Compile() ([]*vm.Code, *errors.Error) {
 	source, sourceCompilationError := generatorExpression.Source.CompilePush(true)
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
@@ -440,7 +440,7 @@ func (generatorExpression *GeneratorExpression) Compile() ([]vm.Code, *errors.Er
 		return nil, operationCompilationError
 	}
 
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result, source...)
 	result = append(result, operation...)
 	result = append(result,
@@ -455,7 +455,7 @@ type SelectorExpression struct {
 	Identifier *Identifier
 }
 
-func (selectorExpression *SelectorExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (selectorExpression *SelectorExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := selectorExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -466,7 +466,7 @@ func (selectorExpression *SelectorExpression) CompilePush(push bool) ([]vm.Code,
 	return result, nil
 }
 
-func (selectorExpression *SelectorExpression) Compile() ([]vm.Code, *errors.Error) {
+func (selectorExpression *SelectorExpression) Compile() ([]*vm.Code, *errors.Error) {
 	source, sourceCompilationError := selectorExpression.X.CompilePush(true)
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
@@ -480,7 +480,7 @@ type MethodInvocationExpression struct {
 	Arguments []IExpression
 }
 
-func (methodInvocationExpression *MethodInvocationExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (methodInvocationExpression *MethodInvocationExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := methodInvocationExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -491,9 +491,9 @@ func (methodInvocationExpression *MethodInvocationExpression) CompilePush(push b
 	return result, nil
 }
 
-func (methodInvocationExpression *MethodInvocationExpression) Compile() ([]vm.Code, *errors.Error) {
+func (methodInvocationExpression *MethodInvocationExpression) Compile() ([]*vm.Code, *errors.Error) {
 	numberOfArguments := len(methodInvocationExpression.Arguments)
-	var result []vm.Code
+	var result []*vm.Code
 	for i := numberOfArguments - 1; i > -1; i-- {
 		argument, argumentCompilationError := methodInvocationExpression.Arguments[i].CompilePush(true)
 		if argumentCompilationError != nil {
@@ -515,7 +515,7 @@ type IndexExpression struct {
 	Index  IExpression
 }
 
-func (indexExpression *IndexExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (indexExpression *IndexExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := indexExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -526,7 +526,7 @@ func (indexExpression *IndexExpression) CompilePush(push bool) ([]vm.Code, *erro
 	return result, nil
 }
 
-func (indexExpression *IndexExpression) Compile() ([]vm.Code, *errors.Error) {
+func (indexExpression *IndexExpression) Compile() ([]*vm.Code, *errors.Error) {
 	source, sourceCompilationError := indexExpression.Source.CompilePush(true)
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
@@ -547,7 +547,7 @@ type IfOneLinerExpression struct {
 	ElseResult IExpression
 }
 
-func (ifOneLinerExpression *IfOneLinerExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (ifOneLinerExpression *IfOneLinerExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := ifOneLinerExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -558,7 +558,7 @@ func (ifOneLinerExpression *IfOneLinerExpression) CompilePush(push bool) ([]vm.C
 	return result, nil
 }
 
-func (ifOneLinerExpression *IfOneLinerExpression) Compile() ([]vm.Code, *errors.Error) {
+func (ifOneLinerExpression *IfOneLinerExpression) Compile() ([]*vm.Code, *errors.Error) {
 	condition, conditionCompilationError := ifOneLinerExpression.Condition.CompilePush(true)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
@@ -570,7 +570,7 @@ func (ifOneLinerExpression *IfOneLinerExpression) Compile() ([]vm.Code, *errors.
 	if ifResultCompilationError != nil {
 		return nil, ifResultCompilationError
 	}
-	var elseResult []vm.Code
+	var elseResult []*vm.Code
 	if ifOneLinerExpression.ElseResult != nil {
 		elseReturnResult := &ReturnStatement{
 			Results: []IExpression{ifOneLinerExpression.ElseResult},
@@ -581,13 +581,13 @@ func (ifOneLinerExpression *IfOneLinerExpression) Compile() ([]vm.Code, *errors.
 			return nil, elseResultCompilationError
 		}
 	} else {
-		elseResult = []vm.Code{
+		elseResult = []*vm.Code{
 			vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil),
 			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
 			vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1),
 		}
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result, condition...)
 	result = append(result,
 		vm.NewCode(vm.IfOneLinerOP,
@@ -608,7 +608,7 @@ type UnlessOneLinerExpression struct {
 	ElseResult IExpression
 }
 
-func (unlessOneLinerExpression *UnlessOneLinerExpression) CompilePush(push bool) ([]vm.Code, *errors.Error) {
+func (unlessOneLinerExpression *UnlessOneLinerExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
 	result, compilationError := unlessOneLinerExpression.Compile()
 	if compilationError != nil {
 		return nil, compilationError
@@ -619,7 +619,7 @@ func (unlessOneLinerExpression *UnlessOneLinerExpression) CompilePush(push bool)
 	return result, nil
 }
 
-func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]vm.Code, *errors.Error) {
+func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]*vm.Code, *errors.Error) {
 	condition, conditionCompilationError := unlessOneLinerExpression.Condition.CompilePush(true)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
@@ -631,7 +631,7 @@ func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]vm.Code, 
 	if ifResultCompilationError != nil {
 		return nil, ifResultCompilationError
 	}
-	var elseResult []vm.Code
+	var elseResult []*vm.Code
 	if unlessOneLinerExpression.ElseResult != nil {
 		elseReturnResult := &ReturnStatement{
 			Results: []IExpression{unlessOneLinerExpression.ElseResult},
@@ -642,13 +642,13 @@ func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]vm.Code, 
 			return nil, elseResultCompilationError
 		}
 	} else {
-		elseResult = []vm.Code{
+		elseResult = []*vm.Code{
 			vm.NewCode(vm.GetNoneOP, errors.UnknownLine, nil),
 			vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
 			vm.NewCode(vm.ReturnOP, errors.UnknownLine, 1),
 		}
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result, condition...)
 	result = append(result,
 		vm.NewCode(vm.UnlessOneLinerOP,

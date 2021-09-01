@@ -135,7 +135,7 @@ func init() {
 	}
 }
 
-func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
+func compileCode(scanner *bufio.Scanner) ([]*vm.Code, *errors.Error) {
 	scanner.Scan()
 	sourceCode := scanner.Text()
 	compiler := plasma.NewCompiler(reader.NewStringReader(sourceCode),

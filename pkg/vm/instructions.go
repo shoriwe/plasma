@@ -222,7 +222,7 @@ func (p *Plasma) ifOneLinerOP(context *Context, information ConditionInformation
 	if asBoolError != nil {
 		return asBoolError
 	}
-	var codeToExecute []Code
+	var codeToExecute []*Code
 	if asBool {
 		codeToExecute = ifBody
 	} else {
@@ -244,7 +244,7 @@ func (p *Plasma) unlessOneLinerOP(context *Context, information ConditionInforma
 	if asBoolError != nil {
 		return asBoolError
 	}
-	var codeToExecute []Code
+	var codeToExecute []*Code
 	if !asBool {
 		codeToExecute = unlessBody
 	} else {
@@ -288,7 +288,7 @@ func (p *Plasma) ifOP(context *Context, information ConditionInformation) *Value
 	if transformationError != nil {
 		return transformationError
 	}
-	var codeToExecute []Code
+	var codeToExecute []*Code
 	if conditionAsBool {
 		codeToExecute = ifBody
 	} else {
@@ -310,7 +310,7 @@ func (p *Plasma) unlessOP(context *Context, information ConditionInformation) *V
 	if transformationError != nil {
 		return transformationError
 	}
-	var codeToExecute []Code
+	var codeToExecute []*Code
 	if !conditionAsBool {
 		codeToExecute = ifBody
 	} else {
@@ -608,7 +608,7 @@ loop:
 	return nil
 }
 
-func (p *Plasma) finallyOP(context *Context, finally []Code) *Value {
+func (p *Plasma) finallyOP(context *Context, finally []*Code) *Value {
 	if finally == nil {
 		return nil
 	}
@@ -672,4 +672,16 @@ func (p *Plasma) tryOP(context *Context, information TryInformation) *Value {
 	}
 	context.NoState()
 	return result
+}
+
+func (p *Plasma) newModuleOP(context *Context, information ClassInformation) *Value {
+	result := p.NewModule(context, false)
+	context.PushSymbolTable(result.SymbolTable())
+	executionError, success := p.Execute(context, NewBytecodeFromArray(information.Body))
+	if !success {
+		return executionError
+	}
+	context.PopSymbolTable()
+	context.LastObject = result
+	return nil
 }

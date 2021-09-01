@@ -86,23 +86,23 @@ type FunctionCallback func(*Value, ...*Value) (*Value, bool)
 
 type Callable interface {
 	NumberOfArguments() int
-	Call() (*Value, FunctionCallback, []Code) // self should return directly the object or the code of the function
+	Call() (*Value, FunctionCallback, []*Code) // self should return directly the object or the code of the function
 }
 
 type PlasmaFunction struct {
 	numberOfArguments int
-	Code              []Code
+	Code              []*Code
 }
 
 func (p *PlasmaFunction) NumberOfArguments() int {
 	return p.numberOfArguments
 }
 
-func (p *PlasmaFunction) Call() (*Value, FunctionCallback, []Code) {
+func (p *PlasmaFunction) Call() (*Value, FunctionCallback, []*Code) {
 	return nil, nil, p.Code
 }
 
-func NewPlasmaFunction(numberOfArguments int, code []Code) *PlasmaFunction {
+func NewPlasmaFunction(numberOfArguments int, code []*Code) *PlasmaFunction {
 	return &PlasmaFunction{
 		numberOfArguments: numberOfArguments,
 		Code:              code,
@@ -111,7 +111,7 @@ func NewPlasmaFunction(numberOfArguments int, code []Code) *PlasmaFunction {
 
 type PlasmaClassFunction struct {
 	numberOfArguments int
-	Code              []Code
+	Code              []*Code
 	Self              *Value
 }
 
@@ -119,11 +119,11 @@ func (p *PlasmaClassFunction) NumberOfArguments() int {
 	return p.numberOfArguments
 }
 
-func (p *PlasmaClassFunction) Call() (*Value, FunctionCallback, []Code) {
+func (p *PlasmaClassFunction) Call() (*Value, FunctionCallback, []*Code) {
 	return p.Self, nil, p.Code
 }
 
-func NewPlasmaClassFunction(self *Value, numberOfArguments int, code []Code) *PlasmaClassFunction {
+func NewPlasmaClassFunction(self *Value, numberOfArguments int, code []*Code) *PlasmaClassFunction {
 	return &PlasmaClassFunction{
 		numberOfArguments: numberOfArguments,
 		Code:              code,
@@ -140,7 +140,7 @@ func (g *BuiltInFunction) NumberOfArguments() int {
 	return g.numberOfArguments
 }
 
-func (g *BuiltInFunction) Call() (*Value, FunctionCallback, []Code) {
+func (g *BuiltInFunction) Call() (*Value, FunctionCallback, []*Code) {
 	return nil, g.callback, nil
 }
 
@@ -161,7 +161,7 @@ func (g *BuiltInClassFunction) NumberOfArguments() int {
 	return g.numberOfArguments
 }
 
-func (g *BuiltInClassFunction) Call() (*Value, FunctionCallback, []Code) {
+func (g *BuiltInClassFunction) Call() (*Value, FunctionCallback, []*Code) {
 	return g.Self, g.callback, nil
 }
 

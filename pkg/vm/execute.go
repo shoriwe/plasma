@@ -152,6 +152,8 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 			}
 		case RaiseOP:
 			executionError = context.PopObject()
+		case NewModuleOP:
+			executionError = p.newModuleOP(context, code.Value.(ClassInformation))
 		default:
 			panic(instructionNames[code.Instruction.OpCode])
 		}

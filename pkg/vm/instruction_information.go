@@ -2,34 +2,34 @@ package vm
 
 type ClassInformation struct {
 	Name string
-	Body []Code
+	Body []*Code
 }
 
 type FunctionInformation struct {
 	Name              string
-	Body              []Code
+	Body              []*Code
 	NumberOfArguments int
 }
 
 type ConditionInformation struct {
-	Body     []Code
-	ElseBody []Code
+	Body     []*Code
+	ElseBody []*Code
 }
 
 type LoopInformation struct {
-	Body      []Code
-	Condition []Code
+	Body      []*Code
+	Condition []*Code
 	Receivers []string
 }
 
 type ExceptInformation struct {
 	CaptureName string
-	Targets     []Code
-	Body        []Code
+	Targets     []*Code
+	Body        []*Code
 }
 
 type TryInformation struct {
-	Body    []Code
+	Body    []*Code
 	Excepts []ExceptInformation
-	Finally []Code
+	Finally []*Code
 }

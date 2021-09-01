@@ -6,12 +6,12 @@ import (
 )
 
 type Node interface {
-	Compile() ([]vm.Code, *errors.Error)
-	CompilePush(push bool) ([]vm.Code, *errors.Error)
+	Compile() ([]*vm.Code, *errors.Error)
+	CompilePush(push bool) ([]*vm.Code, *errors.Error)
 }
 
-func compileBody(body []Node) ([]vm.Code, *errors.Error) {
-	var result []vm.Code
+func compileBody(body []Node) ([]*vm.Code, *errors.Error) {
+	var result []*vm.Code
 	for _, node := range body {
 		nodeCode, compileError := node.Compile()
 		if compileError != nil {
@@ -29,8 +29,8 @@ type Program struct {
 	Body  []Node
 }
 
-func (program *Program) Compile() ([]vm.Code, *errors.Error) {
-	var result []vm.Code
+func (program *Program) Compile() ([]*vm.Code, *errors.Error) {
+	var result []*vm.Code
 	if program.Begin != nil {
 		beginBody, beginCompilationError := program.Begin.Compile()
 		if beginCompilationError != nil {

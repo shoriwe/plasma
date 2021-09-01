@@ -12,12 +12,12 @@ type Statement interface {
 	Node
 }
 
-func compileClassBody(body []Node) ([]vm.Code, *errors.Error) {
+func compileClassBody(body []Node) ([]*vm.Code, *errors.Error) {
 	foundInitialize := false
 	var isInitialize bool
-	var nodeCode []vm.Code
+	var nodeCode []*vm.Code
 	var compilationError *errors.Error
-	var result []vm.Code
+	var result []*vm.Code
 	for _, node := range body {
 		switch node.(type) {
 		case IExpression:
@@ -60,7 +60,7 @@ type AssignStatement struct {
 	RightHandSide  IExpression
 }
 
-func compileAssignStatementMiddleBinaryExpression(leftHandSide IExpression, assignOperator *lexer.Token) ([]vm.Code, *errors.Error) {
+func compileAssignStatementMiddleBinaryExpression(leftHandSide IExpression, assignOperator *lexer.Token) ([]*vm.Code, *errors.Error) {
 	result, leftHandSideCompilationError := leftHandSide.CompilePush(true)
 	if leftHandSideCompilationError != nil {
 		return nil, leftHandSideCompilationError
@@ -96,11 +96,11 @@ func compileAssignStatementMiddleBinaryExpression(leftHandSide IExpression, assi
 	return append(result, vm.NewCode(vm.BinaryOP, assignOperator.Line, operation)), nil
 }
 
-func compileIdentifierAssign(identifier *Identifier) ([]vm.Code, *errors.Error) {
-	return []vm.Code{vm.NewCode(vm.AssignIdentifierOP, identifier.Token.Line, identifier.Token.String)}, nil
+func compileIdentifierAssign(identifier *Identifier) ([]*vm.Code, *errors.Error) {
+	return []*vm.Code{vm.NewCode(vm.AssignIdentifierOP, identifier.Token.Line, identifier.Token.String)}, nil
 }
 
-func compileSelectorAssign(selectorExpression *SelectorExpression) ([]vm.Code, *errors.Error) {
+func compileSelectorAssign(selectorExpression *SelectorExpression) ([]*vm.Code, *errors.Error) {
 	result, sourceCompilationError := selectorExpression.X.CompilePush(true)
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
@@ -108,7 +108,7 @@ func compileSelectorAssign(selectorExpression *SelectorExpression) ([]vm.Code, *
 	return append(result, vm.NewCode(vm.AssignSelectorOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String)), nil
 }
 
-func compileIndexAssign(indexExpression *IndexExpression) ([]vm.Code, *errors.Error) {
+func compileIndexAssign(indexExpression *IndexExpression) ([]*vm.Code, *errors.Error) {
 	result, sourceCompilationError := indexExpression.Source.CompilePush(true)
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
@@ -121,7 +121,7 @@ func compileIndexAssign(indexExpression *IndexExpression) ([]vm.Code, *errors.Er
 	return append(result, vm.NewCode(vm.AssignIndexOP, errors.UnknownLine, nil)), nil
 }
 
-func (assignStatement *AssignStatement) Compile() ([]vm.Code, *errors.Error) {
+func (assignStatement *AssignStatement) Compile() ([]*vm.Code, *errors.Error) {
 	result, valueCompilationError := assignStatement.RightHandSide.CompilePush(true)
 	if valueCompilationError != nil {
 		return nil, valueCompilationError
@@ -135,7 +135,7 @@ func (assignStatement *AssignStatement) Compile() ([]vm.Code, *errors.Error) {
 		result = append(result, assignOperation...)
 		result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
 	}
-	var leftHandSide []vm.Code
+	var leftHandSide []*vm.Code
 	var leftHandSideCompilationError *errors.Error
 	switch assignStatement.LeftHandSide.(type) {
 	case *Identifier:
@@ -159,7 +159,7 @@ type DoWhileStatement struct {
 	Body      []Node
 }
 
-func (doWhileStatement *DoWhileStatement) Compile() ([]vm.Code, *errors.Error) {
+func (doWhileStatement *DoWhileStatement) Compile() ([]*vm.Code, *errors.Error) {
 	conditionReturn := &ReturnStatement{
 		Results: []IExpression{doWhileStatement.Condition},
 	}
@@ -171,7 +171,7 @@ func (doWhileStatement *DoWhileStatement) Compile() ([]vm.Code, *errors.Error) {
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result,
 		vm.NewCode(vm.DoWhileLoopOP, errors.UnknownLine,
 			vm.LoopInformation{
@@ -191,7 +191,7 @@ type WhileLoopStatement struct {
 	Body      []Node
 }
 
-func (whileStatement *WhileLoopStatement) Compile() ([]vm.Code, *errors.Error) {
+func (whileStatement *WhileLoopStatement) Compile() ([]*vm.Code, *errors.Error) {
 	conditionReturn := &ReturnStatement{
 		Results: []IExpression{whileStatement.Condition},
 	}
@@ -203,7 +203,7 @@ func (whileStatement *WhileLoopStatement) Compile() ([]vm.Code, *errors.Error) {
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result,
 		vm.NewCode(vm.WhileLoopOP, errors.UnknownLine,
 			vm.LoopInformation{
@@ -222,7 +222,7 @@ type UntilLoopStatement struct {
 	Body      []Node
 }
 
-func (untilLoop *UntilLoopStatement) Compile() ([]vm.Code, *errors.Error) {
+func (untilLoop *UntilLoopStatement) Compile() ([]*vm.Code, *errors.Error) {
 	conditionReturn := &ReturnStatement{
 		Results: []IExpression{untilLoop.Condition},
 	}
@@ -234,7 +234,7 @@ func (untilLoop *UntilLoopStatement) Compile() ([]vm.Code, *errors.Error) {
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result,
 		vm.NewCode(vm.UntilLoopOP, errors.UnknownLine,
 			vm.LoopInformation{
@@ -254,7 +254,7 @@ type ForLoopStatement struct {
 	Body      []Node
 }
 
-func (forStatement *ForLoopStatement) Compile() ([]vm.Code, *errors.Error) {
+func (forStatement *ForLoopStatement) Compile() ([]*vm.Code, *errors.Error) {
 	source, compilationError := forStatement.Source.CompilePush(true)
 	if compilationError != nil {
 		return nil, compilationError
@@ -270,7 +270,7 @@ func (forStatement *ForLoopStatement) Compile() ([]vm.Code, *errors.Error) {
 			receiver.Token.String,
 		)
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result, source...)
 	result = append(
 		result,
@@ -294,7 +294,7 @@ type IfStatement struct {
 	Else      []Node
 }
 
-func (ifStatement *IfStatement) Compile() ([]vm.Code, *errors.Error) {
+func (ifStatement *IfStatement) Compile() ([]*vm.Code, *errors.Error) {
 	condition, conditionCompilationError := ifStatement.Condition.CompilePush(true)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
@@ -303,7 +303,7 @@ func (ifStatement *IfStatement) Compile() ([]vm.Code, *errors.Error) {
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var elseBody []vm.Code
+	var elseBody []*vm.Code
 	if ifStatement.Else != nil {
 		var elseBodyCompilationError *errors.Error
 		elseBody, elseBodyCompilationError = compileBody(ifStatement.Else)
@@ -311,7 +311,7 @@ func (ifStatement *IfStatement) Compile() ([]vm.Code, *errors.Error) {
 			return nil, elseBodyCompilationError
 		}
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result, condition...)
 	result = append(result,
 		vm.NewCode(vm.IfOP, errors.UnknownLine,
@@ -331,7 +331,7 @@ type UnlessStatement struct {
 	Else      []Node
 }
 
-func (unlessStatement *UnlessStatement) Compile() ([]vm.Code, *errors.Error) {
+func (unlessStatement *UnlessStatement) Compile() ([]*vm.Code, *errors.Error) {
 	condition, conditionCompilationError := unlessStatement.Condition.CompilePush(true)
 	if conditionCompilationError != nil {
 		return nil, conditionCompilationError
@@ -340,7 +340,7 @@ func (unlessStatement *UnlessStatement) Compile() ([]vm.Code, *errors.Error) {
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var elseBody []vm.Code
+	var elseBody []*vm.Code
 	if unlessStatement.Body != nil {
 		var elseBodyCompilationError *errors.Error
 		elseBody, elseBodyCompilationError = compileBody(unlessStatement.Else)
@@ -348,7 +348,7 @@ func (unlessStatement *UnlessStatement) Compile() ([]vm.Code, *errors.Error) {
 			return nil, elseBodyCompilationError
 		}
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result, condition...)
 	result = append(result,
 		vm.NewCode(vm.UnlessOP, errors.UnknownLine,
@@ -373,7 +373,7 @@ type SwitchStatement struct {
 	Default    []Node
 }
 
-func (switchStatement *SwitchStatement) Compile() ([]vm.Code, *errors.Error) {
+func (switchStatement *SwitchStatement) Compile() ([]*vm.Code, *errors.Error) {
 	panic(1)
 }
 
@@ -383,8 +383,23 @@ type ModuleStatement struct {
 	Body []Node
 }
 
-func (moduleStatement *ModuleStatement) Compile() ([]vm.Code, *errors.Error) {
-	panic(1)
+func (moduleStatement *ModuleStatement) Compile() ([]*vm.Code, *errors.Error) {
+	body, bodyCompilationError := compileBody(moduleStatement.Body)
+	if bodyCompilationError != nil {
+		return nil, bodyCompilationError
+	}
+	return []*vm.Code{
+		vm.NewCode(
+			vm.NewModuleOP,
+			errors.UnknownLine,
+			vm.ClassInformation{
+				Name: moduleStatement.Name.Token.String,
+				Body: body,
+			},
+		),
+		vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
+		vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, moduleStatement.Name.Token.String),
+	}, nil
 }
 
 type FunctionDefinitionStatement struct {
@@ -394,7 +409,7 @@ type FunctionDefinitionStatement struct {
 	Body      []Node
 }
 
-func (functionDefinition *FunctionDefinitionStatement) Compile() ([]vm.Code, *errors.Error) {
+func (functionDefinition *FunctionDefinitionStatement) Compile() ([]*vm.Code, *errors.Error) {
 	functionCode, functionDefinitionBodyCompilationError := compileBody(functionDefinition.Body)
 	if functionDefinitionBodyCompilationError != nil {
 		return nil, functionDefinitionBodyCompilationError
@@ -404,12 +419,12 @@ func (functionDefinition *FunctionDefinitionStatement) Compile() ([]vm.Code, *er
 		arguments = append(arguments, argument.Token.String)
 	}
 
-	var body []vm.Code
+	var body []*vm.Code
 	body = append(body, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
 	body = append(body, functionCode...)
 	body = append(body, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
 
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result, vm.NewCode(vm.NewFunctionOP, errors.UnknownLine,
 		vm.FunctionInformation{
 			Name:              functionDefinition.Name.Token.String,
@@ -431,7 +446,7 @@ func (functionDefinition *FunctionDefinitionStatement) Compile() ([]vm.Code, *er
 	return result, nil
 }
 
-func (functionDefinition *FunctionDefinitionStatement) CompileAsClassFunction() ([]vm.Code, *errors.Error, bool) {
+func (functionDefinition *FunctionDefinitionStatement) CompileAsClassFunction() ([]*vm.Code, *errors.Error, bool) {
 	functionCode, functionDefinitionBodyCompilationError := compileBody(functionDefinition.Body)
 	if functionDefinitionBodyCompilationError != nil {
 		return nil, functionDefinitionBodyCompilationError, false
@@ -441,11 +456,11 @@ func (functionDefinition *FunctionDefinitionStatement) CompileAsClassFunction() 
 	for _, argument := range functionDefinition.Arguments {
 		arguments = append(arguments, argument.Token.String)
 	}
-	var body []vm.Code
+	var body []*vm.Code
 	body = append(body, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
 	body = append(body, functionCode...)
 	body = append(body, vm.NewCode(vm.ReturnOP, errors.UnknownLine, 0))
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(
 		result,
 		vm.NewCode(
@@ -480,8 +495,35 @@ type InterfaceStatement struct {
 	MethodDefinitions []*FunctionDefinitionStatement
 }
 
-func (interfaceStatement *InterfaceStatement) Compile() ([]vm.Code, *errors.Error) {
-	panic(1)
+func (interfaceStatement *InterfaceStatement) Compile() ([]*vm.Code, *errors.Error) {
+	var body []*vm.Code
+	for _, functionDefinition := range interfaceStatement.MethodDefinitions {
+		function, functionCompilationError := functionDefinition.Compile()
+		if functionCompilationError != nil {
+			return nil, functionCompilationError
+		}
+		body = append(body, function...)
+	}
+
+	basesAsTuple := &TupleExpression{
+		Values: interfaceStatement.Bases,
+	}
+	bases, basesCompilationError := basesAsTuple.CompilePush(true)
+	if basesCompilationError != nil {
+		return nil, basesCompilationError
+	}
+	var result []*vm.Code
+	result = append(result, bases...)
+	result = append(result, vm.NewCode(vm.NewClassOP, errors.UnknownLine,
+		vm.ClassInformation{
+			Name: interfaceStatement.Name.Token.String,
+			Body: body,
+		},
+	))
+
+	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
+	result = append(result, vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, interfaceStatement.Name.Token.String))
+	return result, nil
 }
 
 type ClassStatement struct {
@@ -491,7 +533,7 @@ type ClassStatement struct {
 	Body  []Node
 }
 
-func (classStatement *ClassStatement) Compile() ([]vm.Code, *errors.Error) {
+func (classStatement *ClassStatement) Compile() ([]*vm.Code, *errors.Error) {
 	basesAsTuple := &TupleExpression{
 		Values: classStatement.Bases,
 	}
@@ -503,7 +545,7 @@ func (classStatement *ClassStatement) Compile() ([]vm.Code, *errors.Error) {
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result, bases...)
 	result = append(result, vm.NewCode(vm.NewClassOP, errors.UnknownLine,
 		vm.ClassInformation{
@@ -528,7 +570,7 @@ type RaiseStatement struct {
 	X IExpression
 }
 
-func (raise *RaiseStatement) Compile() ([]vm.Code, *errors.Error) {
+func (raise *RaiseStatement) Compile() ([]*vm.Code, *errors.Error) {
 	result, expressionCompilationError := raise.X.CompilePush(true)
 	if expressionCompilationError != nil {
 		return nil, expressionCompilationError
@@ -545,7 +587,7 @@ type TryStatement struct {
 	Finally      []Node
 }
 
-func (tryStatement *TryStatement) Compile() ([]vm.Code, *errors.Error) {
+func (tryStatement *TryStatement) Compile() ([]*vm.Code, *errors.Error) {
 	body, bodyCompilationError := compileBody(tryStatement.Body)
 	if bodyCompilationError != nil {
 		return nil, bodyCompilationError
@@ -559,7 +601,7 @@ func (tryStatement *TryStatement) Compile() ([]vm.Code, *errors.Error) {
 		targetsReturn := &ReturnStatement{
 			Results: []IExpression{
 				&TupleExpression{
-					Values:      except.Targets,
+					Values: except.Targets,
 				},
 			},
 		}
@@ -592,7 +634,7 @@ func (tryStatement *TryStatement) Compile() ([]vm.Code, *errors.Error) {
 			},
 		)
 	}
-	var finally []vm.Code
+	var finally []*vm.Code
 	if tryStatement.Finally != nil {
 		var finallyCompilationError *errors.Error
 		finally, finallyCompilationError = compileBody(tryStatement.Finally)
@@ -600,7 +642,7 @@ func (tryStatement *TryStatement) Compile() ([]vm.Code, *errors.Error) {
 			return nil, finallyCompilationError
 		}
 	}
-	var result []vm.Code
+	var result []*vm.Code
 	result = append(result,
 		vm.NewCode(vm.TryOP, errors.UnknownLine, vm.TryInformation{
 			Body:    body,
@@ -615,7 +657,7 @@ type BeginStatement struct {
 	Body []Node
 }
 
-func (beginStatement *BeginStatement) Compile() ([]vm.Code, *errors.Error) {
+func (beginStatement *BeginStatement) Compile() ([]*vm.Code, *errors.Error) {
 	return compileBody(beginStatement.Body)
 }
 
@@ -624,7 +666,7 @@ type EndStatement struct {
 	Body []Node
 }
 
-func (endStatement *EndStatement) Compile() ([]vm.Code, *errors.Error) {
+func (endStatement *EndStatement) Compile() ([]*vm.Code, *errors.Error) {
 	return compileBody(endStatement.Body)
 }
 
@@ -633,9 +675,9 @@ type ReturnStatement struct {
 	Results []IExpression
 }
 
-func (returnStatement *ReturnStatement) Compile() ([]vm.Code, *errors.Error) {
+func (returnStatement *ReturnStatement) Compile() ([]*vm.Code, *errors.Error) {
 	numberOfResults := len(returnStatement.Results)
-	var result []vm.Code
+	var result []*vm.Code
 	for i := numberOfResults - 1; i > -1; i-- {
 		returnResult, resultCompilationError := returnStatement.Results[i].CompilePush(true)
 		if resultCompilationError != nil {
@@ -660,30 +702,30 @@ type ContinueStatement struct {
 	Statement
 }
 
-func (_ *ContinueStatement) Compile() ([]vm.Code, *errors.Error) {
-	return []vm.Code{vm.NewCode(vm.ContinueOP, errors.UnknownLine, nil)}, nil
+func (_ *ContinueStatement) Compile() ([]*vm.Code, *errors.Error) {
+	return []*vm.Code{vm.NewCode(vm.ContinueOP, errors.UnknownLine, nil)}, nil
 }
 
 type BreakStatement struct {
 	Statement
 }
 
-func (_ *BreakStatement) Compile() ([]vm.Code, *errors.Error) {
-	return []vm.Code{vm.NewCode(vm.BreakOP, errors.UnknownLine, nil)}, nil
+func (_ *BreakStatement) Compile() ([]*vm.Code, *errors.Error) {
+	return []*vm.Code{vm.NewCode(vm.BreakOP, errors.UnknownLine, nil)}, nil
 }
 
 type RedoStatement struct {
 	Statement
 }
 
-func (_ *RedoStatement) Compile() ([]vm.Code, *errors.Error) {
-	return []vm.Code{vm.NewCode(vm.RedoOP, errors.UnknownLine, nil)}, nil
+func (_ *RedoStatement) Compile() ([]*vm.Code, *errors.Error) {
+	return []*vm.Code{vm.NewCode(vm.RedoOP, errors.UnknownLine, nil)}, nil
 }
 
 type PassStatement struct {
 	Statement
 }
 
-func (_ *PassStatement) Compile() ([]vm.Code, *errors.Error) {
-	return []vm.Code{vm.NewCode(vm.NOP, errors.UnknownLine, nil)}, nil
+func (_ *PassStatement) Compile() ([]*vm.Code, *errors.Error) {
+	return []*vm.Code{vm.NewCode(vm.NOP, errors.UnknownLine, nil)}, nil
 }
