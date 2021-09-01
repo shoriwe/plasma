@@ -73,6 +73,8 @@ const (
 
 	NOP
 
+	SwitchOP
+
 	LoadFunctionArgumentsOP
 	NewFunctionOP
 	PushOP
@@ -179,6 +181,8 @@ var instructionNames = map[uint8]string{
 	UntilLoopOP:   "UntilLoopOP",
 
 	NOP: "NOP",
+
+	SwitchOP: "SwitchOP",
 
 	LoadFunctionArgumentsOP: "LoadFunctionArgumentsOP",
 	NewFunctionOP:           "NewFunctionOP",

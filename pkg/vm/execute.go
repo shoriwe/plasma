@@ -81,6 +81,9 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 			executionError = p.assignIndexOP(context)
 		case IfOP:
 			executionError = p.ifOP(context, code.Value.(ConditionInformation))
+			if executionError != nil {
+				return executionError, false
+			}
 			switch context.LastState {
 			case BreakState, RedoState, ContinueState:
 				return p.GetNone(), true
@@ -91,6 +94,9 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 			}
 		case UnlessOP:
 			executionError = p.unlessOP(context, code.Value.(ConditionInformation))
+			if executionError != nil {
+				return executionError, false
+			}
 			switch context.LastState {
 			case BreakState, RedoState, ContinueState:
 				return p.GetNone(), true
@@ -142,6 +148,9 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 			break
 		case TryOP:
 			executionError = p.tryOP(context, code.Value.(TryInformation))
+			if executionError != nil {
+				return executionError, false
+			}
 			switch context.LastState {
 			case BreakState, RedoState, ContinueState:
 				return p.GetNone(), true
@@ -154,6 +163,19 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 			executionError = context.PopObject()
 		case NewModuleOP:
 			executionError = p.newModuleOP(context, code.Value.(ClassInformation))
+		case SwitchOP:
+			executionError = p.switchOP(context, code.Value.(SwitchInformation))
+			if executionError != nil {
+				return executionError, false
+			}
+			switch context.LastState {
+			case BreakState, RedoState, ContinueState:
+				return p.GetNone(), true
+			case ReturnState:
+				result := context.LastObject
+				context.LastObject = nil
+				return result, true
+			}
 		default:
 			panic(instructionNames[code.Instruction.OpCode])
 		}

@@ -685,3 +685,38 @@ func (p *Plasma) newModuleOP(context *Context, information ClassInformation) *Va
 	context.LastObject = result
 	return nil
 }
+
+func (p *Plasma) switchOP(context *Context, information SwitchInformation) *Value {
+	reference := context.PopObject()
+	for _, caseBlock := range information.Cases {
+		targets, success := p.Execute(context, NewBytecodeFromArray(caseBlock.Targets))
+		if !success {
+			return targets
+		}
+		var contains *Value
+		contains, success = p.ContentContains(context, targets, reference)
+		if !success {
+			return contains
+		}
+		if !contains.Bool {
+			continue
+		}
+		var result *Value
+		result, success = p.Execute(context, NewBytecodeFromArray(caseBlock.Body))
+		if !success {
+			return result
+		}
+		context.LastObject = result
+		return nil
+	}
+	// Execute Default
+	if information.Default == nil {
+		return nil
+	}
+	result, success := p.Execute(context, NewBytecodeFromArray(information.Default))
+	if !success {
+		return result
+	}
+	context.LastObject = result
+	return nil
+}

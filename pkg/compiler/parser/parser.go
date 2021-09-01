@@ -34,7 +34,7 @@ const (
 	ElifBlock                   = "Elif Block"
 	UnlessStatement             = "Unless Statement"
 	SwitchStatement             = "Switch Statement"
-	CaseBlock                   = "Case Block"
+	CaseBlock                   = "Targets Block"
 	DefaultBlock                = "Default Block"
 	ReturnStatement             = "Return Statement"
 	YieldStatement              = "Yield Statement"
@@ -1826,7 +1826,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Erro
 			if !parser.directValueMatch(lexer.NewLine) {
 				return nil, newSyntaxError(parser.currentLine(), CaseBlock)
 			}
-			// Case Body
+			// Targets Body
 			var caseBody []ast.Node
 			var caseBodyNode ast.Node
 			for parser.hasNext() {
@@ -1848,7 +1848,7 @@ func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, *errors.Erro
 				}
 				caseBody = append(caseBody, caseBodyNode)
 			}
-			// Case block
+			// Targets block
 			caseBlocks = append(caseBlocks, &ast.CaseBlock{
 				Cases: cases,
 				Body:  caseBody,

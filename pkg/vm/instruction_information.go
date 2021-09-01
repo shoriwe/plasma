@@ -33,3 +33,13 @@ type TryInformation struct {
 	Excepts []ExceptInformation
 	Finally []*Code
 }
+
+type CaseInformation struct {
+	Targets []*Code
+	Body    []*Code
+}
+
+type SwitchInformation struct {
+	Cases   []CaseInformation
+	Default []*Code
+}

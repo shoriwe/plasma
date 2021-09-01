@@ -374,7 +374,53 @@ type SwitchStatement struct {
 }
 
 func (switchStatement *SwitchStatement) Compile() ([]*vm.Code, *errors.Error) {
-	panic(1)
+	reference, referenceCompilationError := switchStatement.Target.CompilePush(true)
+	if referenceCompilationError != nil {
+		return nil, referenceCompilationError
+	}
+
+	var caseBlocks []vm.CaseInformation
+	for _, caseChunk := range switchStatement.CaseBlocks {
+		targetsAsTuple := &ReturnStatement{
+			Results: []IExpression{
+				&TupleExpression{
+					Values: caseChunk.Cases,
+				},
+			},
+		}
+		targets, targetCompilationError := targetsAsTuple.Compile()
+		if targetCompilationError != nil {
+			return nil, targetCompilationError
+		}
+		body, bodyCompilationError := compileBody(caseChunk.Body)
+		if bodyCompilationError != nil {
+			return nil, bodyCompilationError
+		}
+		caseBlocks = append(caseBlocks,
+			vm.CaseInformation{
+				Targets: targets,
+				Body:    body,
+			},
+		)
+	}
+
+	var defaultBlock []*vm.Code
+	if switchStatement.Default != nil {
+		var defaultBlockCompilationError *errors.Error
+		defaultBlock, defaultBlockCompilationError = compileBody(switchStatement.Default)
+		if defaultBlockCompilationError != nil {
+			return nil, defaultBlockCompilationError
+		}
+	}
+
+	var result []*vm.Code
+	result = append(result, reference...)
+	result = append(result,
+		vm.NewCode(vm.SwitchOP, errors.UnknownLine, vm.SwitchInformation{
+			Cases:   caseBlocks,
+			Default: defaultBlock,
+		}))
+	return result, nil
 }
 
 type ModuleStatement struct {
