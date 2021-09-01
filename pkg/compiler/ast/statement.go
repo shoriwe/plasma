@@ -175,14 +175,13 @@ func (doWhileStatement *DoWhileStatement) Compile() ([]vm.Code, *errors.Error) {
 	result = append(result,
 		vm.NewCode(vm.DoWhileLoopOP, errors.UnknownLine,
 			vm.LoopInformation{
-				BodyLength:      len(body),
-				ConditionLength: len(condition),
-				Receivers:       nil,
+				Body:      body,
+				Condition: condition,
+				Receivers: nil,
 			},
 		),
 	)
-	result = append(result, condition...)
-	result = append(result, body...)
+
 	return result, nil
 }
 
@@ -208,14 +207,12 @@ func (whileStatement *WhileLoopStatement) Compile() ([]vm.Code, *errors.Error) {
 	result = append(result,
 		vm.NewCode(vm.WhileLoopOP, errors.UnknownLine,
 			vm.LoopInformation{
-				BodyLength:      len(body),
-				ConditionLength: len(condition),
-				Receivers:       nil,
+				Body:      body,
+				Condition: condition,
+				Receivers: nil,
 			},
 		),
 	)
-	result = append(result, condition...)
-	result = append(result, body...)
 	return result, nil
 }
 
@@ -241,14 +238,12 @@ func (untilLoop *UntilLoopStatement) Compile() ([]vm.Code, *errors.Error) {
 	result = append(result,
 		vm.NewCode(vm.UntilLoopOP, errors.UnknownLine,
 			vm.LoopInformation{
-				BodyLength:      len(body),
-				ConditionLength: len(condition),
-				Receivers:       nil,
+				Body:      body,
+				Condition: condition,
+				Receivers: nil,
 			},
 		),
 	)
-	result = append(result, condition...)
-	result = append(result, body...)
 	return result, nil
 }
 
@@ -283,13 +278,12 @@ func (forStatement *ForLoopStatement) Compile() ([]vm.Code, *errors.Error) {
 			vm.ForLoopOP,
 			errors.UnknownLine,
 			vm.LoopInformation{
-				BodyLength:      len(body),
-				ConditionLength: 0,
-				Receivers:       receivers,
+				Body:      body,
+				Condition: nil,
+				Receivers: receivers,
 			},
 		),
 	)
-	result = append(result, body...)
 	return result, nil
 }
 
@@ -322,13 +316,11 @@ func (ifStatement *IfStatement) Compile() ([]vm.Code, *errors.Error) {
 	result = append(result,
 		vm.NewCode(vm.IfOP, errors.UnknownLine,
 			vm.ConditionInformation{
-				BodyLength:     len(body),
-				ElseBodyLength: len(elseBody),
+				Body:     body,
+				ElseBody: elseBody,
 			},
 		),
 	)
-	result = append(result, body...)
-	result = append(result, elseBody...)
 	return result, nil
 }
 
@@ -361,13 +353,11 @@ func (unlessStatement *UnlessStatement) Compile() ([]vm.Code, *errors.Error) {
 	result = append(result,
 		vm.NewCode(vm.UnlessOP, errors.UnknownLine,
 			vm.ConditionInformation{
-				BodyLength:     len(body),
-				ElseBodyLength: len(elseBody),
+				Body:     body,
+				ElseBody: elseBody,
 			},
 		),
 	)
-	result = append(result, body...)
-	result = append(result, elseBody...)
 	return result, nil
 }
 
@@ -423,11 +413,10 @@ func (functionDefinition *FunctionDefinitionStatement) Compile() ([]vm.Code, *er
 	result = append(result, vm.NewCode(vm.NewFunctionOP, errors.UnknownLine,
 		vm.FunctionInformation{
 			Name:              functionDefinition.Name.Token.String,
-			BodyLength:        len(body),
+			Body:              body,
 			NumberOfArguments: len(functionDefinition.Arguments),
 		},
 	))
-	result = append(result, body...)
 	result = append(result,
 		vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
 	)
@@ -464,12 +453,12 @@ func (functionDefinition *FunctionDefinitionStatement) CompileAsClassFunction() 
 			errors.UnknownLine,
 			vm.FunctionInformation{
 				Name:              functionDefinition.Name.Token.String,
-				BodyLength:        len(body),
+				Body:              body,
 				NumberOfArguments: len(arguments),
 			},
 		),
 	)
-	result = append(result, body...)
+
 	result = append(result,
 		vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
 	)
@@ -518,11 +507,11 @@ func (classStatement *ClassStatement) Compile() ([]vm.Code, *errors.Error) {
 	result = append(result, bases...)
 	result = append(result, vm.NewCode(vm.NewClassOP, errors.UnknownLine,
 		vm.ClassInformation{
-			Name:       classStatement.Name.Token.String,
-			BodyLength: len(body),
+			Name: classStatement.Name.Token.String,
+			Body: body,
 		},
 	))
-	result = append(result, body...)
+
 	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
 	result = append(result, vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, classStatement.Name.Token.String))
 	return result, nil
@@ -548,14 +537,6 @@ func (raise *RaiseStatement) Compile() ([]vm.Code, *errors.Error) {
 	return result, nil
 }
 
-type exceptBlock struct {
-	Targets       []vm.Code
-	TargetsLength int
-	Receiver      string
-	Body          []vm.Code
-	BodyLength    int
-}
-
 type TryStatement struct {
 	Statement
 	Body         []Node
@@ -565,7 +546,68 @@ type TryStatement struct {
 }
 
 func (tryStatement *TryStatement) Compile() ([]vm.Code, *errors.Error) {
-	panic("IMPLEMENT ME!!!")
+	body, bodyCompilationError := compileBody(tryStatement.Body)
+	if bodyCompilationError != nil {
+		return nil, bodyCompilationError
+	}
+	var exceptInformation []vm.ExceptInformation
+	for _, except := range tryStatement.ExceptBlocks {
+		captureName := ""
+		if except.CaptureName != nil {
+			captureName = except.CaptureName.Token.String
+		}
+		targetsReturn := &ReturnStatement{
+			Results: []IExpression{
+				&TupleExpression{
+					Values:      except.Targets,
+				},
+			},
+		}
+		targets, targetsCompilationError := targetsReturn.Compile()
+		if targetsCompilationError != nil {
+			return nil, targetsCompilationError
+		}
+		exceptBody, exceptCompilationError := compileBody(except.Body)
+		if exceptCompilationError != nil {
+			return nil, exceptCompilationError
+		}
+
+		exceptBlock := vm.ExceptInformation{
+			CaptureName: captureName,
+			Targets:     targets,
+			Body:        exceptBody,
+		}
+		exceptInformation = append(exceptInformation, exceptBlock)
+	}
+	if tryStatement.Else != nil {
+		elseBody, elseCompilationError := compileBody(tryStatement.Else)
+		if elseCompilationError != nil {
+			return nil, elseCompilationError
+		}
+		exceptInformation = append(exceptInformation,
+			vm.ExceptInformation{
+				CaptureName: "",
+				Targets:     nil,
+				Body:        elseBody,
+			},
+		)
+	}
+	var finally []vm.Code
+	if tryStatement.Finally != nil {
+		var finallyCompilationError *errors.Error
+		finally, finallyCompilationError = compileBody(tryStatement.Finally)
+		if finallyCompilationError != nil {
+			return nil, finallyCompilationError
+		}
+	}
+	var result []vm.Code
+	result = append(result,
+		vm.NewCode(vm.TryOP, errors.UnknownLine, vm.TryInformation{
+			Body:    body,
+			Excepts: exceptInformation,
+			Finally: finally,
+		}))
+	return result, nil
 }
 
 type BeginStatement struct {

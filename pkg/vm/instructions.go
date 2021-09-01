@@ -154,9 +154,9 @@ func (p *Plasma) assignIdentifierOP(context *Context, symbol string) *Value {
 	return nil
 }
 
-func (p *Plasma) newClassOP(context *Context, bytecode *Bytecode, classInformation ClassInformation) *Value {
+func (p *Plasma) newClassOP(context *Context, classInformation ClassInformation) *Value {
 	bases := context.PopObject()
-	body := bytecode.NextN(classInformation.BodyLength)
+	body := classInformation.Body
 	result := p.NewType(context, false, classInformation.Name, context.PeekSymbolTable(), bases.Content,
 		NewPlasmaConstructor(body),
 	)
@@ -164,8 +164,8 @@ func (p *Plasma) newClassOP(context *Context, bytecode *Bytecode, classInformati
 	return nil
 }
 
-func (p *Plasma) newClassFunctionOP(context *Context, bytecode *Bytecode, functionInformation FunctionInformation) *Value {
-	body := bytecode.NextN(functionInformation.BodyLength)
+func (p *Plasma) newClassFunctionOP(context *Context, functionInformation FunctionInformation) *Value {
+	body := functionInformation.Body
 	context.LastObject = p.NewFunction(
 		context,
 		false,
@@ -179,8 +179,8 @@ func (p *Plasma) newClassFunctionOP(context *Context, bytecode *Bytecode, functi
 	return nil
 }
 
-func (p *Plasma) newFunctionOP(context *Context, bytecode *Bytecode, functionInformation FunctionInformation) *Value {
-	body := bytecode.NextN(functionInformation.BodyLength)
+func (p *Plasma) newFunctionOP(context *Context, functionInformation FunctionInformation) *Value {
+	body := functionInformation.Body
 	context.LastObject = p.NewFunction(
 		context,
 		false,
@@ -214,10 +214,10 @@ func (p *Plasma) returnOP(context *Context, numberOfResults int) *Value {
 	return p.NewTuple(context, false, resultValues)
 }
 
-func (p *Plasma) ifOneLinerOP(context *Context, bytecode *Bytecode, information ConditionInformation) *Value {
+func (p *Plasma) ifOneLinerOP(context *Context, information ConditionInformation) *Value {
 	condition := context.PopObject()
-	ifBody := bytecode.NextN(information.BodyLength)
-	elseBody := bytecode.NextN(information.ElseBodyLength)
+	ifBody := information.Body
+	elseBody := information.ElseBody
 	asBool, asBoolError := p.QuickGetBool(context, condition)
 	if asBoolError != nil {
 		return asBoolError
@@ -236,10 +236,10 @@ func (p *Plasma) ifOneLinerOP(context *Context, bytecode *Bytecode, information 
 	return nil
 }
 
-func (p *Plasma) unlessOneLinerOP(context *Context, bytecode *Bytecode, information ConditionInformation) *Value {
+func (p *Plasma) unlessOneLinerOP(context *Context, information ConditionInformation) *Value {
 	condition := context.PopObject()
-	unlessBody := bytecode.NextN(information.BodyLength)
-	elseBody := bytecode.NextN(information.ElseBodyLength)
+	unlessBody := information.Body
+	elseBody := information.ElseBody
 	asBool, asBoolError := p.QuickGetBool(context, condition)
 	if asBoolError != nil {
 		return asBoolError
@@ -280,10 +280,10 @@ func (p *Plasma) assignIndexOP(context *Context) *Value {
 	return nil
 }
 
-func (p *Plasma) ifOP(context *Context, bytecode *Bytecode, information ConditionInformation) *Value {
+func (p *Plasma) ifOP(context *Context, information ConditionInformation) *Value {
 	condition := context.PopObject()
-	ifBody := bytecode.NextN(information.BodyLength)
-	elseBody := bytecode.NextN(information.ElseBodyLength)
+	ifBody := information.Body
+	elseBody := information.ElseBody
 	conditionAsBool, transformationError := p.QuickGetBool(context, condition)
 	if transformationError != nil {
 		return transformationError
@@ -302,10 +302,10 @@ func (p *Plasma) ifOP(context *Context, bytecode *Bytecode, information Conditio
 	return nil
 }
 
-func (p *Plasma) unlessOP(context *Context, bytecode *Bytecode, information ConditionInformation) *Value {
+func (p *Plasma) unlessOP(context *Context, information ConditionInformation) *Value {
 	condition := context.PopObject()
-	ifBody := bytecode.NextN(information.BodyLength)
-	elseBody := bytecode.NextN(information.ElseBodyLength)
+	ifBody := information.Body
+	elseBody := information.ElseBody
 	conditionAsBool, transformationError := p.QuickGetBool(context, condition)
 	if transformationError != nil {
 		return transformationError
@@ -324,7 +324,7 @@ func (p *Plasma) unlessOP(context *Context, bytecode *Bytecode, information Cond
 	return nil
 }
 
-func (p *Plasma) forLoopOP(context *Context, bytecode *Bytecode, information LoopInformation) *Value {
+func (p *Plasma) forLoopOP(context *Context, information LoopInformation) *Value {
 	source, success := p.InterpretAsIterator(context, context.PopObject())
 	if !success {
 		return source
@@ -337,7 +337,7 @@ func (p *Plasma) forLoopOP(context *Context, bytecode *Bytecode, information Loo
 	if hasNextGetError != nil {
 		return hasNextGetError
 	}
-	body := bytecode.NextN(information.BodyLength)
+	body := information.Body
 	numberOfReceivers := len(information.Receivers)
 	bodyBytecode := NewBytecodeFromArray(body)
 	var (
@@ -454,11 +454,11 @@ func (p *Plasma) newGeneratorOP(context *Context, numberOfReceivers int) *Value 
 	return nil
 }
 
-func (p *Plasma) whileLoopOP(context *Context, bytecode *Bytecode, information LoopInformation) *Value {
-	conditionCode := bytecode.NextN(information.ConditionLength)
+func (p *Plasma) whileLoopOP(context *Context, information LoopInformation) *Value {
+	conditionCode := information.Condition
 	conditionBytecode := NewBytecodeFromArray(conditionCode)
 
-	body := bytecode.NextN(information.BodyLength)
+	body := information.Body
 	bodyBytecode := NewBytecodeFromArray(body)
 
 	var (
@@ -506,11 +506,11 @@ loop:
 	return nil
 }
 
-func (p *Plasma) doWhileLoopOP(context *Context, bytecode *Bytecode, information LoopInformation) *Value {
-	conditionCode := bytecode.NextN(information.ConditionLength)
+func (p *Plasma) doWhileLoopOP(context *Context, information LoopInformation) *Value {
+	conditionCode := information.Condition
 	conditionBytecode := NewBytecodeFromArray(conditionCode)
 
-	body := bytecode.NextN(information.BodyLength)
+	body := information.Body
 	bodyBytecode := NewBytecodeFromArray(body)
 
 	var (
@@ -557,12 +557,11 @@ loop:
 	return nil
 }
 
-func (p *Plasma) untilLoopOP(context *Context, bytecode *Bytecode, information LoopInformation) *Value {
-	conditionCode := bytecode.NextN(information.ConditionLength)
+func (p *Plasma) untilLoopOP(context *Context, information LoopInformation) *Value {
+	conditionCode := information.Condition
 	conditionBytecode := NewBytecodeFromArray(conditionCode)
 
-	body := bytecode.NextN(information.BodyLength)
-	bodyBytecode := NewBytecodeFromArray(body)
+	bodyBytecode := NewBytecodeFromArray(information.Body)
 
 	var (
 		result *Value
@@ -607,4 +606,70 @@ loop:
 	}
 	context.LastState = NoState
 	return nil
+}
+
+func (p *Plasma) finallyOP(context *Context, finally []Code) *Value {
+	if finally == nil {
+		return nil
+	}
+	result, success := p.Execute(context, NewBytecodeFromArray(finally))
+	if !success {
+		return result
+	}
+	context.NoState()
+	return nil
+}
+
+func (p *Plasma) tryOP(context *Context, information TryInformation) *Value {
+	tryBytecode := NewBytecodeFromArray(information.Body)
+	result, success := p.Execute(context, tryBytecode)
+	if success {
+		finallyExecutionError := p.finallyOP(context, information.Finally)
+		if finallyExecutionError != nil {
+			return finallyExecutionError
+		}
+		if context.LastState == ReturnState {
+			context.LastObject = result
+		}
+		return nil
+	}
+	errorClass := result.GetClass(p)
+	for _, except := range information.Excepts {
+		var targetsTuple *Value
+		targetsTuple, success = p.Execute(context, NewBytecodeFromArray(except.Targets))
+		if !success {
+			return targetsTuple
+		}
+		context.NoState()
+		if len(targetsTuple.Content) > 0 {
+			found := false
+			for _, target := range targetsTuple.Content {
+				if errorClass.Implements(target) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+			if except.CaptureName != "" {
+				context.PeekSymbolTable().Set(except.CaptureName, result)
+			}
+		}
+		var exceptResult *Value
+		exceptResult, success = p.Execute(context, NewBytecodeFromArray(except.Body))
+		if !success {
+			return exceptResult
+		}
+		finallyExecutionError := p.finallyOP(context, information.Finally)
+		if finallyExecutionError != nil {
+			return finallyExecutionError
+		}
+		if context.LastState == ReturnState {
+			context.LastObject = exceptResult
+		}
+		return nil
+	}
+	context.NoState()
+	return result
 }

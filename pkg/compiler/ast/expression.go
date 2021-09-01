@@ -400,12 +400,11 @@ func (lambdaExpression *LambdaExpression) Compile() ([]vm.Code, *errors.Error) {
 			errors.UnknownLine,
 			vm.FunctionInformation{
 				Name:              "",
-				BodyLength:        len(functionBody),
+				Body:              functionBody,
 				NumberOfArguments: len(arguments),
 			},
 		),
 	)
-	result = append(result, functionBody...)
 	return result, nil
 }
 
@@ -594,13 +593,11 @@ func (ifOneLinerExpression *IfOneLinerExpression) Compile() ([]vm.Code, *errors.
 		vm.NewCode(vm.IfOneLinerOP,
 			errors.UnknownLine,
 			vm.ConditionInformation{
-				BodyLength:     len(ifResult),
-				ElseBodyLength: len(elseResult),
+				Body:     ifResult,
+				ElseBody: elseResult,
 			},
 		),
 	)
-	result = append(result, ifResult...)
-	result = append(result, elseResult...)
 	return result, nil
 }
 
@@ -657,12 +654,10 @@ func (unlessOneLinerExpression *UnlessOneLinerExpression) Compile() ([]vm.Code, 
 		vm.NewCode(vm.UnlessOneLinerOP,
 			errors.UnknownLine,
 			vm.ConditionInformation{
-				BodyLength:     len(ifResult),
-				ElseBodyLength: len(elseResult),
+				Body:     ifResult,
+				ElseBody: elseResult,
 			},
 		),
 	)
-	result = append(result, ifResult...)
-	result = append(result, elseResult...)
 	return result, nil
 }
