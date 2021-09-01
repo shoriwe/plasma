@@ -39,7 +39,7 @@ type Constructor interface {
 
 type PlasmaConstructor struct {
 	Constructor
-	Code []Code
+	Code []*Code
 }
 
 func (c *PlasmaConstructor) Construct(context *Context, vm *Plasma, object *Value) *Value {
@@ -47,13 +47,14 @@ func (c *PlasmaConstructor) Construct(context *Context, vm *Plasma, object *Valu
 	context.PushObject(object)
 	executionError, success := vm.Execute(context, NewBytecodeFromArray(c.Code))
 	context.PopSymbolTable()
+	context.PopObject()
 	if !success {
 		return executionError
 	}
 	return nil
 }
 
-func NewPlasmaConstructor(code []Code) *PlasmaConstructor {
+func NewPlasmaConstructor(code []*Code) *PlasmaConstructor {
 	return &PlasmaConstructor{
 		Code: code,
 	}

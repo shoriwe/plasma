@@ -1,40 +1,9 @@
 package vm
 
 const (
-	XXPrime1 uint64 = 11400714785074694791
-	XXPrime2 uint64 = 14029467366897019727
-	XXPrime5 uint64 = 2870177450012600261
-)
-
-const (
-	TypeName          = "Type"
-	ValueName         = "Value"
-	FunctionName      = "Function"
-	StringName        = "String"
-	BoolName          = "Bool"
-	TrueName          = "True"
-	FalseName         = "False"
-	TupleName         = "Tuple"
-	IntegerName       = "Integer"
-	FloatName         = "Float"
-	ArrayName         = "Array"
-	NoneName          = "NoneType"
-	BytesName         = "Bytes"
-	HashName          = "Hash"
-	IteratorName      = "Iterator"
-	ModuleName        = "Module"
-	None              = "None"
-	CallableName      = "Callable"
-	Source            = "0xFFFFFF"
-	TemporalVariable1 = "0xAAAAAA"
-	TemporalVariable2 = "0xBBBBBB"
-	JunkVariable      = "0N-JUNK-VARIABLE"
-)
-
-const (
 	Self                    = "self"
 	Initialize              = "Initialize"
-	NegBits                 = "NegBits"
+	NegateBits              = "NegateBits"
 	Negate                  = "Negate"
 	Negative                = "Negative"
 	Add                     = "Add"
@@ -80,7 +49,6 @@ const (
 	LessThanOrEqual         = "LessThanOrEqual"
 	RightLessThanOrEqual    = "RightLessThanOrEqual"
 	Contains                = "Contains"
-	RightContains           = "RightContains"
 	Hash                    = "Hash"
 	Copy                    = "Copy"
 	Index                   = "Index"
@@ -112,51 +80,4 @@ const (
 	SetFloat                = "SetFloat"
 	SetContent              = "SetContent"
 	SetKeyValues            = "SetKeyValues"
-	SetLength               = "SetLength"
 )
-
-type LoopSettings struct {
-	Source            *Value
-	Next              *Value
-	HasNext           *Value
-	Receivers         []string
-	MappedReceivers   map[string]*Value
-	NumberOfReceivers int
-	Jump              int
-}
-
-type TrySettings struct {
-	StartIndex int
-	BodyLength int
-	LastError  *Value
-}
-
-type Context struct {
-	LoopStack   *LoopStack
-	ObjectStack *ObjectStack
-	TryStack    *TryStack
-	SymbolStack *SymbolStack
-}
-
-func (c *Context) PushObject(object *Value) {
-	c.ObjectStack.Push(object)
-}
-func (c *Context) PeekObject() *Value {
-	return c.ObjectStack.Peek()
-}
-
-func (c *Context) PopObject() *Value {
-	return c.ObjectStack.Pop()
-}
-
-func (c *Context) PushSymbolTable(table *SymbolTable) {
-	c.SymbolStack.Push(table)
-}
-
-func (c *Context) PopSymbolTable() *SymbolTable {
-	return c.SymbolStack.Pop()
-}
-
-func (c *Context) PeekSymbolTable() *SymbolTable {
-	return c.SymbolStack.Peek()
-}

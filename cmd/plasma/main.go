@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/otiai10/copy"
-	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
+	"github.com/shoriwe/gplasma/pkg/compiler"
 	"github.com/shoriwe/gplasma/pkg/errors"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/std/importlib"
@@ -135,13 +135,10 @@ func init() {
 	}
 }
 
-func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
+func compileCode(scanner *bufio.Scanner) (*vm.Bytecode, *errors.Error) {
 	scanner.Scan()
 	sourceCode := scanner.Text()
-	compiler := plasma.NewCompiler(reader.NewStringReader(sourceCode),
-		plasma.Options{},
-	)
-	bytecode, compilationError := compiler.CompileToArray()
+	bytecode, compilationError := compiler.Compile(reader.NewStringReader(sourceCode))
 	if compilationError != nil {
 		switch compilationError.Type() {
 		case errors.LexingError:
@@ -156,10 +153,10 @@ func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
 						if sourceCode[0] == rest[restLength-1] {
 							if restLength-2 >= 0 {
 								if rest[restLength-2] != '\\' {
-									return plasma.NewCompiler(reader.NewStringReader(sourceCode), plasma.Options{}).CompileToArray()
+									return compiler.Compile(reader.NewStringReader(sourceCode))
 								}
 							} else {
-								return plasma.NewCompiler(reader.NewStringReader(sourceCode), plasma.Options{}).CompileToArray()
+								return compiler.Compile(reader.NewStringReader(sourceCode))
 							}
 						}
 					}
@@ -174,7 +171,7 @@ func compileCode(scanner *bufio.Scanner) ([]vm.Code, *errors.Error) {
 					rest := scanner.Text()
 					sourceCode += "\n" + rest
 					if rest == "end" {
-						return plasma.NewCompiler(reader.NewStringReader(sourceCode), plasma.Options{}).CompileToArray()
+						return compiler.Compile(reader.NewStringReader(sourceCode))
 					}
 				}
 			}
@@ -195,15 +192,15 @@ func repl() {
 			continue
 		}
 
-		result, success := virtualMachine.Execute(context, vm.NewBytecodeFromArray(bytecode))
+		result, success := virtualMachine.Execute(context, bytecode)
 		if !success {
-			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.GetString())
+			fmt.Printf("[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
 			continue
 		}
 		if result.TypeName() == vm.NoneName {
 			continue
 		}
-		resultToString, getError := result.Get(vm.ToString)
+		resultToString, getError := result.Get(virtualMachine, context, vm.ToString)
 		if getError != nil {
 			fmt.Println(result)
 			continue
@@ -219,7 +216,7 @@ func repl() {
 			fmt.Println(result)
 			continue
 		}
-		fmt.Println(resultString.GetString())
+		fmt.Println(resultString.String)
 	}
 }
 
@@ -229,12 +226,7 @@ func program() {
 		if readingError != nil {
 			panic(readingError)
 		}
-		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
-			plasma.Options{
-				Debug: false,
-			},
-		)
-		code, compilationError := compiler.Compile()
+		code, compilationError := compiler.Compile(reader.NewStringReaderFromFile(fileHandler))
 		if compilationError != nil {
 			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), compilationError.String())
 			os.Exit(1)
@@ -245,7 +237,7 @@ func program() {
 		context := virtualMachine.NewContext()
 		result, success := virtualMachine.Execute(context, code)
 		if !success {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.GetString())
+			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
 			os.Exit(1)
 		}
 	}

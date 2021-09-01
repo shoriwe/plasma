@@ -4,7 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
+	"github.com/shoriwe/gplasma/pkg/compiler"
 	"github.com/shoriwe/gplasma/pkg/errors"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/vm"
@@ -72,7 +72,7 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 							if !bytesToRead.IsTypeById(vm.IntegerId) {
 								return p.NewInvalidTypeError(context, bytesToRead.TypeName(), vm.IntegerName), false
 							}
-							bytes := make([]byte, bytesToRead.GetInteger())
+							bytes := make([]byte, bytesToRead.Integer)
 							numberOfBytes, readError := r.Read(bytes)
 							if readError != nil {
 								if readError == io.EOF {
@@ -82,7 +82,7 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 								}
 							}
 							bytes = bytes[:numberOfBytes]
-							return p.NewBytes(context, false, context.PeekSymbolTable(), bytes), true
+							return p.NewBytes(context, false, bytes), true
 						},
 					),
 				)
@@ -97,7 +97,7 @@ func resourceReaderInitialize(p *vm.Plasma, r io.ReadSeekCloser) vm.ConstructorC
 							if !seek.IsTypeById(vm.IntegerId) {
 								return p.NewInvalidTypeError(context, seek.TypeName(), vm.IntegerName), false
 							}
-							_, seekError := r.Seek(seek.GetInteger(), io.SeekStart)
+							_, seekError := r.Seek(seek.Integer, io.SeekStart)
 							if seekError != nil {
 								return p.NewGoRuntimeError(context, seekError), false
 							}
@@ -137,7 +137,7 @@ func newResourceReader(context *vm.Context, p *vm.Plasma, r io.ReadSeekCloser) *
 func newResourceNotFoundError(context *vm.Context, p *vm.Plasma, path string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ResourceNotFoundError))
 	p.ForceInitialization(context, result,
-		p.NewString(context, false, context.PeekSymbolTable(), path),
+		p.NewString(context, false, path),
 	)
 	return result
 }
@@ -151,7 +151,7 @@ func newNotInsideModuleError(context *vm.Context, p *vm.Plasma) *vm.Value {
 func newScriptNotFoundError(context *vm.Context, p *vm.Plasma, path string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ScriptNotFoundError))
 	p.ForceInitialization(context, result,
-		p.NewString(context, false, context.PeekSymbolTable(), path),
+		p.NewString(context, false, path),
 	)
 	return result
 }
@@ -159,7 +159,7 @@ func newScriptNotFoundError(context *vm.Context, p *vm.Plasma, path string) *vm.
 func newCompilationError(context *vm.Context, p *vm.Plasma, compilationError *errors.Error) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(CompilationError))
 	p.ForceInitialization(context, result,
-		p.NewString(context, false, context.PeekSymbolTable(), compilationError.Message()),
+		p.NewString(context, false, compilationError.Message()),
 	)
 	return result
 }
@@ -167,7 +167,7 @@ func newCompilationError(context *vm.Context, p *vm.Plasma, compilationError *er
 func newModuleNotFoundError(context *vm.Context, p *vm.Plasma, moduleName string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ModuleNotFoundError))
 	p.ForceInitialization(context, result,
-		p.NewString(context, false, context.PeekSymbolTable(), moduleName),
+		p.NewString(context, false, moduleName),
 	)
 	return result
 }
@@ -175,7 +175,7 @@ func newModuleNotFoundError(context *vm.Context, p *vm.Plasma, moduleName string
 func newChangeDirectoryError(context *vm.Context, p *vm.Plasma, compilationError *errors.Error) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ChangeDirectoryError))
 	p.ForceInitialization(context, result,
-		p.NewString(context, false, context.PeekSymbolTable(), compilationError.Message()),
+		p.NewString(context, false, compilationError.Message()),
 	)
 	return result
 }
@@ -183,7 +183,7 @@ func newChangeDirectoryError(context *vm.Context, p *vm.Plasma, compilationError
 func newModuleNomenclatureError(context *vm.Context, p *vm.Plasma, moduleName string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(ModuleNomenclatureError))
 	p.ForceInitialization(context, result,
-		p.NewString(context, false, context.PeekSymbolTable(), moduleName),
+		p.NewString(context, false, moduleName),
 	)
 	return result
 }
@@ -191,8 +191,8 @@ func newModuleNomenclatureError(context *vm.Context, p *vm.Plasma, moduleName st
 func newNoVersionFoundError(context *vm.Context, p *vm.Plasma, moduleName string, version string) *vm.Value {
 	result := p.ForceConstruction(context, p.ForceMasterGetAny(NoVersionFoundError))
 	p.ForceInitialization(context, result,
-		p.NewString(context, false, context.PeekSymbolTable(), moduleName),
-		p.NewString(context, false, context.PeekSymbolTable(), version),
+		p.NewString(context, false, moduleName),
+		p.NewString(context, false, version),
 	)
 	return result
 }
@@ -219,7 +219,7 @@ func getResource(ctx *importContext, sitePackages FileSystem) vm.ObjectLoader {
 					defer sitePackages.ChangeDirectoryFullPath(oldLocation)
 					sitePackages.ChangeDirectoryRelative(ctx.resources)
 
-					resourcePath := resourcePathObject.GetString()
+					resourcePath := resourcePathObject.String
 					if !sitePackages.ExistsRelative(resourcePath) {
 						return newResourceNotFoundError(context, p, resourcePath), false
 					}
@@ -248,11 +248,11 @@ func getResourcePath(ctx *importContext, sitePackages FileSystem) vm.ObjectLoade
 					defer sitePackages.ChangeDirectoryFullPath(oldLocation)
 					sitePackages.ChangeDirectoryRelative(ctx.resources)
 
-					if !sitePackages.ExistsRelative(resource.GetString()) {
-						return newResourceNotFoundError(context, p, resource.GetString()), false
+					if !sitePackages.ExistsRelative(resource.String) {
+						return newResourceNotFoundError(context, p, resource.String), false
 					}
-					resourcePath := filepath.Join(sitePackages.AbsolutePwd(), ctx.root, ctx.resources, resource.GetString())
-					return p.NewString(context, false, context.PeekSymbolTable(), resourcePath), true
+					resourcePath := filepath.Join(sitePackages.AbsolutePwd(), ctx.root, ctx.resources, resource.String)
+					return p.NewString(context, false, resourcePath), true
 				},
 			),
 		)
@@ -277,24 +277,24 @@ func scriptImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 					if ctx.isSet() {
 						// If it is, import the scriptFile relative the root of the module
 						// Check if file exists
-						if !sitePackages.ExistsRelative(scriptPath.GetString()) {
-							return newScriptNotFoundError(context, p, scriptPath.GetString()), false
+						if !sitePackages.ExistsRelative(scriptPath.String) {
+							return newScriptNotFoundError(context, p, scriptPath.String), false
 						}
-						scriptFile, openError = sitePackages.OpenRelative(scriptPath.GetString())
+						scriptFile, openError = sitePackages.OpenRelative(scriptPath.String)
 
 						oldLocation := sitePackages.RelativePwd()
 						defer sitePackages.ChangeDirectoryFullPath(oldLocation)
-						sitePackages.ChangeDirectoryToFileLocation(scriptPath.GetString())
+						sitePackages.ChangeDirectoryToFileLocation(scriptPath.String)
 					} else {
 						// If not import the scriptFile from the immediate filesystem of the running scriptFile
 						// Check if file exists
-						if !pwd.ExistsRelative(scriptPath.GetString()) {
-							return newScriptNotFoundError(context, p, scriptPath.GetString()), false
+						if !pwd.ExistsRelative(scriptPath.String) {
+							return newScriptNotFoundError(context, p, scriptPath.String), false
 						}
-						scriptFile, openError = pwd.OpenRelative(scriptPath.GetString())
+						scriptFile, openError = pwd.OpenRelative(scriptPath.String)
 						oldLocation := pwd.RelativePwd()
 						defer pwd.ChangeDirectoryFullPath(oldLocation)
-						pwd.ChangeDirectoryToFileLocation(scriptPath.GetString())
+						pwd.ChangeDirectoryToFileLocation(scriptPath.String)
 					}
 					if openError != nil {
 						return p.NewGoRuntimeError(context, openError), false
@@ -308,16 +308,12 @@ func scriptImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 						return memory[scriptHash], true
 					}
 					// ToDo: Fix this, use a better file reader object
-					scriptCode, compilationError := plasma.NewCompiler(reader.NewStringReaderFromFile(scriptFile),
-						plasma.Options{
-							Debug: false,
-						},
-					).Compile()
+					scriptCode, compilationError := compiler.Compile(reader.NewStringReaderFromFile(scriptFile))
 					if compilationError != nil {
 						return newCompilationError(context, p, compilationError), false
 					}
 					// Prepare the module object that will receive the namespace
-					script := p.NewModule(context, false, context.PeekSymbolTable())
+					script := p.NewModule(context, false)
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
 					executionError, success := p.Execute(context, scriptCode)
@@ -342,10 +338,10 @@ func moduleImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 					if !module.IsTypeById(vm.StringId) {
 						return p.NewInvalidTypeError(context, module.TypeName(), vm.StringName), false
 					}
-					nameParts := strings.Split(module.GetString(), "@")
+					nameParts := strings.Split(module.String, "@")
 					numberOfParts := len(nameParts)
 					if numberOfParts > 2 {
-						return newModuleNomenclatureError(context, p, module.GetString()), false
+						return newModuleNomenclatureError(context, p, module.String), false
 					}
 					moduleName := nameParts[0]
 					var version string
@@ -418,16 +414,12 @@ func moduleImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 						return memory[scriptHash], true
 					}
 					// Run the entry script
-					scriptCode, compilationError := plasma.NewCompiler(reader.NewStringReaderFromFile(scriptFile),
-						plasma.Options{
-							Debug: false,
-						},
-					).Compile()
+					scriptCode, compilationError := compiler.Compile(reader.NewStringReaderFromFile(scriptFile))
 					if compilationError != nil {
 						return newCompilationError(context, p, compilationError), false
 					}
 					// Prepare the module object that will receive the namespace
-					script := p.NewModule(context, false, context.PeekSymbolTable())
+					script := p.NewModule(context, false)
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
 					executionError, success := p.Execute(context, scriptCode)
@@ -496,7 +488,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											if !resourceName.IsTypeById(vm.StringId) {
 												return p.NewInvalidTypeError(context, resourceName.TypeName(), vm.StringName), false
 											}
-											self.SetString(fmt.Sprintf("Resource with name %s not found", resourceName.GetString()))
+											self.String = fmt.Sprintf("Resource with name %s not found", resourceName.String)
 											return p.GetNone(), true
 										},
 									),
@@ -519,7 +511,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 								return p.NewFunction(context, true, object.SymbolTable(),
 									vm.NewBuiltInClassFunction(object, 0,
 										func(self *vm.Value, _ ...*vm.Value) (*vm.Value, bool) {
-											self.SetString("Not inside a module importContext")
+											self.String = "Not inside a module importContext"
 											return p.GetNone(), true
 										},
 									),
@@ -546,7 +538,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											if !script.IsTypeById(vm.StringId) {
 												return p.NewInvalidTypeError(context, script.TypeName(), vm.StringName), false
 											}
-											self.SetString(fmt.Sprintf("Script %s not found", script.GetString()))
+											self.String = fmt.Sprintf("Script %s not found", script.String)
 											return p.GetNone(), true
 										},
 									),
@@ -572,7 +564,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											if !compilationError.IsTypeById(vm.StringId) {
 												return p.NewInvalidTypeError(context, compilationError.TypeName(), vm.StringName), false
 											}
-											self.SetString(compilationError.GetString())
+											self.String = compilationError.String
 											return p.GetNone(), true
 										},
 									),
@@ -599,7 +591,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											if !moduleName.IsTypeById(vm.StringId) {
 												return p.NewInvalidTypeError(context, moduleName.TypeName(), vm.StringName), false
 											}
-											self.SetString(fmt.Sprintf("No module with name %s found", moduleName.GetString()))
+											self.String = fmt.Sprintf("No module with name %s found", moduleName.String)
 											return p.GetNone(), true
 										},
 									),
@@ -626,7 +618,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											if !message.IsTypeById(vm.StringId) {
 												return p.NewInvalidTypeError(context, message.TypeName(), vm.StringName), false
 											}
-											self.SetString(message.GetString())
+											self.String = message.String
 											return p.GetNone(), true
 										},
 									),
@@ -653,7 +645,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											if !moduleName.IsTypeById(vm.StringId) {
 												return p.NewInvalidTypeError(context, moduleName.TypeName(), vm.StringName), false
 											}
-											self.SetString(fmt.Sprintf("Invalid module nomenclature for %s, expecting estructure like \"NAME\" or \"NAME@VERSION\"", moduleName.GetString()))
+											self.String = fmt.Sprintf("Invalid module nomenclature for %s, expecting estructure like \"NAME\" or \"NAME@VERSION\"", moduleName.String)
 											return p.GetNone(), true
 										},
 									),
@@ -684,7 +676,7 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 											if !version.IsTypeById(vm.StringId) {
 												return p.NewInvalidTypeError(context, version.TypeName(), vm.StringName), false
 											}
-											self.SetString(fmt.Sprintf("no module found with name: %s and version %s", moduleName.GetString(), version.GetString()))
+											self.String = fmt.Sprintf("no module found with name: %s and version %s", moduleName.String, version.String)
 											return p.GetNone(), true
 										},
 									),

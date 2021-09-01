@@ -5,10 +5,10 @@ import (
 	"math"
 )
 
-func (p *Plasma) NewFloat(context *Context, isBuiltIn bool, parentSymbols *SymbolTable, value float64) *Value {
-	float_ := p.NewValue(context, isBuiltIn, FloatName, nil, parentSymbols)
+func (p *Plasma) NewFloat(context *Context, isBuiltIn bool, value float64) *Value {
+	float_ := p.NewValue(context, isBuiltIn, FloatName, nil, context.PeekSymbolTable())
 	float_.BuiltInTypeId = FloatId
-	float_.SetFloat(value)
+	float_.Float = value
 	p.FloatInitialize(isBuiltIn)(context, float_)
 	float_.SetOnDemandSymbol(Self,
 		func() *Value {
@@ -25,8 +25,8 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewFloat(context, false, context.PeekSymbolTable(),
-								-self.GetFloat(),
+							return p.NewFloat(context, false,
+								-self.Float,
 							), true
 						},
 					),
@@ -41,12 +41,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									self.GetFloat()+float64(right.GetInteger()),
+								return p.NewFloat(context, false,
+									self.Float+float64(right.Integer),
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									self.GetFloat()+right.GetFloat(),
+								return p.NewFloat(context, false,
+									self.Float+right.Float,
 								), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
@@ -64,12 +64,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									float64(left.GetInteger())+self.GetFloat(),
+								return p.NewFloat(context, false,
+									float64(left.Integer)+self.Float,
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									left.GetFloat()+self.GetFloat(),
+								return p.NewFloat(context, false,
+									left.Float+self.Float,
 								), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
@@ -87,12 +87,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									self.GetFloat()-float64(right.GetInteger()),
+								return p.NewFloat(context, false,
+									self.Float-float64(right.Integer),
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									self.GetFloat()-right.GetFloat(),
+								return p.NewFloat(context, false,
+									self.Float-right.Float,
 								), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
@@ -110,12 +110,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									float64(left.GetInteger())-self.GetFloat(),
+								return p.NewFloat(context, false,
+									float64(left.Integer)-self.Float,
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									left.GetFloat()-self.GetFloat(),
+								return p.NewFloat(context, false,
+									left.Float-self.Float,
 								), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
@@ -133,12 +133,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									self.GetFloat()*float64(right.GetInteger()),
+								return p.NewFloat(context, false,
+									self.Float*float64(right.Integer),
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									self.GetFloat()*right.GetFloat(),
+								return p.NewFloat(context, false,
+									self.Float*right.Float,
 								), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName, StringName, ArrayName, TupleName), false
@@ -156,12 +156,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									float64(left.GetInteger())*self.GetFloat(),
+								return p.NewFloat(context, false,
+									float64(left.Integer)*self.Float,
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									left.GetFloat()*self.GetFloat(),
+								return p.NewFloat(context, false,
+									left.Float*self.Float,
 								), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
@@ -179,12 +179,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									self.GetFloat()/float64(right.GetInteger()),
+								return p.NewFloat(context, false,
+									self.Float/float64(right.Integer),
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									self.GetFloat()/right.GetFloat(),
+								return p.NewFloat(context, false,
+									self.Float/right.Float,
 								), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
@@ -202,12 +202,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									float64(left.GetInteger())/self.GetFloat(),
+								return p.NewFloat(context, false,
+									float64(left.Integer)/self.Float,
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									left.GetFloat()/self.GetFloat(),
+								return p.NewFloat(context, false,
+									left.Float/self.Float,
 								), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
@@ -225,12 +225,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									math.Mod(self.GetFloat(), float64(right.GetInteger())),
+								return p.NewFloat(context, false,
+									math.Mod(self.Float, float64(right.Integer)),
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									math.Mod(self.GetFloat(), right.GetFloat()),
+								return p.NewFloat(context, false,
+									math.Mod(self.Float, right.Float),
 								), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
@@ -248,12 +248,12 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									math.Mod(float64(left.GetInteger()), self.GetFloat()),
+								return p.NewFloat(context, false,
+									math.Mod(float64(left.Integer), self.Float),
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
-									math.Mod(left.GetFloat(), self.GetFloat()),
+								return p.NewFloat(context, false,
+									math.Mod(left.Float, self.Float),
 								), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
@@ -271,17 +271,17 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
+								return p.NewFloat(context, false,
 									math.Pow(
-										self.GetFloat(),
-										float64(right.GetInteger()),
+										self.Float,
+										float64(right.Integer),
 									),
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
+								return p.NewFloat(context, false,
 									math.Pow(
-										self.GetFloat(),
-										right.GetFloat(),
+										self.Float,
+										right.Float,
 									),
 								), true
 							default:
@@ -300,17 +300,17 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
+								return p.NewFloat(context, false,
 									math.Pow(
-										float64(left.GetInteger()),
-										self.GetFloat(),
+										float64(left.Integer),
+										self.Float,
 									),
 								), true
 							case FloatId:
-								return p.NewFloat(context, false, context.PeekSymbolTable(),
+								return p.NewFloat(context, false,
 									math.Pow(
-										float64(left.GetInteger()),
-										self.GetFloat(),
+										float64(left.Integer),
+										self.Float,
 									),
 								), true
 							default:
@@ -330,9 +330,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(self.GetFloat() == float64(right.GetInteger())), true
+								return p.InterpretAsBool(self.Float == float64(right.Integer)), true
 							case FloatId:
-								return p.InterpretAsBool(self.GetFloat() == right.GetFloat()), true
+								return p.InterpretAsBool(self.Float == right.Float), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
@@ -349,9 +349,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(float64(left.GetInteger()) == self.GetFloat()), true
+								return p.InterpretAsBool(float64(left.Integer) == self.Float), true
 							case FloatId:
-								return p.InterpretAsBool(left.GetFloat() == self.GetFloat()), true
+								return p.InterpretAsBool(left.Float == self.Float), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
@@ -368,9 +368,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(self.GetFloat() != float64(right.GetInteger())), true
+								return p.InterpretAsBool(self.Float != float64(right.Integer)), true
 							case FloatId:
-								return p.InterpretAsBool(self.GetFloat() != right.GetFloat()), true
+								return p.InterpretAsBool(self.Float != right.Float), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
@@ -387,9 +387,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(float64(left.GetInteger()) != self.GetFloat()), true
+								return p.InterpretAsBool(float64(left.Integer) != self.Float), true
 							case FloatId:
-								return p.InterpretAsBool(left.GetFloat() != self.GetFloat()), true
+								return p.InterpretAsBool(left.Float != self.Float), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
@@ -406,9 +406,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(self.GetFloat() > float64(right.GetInteger())), true
+								return p.InterpretAsBool(self.Float > float64(right.Integer)), true
 							case FloatId:
-								return p.InterpretAsBool(self.GetFloat() > right.GetFloat()), true
+								return p.InterpretAsBool(self.Float > right.Float), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
@@ -425,9 +425,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(float64(left.GetInteger()) > self.GetFloat()), true
+								return p.InterpretAsBool(float64(left.Integer) > self.Float), true
 							case FloatId:
-								return p.InterpretAsBool(left.GetFloat() > self.GetFloat()), true
+								return p.InterpretAsBool(left.Float > self.Float), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
@@ -444,9 +444,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(self.GetFloat() < float64(right.GetInteger())), true
+								return p.InterpretAsBool(self.Float < float64(right.Integer)), true
 							case FloatId:
-								return p.InterpretAsBool(self.GetFloat() < right.GetFloat()), true
+								return p.InterpretAsBool(self.Float < right.Float), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
@@ -463,9 +463,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(float64(left.GetInteger()) < self.GetFloat()), true
+								return p.InterpretAsBool(float64(left.Integer) < self.Float), true
 							case FloatId:
-								return p.InterpretAsBool(left.GetFloat() < self.GetFloat()), true
+								return p.InterpretAsBool(left.Float < self.Float), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
@@ -482,9 +482,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(self.GetFloat() >= float64(right.GetInteger())), true
+								return p.InterpretAsBool(self.Float >= float64(right.Integer)), true
 							case FloatId:
-								return p.InterpretAsBool(self.GetFloat() >= right.GetFloat()), true
+								return p.InterpretAsBool(self.Float >= right.Float), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
@@ -501,9 +501,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(float64(left.GetInteger()) >= self.GetFloat()), true
+								return p.InterpretAsBool(float64(left.Integer) >= self.Float), true
 							case FloatId:
-								return p.InterpretAsBool(left.GetFloat() >= self.GetFloat()), true
+								return p.InterpretAsBool(left.Float >= self.Float), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
@@ -520,9 +520,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							right := arguments[0]
 							switch right.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(self.GetFloat() <= float64(right.GetInteger())), true
+								return p.InterpretAsBool(self.Float <= float64(right.Integer)), true
 							case FloatId:
-								return p.InterpretAsBool(self.GetFloat() <= right.GetFloat()), true
+								return p.InterpretAsBool(self.Float <= right.Float), true
 							default:
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName, FloatName), false
 							}
@@ -539,9 +539,9 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 							left := arguments[0]
 							switch left.BuiltInTypeId {
 							case IntegerId:
-								return p.InterpretAsBool(float64(left.GetInteger()) <= self.GetFloat()), true
+								return p.InterpretAsBool(float64(left.Integer) <= self.Float), true
 							case FloatId:
-								return p.InterpretAsBool(left.GetFloat() <= self.GetFloat()), true
+								return p.InterpretAsBool(left.Float <= self.Float), true
 							default:
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName, FloatName), false
 							}
@@ -557,10 +557,10 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
 							if self.GetHash() == 0 {
-								floatHash := p.HashString(fmt.Sprintf("%f-%s", self.GetFloat(), FloatName))
+								floatHash := p.HashString(fmt.Sprintf("%f-%s", self.Float, FloatName))
 								self.SetHash(floatHash)
 							}
-							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetHash()), true
+							return p.NewInteger(context, false, self.GetHash()), true
 						},
 					),
 				)
@@ -571,7 +571,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewFloat(context, false, context.PeekSymbolTable(), self.GetFloat()), true
+							return p.NewFloat(context, false, self.Float), true
 						},
 					),
 				)
@@ -583,7 +583,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewInteger(context, false, context.PeekSymbolTable(), int64(self.GetFloat())), true
+							return p.NewInteger(context, false, int64(self.Float)), true
 						},
 					),
 				)
@@ -594,7 +594,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewFloat(context, false, context.PeekSymbolTable(), self.GetFloat()), true
+							return p.NewFloat(context, false, self.Float), true
 						},
 					),
 				)
@@ -605,7 +605,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewString(context, false, context.PeekSymbolTable(), fmt.Sprint(self.GetFloat())), true
+							return p.NewString(context, false, fmt.Sprint(self.Float)), true
 						},
 					),
 				)
@@ -616,7 +616,7 @@ func (p *Plasma) FloatInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.InterpretAsBool(self.GetFloat() != 0), true
+							return p.InterpretAsBool(self.Float != 0), true
 						},
 					),
 				)

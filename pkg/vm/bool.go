@@ -4,9 +4,9 @@ func (p *Plasma) QuickGetBool(context *Context, value *Value) (bool, *Value) {
 	if value.BuiltInTypeId == BoolId {
 		return value.Bool, nil
 	}
-	valueToBool, getError := value.Get(ToBool)
+	valueToBool, getError := value.Get(p, context, ToBool)
 	if getError != nil {
-		return false, p.NewObjectWithNameNotFoundError(context, value.GetClass(p), ToBool)
+		return false, getError
 	}
 	valueBool, success := p.CallFunction(context, valueToBool)
 	if !success {
@@ -18,10 +18,10 @@ func (p *Plasma) QuickGetBool(context *Context, value *Value) (bool, *Value) {
 	return valueBool.Bool, nil
 }
 
-func (p *Plasma) NewBool(context *Context, isBuiltIn bool, parentSymbols *SymbolTable, value bool) *Value {
-	bool_ := p.NewValue(context, isBuiltIn, BoolName, nil, parentSymbols)
+func (p *Plasma) NewBool(context *Context, isBuiltIn bool, value bool) *Value {
+	bool_ := p.NewValue(context, isBuiltIn, BoolName, nil, context.PeekSymbolTable())
 	bool_.BuiltInTypeId = BoolId
-	bool_.SetBool(value)
+	bool_.Bool = value
 	p.BoolInitialize(isBuiltIn)(context, bool_)
 	bool_.SetOnDemandSymbol(Self,
 		func() *Value {
@@ -50,7 +50,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 							if !right.IsTypeById(BoolId) {
 								return p.GetFalse(), true
 							}
-							return p.InterpretAsBool(self.GetBool() == right.GetBool()), true
+							return p.InterpretAsBool(self.Bool == right.Bool), true
 						},
 					),
 				)
@@ -65,7 +65,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 							if !left.IsTypeById(BoolId) {
 								return p.GetFalse(), true
 							}
-							return p.InterpretAsBool(left.GetBool() == self.GetBool()), true
+							return p.InterpretAsBool(left.Bool == self.Bool), true
 						},
 					),
 				)
@@ -80,7 +80,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 							if right.BuiltInTypeId != BoolId {
 								return p.GetFalse(), true
 							}
-							return p.InterpretAsBool(self.GetBool() != right.GetBool()), true
+							return p.InterpretAsBool(self.Bool != right.Bool), true
 						},
 					),
 				)
@@ -95,7 +95,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 							if left.BuiltInTypeId != BoolId {
 								return p.GetFalse(), true
 							}
-							return p.InterpretAsBool(left.GetBool() != self.GetBool()), true
+							return p.InterpretAsBool(left.Bool != self.Bool), true
 						},
 					),
 				)
@@ -106,7 +106,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.InterpretAsBool(self.GetBool()), true
+							return p.InterpretAsBool(self.Bool), true
 						},
 					),
 				)
@@ -117,10 +117,10 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							if self.GetBool() {
-								return p.NewInteger(context, false, context.PeekSymbolTable(), 1), true
+							if self.Bool {
+								return p.NewInteger(context, false, 1), true
 							}
-							return p.NewInteger(context, false, context.PeekSymbolTable(), 0), true
+							return p.NewInteger(context, false, 0), true
 						},
 					),
 				)
@@ -131,10 +131,10 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							if self.GetBool() {
-								return p.NewInteger(context, false, context.PeekSymbolTable(), 1), true
+							if self.Bool {
+								return p.NewInteger(context, false, 1), true
 							}
-							return p.NewInteger(context, false, context.PeekSymbolTable(), 0), true
+							return p.NewInteger(context, false, 0), true
 						},
 					),
 				)
@@ -145,10 +145,10 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							if self.GetBool() {
-								return p.NewFloat(context, false, context.PeekSymbolTable(), 1), true
+							if self.Bool {
+								return p.NewFloat(context, false, 1), true
 							}
-							return p.NewFloat(context, false, context.PeekSymbolTable(), 0), true
+							return p.NewFloat(context, false, 0), true
 						},
 					),
 				)
@@ -159,10 +159,10 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							if self.GetBool() {
-								return p.NewString(context, false, context.PeekSymbolTable(), TrueName), true
+							if self.Bool {
+								return p.NewString(context, false, TrueName), true
 							}
-							return p.NewString(context, false, context.PeekSymbolTable(), FalseName), true
+							return p.NewString(context, false, FalseName), true
 						},
 					),
 				)
@@ -173,7 +173,7 @@ func (p *Plasma) BoolInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.InterpretAsBool(self.GetBool()), true
+							return p.InterpretAsBool(self.Bool), true
 						},
 					),
 				)

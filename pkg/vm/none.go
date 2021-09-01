@@ -47,7 +47,7 @@ func (p *Plasma) NoneInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(_ *Value, _ ...*Value) (*Value, bool) {
-							return p.NewString(context, false, context.PeekSymbolTable(), "None"), true
+							return p.NewString(context, false, "None"), true
 						},
 					),
 				)

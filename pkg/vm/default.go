@@ -62,7 +62,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !expecting.IsTypeById(StringId) {
 											return p.NewInvalidTypeError(context, expecting.TypeName(), StringName), false
 										}
-										self.SetString(fmt.Sprintf("Expecting %s but received %s", expecting.GetString(), received.GetString()))
+										self.String = fmt.Sprintf("Expecting %s but received %s", expecting.String, received.String)
 										return p.GetNone(), true
 									},
 								),
@@ -84,9 +84,9 @@ func (p *Plasma) InitializeBuiltIn() {
 								NewBuiltInClassFunction(object, 1,
 									func(self *Value, arguments ...*Value) (*Value, bool) {
 										methodNameObject := arguments[0]
-										methodNameObjectToString, getError := methodNameObject.Get(ToString)
+										methodNameObjectToString, getError := methodNameObject.Get(p, context, ToString)
 										if getError != nil {
-											return p.NewObjectWithNameNotFoundError(context, methodNameObject.GetClass(p), ToString), false
+											return getError, false
 										}
 										methodNameString, success := p.CallFunction(context, methodNameObjectToString)
 										if !success {
@@ -95,7 +95,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !methodNameString.IsTypeById(StringId) {
 											return p.NewInvalidTypeError(context, methodNameString.TypeName(), StringName), false
 										}
-										self.SetString(fmt.Sprintf("Method %s not implemented", methodNameString.GetString()))
+										self.String = fmt.Sprintf("Method %s not implemented", methodNameString.String)
 										return p.GetNone(), true
 									},
 								),
@@ -124,7 +124,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !typeName.IsTypeById(StringId) {
 											return p.NewInvalidTypeError(context, errorMessage.TypeName(), StringName), false
 										}
-										self.SetString(fmt.Sprintf("Could not construct object of Type: %s -> %s", typeName.GetString(), errorMessage.GetString()))
+										self.String = fmt.Sprintf("Could not construct object of Type: %s -> %s", typeName.String, errorMessage.String)
 										return p.GetNone(), true
 									},
 								),
@@ -153,7 +153,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !name.IsTypeById(StringId) {
 											return p.NewInvalidTypeError(context, name.TypeName(), StringName), false
 										}
-										self.SetString(fmt.Sprintf(" Value with name %s not Found inside object of type %s", name.GetString(), objectType.Name))
+										self.String = fmt.Sprintf(" Value with name %s not Found inside object of type %s", name.String, objectType.Name)
 										return p.GetNone(), true
 									},
 								),
@@ -183,7 +183,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !expecting.IsTypeById(IntegerId) {
 											return p.NewInvalidTypeError(context, expecting.TypeName(), IntegerName), false
 										}
-										self.SetString(fmt.Sprintf("Received %d but expecting %d expecting", received.GetInteger(), expecting.GetInteger()))
+										self.String = fmt.Sprintf("Received %d but expecting %d expecting", received.Integer, expecting.Integer)
 										return p.GetNone(), true
 									},
 								),
@@ -208,7 +208,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !runtimeError.IsTypeById(StringId) {
 											return p.NewInvalidTypeError(context, runtimeError.TypeName(), StringName), false
 										}
-										self.SetString(runtimeError.GetString())
+										self.String = runtimeError.String
 										return p.GetNone(), true
 									},
 								),
@@ -233,7 +233,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !objectType.IsTypeById(TypeId) {
 											return p.NewInvalidTypeError(context, objectType.TypeName(), TypeName), false
 										}
-										self.SetString(fmt.Sprintf(" Value of type: %s is unhasable", objectType.Name))
+										self.String = fmt.Sprintf(" Value of type: %s is unhasable", objectType.Name)
 										return p.GetNone(), true
 									},
 								),
@@ -262,7 +262,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !index.IsTypeById(IntegerId) {
 											return p.NewInvalidTypeError(context, index.TypeName(), IntegerName), false
 										}
-										self.SetString(fmt.Sprintf("Index: %d, out of range (Length=%d)", index.GetInteger(), length.GetInteger()))
+										self.String = fmt.Sprintf("Index: %d, out of range (Length=%d)", index.Integer, length.Integer)
 										return p.GetNone(), true
 									},
 								),
@@ -284,9 +284,9 @@ func (p *Plasma) InitializeBuiltIn() {
 								NewBuiltInClassFunction(object, 1,
 									func(self *Value, arguments ...*Value) (*Value, bool) {
 										key := arguments[0]
-										keyToString, getError := key.Get(ToString)
+										keyToString, getError := key.Get(p, context, ToString)
 										if getError != nil {
-											return p.NewObjectWithNameNotFoundError(context, key.GetClass(p), ToString), false
+											return getError, false
 										}
 										keyString, success := p.CallFunction(context, keyToString)
 										if !success {
@@ -295,7 +295,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !keyString.IsTypeById(StringId) {
 											return p.NewInvalidTypeError(context, keyString.TypeName(), StringName), false
 										}
-										self.SetString(fmt.Sprintf("Key %s not found", keyString.GetString()))
+										self.String = fmt.Sprintf("Key %s not found", keyString.String)
 										return p.GetNone(), true
 									},
 								),
@@ -316,7 +316,7 @@ func (p *Plasma) InitializeBuiltIn() {
 							return p.NewFunction(context, true, object.SymbolTable(),
 								NewBuiltInClassFunction(object, 0,
 									func(self *Value, arguments ...*Value) (*Value, bool) {
-										self.SetString("Integer parsing error")
+										self.String = "Integer parsing error"
 										return p.GetNone(), true
 									},
 								),
@@ -337,7 +337,7 @@ func (p *Plasma) InitializeBuiltIn() {
 							return p.NewFunction(context, true, object.SymbolTable(),
 								NewBuiltInClassFunction(object, 0,
 									func(self *Value, arguments ...*Value) (*Value, bool) {
-										self.SetString("Float parsing error")
+										self.String = "Float parsing error"
 										return p.GetNone(), true
 									},
 								),
@@ -362,7 +362,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !symbolName.IsTypeById(StringId) {
 											return p.NewInvalidTypeError(context, symbolName.TypeName(), StringName), false
 										}
-										self.SetString(fmt.Sprintf("cannot assign/delete built-in symbol %s", symbolName.GetString()))
+										self.String = fmt.Sprintf("cannot assign/delete built-in symbol %s", symbolName.String)
 										return p.GetNone(), true
 									},
 								),
@@ -387,7 +387,7 @@ func (p *Plasma) InitializeBuiltIn() {
 										if !receivedType.IsTypeById(TypeId) {
 											return p.NewInvalidTypeError(context, receivedType.TypeName(), TypeName), false
 										}
-										self.SetString(fmt.Sprintf(" Value of type %s object is not callable", receivedType.Name))
+										self.String = fmt.Sprintf(" Value of type %s object is not callable", receivedType.Name)
 										return p.GetNone(), true
 									},
 								),
@@ -472,8 +472,8 @@ func (p *Plasma) InitializeBuiltIn() {
 		),
 	)
 	// Names
-	p.builtInContext.PeekSymbolTable().Set(TrueName, p.NewBool(p.builtInContext, true, p.builtInContext.PeekSymbolTable(), true))
-	p.builtInContext.PeekSymbolTable().Set(FalseName, p.NewBool(p.builtInContext, true, p.builtInContext.PeekSymbolTable(), false))
+	p.builtInContext.PeekSymbolTable().Set(TrueName, p.NewBool(p.builtInContext, true, true))
+	p.builtInContext.PeekSymbolTable().Set(FalseName, p.NewBool(p.builtInContext, true, false))
 	p.builtInContext.PeekSymbolTable().Set(None, p.NewNone(p.builtInContext, true, p.builtInContext.PeekSymbolTable()))
 	// Functions
 	p.builtInContext.PeekSymbolTable().Set("expand",
@@ -482,7 +482,7 @@ func (p *Plasma) InitializeBuiltIn() {
 				func(_ *Value, arguments ...*Value) (*Value, bool) {
 					receiver := arguments[0]
 					for symbol, object := range arguments[1].SymbolTable().Symbols {
-						receiver.Set(symbol, object)
+						receiver.Set(p, p.builtInContext, symbol, object)
 					}
 					return p.GetNone(), true
 				},
@@ -496,9 +496,9 @@ func (p *Plasma) InitializeBuiltIn() {
 					object := arguments[0]
 					var symbols []*Value
 					for symbol := range object.Dir() {
-						symbols = append(symbols, p.NewString(p.builtInContext, false, p.builtInContext.PeekSymbolTable(), symbol))
+						symbols = append(symbols, p.NewString(p.builtInContext, false, symbol))
 					}
-					return p.NewTuple(p.builtInContext, false, p.builtInContext.PeekSymbolTable(), symbols), true
+					return p.NewTuple(p.builtInContext, false, symbols), true
 				},
 			),
 		),
@@ -513,10 +513,10 @@ func (p *Plasma) InitializeBuiltIn() {
 					if !symbol.IsTypeById(StringId) {
 						return p.NewInvalidTypeError(p.builtInContext, symbol.TypeName(), StringName), false
 					}
-					if source.IsBuiltIn() {
-						return p.NewBuiltInSymbolProtectionError(p.builtInContext, symbol.GetString()), false
+					if source.IsBuiltIn {
+						return p.NewBuiltInSymbolProtectionError(p.builtInContext, symbol.String), false
 					}
-					source.Set(symbol.GetString(), value)
+					source.Set(p, p.builtInContext, symbol.String, value)
 					return p.GetNone(), true
 				},
 			),
@@ -531,9 +531,9 @@ func (p *Plasma) InitializeBuiltIn() {
 					if !symbol.IsTypeById(StringId) {
 						return p.NewInvalidTypeError(p.builtInContext, symbol.TypeName(), StringName), false
 					}
-					value, getError := source.Get(symbol.GetString())
+					value, getError := source.Get(p, p.builtInContext, symbol.String)
 					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, source.GetClass(p), symbol.GetString()), false
+						return getError, false
 					}
 					return value, true
 				},
@@ -549,14 +549,14 @@ func (p *Plasma) InitializeBuiltIn() {
 					if !symbol.IsTypeById(StringId) {
 						return p.NewInvalidTypeError(p.builtInContext, symbol.TypeName(), StringName), false
 					}
-					if source.IsBuiltIn() {
-						return p.NewBuiltInSymbolProtectionError(p.builtInContext, symbol.GetString()), false
+					if source.IsBuiltIn {
+						return p.NewBuiltInSymbolProtectionError(p.builtInContext, symbol.String), false
 					}
-					_, getError := source.SymbolTable().GetSelf(symbol.GetString())
+					_, getError := source.SymbolTable().GetSelf(symbol.String)
 					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, source.GetClass(p), symbol.GetString()), false
+						return p.NewObjectWithNameNotFoundError(p.builtInContext, source.GetClass(p), symbol.String), false
 					}
-					delete(source.SymbolTable().Symbols, symbol.GetString())
+					delete(source.SymbolTable().Symbols, symbol.String)
 					return p.GetNone(), true
 				},
 			),
@@ -569,9 +569,9 @@ func (p *Plasma) InitializeBuiltIn() {
 					message := arguments[0]
 					var messageString *Value
 					if !message.IsTypeById(StringId) {
-						messageToString, getError := message.Get(ToString)
+						messageToString, getError := message.Get(p, p.builtInContext, ToString)
 						if getError != nil {
-							return p.NewObjectWithNameNotFoundError(p.builtInContext, message.GetClass(p), ToString), false
+							return getError, false
 						}
 						toStringResult, success := p.CallFunction(p.builtInContext, messageToString)
 						if !success {
@@ -584,12 +584,12 @@ func (p *Plasma) InitializeBuiltIn() {
 					} else {
 						messageString = message
 					}
-					_, writingError := p.StdOut().Write([]byte(messageString.GetString()))
+					_, writingError := p.StdOut().Write([]byte(messageString.String))
 					if writingError != nil {
 						return p.NewGoRuntimeError(p.builtInContext, writingError), false
 					}
 					if p.StdInScanner().Scan() {
-						return p.NewString(p.builtInContext, false, p.builtInContext.PeekSymbolTable(), p.StdInScanner().Text()), true
+						return p.NewString(p.builtInContext, false, p.StdInScanner().Text()), true
 					}
 					return p.NewGoRuntimeError(p.builtInContext, p.StdInScanner().Err()), false
 				},
@@ -601,15 +601,15 @@ func (p *Plasma) InitializeBuiltIn() {
 			NewBuiltInFunction(1,
 				func(_ *Value, arguments ...*Value) (*Value, bool) {
 					value := arguments[0]
-					toString, getError := value.Get(ToString)
+					toString, getError := value.Get(p, p.builtInContext, ToString)
 					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, value.GetClass(p), ToString), false
+						return getError, false
 					}
 					stringValue, success := p.CallFunction(p.builtInContext, toString)
 					if !success {
 						return stringValue, false
 					}
-					_, writeError := fmt.Fprintf(p.StdOut(), "%s", stringValue.GetString())
+					_, writeError := fmt.Fprintf(p.StdOut(), "%s", stringValue.String)
 					if writeError != nil {
 						return p.NewGoRuntimeError(p.builtInContext, writeError), false
 					}
@@ -623,15 +623,15 @@ func (p *Plasma) InitializeBuiltIn() {
 			NewBuiltInFunction(1,
 				func(_ *Value, arguments ...*Value) (*Value, bool) {
 					value := arguments[0]
-					toString, getError := value.Get(ToString)
+					toString, getError := value.Get(p, p.builtInContext, ToString)
 					if getError != nil {
-						return p.NewObjectWithNameNotFoundError(p.builtInContext, value.GetClass(p), ToString), false
+						return getError, false
 					}
 					stringValue, success := p.CallFunction(p.builtInContext, toString)
 					if !success {
 						return stringValue, false
 					}
-					_, writeError := fmt.Fprintf(p.StdOut(), "%s\n", stringValue.GetString())
+					_, writeError := fmt.Fprintf(p.StdOut(), "%s\n", stringValue.String)
 					if writeError != nil {
 						return p.NewGoRuntimeError(p.builtInContext, writeError), false
 					}
@@ -645,7 +645,7 @@ func (p *Plasma) InitializeBuiltIn() {
 			NewBuiltInFunction(1,
 				func(_ *Value, arguments ...*Value) (*Value, bool) {
 					object := arguments[0]
-					return p.NewInteger(p.builtInContext, false, p.builtInContext.PeekSymbolTable(), object.Id()), true
+					return p.NewInteger(p.builtInContext, false, object.Id()), true
 				},
 			),
 		),
@@ -658,29 +658,35 @@ func (p *Plasma) InitializeBuiltIn() {
 					if !start.IsTypeById(IntegerId) {
 						return p.NewInvalidTypeError(p.builtInContext, start.TypeName(), IntegerName), false
 					}
-					startValue := start.GetInteger()
 
 					end := arguments[1]
 					if !end.IsTypeById(IntegerId) {
 						return p.NewInvalidTypeError(p.builtInContext, end.TypeName(), IntegerName), false
 					}
-					endValue := end.GetInteger()
 
 					step := arguments[2]
 					if !step.IsTypeById(IntegerId) {
 						return p.NewInvalidTypeError(p.builtInContext, step.TypeName(), IntegerName), false
 					}
-					stepValue := step.GetInteger()
+
+					rangeInformation := struct {
+						current int64
+						end     int64
+						step    int64
+					}{
+						current: start.Integer,
+						end:     end.Integer,
+						step:    step.Integer,
+					}
 
 					// This should return a iterator
-					rangeIterator := p.NewIterator(p.builtInContext, true, p.builtInContext.PeekSymbolTable())
-					rangeIterator.SetInteger(startValue)
+					rangeIterator := p.NewIterator(p.builtInContext, false)
 
-					rangeIterator.Set(HasNext,
+					rangeIterator.Set(p, p.builtInContext, HasNext,
 						p.NewFunction(p.builtInContext, true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self *Value, _ ...*Value) (*Value, bool) {
-									if self.GetInteger() < endValue {
+									if rangeInformation.current < rangeInformation.end {
 										return p.GetTrue(), true
 									}
 									return p.GetFalse(), true
@@ -688,18 +694,17 @@ func (p *Plasma) InitializeBuiltIn() {
 							),
 						),
 					)
-					rangeIterator.Set(Next,
+					rangeIterator.Set(p, p.builtInContext, Next,
 						p.NewFunction(p.builtInContext, true, rangeIterator.SymbolTable(),
 							NewBuiltInClassFunction(rangeIterator, 0,
 								func(self *Value, _ ...*Value) (*Value, bool) {
-									number := self.GetInteger()
-									self.SetInteger(number + stepValue)
-									return p.NewInteger(p.builtInContext, false, p.builtInContext.PeekSymbolTable(), number), true
+									number := rangeInformation.current
+									rangeInformation.current += rangeInformation.step
+									return p.NewInteger(p.builtInContext, false, number), true
 								},
 							),
 						),
 					)
-
 					return rangeIterator, true
 				},
 			),

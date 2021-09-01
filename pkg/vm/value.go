@@ -2,7 +2,6 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/errors"
 )
 
 type OnDemandLoader func() *Value
@@ -25,7 +24,7 @@ const (
 )
 
 type Value struct {
-	isBuiltIn       bool
+	IsBuiltIn       bool
 	id              int64
 	typeName        string
 	BuiltInTypeId   uint16
@@ -43,84 +42,11 @@ type Value struct {
 	Float           float64
 	Content         []*Value
 	KeyValues       map[int64][]*KeyValue
-	Length          int
 	onDemandSymbols map[string]OnDemandLoader
-}
-
-func (o *Value) IsBuiltIn() bool {
-	return o.isBuiltIn
-}
-
-func (o *Value) IncreaseLength() {
-	o.Length++
-}
-
-func (o *Value) GetBool() bool {
-	return o.Bool
-}
-
-func (o *Value) GetBytes() []uint8 {
-	return o.Bytes
-}
-
-func (o *Value) GetString() string {
-	return o.String
-}
-
-func (o *Value) GetInteger() int64 {
-	return o.Integer
-}
-
-func (o *Value) GetFloat() float64 {
-	return o.Float
-}
-
-func (o *Value) GetContent() []*Value {
-	return o.Content
-}
-
-func (o *Value) GetKeyValues() map[int64][]*KeyValue {
-	return o.KeyValues
-}
-
-func (o *Value) GetLength() int {
-	return o.Length
-}
-
-func (o *Value) SetString(s string) {
-	o.String = s
-}
-
-func (o *Value) SetInteger(i int64) {
-	o.Integer = i
-}
-
-func (o *Value) SetFloat(f float64) {
-	o.Float = f
-}
-
-func (o *Value) SetContent(objects []*Value) {
-	o.Content = objects
-}
-
-func (o *Value) SetKeyValues(m map[int64][]*KeyValue) {
-	o.KeyValues = m
 }
 
 func (o *Value) AddKeyValue(hash int64, keyValue *KeyValue) {
 	o.KeyValues[hash] = append(o.KeyValues[hash], keyValue)
-}
-
-func (o *Value) SetLength(i int) {
-	o.Length = i
-}
-
-func (o *Value) SetBool(b bool) {
-	o.Bool = b
-}
-
-func (o *Value) SetBytes(b []uint8) {
-	o.Bytes = b
 }
 
 func (o *Value) Id() int64 {
@@ -131,15 +57,15 @@ func (o *Value) SubClasses() []*Value {
 	return o.subClasses
 }
 
-func (o *Value) Get(symbol string) (*Value, *errors.Error) {
+func (o *Value) Get(p *Plasma, context *Context, symbol string) (*Value, *Value) {
 	result, getError := o.symbols.GetSelf(symbol)
 	if getError != nil {
 		loader, found := o.onDemandSymbols[symbol]
 		if !found {
-			return nil, getError
+			return nil, p.NewObjectWithNameNotFoundError(context, o.GetClass(p), symbol)
 		}
 		result = loader()
-		o.Set(symbol, result)
+		o.Set(p, context, symbol, result)
 	}
 	return result, nil
 }
@@ -165,8 +91,13 @@ func (o *Value) Dir() map[string]byte {
 	}
 	return result
 }
-func (o *Value) Set(symbol string, object *Value) {
+
+func (o *Value) Set(p *Plasma, context *Context, symbol string, object *Value) *Value {
+	if o.IsBuiltIn {
+		return p.NewBuiltInSymbolProtectionError(context, symbol)
+	}
 	o.symbols.Set(symbol, object)
+	return nil
 }
 
 func (o *Value) TypeName() string {
@@ -235,12 +166,11 @@ func (p *Plasma) NewValue(
 		typeName:        typeName,
 		subClasses:      subClasses,
 		symbols:         NewSymbolTable(parentSymbols),
-		isBuiltIn:       isBuiltIn,
+		IsBuiltIn:       isBuiltIn,
 		onDemandSymbols: map[string]OnDemandLoader{},
 		BuiltInTypeId:   ValueId,
 	}
 	result.BuiltInTypeId = ValueId
-	result.Length = 0
 	result.Bool = true
 	result.String = ""
 	result.Integer = 0
@@ -474,7 +404,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 								objectHash := p.HashString(fmt.Sprintf("%v-%s-%d", self, self.TypeName(), self.Id()))
 								self.SetHash(objectHash)
 							}
-							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetHash()), true
+							return p.NewInteger(context, false, self.GetHash()), true
 						},
 					),
 				)
@@ -500,7 +430,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 							for _, class := range self.SubClasses() {
 								subClassesCopy = append(subClassesCopy, class)
 							}
-							return p.NewTuple(context, false, context.PeekSymbolTable(), subClassesCopy), true
+							return p.NewTuple(context, false, subClassesCopy), true
 						},
 					),
 				)
@@ -512,7 +442,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewString(context, false, context.PeekSymbolTable(),
+							return p.NewString(context, false,
 								fmt.Sprintf("%s{%s}-%X", ValueName, self.TypeName(), self.Id())), true
 						},
 					),
@@ -534,7 +464,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewInteger(context, false, context.PeekSymbolTable(), self.GetInteger()), true
+							return p.NewInteger(context, false, self.Integer), true
 						},
 					),
 				)
@@ -545,7 +475,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.InterpretAsBool(self.GetBool()), true
+							return p.InterpretAsBool(self.Bool), true
 						},
 					),
 				)
@@ -556,7 +486,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewBytes(context, false, context.PeekSymbolTable(), self.GetBytes()), true
+							return p.NewBytes(context, false, self.Bytes), true
 						},
 					),
 				)
@@ -567,7 +497,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewString(context, false, context.PeekSymbolTable(), self.GetString()), true
+							return p.NewString(context, false, self.String), true
 						},
 					),
 				)
@@ -578,7 +508,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewFloat(context, false, context.PeekSymbolTable(), self.GetFloat()), true
+							return p.NewFloat(context, false, self.Float), true
 						},
 					),
 				)
@@ -589,7 +519,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewArray(context, false, context.PeekSymbolTable(), self.GetContent()), true
+							return p.NewArray(context, false, self.Content), true
 						},
 					),
 				)
@@ -600,18 +530,9 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewHashTable(context, false, context.PeekSymbolTable(), self.GetKeyValues(), self.GetLength()), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(GetLength,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 0,
-						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewInteger(context, false, context.PeekSymbolTable(), int64(self.GetLength())), true
+							result := p.NewHashTable(context, false)
+							result.KeyValues = self.KeyValues
+							return result, true
 						},
 					),
 				)
@@ -622,7 +543,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
-							self.SetBool(arguments[0].GetBool())
+							self.Bool = arguments[0].Bool
 							return p.GetNone(), true
 						},
 					),
@@ -634,8 +555,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
-							self.SetBytes(arguments[0].GetBytes())
-							self.SetLength(arguments[0].GetLength())
+							self.Bytes = arguments[0].Bytes
 							return p.GetNone(), true
 						},
 					),
@@ -647,8 +567,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
-							self.SetString(arguments[0].GetString())
-							self.SetLength(arguments[0].GetLength())
+							self.String = arguments[0].String
 							return p.GetNone(), true
 						},
 					),
@@ -660,7 +579,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
-							self.SetInteger(arguments[0].GetInteger())
+							self.Integer = arguments[0].Integer
 							return p.GetNone(), true
 						},
 					),
@@ -672,7 +591,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
-							self.SetFloat(arguments[0].GetFloat())
+							self.Float = arguments[0].Float
 							return p.GetNone(), true
 						},
 					),
@@ -684,8 +603,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
-							self.SetContent(arguments[0].GetContent())
-							self.SetLength(arguments[0].GetLength())
+							self.Content = arguments[0].Content
 							return p.GetNone(), true
 						},
 					),
@@ -697,20 +615,7 @@ func (p *Plasma) ObjectInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
-							self.SetKeyValues(arguments[0].GetKeyValues())
-							self.SetLength(arguments[0].GetLength())
-							return p.GetNone(), true
-						},
-					),
-				)
-			},
-		)
-		object.SetOnDemandSymbol(SetLength,
-			func() *Value {
-				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
-					NewBuiltInClassFunction(object, 1,
-						func(self *Value, arguments ...*Value) (*Value, bool) {
-							self.SetLength(arguments[0].GetLength())
+							self.KeyValues = (arguments[0].KeyValues)
 							return p.GetNone(), true
 						},
 					),

@@ -3,7 +3,7 @@ package success
 import (
 	"bytes"
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/compiler/plasma"
+	"github.com/shoriwe/gplasma/pkg/compiler"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
@@ -64,14 +64,9 @@ func test(t *testing.T, directory string) {
 			t.Fatal(openError)
 			return
 		}
-		compiler := plasma.NewCompiler(reader.NewStringReaderFromFile(fileHandler),
-			plasma.Options{
-				Debug: false,
-			},
-		)
-		code, compilingError := compiler.Compile()
-		if compilingError != nil {
-			t.Fatal(compilingError)
+		code, compilationError := compiler.Compile(reader.NewStringReaderFromFile(fileHandler))
+		if compilationError != nil {
+			t.Fatal(compilationError)
 			return
 		}
 		output := bytes.NewBuffer(make([]byte, 0))
@@ -80,7 +75,7 @@ func test(t *testing.T, directory string) {
 		if !success {
 			t.Errorf("[+] %s: FAIL", file.Name())
 			t.Logf("Output:\n%s", output.String())
-			t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.GetString()))
+			t.Fatal(fmt.Sprintf("%s: %s", executionError.TypeName(), executionError.String))
 			return
 		}
 		if strings.Contains(output.String(), "False\n") {
@@ -93,91 +88,91 @@ func test(t *testing.T, directory string) {
 }
 
 func TestLiterals(t *testing.T) {
-	test(t, filepath.Join("success", expressionSamples, literals))
+	test(t, filepath.Join(expressionSamples, literals))
 }
 
 func TestComposites(t *testing.T) {
-	test(t, filepath.Join("success", expressionSamples, composites))
+	test(t, filepath.Join(expressionSamples, composites))
 }
 
 func TestUnaryExpressions(t *testing.T) {
-	test(t, filepath.Join("success", expressionSamples, unaryExpressions))
+	test(t, filepath.Join(expressionSamples, unaryExpressions))
 }
 
 func TestBinaryExpressions(t *testing.T) {
-	test(t, filepath.Join("success", expressionSamples, binaryExpressions))
+	test(t, filepath.Join(expressionSamples, binaryExpressions))
 }
 
 func TestIndexExpressions(t *testing.T) {
-	test(t, filepath.Join("success", expressionSamples, indexExpressions))
+	test(t, filepath.Join(expressionSamples, indexExpressions))
 }
 
 func TestSelectorExpressions(t *testing.T) {
-	test(t, filepath.Join("success", expressionSamples, selectorExpressions))
+	test(t, filepath.Join(expressionSamples, selectorExpressions))
 }
 
 func TestLambdaExpressions(t *testing.T) {
-	test(t, filepath.Join("success", expressionSamples, lambdaExpressions))
+	test(t, filepath.Join(expressionSamples, lambdaExpressions))
 }
 
 func TestIfAndUnlessOneLinersExpressions(t *testing.T) {
-	test(t, filepath.Join("success", expressionSamples, ifUnlessOneLiners))
+	test(t, filepath.Join(expressionSamples, ifUnlessOneLiners))
 }
 
 func TestGeneratorExpressions(t *testing.T) {
-	test(t, filepath.Join("success", expressionSamples, generatorExpression))
+	test(t, filepath.Join(expressionSamples, generatorExpression))
 }
 
 // Statement tests
 
 func TestAssignStatement(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, assignStatement))
+	test(t, filepath.Join(statementSamples, assignStatement))
 }
 
 func TestIfStatement(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, ifStatement))
+	test(t, filepath.Join(statementSamples, ifStatement))
 }
 
 func TestForStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, forStatement))
+	test(t, filepath.Join(statementSamples, forStatement))
 }
 
 func TestWhileStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, whileStatement))
+	test(t, filepath.Join(statementSamples, whileStatement))
 }
 
 func TestUntilStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, untilStatement))
+	test(t, filepath.Join(statementSamples, untilStatement))
 }
 
 func TestDoWhileStatement(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, doWhileStatement))
+	test(t, filepath.Join(statementSamples, doWhileStatement))
 }
 
 func TestFunctionDefinitionStatement(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, functionDefinition))
+	test(t, filepath.Join(statementSamples, functionDefinition))
 }
 
 func TestBeginEndStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, beginEnd))
+	test(t, filepath.Join(statementSamples, beginEnd))
 }
 
 func TestTryStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, tryStatement))
+	test(t, filepath.Join(statementSamples, tryStatement))
 }
 
 func TestModuleStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, moduleStatement))
+	test(t, filepath.Join(statementSamples, moduleStatement))
 }
 
 func TestClassStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, classStatement))
+	test(t, filepath.Join(statementSamples, classStatement))
 }
 
 func TestInterfaceStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, interfaceStatement))
+	test(t, filepath.Join(statementSamples, interfaceStatement))
 }
 
 func TestSwitchStatements(t *testing.T) {
-	test(t, filepath.Join("success", statementSamples, switchStatement))
+	test(t, filepath.Join(statementSamples, switchStatement))
 }
