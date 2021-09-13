@@ -264,8 +264,6 @@ func guessKind(buffer []rune) (uint8, uint8) {
 	switch string(buffer) {
 	case PassString:
 		return Keyboard, Pass
-	case SuperString:
-		return Keyboard, Super
 	case EndString:
 		return Keyboard, End
 	case IfString:
