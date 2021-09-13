@@ -80,4 +80,8 @@ const (
 	SetFloat                = "SetFloat"
 	SetContent              = "SetContent"
 	SetKeyValues            = "SetKeyValues"
+	Append                  = "Append"
+	Delete                  = "Delete"
+	Lower                   = "Lower"
+	Upper                   = "Upper"
 )

@@ -277,6 +277,28 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				)
 			},
 		)
+		object.SetOnDemandSymbol(Lower,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.NewString(context, false, strings.ToLower(self.String)), true
+						},
+					),
+				)
+			},
+		)
+		object.SetOnDemandSymbol(Upper,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.NewString(context, false, strings.ToUpper(self.String)), true
+						},
+					),
+				)
+			},
+		)
 		return nil
 	}
 }

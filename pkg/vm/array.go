@@ -214,6 +214,18 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 				)
 			},
 		)
+		object.SetOnDemandSymbol(Append,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							self.Content = append(self.Content, arguments[0])
+							return p.GetNone(), true
+						},
+					),
+				)
+			},
+		)
 		return nil
 	}
 }

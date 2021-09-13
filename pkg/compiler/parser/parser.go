@@ -1973,64 +1973,6 @@ func (parser *Parser) parseYieldStatement() (*ast.YieldStatement, *errors.Error)
 	}, nil
 }
 
-func (parser *Parser) parseSuperStatement() (*ast.SuperInvocationStatement, *errors.Error) {
-	tokenizingError := parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	if !parser.directValueMatch(lexer.OpenParentheses) {
-		return nil, newSyntaxError(parser.currentLine(), SuperStatement)
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	newLinesRemoveError := parser.removeNewLines()
-	if newLinesRemoveError != nil {
-		return nil, newLinesRemoveError
-	}
-	var arguments []ast.IExpression
-	for parser.hasNext() {
-		if parser.directValueMatch(lexer.CloseParentheses) {
-			break
-		}
-		newLinesRemoveError = parser.removeNewLines()
-		if newLinesRemoveError != nil {
-			return nil, newLinesRemoveError
-		}
-		line := parser.currentLine()
-		argument, parsingError := parser.parseBinaryExpression(0)
-		if parsingError != nil {
-			return nil, parsingError
-		}
-		if _, ok := argument.(ast.IExpression); !ok {
-			return nil, newNonExpressionReceivedError(line, SuperStatement)
-		}
-		arguments = append(arguments, argument.(ast.IExpression))
-		newLinesRemoveError = parser.removeNewLines()
-		if newLinesRemoveError != nil {
-			return nil, newLinesRemoveError
-		}
-		if !parser.directValueMatch(lexer.Comma) {
-			break
-		}
-		tokenizingError = parser.next()
-		if tokenizingError != nil {
-			return nil, tokenizingError
-		}
-	}
-	if !parser.directValueMatch(lexer.CloseParentheses) {
-		return nil, newSyntaxError(parser.currentLine(), SuperStatement)
-	}
-	tokenizingError = parser.next()
-	if tokenizingError != nil {
-		return nil, tokenizingError
-	}
-	return &ast.SuperInvocationStatement{
-		Arguments: arguments,
-	}, nil
-}
-
 func (parser *Parser) parseContinueStatement() (*ast.ContinueStatement, *errors.Error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -2109,8 +2051,6 @@ func (parser *Parser) parseOperand() (ast.Node, *errors.Error) {
 			return parser.parseReturnStatement()
 		case lexer.Yield:
 			return parser.parseYieldStatement()
-		case lexer.Super:
-			return parser.parseSuperStatement()
 		case lexer.Continue:
 			return parser.parseContinueStatement()
 		case lexer.Break:

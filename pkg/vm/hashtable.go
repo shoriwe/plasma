@@ -204,6 +204,34 @@ func (p *Plasma) HashTableInitialize(isBuiltIn bool) ConstructorCallBack {
 				)
 			},
 		)
+		object.SetOnDemandSymbol(Delete,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							keyHash, success := p.Hash(context, arguments[0])
+							if !success {
+								return keyHash, false
+							}
+							if _, found := self.KeyValues[keyHash.Integer]; !found {
+								return p.NewKeyNotFoundError(context, arguments[0]), false
+							}
+							for index, keyValue := range self.KeyValues[keyHash.Integer] {
+								doesEquals, equalsError := p.Equals(context, keyValue.Key, arguments[0])
+								if equalsError != nil {
+									return equalsError, false
+								}
+								if doesEquals {
+									self.KeyValues[keyHash.Integer] = append(self.KeyValues[keyHash.Integer][:index], self.KeyValues[keyHash.Integer][index+1:]...)
+									return p.GetNone(), true
+								}
+							}
+							return p.NewKeyNotFoundError(context, arguments[0]), false
+						},
+					),
+				)
+			},
+		)
 		return nil
 	}
 }

@@ -710,4 +710,13 @@ func (p *Plasma) InitializeBuiltIn() {
 			),
 		),
 	)
+	p.builtInContext.PeekSymbolTable().Set("super",
+		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
+			NewBuiltInFunction(2,
+				func(_ *Value, arguments ...*Value) (*Value, bool) {
+					return p.NewProxyObject(p.builtInContext, arguments[0], arguments[1])
+				},
+			),
+		),
+	)
 }

@@ -739,11 +739,6 @@ type YieldStatement struct {
 	Results []IExpression
 }
 
-type SuperInvocationStatement struct {
-	Statement
-	Arguments []IExpression
-}
-
 type ContinueStatement struct {
 	Statement
 }
