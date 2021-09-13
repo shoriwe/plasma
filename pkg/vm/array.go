@@ -1,5 +1,7 @@
 package vm
 
+import "github.com/shoriwe/gplasma/pkg/tools"
+
 func (p *Plasma) NewArray(context *Context, isBuiltIn bool, content []*Value) *Value {
 	array := p.NewValue(context, isBuiltIn, ArrayName, nil, context.PeekSymbolTable())
 	array.BuiltInTypeId = ArrayId
@@ -15,6 +17,34 @@ func (p *Plasma) NewArray(context *Context, isBuiltIn bool, content []*Value) *V
 
 func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(context *Context, object *Value) *Value {
+		object.SetOnDemandSymbol(Add,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							if !arguments[0].IsTypeById(ArrayId) {
+								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, ArrayName), false
+							}
+							return p.NewArray(context, false, append(self.Content, arguments[0].Content...)), true
+						},
+					),
+				)
+			},
+		)
+		object.SetOnDemandSymbol(RightAdd,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							if !arguments[0].IsTypeById(ArrayId) {
+								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, ArrayName), false
+							}
+							return p.NewArray(context, false, append(arguments[0].Content, self.Content...)), true
+						},
+					),
+				)
+			},
+		)
 		object.SetOnDemandSymbol(Mul,
 			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
@@ -220,6 +250,26 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 					NewBuiltInClassFunction(object, 1,
 						func(self *Value, arguments ...*Value) (*Value, bool) {
 							self.Content = append(self.Content, arguments[0])
+							return p.GetNone(), true
+						},
+					),
+				)
+			},
+		)
+		object.SetOnDemandSymbol(Delete,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							if !arguments[0].IsTypeById(IntegerId) {
+								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, IntegerName), false
+							}
+							contentLength := len(self.Content)
+							realIndex, indexCalculationError := tools.CalcIndex(arguments[0].Integer, contentLength)
+							if indexCalculationError != nil {
+								return p.NewIndexOutOfRange(context, contentLength, arguments[0].Integer), false
+							}
+							self.Content = append(self.Content[:realIndex], self.Content[realIndex+1:]...)
 							return p.GetNone(), true
 						},
 					),
