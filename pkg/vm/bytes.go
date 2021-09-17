@@ -262,6 +262,41 @@ func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 				)
 			},
 		)
+		object.SetOnDemandSymbol(Replace,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							if !arguments[0].IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, BytesName), false
+							}
+							var subBytes []*Value
+							for _, s := range bytes.Split(self.Bytes, arguments[0].Bytes) {
+								subBytes = append(subBytes, p.NewBytes(context, false, s))
+							}
+							return p.NewArray(context, false, subBytes), true
+						},
+					),
+				)
+			},
+		)
+		object.SetOnDemandSymbol(Replace,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 2,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							if !arguments[0].IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, BytesName), false
+							}
+							if !arguments[1].IsTypeById(BytesId) {
+								return p.NewInvalidTypeError(context, arguments[1].GetClass(p).Name, BytesName), false
+							}
+							return p.NewBytes(context, false, bytes.ReplaceAll(self.Bytes, arguments[0].Bytes, arguments[1].Bytes)), true
+						},
+					),
+				)
+			},
+		)
 		return nil
 	}
 }

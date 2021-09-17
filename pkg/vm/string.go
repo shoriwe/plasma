@@ -277,6 +277,17 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				)
 			},
 		)
+		object.SetOnDemandSymbol(ToBytes,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, _ ...*Value) (*Value, bool) {
+							return p.NewBytes(context, false, []byte(self.String)), false
+						},
+					),
+				)
+			},
+		)
 		object.SetOnDemandSymbol(Lower,
 			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
@@ -294,6 +305,41 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
 							return p.NewString(context, false, strings.ToUpper(self.String)), true
+						},
+					),
+				)
+			},
+		)
+		object.SetOnDemandSymbol(Split,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 1,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							if !arguments[0].IsTypeById(StringId) {
+								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, StringName), false
+							}
+							var subStrings []*Value
+							for _, s := range strings.Split(self.String, arguments[0].String) {
+								subStrings = append(subStrings, p.NewString(context, false, s))
+							}
+							return p.NewArray(context, false, subStrings), true
+						},
+					),
+				)
+			},
+		)
+		object.SetOnDemandSymbol(Replace,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 2,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							if !arguments[0].IsTypeById(StringId) {
+								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, StringName), false
+							}
+							if !arguments[1].IsTypeById(StringId) {
+								return p.NewInvalidTypeError(context, arguments[1].GetClass(p).Name, StringName), false
+							}
+							return p.NewString(context, false, strings.ReplaceAll(self.String, arguments[0].String, arguments[1].String)), true
 						},
 					),
 				)
