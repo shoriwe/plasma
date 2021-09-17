@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/fatih/color"
 	"github.com/otiai10/copy"
+	"github.com/shoriwe/gplasma"
 	"github.com/shoriwe/gplasma/pkg/compiler"
 	"github.com/shoriwe/gplasma/pkg/errors"
 	"github.com/shoriwe/gplasma/pkg/reader"
@@ -25,7 +26,7 @@ const (
 
 var (
 	files                   []string
-	virtualMachine          *vm.Plasma
+	virtualMachine          *gplasma.VirtualMachine
 	flagOptions             map[string]configOption
 	envOptions              map[string]configOption
 	defaultSitePackagesPath = true
@@ -77,12 +78,12 @@ func help() {
 
 // Setup the vm based on the options
 func setupVm() {
-	virtualMachine = vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
+	virtualMachine = gplasma.NewVirtualMachine()
 	currentDir, err := os.Getwd()
 	if err != nil {
 		currentDir = "."
 	}
-	virtualMachine.LoadBuiltInSymbols(
+	virtualMachine.LoadModule(
 		importlib.NewImporter(
 			importlib.NewRealFileSystem(sitePackagesPath),
 			importlib.NewRealFileSystem(currentDir),
@@ -200,7 +201,7 @@ func repl() {
 		if result.TypeName() == vm.NoneName {
 			continue
 		}
-		resultToString, getError := result.Get(virtualMachine, context, vm.ToString)
+		resultToString, getError := result.Get(virtualMachine.Plasma, context, vm.ToString)
 		if getError != nil {
 			fmt.Println(result)
 			continue
@@ -221,21 +222,18 @@ func repl() {
 }
 
 func program() {
-	for _, file := range files {
-		fileHandler, readingError := os.Open(file)
-		if readingError != nil {
-			panic(readingError)
-		}
-		code, compilationError := compiler.Compile(reader.NewStringReaderFromFile(fileHandler))
-		if compilationError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), compilationError.String())
+	for _, filePath := range files {
+		fileHandler, openError := os.Open(filePath)
+		if openError != nil {
+			_, _ = fmt.Fprintf(os.Stderr, openError.Error())
 			os.Exit(1)
 		}
-		/*
-			ToDo: Do intermediate stuff with other flags
-		*/
-		context := virtualMachine.NewContext()
-		result, success := virtualMachine.Execute(context, code)
+		content, readingError := io.ReadAll(fileHandler)
+		if readingError != nil {
+			_, _ = fmt.Fprintf(os.Stderr, readingError.Error())
+			os.Exit(1)
+		}
+		result, success := virtualMachine.ExecuteMain(string(content))
 		if !success {
 			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
 			os.Exit(1)

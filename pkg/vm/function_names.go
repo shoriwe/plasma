@@ -87,4 +87,5 @@ const (
 	Upper                   = "Upper"
 	Split                   = "Split"
 	Replace                 = "Replace"
+	IsMain                  = "IsMain"
 )

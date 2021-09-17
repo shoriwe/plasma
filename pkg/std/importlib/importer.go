@@ -316,6 +316,13 @@ func scriptImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 					script := p.NewModule(context, false)
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
+					context.PeekSymbolTable().Set(vm.IsMain, p.GetFalse())
+					defer func() {
+						_, found := context.PeekSymbolTable().Symbols[vm.IsMain]
+						if found {
+							delete(context.PeekSymbolTable().Symbols, vm.IsMain)
+						}
+					}()
 					executionError, success := p.Execute(context, scriptCode)
 					if !success {
 						return executionError, false
@@ -422,6 +429,13 @@ func moduleImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 					script := p.NewModule(context, false)
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
+					context.PeekSymbolTable().Set(vm.IsMain, p.GetFalse())
+					defer func() {
+						_, found := context.PeekSymbolTable().Symbols[vm.IsMain]
+						if found {
+							delete(context.PeekSymbolTable().Symbols, vm.IsMain)
+						}
+					}()
 					executionError, success := p.Execute(context, scriptCode)
 					if !success {
 						return executionError, false
