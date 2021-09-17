@@ -719,4 +719,45 @@ func (p *Plasma) InitializeBuiltIn() {
 			),
 		),
 	)
+	p.builtInContext.PeekSymbolTable().Set("map",
+		p.NewFunction(p.builtInContext, true, p.builtInContext.PeekSymbolTable(),
+			NewBuiltInFunction(2,
+				func(_ *Value, arguments ...*Value) (*Value, bool) {
+					asIterator, interpreationSuccess := p.InterpretAsIterator(p.builtInContext, arguments[1])
+					if !interpreationSuccess {
+						return asIterator, false
+					}
+					hasNext, hasNextGetError := asIterator.Get(p, p.builtInContext, HasNext)
+					if hasNextGetError != nil {
+						return hasNextGetError, false
+					}
+					next, nextGetError := asIterator.Get(p, p.builtInContext, Next)
+					if nextGetError != nil {
+						return nextGetError, false
+					}
+					result := p.NewIterator(p.builtInContext, false)
+
+					// Set Next
+					result.Set(p, p.builtInContext, Next,
+						p.NewFunction(p.builtInContext, false, result.symbols,
+							NewBuiltInClassFunction(result, 0,
+								func(value *Value, value2 ...*Value) (*Value, bool) {
+									nextValue, success := p.CallFunction(p.builtInContext, next)
+									if !success {
+										return nextValue, false
+									}
+									return p.CallFunction(p.builtInContext, arguments[0], nextValue)
+								},
+							),
+						),
+					)
+
+					// Set HasNext
+					result.Set(p, p.builtInContext, HasNext, hasNext)
+
+					return result, true
+				},
+			),
+		),
+	)
 }
