@@ -317,15 +317,13 @@ func scriptImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
 					context.PeekSymbolTable().Set(vm.IsMain, p.GetFalse())
-					defer func() {
-						_, found := context.PeekSymbolTable().Symbols[vm.IsMain]
-						if found {
-							delete(context.PeekSymbolTable().Symbols, vm.IsMain)
-						}
-					}()
 					executionError, success := p.Execute(context, scriptCode)
 					if !success {
 						return executionError, false
+					}
+					_, found := context.PeekSymbolTable().Symbols[vm.IsMain]
+					if found {
+						delete(context.PeekSymbolTable().Symbols, vm.IsMain)
 					}
 					context.PopSymbolTable()
 					// Return the initialized module object
@@ -430,15 +428,13 @@ func moduleImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
 					context.PeekSymbolTable().Set(vm.IsMain, p.GetFalse())
-					defer func() {
-						_, found := context.PeekSymbolTable().Symbols[vm.IsMain]
-						if found {
-							delete(context.PeekSymbolTable().Symbols, vm.IsMain)
-						}
-					}()
 					executionError, success := p.Execute(context, scriptCode)
 					if !success {
 						return executionError, false
+					}
+					_, found := context.PeekSymbolTable().Symbols[vm.IsMain]
+					if found {
+						delete(context.PeekSymbolTable().Symbols, vm.IsMain)
 					}
 					context.PopSymbolTable()
 					// Restore the backed importContext
