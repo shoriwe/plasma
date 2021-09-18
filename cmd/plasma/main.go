@@ -12,6 +12,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/errors"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/std/features/importlib"
+	json2 "github.com/shoriwe/gplasma/pkg/std/modules/json"
 	"github.com/shoriwe/gplasma/pkg/std/modules/regex"
 	"github.com/shoriwe/gplasma/pkg/vm"
 	"io"
@@ -87,6 +88,7 @@ func setupVm() {
 	importSystem := importlib.NewImporter()
 	// Load Default modules to use with the VM
 	importSystem.LoadModule(regex.Regex)
+	importSystem.LoadModule(json2.JSON)
 	//
 	virtualMachine.LoadFeature(
 		importSystem.Result(
