@@ -282,7 +282,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
 					NewBuiltInClassFunction(object, 0,
 						func(self *Value, _ ...*Value) (*Value, bool) {
-							return p.NewBytes(context, false, []byte(self.String)), false
+							return p.NewBytes(context, false, []byte(self.String)), true
 						},
 					),
 				)
