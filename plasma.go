@@ -29,6 +29,9 @@ func (v *VirtualMachine) prepareCode(code string) ([]*vm.Code, *vm.Value) {
 }
 
 func (v *VirtualMachine) Execute(context *vm.Context, bytecode *vm.Bytecode) (*vm.Value, bool) {
+	/*
+		This only should be used when accessing developing a new module for the language
+	*/
 	context.PeekSymbolTable().Set(vm.IsMain, v.GetFalse())
 	defer func() {
 		_, found := context.PeekSymbolTable().Symbols[vm.IsMain]

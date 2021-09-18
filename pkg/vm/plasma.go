@@ -13,7 +13,10 @@ const (
 	polySize = 0xffffffff
 )
 
-type ObjectLoader func(*Context, *Plasma) *Value
+type (
+	ObjectLoader func(*Context, *Plasma) *Value
+	Feature      map[string]ObjectLoader
+)
 
 type Plasma struct {
 	currentId      int64
@@ -50,15 +53,7 @@ func (p *Plasma) Seed() uint64 {
 	return p.seed
 }
 
-/*
-	LoadBuiltInObject
-	This function should be used to load custom object in the built-in symbol table
-*/
-func (p *Plasma) LoadBuiltInObject(symbolName string, loader ObjectLoader) {
-	p.BuiltInContext.PeekSymbolTable().Set(symbolName, loader(p.BuiltInContext, p))
-}
-
-func (p *Plasma) LoadModule(symbolMap map[string]ObjectLoader) {
+func (p *Plasma) LoadFeature(symbolMap Feature) {
 	for symbol, loader := range symbolMap {
 		p.BuiltInContext.PeekSymbolTable().Set(symbol, loader(p.BuiltInContext, p))
 	}
