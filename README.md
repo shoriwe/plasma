@@ -71,7 +71,6 @@ func setupVM() {
 			importlib.NewRealFileSystem(currentDir),
 		),
 	)
-	// Setup from here the other flags
 }
 
 func program() {
