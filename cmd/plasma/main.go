@@ -11,7 +11,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/compiler"
 	"github.com/shoriwe/gplasma/pkg/errors"
 	"github.com/shoriwe/gplasma/pkg/reader"
-	importlib2 "github.com/shoriwe/gplasma/pkg/std/features/importlib"
+	"github.com/shoriwe/gplasma/pkg/std/features/importlib"
 	"github.com/shoriwe/gplasma/pkg/std/modules/regex"
 	"github.com/shoriwe/gplasma/pkg/vm"
 	"io"
@@ -84,14 +84,14 @@ func setupVm() {
 	if err != nil {
 		currentDir = "."
 	}
-	importSystem := importlib2.NewImporter()
+	importSystem := importlib.NewImporter()
 	// Load Default modules to use with the VM
 	importSystem.LoadModule(regex.Regex)
 	//
 	virtualMachine.LoadFeature(
 		importSystem.Result(
-			importlib2.NewRealFileSystem(sitePackagesPath),
-			importlib2.NewRealFileSystem(currentDir),
+			importlib.NewRealFileSystem(sitePackagesPath),
+			importlib.NewRealFileSystem(currentDir),
 		),
 	)
 	// Setup from here the other flags
@@ -284,7 +284,7 @@ func installModuleFromDisk(source string) {
 		_, _ = fmt.Printf("[%s] %s\n", color.RedString("-"), readingError.Error())
 		os.Exit(1)
 	}
-	var settings importlib2.Settings
+	var settings importlib.Settings
 	unmarshalError := json.Unmarshal(content, &settings)
 	if unmarshalError != nil {
 		_, _ = fmt.Printf("[%s] %s\n", color.RedString("-"), unmarshalError.Error())
@@ -436,7 +436,7 @@ func initializeModule() {
 		_, _ = fmt.Printf("[%s] %s", color.RedString("-"), openError.Error())
 		os.Exit(0)
 	}
-	settings := importlib2.Settings{
+	settings := importlib.Settings{
 		Name:         moduleName,
 		Version:      "0.0.0",
 		Resources:    "",
