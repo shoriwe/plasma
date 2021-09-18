@@ -1,6 +1,9 @@
 package errors
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // Compiling Errors
 const (
@@ -29,6 +32,10 @@ func (plasmaError *Error) String() string {
 
 func (plasmaError *Error) Line() int {
 	return plasmaError.line
+}
+
+func (plasmaError *Error) Error() error {
+	return errors.New(plasmaError.String())
 }
 
 func New(line int, message string, type_ string) *Error {

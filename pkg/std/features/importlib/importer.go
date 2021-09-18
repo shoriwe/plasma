@@ -316,9 +316,14 @@ func scriptImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 					script := p.NewModule(context, false)
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
+					context.PeekSymbolTable().Set(vm.IsMain, p.GetFalse())
 					executionError, success := p.Execute(context, scriptCode)
 					if !success {
 						return executionError, false
+					}
+					_, found := context.PeekSymbolTable().Symbols[vm.IsMain]
+					if found {
+						delete(context.PeekSymbolTable().Symbols, vm.IsMain)
 					}
 					context.PopSymbolTable()
 					// Return the initialized module object
@@ -329,7 +334,8 @@ func scriptImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 	}
 }
 
-func moduleImport(memory map[string]*vm.Value, ctx *importContext, sitePackages FileSystem) vm.ObjectLoader {
+func moduleImport(moduleLoaders map[string]vm.ObjectLoader, memory map[string]*vm.Value, ctx *importContext, sitePackages FileSystem) vm.ObjectLoader {
+	createdModules := map[string]*vm.Value{}
 	return func(context *vm.Context, p *vm.Plasma) *vm.Value {
 		return p.NewFunction(context, true, p.BuiltInSymbols(),
 			vm.NewBuiltInFunction(1,
@@ -337,6 +343,14 @@ func moduleImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 					module := arguments[0]
 					if !module.IsTypeById(vm.StringId) {
 						return p.NewInvalidTypeError(context, module.TypeName(), vm.StringName), false
+					}
+					if _, ok := moduleLoaders[module.String]; ok {
+						result, found := createdModules[module.String]
+						if !found {
+							result = moduleLoaders[module.String](context, p)
+							createdModules[module.String] = result
+						}
+						return result, true
 					}
 					nameParts := strings.Split(module.String, "@")
 					numberOfParts := len(nameParts)
@@ -422,9 +436,14 @@ func moduleImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 					script := p.NewModule(context, false)
 					memory[scriptHash] = script
 					context.PushSymbolTable(script.SymbolTable())
+					context.PeekSymbolTable().Set(vm.IsMain, p.GetFalse())
 					executionError, success := p.Execute(context, scriptCode)
 					if !success {
 						return executionError, false
+					}
+					_, found := context.PeekSymbolTable().Symbols[vm.IsMain]
+					if found {
+						delete(context.PeekSymbolTable().Symbols, vm.IsMain)
 					}
 					context.PopSymbolTable()
 					// Restore the backed importContext
@@ -439,20 +458,18 @@ func moduleImport(memory map[string]*vm.Value, ctx *importContext, sitePackages 
 	}
 }
 
-func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLoader {
-	ctx := &importContext{
-		moduleName:  "",
-		version:     "",
-		resources:   "",
-		entryScript: "",
-		root:        "",
-	}
-	memory := map[string]*vm.Value{}
-	return map[string]vm.ObjectLoader{
-		"open_resource":     getResource(ctx, sitePackages),
-		"get_resource_path": getResourcePath(ctx, sitePackages),
-		"import_script":     scriptImport(memory, ctx, sitePackages, pwd),
-		"import_module":     moduleImport(memory, ctx, sitePackages),
+type Importer struct {
+	context        *importContext
+	memory         map[string]*vm.Value
+	modulesLoaders map[string]vm.ObjectLoader
+}
+
+func (importer *Importer) Result(sitePackages FileSystem, pwd FileSystem) vm.Feature {
+	return vm.Feature{
+		"open_resource":     getResource(importer.context, sitePackages),
+		"get_resource_path": getResourcePath(importer.context, sitePackages),
+		"import":            scriptImport(importer.memory, importer.context, sitePackages, pwd),
+		"require":           moduleImport(importer.modulesLoaders, importer.memory, importer.context, sitePackages),
 
 		ResourceReader: func(context *vm.Context, p *vm.Plasma) *vm.Value {
 			return p.NewType(context, true, ResourceReader, p.BuiltInSymbols(), nil,
@@ -684,11 +701,32 @@ func NewImporter(sitePackages FileSystem, pwd FileSystem) map[string]vm.ObjectLo
 							},
 						)
 						return nil
-
 					},
 				),
 			)
-
 		},
+	}
+}
+
+type ModuleInformation struct {
+	Name   string
+	Loader vm.ObjectLoader
+}
+
+func (importer *Importer) LoadModule(moduleInformation ModuleInformation) {
+	importer.modulesLoaders[moduleInformation.Name] = moduleInformation.Loader
+}
+
+func NewImporter() *Importer {
+	return &Importer{
+		context: &importContext{
+			moduleName:  "",
+			version:     "",
+			resources:   "",
+			entryScript: "",
+			root:        "",
+		},
+		memory:         map[string]*vm.Value{},
+		modulesLoaders: map[string]vm.ObjectLoader{},
 	}
 }

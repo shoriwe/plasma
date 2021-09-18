@@ -65,6 +65,7 @@ const (
 	ToBool                  = "ToBool"
 	ToArray                 = "ToArray"
 	ToTuple                 = "ToTuple"
+	ToBytes                 = "ToBytes"
 	GetInteger              = "GetInteger"
 	GetBool                 = "GetBool"
 	GetBytes                = "GetBytes"
@@ -84,4 +85,7 @@ const (
 	Delete                  = "Delete"
 	Lower                   = "Lower"
 	Upper                   = "Upper"
+	Split                   = "Split"
+	Replace                 = "Replace"
+	IsMain                  = "IsMain"
 )

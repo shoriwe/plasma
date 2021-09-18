@@ -441,6 +441,14 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 	char := lexer.reader.Char()
 	lexer.reader.Next()
 	switch char {
+	case '\r':
+		if lexer.reader.Char() == NewLineChar {
+			lexer.reader.Next()
+			lexer.line++
+			content = []rune{char}
+			kind = Separator
+			directValue = NewLine
+		}
 	case NewLineChar:
 		lexer.line++
 		content = []rune{char}
