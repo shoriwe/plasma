@@ -42,64 +42,51 @@ go install github.com/shoriwe/gplasma/cmd/plasma@latest
 package main
 
 import (
-	"bufio"
-	"encoding/json"
-	"flag"
 	"fmt"
-	"github.com/fatih/color"
-	"github.com/otiai10/copy"
-	"github.com/shoriwe/gplasma/pkg/compiler"
-	"github.com/shoriwe/gplasma/pkg/errors"
-	"github.com/shoriwe/gplasma/pkg/reader"
-	"github.com/shoriwe/gplasma/pkg/std/importlib"
-	"github.com/shoriwe/gplasma/pkg/vm"
-	"io"
+	"github.com/shoriwe/gplasma"
+	"github.com/shoriwe/gplasma/pkg/std/features/importlib"
 	"os"
-	"path/filepath"
-	"strings"
 )
 
 var (
 	files                   []string
-	virtualMachine          *vm.Plasma
-	flagOptions             map[string]configOption
-	envOptions              map[string]configOption
-	defaultSitePackagesPath = true
+	virtualMachine          *gplasma.VirtualMachine
 	sitePackagesPath        = "site-packages"
 )
 
-func setupVm() {
-	virtualMachine = vm.NewPlasmaVM(os.Stdin, os.Stdout, os.Stderr)
+// Setup the vm based on the options
+func setupVM() {
+	virtualMachine = gplasma.NewVirtualMachine()
 	currentDir, err := os.Getwd()
 	if err != nil {
 		currentDir = "."
 	}
-	virtualMachine.LoadBuiltInSymbols(
-		importlib.NewImporter(
+	importSystem := importlib.NewImporter()
+	// Load Default modules to use with the VM
+	importSystem.LoadModule(regex.Regex)
+	//
+	virtualMachine.LoadFeature(
+		importSystem.Result(
 			importlib.NewRealFileSystem(sitePackagesPath),
 			importlib.NewRealFileSystem(currentDir),
 		),
 	)
-	// Setup from here the other flags
 }
 
 func program() {
 	setupVM()
-	for _, file := range files {
-		fileHandler, readingError := os.Open(file)
-		if readingError != nil {
-			panic(readingError)
-		}
-		code, compilationError := compiler.Compile(reader.NewStringReaderFromFile(fileHandler))
-		if compilationError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s\n", color.RedString("-"), compilationError.String())
+	for _, filePath := range files {
+		fileHandler, openError := os.Open(filePath)
+		if openError != nil {
+			_, _ = fmt.Fprintf(os.Stderr, openError.Error())
 			os.Exit(1)
 		}
-		/*
-			ToDo: Do intermediate stuff with other flags
-		*/
-		context := virtualMachine.NewContext()
-		result, success := virtualMachine.Execute(context, code)
+		content, readingError := io.ReadAll(fileHandler)
+		if readingError != nil {
+			_, _ = fmt.Fprintf(os.Stderr, readingError.Error())
+			os.Exit(1)
+		}
+		result, success := virtualMachine.ExecuteMain(string(content))
 		if !success {
 			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
 			os.Exit(1)
