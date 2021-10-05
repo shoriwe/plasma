@@ -5,6 +5,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/compiler/ast"
 	"github.com/shoriwe/gplasma/pkg/compiler/lexer"
 	reader2 "github.com/shoriwe/gplasma/pkg/reader"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -156,15 +157,6 @@ func walker(node ast.Node) string {
 			result += walker(output)
 		}
 		return result
-	case *ast.SuperInvocationStatement:
-		result := "super("
-		for index, argument := range node.(*ast.SuperInvocationStatement).Arguments {
-			if index != 0 {
-				result += ", "
-			}
-			result += walker(argument)
-		}
-		return result + ")"
 	case *ast.IfStatement:
 		result := "if "
 		result += walker(node.(*ast.IfStatement).Condition)
@@ -173,21 +165,23 @@ func walker(node ast.Node) string {
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		for _, elifBlock := range node.(*ast.IfStatement).ElifBlocks {
-			result += "\nelif "
-			result += walker(elifBlock.Condition)
-			for _, bodyNode := range elifBlock.Body {
-				nodeString := walker(bodyNode)
-				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-				result += "\n\t" + nodeString
-			}
-		}
-		if node.(*ast.IfStatement).Else != nil {
-			result += "\nelse"
-			for _, elseNode := range node.(*ast.IfStatement).Else {
-				nodeString := walker(elseNode)
-				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-				result += "\n\t" + nodeString
+		if len(node.(*ast.IfStatement).Else) > 0{
+			if _, isIf := node.(*ast.IfStatement).Else[0].(*ast.IfStatement); len(node.(*ast.IfStatement).Else) == 1 && isIf {
+				elifBlock := node.(*ast.IfStatement).Else[0].(*ast.IfStatement)
+				result += "\nelif "
+				result += walker(elifBlock.Condition)
+				for _, bodyNode := range elifBlock.Body {
+					nodeString := walker(bodyNode)
+					nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+					result += "\n\t" + nodeString
+				}
+			} else {
+				result += "\nelse"
+				for _, elseNode := range node.(*ast.IfStatement).Else {
+					nodeString := walker(elseNode)
+					nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+					result += "\n\t" + nodeString
+				}
 			}
 		}
 		return result + "\nend"
@@ -199,21 +193,23 @@ func walker(node ast.Node) string {
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		for _, elifBlock := range node.(*ast.UnlessStatement).ElifBlocks {
-			result += "\nelif "
-			result += walker(elifBlock.Condition)
-			for _, bodyNode := range elifBlock.Body {
-				nodeString := walker(bodyNode)
-				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-				result += "\n\t" + nodeString
-			}
-		}
-		if node.(*ast.UnlessStatement).Else != nil {
-			result += "\nelse"
-			for _, elseNode := range node.(*ast.UnlessStatement).Else {
-				nodeString := walker(elseNode)
-				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-				result += "\n\t" + nodeString
+		if len(node.(*ast.UnlessStatement).Else) > 0{
+			if _, isUnless := node.(*ast.UnlessStatement).Else[0].(*ast.UnlessStatement); len(node.(*ast.UnlessStatement).Else) == 1 && isUnless {
+				elifBlock := node.(*ast.UnlessStatement).Else[0].(*ast.UnlessStatement)
+				result += "\nelif "
+				result += walker(elifBlock.Condition)
+				for _, bodyNode := range elifBlock.Body {
+					nodeString := walker(bodyNode)
+					nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+					result += "\n\t" + nodeString
+				}
+			} else {
+				result += "\nelse"
+				for _, elseNode := range node.(*ast.UnlessStatement).Else {
+					nodeString := walker(elseNode)
+					nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+					result += "\n\t" + nodeString
+				}
 			}
 		}
 		return result + "\nend"
@@ -401,7 +397,7 @@ func walker(node ast.Node) string {
 		}
 		return result + "\nwhile " + walker(node.(*ast.DoWhileStatement).Condition)
 	}
-	panic("unknown node type")
+	panic("unknown node type: " + reflect.TypeOf(node).String())
 }
 
 func walk(node ast.Node) string {
