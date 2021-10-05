@@ -43,12 +43,12 @@ func (program *Program) Compile() ([]*vm.Code, *errors.Error) {
 		return nil, bodyCompilationError
 	}
 	result = append(result, body...)
-	if program.Begin != nil {
-		beginBody, endCompilationError := program.Begin.Compile()
+	if program.End != nil {
+		endBody, endCompilationError := program.End.Compile()
 		if endCompilationError != nil {
 			return nil, endCompilationError
 		}
-		result = append(result, beginBody...)
+		result = append(result, endBody...)
 	}
 	return result, nil
 }

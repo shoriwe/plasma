@@ -73,7 +73,6 @@ const (
 	GetFloat                = "GetFloat"
 	GetContent              = "GetContent"
 	GetKeyValues            = "GetKeyValues"
-	GetLength               = "GetLength"
 	SetBool                 = "SetBool"
 	SetBytes                = "SetBytes"
 	SetString               = "SetString"
