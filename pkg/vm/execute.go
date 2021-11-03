@@ -107,7 +107,9 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 			}
 		case ForLoopOP:
 			executionError = p.forLoopOP(context, code.Value.(LoopInformation))
-			if context.LastState == ReturnState {
+			if executionError != nil {
+				return executionError, false
+			} else if context.LastState == ReturnState {
 				result := context.LastObject
 				context.LastObject = nil
 				return result, true
@@ -116,21 +118,27 @@ func (p *Plasma) Execute(context *Context, bytecode *Bytecode) (*Value, bool) {
 			executionError = p.newGeneratorOP(context, code.Value.(int))
 		case WhileLoopOP:
 			executionError = p.whileLoopOP(context, code.Value.(LoopInformation))
-			if context.LastState == ReturnState {
+			if executionError != nil {
+				return executionError, false
+			} else if context.LastState == ReturnState {
 				result := context.LastObject
 				context.LastObject = nil
 				return result, true
 			}
 		case DoWhileLoopOP:
 			executionError = p.doWhileLoopOP(context, code.Value.(LoopInformation))
-			if context.LastState == ReturnState {
+			if executionError != nil {
+				return executionError, false
+			} else if context.LastState == ReturnState {
 				result := context.LastObject
 				context.LastObject = nil
 				return result, true
 			}
 		case UntilLoopOP:
 			executionError = p.untilLoopOP(context, code.Value.(LoopInformation))
-			if context.LastState == ReturnState {
+			if executionError != nil {
+				return executionError, false
+			} else if context.LastState == ReturnState {
 				result := context.LastObject
 				context.LastObject = nil
 				return result, true
