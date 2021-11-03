@@ -173,7 +173,7 @@ func regexLoader(context *vm.Context, p *vm.Plasma) *vm.Value {
 						if err != nil {
 							return err, false
 						}
-						return match(arguments[0], regex, p, context)
+						return match(arguments[1], regex, p, context)
 					},
 				),
 			)

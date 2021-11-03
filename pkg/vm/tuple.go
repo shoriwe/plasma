@@ -15,6 +15,17 @@ func (p *Plasma) NewTuple(context *Context, isBuiltIn bool, content []*Value) *V
 
 func (p *Plasma) TupleInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(context *Context, object *Value) *Value {
+		object.SetOnDemandSymbol(Length,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							return p.NewInteger(context, false, int64(len(self.Content))), true
+						},
+					),
+				)
+			},
+		)
 		object.SetOnDemandSymbol(Mul,
 			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),

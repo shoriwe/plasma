@@ -256,6 +256,34 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 				)
 			},
 		)
+		object.SetOnDemandSymbol(Length,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							return p.NewInteger(context, false, int64(len(self.Content))), true
+						},
+					),
+				)
+			},
+		)
+		object.SetOnDemandSymbol(Pop,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							length := len(self.Content)
+							if length > 0 {
+								result := self.Content[length-1]
+								self.Content = self.Content[:length-1]
+								return result, true
+							}
+							return p.NewIndexOutOfRange(context, 0, 0), false
+						},
+					),
+				)
+			},
+		)
 		object.SetOnDemandSymbol(Delete,
 			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
