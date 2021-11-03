@@ -20,6 +20,17 @@ func (p *Plasma) NewBytes(context *Context, isBuiltIn bool, content []uint8) *Va
 
 func (p *Plasma) BytesInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(context *Context, object *Value) *Value {
+		object.SetOnDemandSymbol(Length,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							return p.NewInteger(context, false, int64(len(self.Bytes))), true
+						},
+					),
+				)
+			},
+		)
 		object.SetOnDemandSymbol(Add,
 			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),

@@ -23,6 +23,17 @@ func (p *Plasma) NewString(context *Context, isBuiltIn bool, value string) *Valu
 
 func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 	return func(context *Context, object *Value) *Value {
+		object.SetOnDemandSymbol(Length,
+			func() *Value {
+				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),
+					NewBuiltInClassFunction(object, 0,
+						func(self *Value, arguments ...*Value) (*Value, bool) {
+							return p.NewInteger(context, false, int64(len(self.String))), true
+						},
+					),
+				)
+			},
+		)
 		object.SetOnDemandSymbol(Add,
 			func() *Value {
 				return p.NewFunction(context, isBuiltIn, object.SymbolTable(),

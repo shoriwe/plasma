@@ -165,7 +165,7 @@ func walker(node ast.Node) string {
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		if len(node.(*ast.IfStatement).Else) > 0{
+		if len(node.(*ast.IfStatement).Else) > 0 {
 			if _, isIf := node.(*ast.IfStatement).Else[0].(*ast.IfStatement); len(node.(*ast.IfStatement).Else) == 1 && isIf {
 				elifBlock := node.(*ast.IfStatement).Else[0].(*ast.IfStatement)
 				result += "\nelif "
@@ -193,7 +193,7 @@ func walker(node ast.Node) string {
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		if len(node.(*ast.UnlessStatement).Else) > 0{
+		if len(node.(*ast.UnlessStatement).Else) > 0 {
 			if _, isUnless := node.(*ast.UnlessStatement).Else[0].(*ast.UnlessStatement); len(node.(*ast.UnlessStatement).Else) == 1 && isUnless {
 				elifBlock := node.(*ast.UnlessStatement).Else[0].(*ast.UnlessStatement)
 				result += "\nelif "

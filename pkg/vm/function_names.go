@@ -87,4 +87,6 @@ const (
 	Split                   = "Split"
 	Replace                 = "Replace"
 	IsMain                  = "IsMain"
+	Length                  = "Length"
+	Pop                     = "Pop"
 )
