@@ -4,7 +4,7 @@
 
 You can find documentation in:
 
-[Documentation](https://shoriwe.github.io)
+[Documentation](https://shoriwe.github.io/plasma/index.html)
 
 ## Description
 
