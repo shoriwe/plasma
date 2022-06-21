@@ -7,7 +7,8 @@
 
 You can find documentation in:
 
-[Documentation](https://shoriwe.github.io/plasma/index.html)
+- [Offical documentation](https://shoriwe.github.io/plasma/index.html)
+- [pkg.go.dev](https://pkg.go.dev/github.com/shoriwe/gplasma)
 
 ## Description
 
