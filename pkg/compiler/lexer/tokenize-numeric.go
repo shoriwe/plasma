@@ -21,32 +21,18 @@ func (lexer *Lexer) tokenizeNumeric() *errors.Error {
 		case 'o', 'O': // Octal
 			lexer.currentToken.append(nextChar)
 			return lexer.tokenizeOctal()
-		case 'e', 'E': // Scientific float
-			lexer.currentToken.append(nextChar)
-			return lexer.tokenizeScientificFloat()
-		case '.': // Maybe a float
-			lexer.currentToken.append(nextChar)
-			return lexer.tokenizeFloat() // Integer, Float Or Scientific Float
-		default:
-			if ('0' <= nextChar && nextChar <= '9') || nextChar == '_' {
-				lexer.currentToken.append(nextChar)
-				return lexer.tokenizeInteger() // Integer, Float or Scientific Float
-			}
 		}
-	} else {
-		switch nextChar {
-		case 'e', 'E': // Scientific float
-			lexer.currentToken.append(nextChar)
-			return lexer.tokenizeScientificFloat()
-		case '.': // Maybe a float
-			lexer.currentToken.append(nextChar)
-			return lexer.tokenizeFloat() // Integer, Float Or Scientific Float
-		default:
-			if ('0' <= nextChar && nextChar <= '9') || nextChar == '_' {
-				lexer.currentToken.append(nextChar)
-				return lexer.tokenizeInteger() // Integer, Float or Scientific Float
-			}
-		}
+	}
+	switch nextChar {
+	case 'e', 'E': // Scientific float
+		lexer.currentToken.append(nextChar)
+		return lexer.tokenizeScientificFloat()
+	case '.': // Maybe a float
+		lexer.currentToken.append(nextChar)
+		return lexer.tokenizeFloat() // Integer, Float Or Scientific Float
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_':
+		lexer.currentToken.append(nextChar)
+		return lexer.tokenizeInteger() // Integer, Float or Scientific Float
 	}
 	lexer.reader.Redo()
 	lexer.currentToken.Kind = Literal

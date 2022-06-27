@@ -9,34 +9,39 @@ func (lexer *Lexer) tokenizeInteger() *errors.Error {
 		return nil
 	}
 	nextDigit := lexer.reader.Char()
-	if nextDigit == '.' {
+	switch nextDigit {
+	case '.':
 		lexer.reader.Next()
 		lexer.currentToken.append(nextDigit)
 		return lexer.tokenizeFloat()
-	} else if nextDigit == 'e' || nextDigit == 'E' {
+	case 'e', 'E':
 		lexer.reader.Next()
 		lexer.currentToken.append(nextDigit)
 		return lexer.tokenizeScientificFloat()
-	} else if !('0' <= nextDigit && nextDigit <= '9') {
+	case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+		// If no of this match return
+	default:
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = Integer
 		return nil
 	}
 	lexer.reader.Next()
 	lexer.currentToken.append(nextDigit)
+loop:
 	for ; lexer.reader.HasNext(); lexer.reader.Next() {
 		nextDigit = lexer.reader.Char()
-		if nextDigit == 'e' || nextDigit == 'E' {
+		switch nextDigit {
+		case 'e', 'E':
 			lexer.currentToken.append(nextDigit)
 			return lexer.tokenizeScientificFloat()
-		} else if nextDigit == '.' {
+		case '.':
 			lexer.reader.Next()
 			lexer.currentToken.append(nextDigit)
 			return lexer.tokenizeFloat()
-		} else if ('0' <= nextDigit && nextDigit <= '9') || nextDigit == '_' {
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '_':
 			lexer.currentToken.append(nextDigit)
-		} else {
-			break
+		default:
+			break loop
 		}
 	}
 	lexer.currentToken.Kind = Literal
