@@ -1,8 +1,8 @@
 package lexer
 
-func detectKindAndDirectValue(buffer []rune) (Kind, DirectValue) {
-
-	switch string(buffer) {
+func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
+	s := lexer.currentToken.String()
+	switch s {
 	case PassString:
 		return Keyboard, Pass
 	case EndString:
@@ -82,9 +82,9 @@ func detectKindAndDirectValue(buffer []rune) (Kind, DirectValue) {
 	case ContextString:
 		return Keyboard, Context
 	default:
-		if identifierCheck.MatchString(string(buffer)) {
+		if identifierCheck.MatchString(s) {
 			return IdentifierKind, InvalidDirectValue
-		} else if junkKindCheck.MatchString(string(buffer)) {
+		} else if junkKindCheck.MatchString(s) {
 			return JunkKind, InvalidDirectValue
 		}
 	}

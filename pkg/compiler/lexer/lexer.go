@@ -37,6 +37,7 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 	}
 	var tokenizingError *errors.Error
 	char := lexer.reader.Char()
+	lexer.currentToken.append(char)
 	lexer.reader.Next()
 	switch char {
 	case '\r':
@@ -50,111 +51,111 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		lexer.currentToken.DirectValue = NewLine
 	case NewLineChar:
 		lexer.line++
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.Kind = Separator
 		lexer.currentToken.DirectValue = NewLine
 	case SemiColonChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.Kind = Separator
 		lexer.currentToken.DirectValue = SemiColon
 	case ColonChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = Colon
 		lexer.currentToken.Kind = Punctuation
 	case CommaChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = Comma
 		lexer.currentToken.Kind = Punctuation
 	case OpenParenthesesChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = OpenParentheses
 		lexer.currentToken.Kind = Punctuation
 	case CloseParenthesesChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = CloseParentheses
 		lexer.currentToken.Kind = Punctuation
 	case OpenSquareBracketChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = OpenSquareBracket
 		lexer.currentToken.Kind = Punctuation
 	case CloseSquareBracketChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = CloseSquareBracket
 		lexer.currentToken.Kind = Punctuation
 	case OpenBraceChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = OpenBrace
 		lexer.currentToken.Kind = Punctuation
 	case CloseBraceChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = CloseBrace
 		lexer.currentToken.Kind = Punctuation
 	case DollarSignChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = DollarSign
 		lexer.currentToken.Kind = Punctuation
 	case DotChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = Dot
 		lexer.currentToken.Kind = Punctuation
 	case WhiteSpaceChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = Blank
 		lexer.currentToken.Kind = Whitespace
 	case TabChar:
-		lexer.currentToken.append(char)
+
 		lexer.currentToken.DirectValue = Blank
 		lexer.currentToken.Kind = Whitespace
 	case CommentChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeComment()
 	case '\'', '"', '`':
-		lexer.currentToken.append(char)
+
 		tokenizingError = lexer.tokenizeStringLikeExpressions(char)
 	case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
-		lexer.currentToken.append(char)
+
 		tokenizingError = lexer.tokenizeNumeric()
 	case StarChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeRepeatableOperator(Star, Operator, PowerOf, Operator, StarAssign, Assignment, PowerOfAssign, Assignment)
 	case DivChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeRepeatableOperator(Div, Operator, FloorDiv, Operator, DivAssign, Assignment, FloorDivAssign, Assignment)
 	case LessThanChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeRepeatableOperator(LessThan, Comparator, BitwiseLeft, Operator, LessOrEqualThan, Comparator, BitwiseLeftAssign, Assignment)
 	case GreatThanChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeRepeatableOperator(GreaterThan, Comparator, BitwiseRight, Operator, GreaterOrEqualThan, Comparator, BitwiseRightAssign, Assignment)
 	case AddChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeSingleOperator(Add, Operator, AddAssign, Assignment)
 	case SubChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeSingleOperator(Sub, Operator, SubAssign, Assignment)
 	case ModulusChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeSingleOperator(Modulus, Operator, ModulusAssign, Assignment)
 	case BitwiseXorChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeSingleOperator(BitwiseXor, Operator, BitwiseXorAssign, Assignment)
 	case BitWiseAndChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeSingleOperator(BitWiseAnd, Operator, BitWiseAndAssign, Assignment)
 	case BitwiseOrChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeSingleOperator(BitwiseOr, Operator, BitwiseOrAssign, Assignment)
 	case SignNotChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeSingleOperator(SignNot, Operator, NotEqual, Comparator)
 	case NegateBitsChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeSingleOperator(NegateBits, Operator, NegateBitsAssign, Assignment)
 	case EqualsChar:
-		lexer.currentToken.append(char)
+
 		lexer.tokenizeSingleOperator(Assign, Assignment, Equals, Comparator)
 	case BackSlashChar:
-		lexer.currentToken.append(char)
+
 		if !lexer.reader.HasNext() {
 			return nil, errors.New(lexer.line, "line escape not followed by a new line", errors.LexingError)
 		}
@@ -167,18 +168,16 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 
 	default:
 		if char != 'b' || !lexer.reader.HasNext() {
-			lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue,
-				tokenizingError = lexer.tokenizeWord(char)
+			lexer.tokenizeWord()
 			break
 		}
 		nextChar := lexer.reader.Char()
 		if nextChar != '\'' && nextChar != '"' {
-			lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue,
-				tokenizingError = lexer.tokenizeWord(char)
+			lexer.tokenizeWord()
 			break
 		}
 		lexer.reader.Next()
-		lexer.currentToken.append('b', nextChar)
+		lexer.currentToken.append(nextChar)
 		tokenizingError = lexer.tokenizeStringLikeExpressions(nextChar)
 		if lexer.currentToken.DirectValue != InvalidDirectValue {
 			lexer.currentToken.DirectValue = ByteString
