@@ -154,16 +154,17 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		lexer.currentToken.append(char)
 		lexer.tokenizeSingleOperator(Assign, Assignment, Equals, Comparator)
 	case BackSlashChar:
-		lexer.currentToken.Contents = []rune{char}
-		if lexer.reader.HasNext() {
-			nextChar := lexer.reader.Char()
-			if nextChar != '\n' {
-				return nil, errors.New(lexer.line, "line escape not followed by a new line", errors.LexingError)
-			}
-			lexer.currentToken.Contents = append(lexer.currentToken.Contents, '\n')
-			lexer.reader.Next()
+		lexer.currentToken.append(char)
+		if !lexer.reader.HasNext() {
+			return nil, errors.New(lexer.line, "line escape not followed by a new line", errors.LexingError)
 		}
-		lexer.currentToken.Kind = PendingEscape
+		nextChar := lexer.reader.Char()
+		if nextChar != '\n' {
+			return nil, errors.New(lexer.line, "line escape not followed by a new line", errors.LexingError)
+		}
+		lexer.currentToken.append('\n')
+		lexer.reader.Next()
+
 	default:
 		if char != 'b' || !lexer.reader.HasNext() {
 			lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue,
