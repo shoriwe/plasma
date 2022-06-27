@@ -1,25 +1,11 @@
 package lexer
 
-/*
-	Token Kinds
-*/
+type DirectValue uint8
 
 const (
-	Unknown uint8 = iota
-	PendingEscape
-	Comment
-	Whitespace
-	Literal
-	Tab
-	IdentifierKind
-	JunkKind
-	Separator
-	Punctuation
-	Assignment
-	Comparator
-	Operator
-	SingleQuoteString
+	SingleQuoteString DirectValue = iota
 	DoubleQuoteString
+	ByteString
 	Integer
 	HexadecimalInteger
 	BinaryInteger
@@ -27,11 +13,6 @@ const (
 	Float
 	ScientificFloat
 	CommandOutput
-	ByteString
-	Keyboard
-	Boolean
-	NoneType
-	EOF
 
 	Comma
 	Colon
@@ -128,6 +109,9 @@ const (
 	CloseBrace
 	DollarSign
 	Dot
+
+	InvalidDirectValue
+	Blank
 )
 
 /*
@@ -136,8 +120,8 @@ const (
 
 type Token struct {
 	String      string
-	DirectValue uint8
-	Kind        uint8
+	DirectValue DirectValue
+	Kind        Kind
 	Line        int
 	Column      int
 	Index       int

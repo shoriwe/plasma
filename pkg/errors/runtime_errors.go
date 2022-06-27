@@ -35,6 +35,6 @@ func NewNameNotFoundError() *Error {
 	return New(UnknownLine, NameNotFoundMessage, NameNotFoundError)
 }
 
-func NewUnknownVMOperationError(operation uint8) *Error {
+func NewUnknownVMOperationError(operation interface{}) *Error {
 	return New(UnknownLine, fmt.Sprintf("unknown operation with value %d", operation), UnknownVmOperationError)
 }

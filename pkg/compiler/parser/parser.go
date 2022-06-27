@@ -99,14 +99,14 @@ func (parser *Parser) next() *errors.Error {
 	return nil
 }
 
-func (parser *Parser) directValueMatch(directValue uint8) bool {
+func (parser *Parser) directValueMatch(directValue lexer.DirectValue) bool {
 	if parser.currentToken == nil {
 		return false
 	}
 	return parser.currentToken.DirectValue == directValue
 }
 
-func (parser *Parser) kindMatch(kind uint8) bool {
+func (parser *Parser) kindMatch(kind lexer.Kind) bool {
 	if parser.currentToken == nil {
 		return false
 	}
@@ -968,7 +968,7 @@ func (parser *Parser) parseLiteral() (ast.IExpression, *errors.Error) {
 	return nil, newInvalidKindOfTokenError(parser.currentLine())
 }
 
-func (parser *Parser) parseBinaryExpression(precedence uint8) (ast.Node, *errors.Error) {
+func (parser *Parser) parseBinaryExpression(precedence lexer.DirectValue) (ast.Node, *errors.Error) {
 	var leftHandSide ast.Node
 	var rightHandSide ast.Node
 	var parsingError *errors.Error

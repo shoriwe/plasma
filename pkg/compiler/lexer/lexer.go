@@ -22,60 +22,16 @@ func (lexer *Lexer) HasNext() bool {
 	return !lexer.complete
 }
 
-func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener rune) ([]rune, uint8, uint8, *errors.Error) {
-	content := []rune{stringOpener}
-	var target uint8
-	switch stringOpener {
-	case '\'':
-		target = SingleQuoteString
-	case '"':
-		target = DoubleQuoteString
-	case '`':
-		target = CommandOutput
-	}
-	var directValue = Unknown
-	var tokenizingError *errors.Error
-	escaped := false
-	finish := false
-	for ; lexer.reader.HasNext() && !finish; lexer.reader.Next() {
-		char := lexer.reader.Char()
-		if escaped {
-			switch char {
-			case '\\', '\'', '"', '`', 'a', 'b', 'e', 'f', 'n', 'r', 't', '?', 'u', 'x':
-				escaped = false
-			default:
-				tokenizingError = errors.New(lexer.line, "invalid escape sequence", errors.LexingError)
-				finish = true
-			}
-		} else {
-			switch char {
-			case '\n':
-				lexer.line++
-			case stringOpener:
-				directValue = target
-				finish = true
-			case '\\':
-				escaped = true
-			}
-		}
-		content = append(content, char)
-	}
-	if directValue != target {
-		tokenizingError = errors.New(lexer.line, "string never closed", errors.LexingError)
-	}
-	return content, Literal, directValue, tokenizingError
-}
-
-func (lexer *Lexer) tokenizeHexadecimal(letterX rune) ([]rune, uint8, uint8, *errors.Error) {
+func (lexer *Lexer) tokenizeHexadecimal(letterX rune) ([]rune, Kind, DirectValue, *errors.Error) {
 	result := []rune{'0', letterX}
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	nextDigit := lexer.reader.Char()
 	if !(('0' <= nextDigit && nextDigit <= '9') ||
 		('a' <= nextDigit && nextDigit <= 'f') ||
 		('A' <= nextDigit && nextDigit <= 'F')) {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
 	result = append(result, nextDigit)
@@ -89,14 +45,14 @@ func (lexer *Lexer) tokenizeHexadecimal(letterX rune) ([]rune, uint8, uint8, *er
 	return result, Literal, HexadecimalInteger, nil
 }
 
-func (lexer *Lexer) tokenizeBinary(letterB rune) ([]rune, uint8, uint8, *errors.Error) {
+func (lexer *Lexer) tokenizeBinary(letterB rune) ([]rune, Kind, DirectValue, *errors.Error) {
 	result := []rune{'0', letterB}
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	nextDigit := lexer.reader.Char()
 	if !(nextDigit == '0' || nextDigit == '1') {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
 	result = append(result, nextDigit)
@@ -110,14 +66,14 @@ func (lexer *Lexer) tokenizeBinary(letterB rune) ([]rune, uint8, uint8, *errors.
 	return result, Literal, BinaryInteger, nil
 }
 
-func (lexer *Lexer) tokenizeOctal(letterO rune) ([]rune, uint8, uint8, *errors.Error) {
+func (lexer *Lexer) tokenizeOctal(letterO rune) ([]rune, Kind, DirectValue, *errors.Error) {
 	result := []rune{'0', letterO}
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '7') {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
 	result = append(result, nextDigit)
@@ -131,24 +87,24 @@ func (lexer *Lexer) tokenizeOctal(letterO rune) ([]rune, uint8, uint8, *errors.E
 	return result, Literal, OctalInteger, nil
 }
 
-func (lexer *Lexer) tokenizeScientificFloat(base []rune) ([]rune, uint8, uint8, *errors.Error) {
+func (lexer *Lexer) tokenizeScientificFloat(base []rune) ([]rune, Kind, DirectValue, *errors.Error) {
 	result := base
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	direction := lexer.reader.Char()
 	if (direction != '-') && (direction != '+') {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
 	// Ensure next is a number
 	if !lexer.reader.HasNext() {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	result = append(result, direction)
 	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '9') {
-		return result, Literal, Unknown, errors.NewUnknownTokenKindError(lexer.line)
+		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
 	}
 	result = append(result, nextDigit)
 	lexer.reader.Next()
@@ -162,7 +118,7 @@ func (lexer *Lexer) tokenizeScientificFloat(base []rune) ([]rune, uint8, uint8, 
 	return result, Literal, ScientificFloat, nil
 }
 
-func (lexer *Lexer) tokenizeFloat(base []rune) ([]rune, uint8, uint8, *errors.Error) {
+func (lexer *Lexer) tokenizeFloat(base []rune) ([]rune, Kind, DirectValue, *errors.Error) {
 	if !lexer.reader.HasNext() {
 		lexer.reader.Redo()
 		return base[:len(base)-1], Literal, Integer, nil
@@ -188,7 +144,7 @@ func (lexer *Lexer) tokenizeFloat(base []rune) ([]rune, uint8, uint8, *errors.Er
 	return result, Literal, Float, nil
 }
 
-func (lexer *Lexer) tokenizeInteger(base []rune) ([]rune, uint8, uint8, *errors.Error) {
+func (lexer *Lexer) tokenizeInteger(base []rune) ([]rune, Kind, DirectValue, *errors.Error) {
 	if !lexer.reader.HasNext() {
 		return base, Literal, Integer, nil
 	}
@@ -220,7 +176,7 @@ func (lexer *Lexer) tokenizeInteger(base []rune) ([]rune, uint8, uint8, *errors.
 	return result, Literal, Integer, nil
 }
 
-func (lexer *Lexer) tokenizeNumeric(firstDigit rune) ([]rune, uint8, uint8, *errors.Error) {
+func (lexer *Lexer) tokenizeNumeric(firstDigit rune) ([]rune, Kind, DirectValue, *errors.Error) {
 	if !lexer.reader.HasNext() {
 		return []rune{firstDigit}, Literal, Integer, nil
 	}
@@ -259,7 +215,7 @@ func (lexer *Lexer) tokenizeNumeric(firstDigit rune) ([]rune, uint8, uint8, *err
 	return []rune{firstDigit}, Literal, Integer, nil
 }
 
-func guessKind(buffer []rune) (uint8, uint8) {
+func guessKind(buffer []rune) (Kind, DirectValue) {
 
 	switch string(buffer) {
 	case PassString:
@@ -342,15 +298,15 @@ func guessKind(buffer []rune) (uint8, uint8) {
 		return Keyboard, Context
 	default:
 		if identifierCheck.MatchString(string(buffer)) {
-			return IdentifierKind, Unknown
+			return IdentifierKind, InvalidDirectValue
 		} else if junkKindCheck.MatchString(string(buffer)) {
-			return JunkKind, Unknown
+			return JunkKind, InvalidDirectValue
 		}
 	}
-	return Unknown, Unknown
+	return Unknown, InvalidDirectValue
 }
 
-func (lexer *Lexer) tokenizeChars(startingChar rune) ([]rune, uint8, uint8, *errors.Error) {
+func (lexer *Lexer) tokenizeChars(startingChar rune) ([]rune, Kind, DirectValue, *errors.Error) {
 	content := []rune{startingChar}
 	for ; lexer.reader.HasNext(); lexer.reader.Next() {
 		char := lexer.reader.Char()
@@ -364,7 +320,7 @@ func (lexer *Lexer) tokenizeChars(startingChar rune) ([]rune, uint8, uint8, *err
 	return content, kind, directValue, nil
 }
 
-func (lexer *Lexer) tokenizeComment() ([]rune, uint8, *errors.Error) {
+func (lexer *Lexer) tokenizeComment() ([]rune, Kind, *errors.Error) {
 	var content []rune
 	for ; lexer.reader.HasNext(); lexer.reader.Next() {
 		char := lexer.reader.Char()
@@ -376,7 +332,12 @@ func (lexer *Lexer) tokenizeComment() ([]rune, uint8, *errors.Error) {
 	return content, Comment, nil
 }
 
-func (lexer *Lexer) tokenizeRepeatableOperator(char rune, singleDirectValue uint8, singleKind uint8, doubleDirectValue uint8, doubleKind uint8, assignSingleDirectValue uint8, assignDoubleDirectValue uint8, assignSingleKind uint8, assignDoubleKind uint8) ([]rune, uint8, uint8) {
+func (lexer *Lexer) tokenizeRepeatableOperator(char rune,
+	singleDirectValue DirectValue, singleKind Kind,
+	doubleDirectValue DirectValue, doubleKind Kind,
+	assignSingleDirectValue DirectValue, assignSingleKind Kind,
+	assignDoubleDirectValue DirectValue, assignDoubleKind Kind,
+) ([]rune, Kind, DirectValue) {
 	content := []rune{char}
 	kind := singleKind
 	directValue := singleDirectValue
@@ -406,7 +367,9 @@ func (lexer *Lexer) tokenizeRepeatableOperator(char rune, singleDirectValue uint
 	return content, kind, directValue
 }
 
-func (lexer *Lexer) tokenizeNotRepeatableOperator(char rune, single uint8, singleKind uint8, assign uint8, assignKind uint8) ([]rune, uint8, uint8) {
+func (lexer *Lexer) tokenizeNotRepeatableOperator(char rune,
+	single DirectValue, singleKind Kind,
+	assign DirectValue, assignKind Kind) ([]rune, Kind, DirectValue) {
 	content := []rune{char}
 	kind := singleKind
 	directValue := single
@@ -426,16 +389,16 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		lexer.complete = true
 		return &Token{
 			String:      "EOF",
-			DirectValue: EOF,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        lexer.line,
 			Index:       lexer.reader.Index(),
 		}, nil
 	}
 	var tokenizingError *errors.Error
-	var kind uint8
+	var kind Kind
 	var content []rune
-	directValue := Unknown
+	directValue := InvalidDirectValue
 	line := lexer.line
 	index := lexer.reader.Index()
 	char := lexer.reader.Char()
@@ -499,11 +462,11 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		directValue = Dot
 		kind = Punctuation
 	case WhiteSpaceChar:
-		directValue = Whitespace
+		directValue = Blank
 		kind = Whitespace
 		content = []rune{char}
 	case TabChar:
-		directValue = Tab
+		directValue = Blank
 		kind = Whitespace
 		content = []rune{char}
 	case CommentChar:
@@ -516,13 +479,13 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 	case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
 		content, kind, directValue, tokenizingError = lexer.tokenizeNumeric(char)
 	case StarChar:
-		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Star, Operator, PowerOf, Operator, StarAssign, PowerOfAssign, Assignment, Assignment)
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Star, Operator, PowerOf, Operator, StarAssign, Assignment, PowerOfAssign, Assignment)
 	case DivChar:
-		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Div, Operator, FloorDiv, Operator, DivAssign, FloorDivAssign, Assignment, Assignment)
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, Div, Operator, FloorDiv, Operator, DivAssign, Assignment, FloorDivAssign, Assignment)
 	case LessThanChar:
-		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, LessThan, Comparator, BitwiseLeft, Operator, LessOrEqualThan, BitwiseLeftAssign, Comparator, Assignment)
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, LessThan, Comparator, BitwiseLeft, Operator, LessOrEqualThan, Comparator, BitwiseLeftAssign, Assignment)
 	case GreatThanChar:
-		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, GreaterThan, Comparator, BitwiseRight, Operator, GreaterOrEqualThan, BitwiseRightAssign, Comparator, Assignment)
+		content, kind, directValue = lexer.tokenizeRepeatableOperator(char, GreaterThan, Comparator, BitwiseRight, Operator, GreaterOrEqualThan, Comparator, BitwiseRightAssign, Assignment)
 	case AddChar:
 		content, kind, directValue = lexer.tokenizeNotRepeatableOperator(char, Add, Operator, AddAssign, Assignment)
 	case SubChar:
@@ -561,7 +524,7 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 					lexer.reader.Next()
 					byteStringPart, kind, directValue, tokenizingError = lexer.tokenizeStringLikeExpressions(nextChar)
 					content = append([]rune{char}, byteStringPart...)
-					if directValue != Unknown {
+					if directValue != InvalidDirectValue {
 						directValue = ByteString
 					}
 					break

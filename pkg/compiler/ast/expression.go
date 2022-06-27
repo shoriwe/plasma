@@ -134,8 +134,8 @@ func (identifier *Identifier) Compile() ([]*vm.Code, *errors.Error) {
 type BasicLiteralExpression struct {
 	IExpression
 	Token       *lexer.Token
-	Kind        uint8
-	DirectValue uint8
+	Kind        lexer.Kind
+	DirectValue lexer.DirectValue
 }
 
 func (basicLiteral *BasicLiteralExpression) CompilePush(push bool) ([]*vm.Code, *errors.Error) {
