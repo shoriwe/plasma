@@ -124,7 +124,7 @@ func (parser *Parser) matchString(value string) bool {
 	if parser.currentToken == nil {
 		return false
 	}
-	return parser.currentToken.String == value
+	return parser.currentToken.String() == value
 }
 
 func (parser *Parser) parseForStatement() (*ast.ForLoopStatement, *errors.Error) {

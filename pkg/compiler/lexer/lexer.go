@@ -26,7 +26,7 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 	if !lexer.reader.HasNext() {
 		lexer.complete = true
 		return &Token{
-			String:      "EOF",
+			Contents:    nil,
 			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        lexer.line,
@@ -173,7 +173,7 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 	}
 	return &Token{
 		DirectValue: directValue,
-		String:      string(content),
+		Contents:    content,
 		Kind:        kind,
 		Line:        line,
 		Index:       index,

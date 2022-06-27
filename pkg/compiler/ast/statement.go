@@ -41,7 +41,7 @@ func compileClassBody(body []Node) ([]*vm.Code, *errors.Error) {
 		initFunction := &FunctionDefinitionStatement{
 			Name: &Identifier{
 				Token: &lexer.Token{
-					String: vm.Initialize,
+					Contents: []rune(vm.Initialize),
 				},
 			},
 			Arguments: nil,
@@ -97,7 +97,7 @@ func compileAssignStatementMiddleBinaryExpression(leftHandSide IExpression, assi
 }
 
 func compileIdentifierAssign(identifier *Identifier) ([]*vm.Code, *errors.Error) {
-	return []*vm.Code{vm.NewCode(vm.AssignIdentifierOP, identifier.Token.Line, identifier.Token.String)}, nil
+	return []*vm.Code{vm.NewCode(vm.AssignIdentifierOP, identifier.Token.Line, identifier.Token.String())}, nil
 }
 
 func compileSelectorAssign(selectorExpression *SelectorExpression) ([]*vm.Code, *errors.Error) {
@@ -105,7 +105,7 @@ func compileSelectorAssign(selectorExpression *SelectorExpression) ([]*vm.Code, 
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
 	}
-	return append(result, vm.NewCode(vm.AssignSelectorOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String)), nil
+	return append(result, vm.NewCode(vm.AssignSelectorOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String())), nil
 }
 
 func compileIndexAssign(indexExpression *IndexExpression) ([]*vm.Code, *errors.Error) {
@@ -267,7 +267,7 @@ func (forStatement *ForLoopStatement) Compile() ([]*vm.Code, *errors.Error) {
 	for _, receiver := range forStatement.Receivers {
 		receivers = append(
 			receivers,
-			receiver.Token.String,
+			receiver.Token.String(),
 		)
 	}
 	var result []*vm.Code
@@ -439,12 +439,12 @@ func (moduleStatement *ModuleStatement) Compile() ([]*vm.Code, *errors.Error) {
 			vm.NewModuleOP,
 			errors.UnknownLine,
 			vm.ClassInformation{
-				Name: moduleStatement.Name.Token.String,
+				Name: moduleStatement.Name.Token.String(),
 				Body: body,
 			},
 		),
 		vm.NewCode(vm.PushOP, errors.UnknownLine, nil),
-		vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, moduleStatement.Name.Token.String),
+		vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, moduleStatement.Name.Token.String()),
 	}, nil
 }
 
@@ -462,7 +462,7 @@ func (functionDefinition *FunctionDefinitionStatement) Compile() ([]*vm.Code, *e
 	}
 	var arguments []string
 	for _, argument := range functionDefinition.Arguments {
-		arguments = append(arguments, argument.Token.String)
+		arguments = append(arguments, argument.Token.String())
 	}
 
 	var body []*vm.Code
@@ -473,7 +473,7 @@ func (functionDefinition *FunctionDefinitionStatement) Compile() ([]*vm.Code, *e
 	var result []*vm.Code
 	result = append(result, vm.NewCode(vm.NewFunctionOP, errors.UnknownLine,
 		vm.FunctionInformation{
-			Name:              functionDefinition.Name.Token.String,
+			Name:              functionDefinition.Name.Token.String(),
 			Body:              body,
 			NumberOfArguments: len(functionDefinition.Arguments),
 		},
@@ -486,7 +486,7 @@ func (functionDefinition *FunctionDefinitionStatement) Compile() ([]*vm.Code, *e
 		vm.NewCode(
 			vm.AssignIdentifierOP,
 			functionDefinition.Name.Token.Line,
-			functionDefinition.Name.Token.String,
+			functionDefinition.Name.Token.String(),
 		),
 	)
 	return result, nil
@@ -500,7 +500,7 @@ func (functionDefinition *FunctionDefinitionStatement) CompileAsClassFunction() 
 
 	var arguments []string
 	for _, argument := range functionDefinition.Arguments {
-		arguments = append(arguments, argument.Token.String)
+		arguments = append(arguments, argument.Token.String())
 	}
 	var body []*vm.Code
 	body = append(body, vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments))
@@ -513,7 +513,7 @@ func (functionDefinition *FunctionDefinitionStatement) CompileAsClassFunction() 
 			vm.NewClassFunctionOP,
 			errors.UnknownLine,
 			vm.FunctionInformation{
-				Name:              functionDefinition.Name.Token.String,
+				Name:              functionDefinition.Name.Token.String(),
 				Body:              body,
 				NumberOfArguments: len(arguments),
 			},
@@ -528,10 +528,10 @@ func (functionDefinition *FunctionDefinitionStatement) CompileAsClassFunction() 
 		vm.NewCode(
 			vm.AssignIdentifierOP,
 			functionDefinition.Name.Token.Line,
-			functionDefinition.Name.Token.String,
+			functionDefinition.Name.Token.String(),
 		),
 	)
-	return result, nil, functionDefinition.Name.Token.String == vm.Initialize
+	return result, nil, functionDefinition.Name.Token.String() == vm.Initialize
 }
 
 type InterfaceStatement struct {
@@ -562,13 +562,13 @@ func (interfaceStatement *InterfaceStatement) Compile() ([]*vm.Code, *errors.Err
 	result = append(result, bases...)
 	result = append(result, vm.NewCode(vm.NewClassOP, errors.UnknownLine,
 		vm.ClassInformation{
-			Name: interfaceStatement.Name.Token.String,
+			Name: interfaceStatement.Name.Token.String(),
 			Body: body,
 		},
 	))
 
 	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
-	result = append(result, vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, interfaceStatement.Name.Token.String))
+	result = append(result, vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, interfaceStatement.Name.Token.String()))
 	return result, nil
 }
 
@@ -595,13 +595,13 @@ func (classStatement *ClassStatement) Compile() ([]*vm.Code, *errors.Error) {
 	result = append(result, bases...)
 	result = append(result, vm.NewCode(vm.NewClassOP, errors.UnknownLine,
 		vm.ClassInformation{
-			Name: classStatement.Name.Token.String,
+			Name: classStatement.Name.Token.String(),
 			Body: body,
 		},
 	))
 
 	result = append(result, vm.NewCode(vm.PushOP, errors.UnknownLine, nil))
-	result = append(result, vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, classStatement.Name.Token.String))
+	result = append(result, vm.NewCode(vm.AssignIdentifierOP, errors.UnknownLine, classStatement.Name.Token.String()))
 	return result, nil
 }
 
@@ -642,7 +642,7 @@ func (tryStatement *TryStatement) Compile() ([]*vm.Code, *errors.Error) {
 	for _, except := range tryStatement.ExceptBlocks {
 		captureName := ""
 		if except.CaptureName != nil {
-			captureName = except.CaptureName.Token.String
+			captureName = except.CaptureName.Token.String()
 		}
 		targetsReturn := &ReturnStatement{
 			Results: []IExpression{

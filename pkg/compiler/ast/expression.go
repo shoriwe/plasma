@@ -128,7 +128,7 @@ func (identifier *Identifier) CompilePush(push bool) ([]*vm.Code, *errors.Error)
 }
 
 func (identifier *Identifier) Compile() ([]*vm.Code, *errors.Error) {
-	return []*vm.Code{vm.NewCode(vm.GetIdentifierOP, identifier.Token.Line, identifier.Token.String)}, nil
+	return []*vm.Code{vm.NewCode(vm.GetIdentifierOP, identifier.Token.Line, identifier.Token.String())}, nil
 }
 
 type BasicLiteralExpression struct {
@@ -152,7 +152,7 @@ func (basicLiteral *BasicLiteralExpression) CompilePush(push bool) ([]*vm.Code, 
 func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error) {
 	switch basicLiteral.DirectValue {
 	case lexer.Integer:
-		numberString := basicLiteral.Token.String
+		numberString := basicLiteral.Token.String()
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		number, success := strconv.ParseInt(numberString, 10, 64)
 		if success != nil {
@@ -160,7 +160,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error
 		}
 		return []*vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
 	case lexer.HexadecimalInteger:
-		numberString := basicLiteral.Token.String
+		numberString := basicLiteral.Token.String()
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		numberString = numberString[2:]
 		number, parsingError := strconv.ParseInt(numberString, 16, 64)
@@ -169,7 +169,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error
 		}
 		return []*vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
 	case lexer.OctalInteger:
-		numberString := basicLiteral.Token.String
+		numberString := basicLiteral.Token.String()
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		numberString = numberString[2:]
 		number, parsingError := strconv.ParseInt(numberString, 8, 64)
@@ -178,7 +178,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error
 		}
 		return []*vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
 	case lexer.BinaryInteger:
-		numberString := basicLiteral.Token.String
+		numberString := basicLiteral.Token.String()
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		numberString = numberString[2:]
 		number, parsingError := strconv.ParseInt(numberString, 2, 64)
@@ -187,7 +187,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error
 		}
 		return []*vm.Code{vm.NewCode(vm.NewIntegerOP, basicLiteral.Token.Line, number)}, nil
 	case lexer.Float, lexer.ScientificFloat:
-		numberString := basicLiteral.Token.String
+		numberString := basicLiteral.Token.String()
 		numberString = strings.ReplaceAll(numberString, "_", "")
 		number, parsingError := strconv.ParseFloat(numberString, 64)
 		if parsingError != nil {
@@ -200,7 +200,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error
 
 			string(
 				tools.ReplaceEscaped(
-					[]rune(basicLiteral.Token.String[1:len(basicLiteral.Token.String)-1])),
+					[]rune(basicLiteral.Token.String()[1:len(basicLiteral.Token.String())-1])),
 			),
 		),
 		}, nil
@@ -209,7 +209,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error
 			[]byte(
 				string(
 					tools.ReplaceEscaped(
-						[]rune(basicLiteral.Token.String[2:len(basicLiteral.Token.String)-1]),
+						[]rune(basicLiteral.Token.String()[2:len(basicLiteral.Token.String())-1]),
 					),
 				),
 			),
@@ -388,7 +388,7 @@ func (lambdaExpression *LambdaExpression) Compile() ([]*vm.Code, *errors.Error) 
 	}
 	var arguments []string
 	for _, argument := range lambdaExpression.Arguments {
-		arguments = append(arguments, argument.Token.String)
+		arguments = append(arguments, argument.Token.String())
 	}
 	functionBody := []*vm.Code{vm.NewCode(vm.LoadFunctionArgumentsOP, errors.UnknownLine, arguments)}
 	functionBody = append(functionBody, functionCode...)
@@ -471,7 +471,7 @@ func (selectorExpression *SelectorExpression) Compile() ([]*vm.Code, *errors.Err
 	if sourceCompilationError != nil {
 		return nil, sourceCompilationError
 	}
-	return append(source, vm.NewCode(vm.SelectNameFromObjectOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String)), nil
+	return append(source, vm.NewCode(vm.SelectNameFromObjectOP, selectorExpression.Identifier.Token.Line, selectorExpression.Identifier.Token.String())), nil
 }
 
 type MethodInvocationExpression struct {

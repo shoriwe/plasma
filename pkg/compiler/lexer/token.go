@@ -119,12 +119,16 @@ const (
 */
 
 type Token struct {
-	String      string
+	Contents    []rune
 	DirectValue DirectValue
 	Kind        Kind
 	Line        int
 	Column      int
 	Index       int
+}
+
+func (token *Token) String() string {
+	return string(token.Contents)
 }
 
 /*

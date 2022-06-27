@@ -35,19 +35,19 @@ func walker(node ast.Node) string {
 		return result
 	case *ast.BinaryExpression:
 		return walker(node.(*ast.BinaryExpression).LeftHandSide) +
-			" " + node.(*ast.BinaryExpression).Operator.String +
+			" " + node.(*ast.BinaryExpression).Operator.String() +
 			" " + walker(node.(*ast.BinaryExpression).RightHandSide)
 	case *ast.BasicLiteralExpression:
-		return node.(*ast.BasicLiteralExpression).Token.String
+		return node.(*ast.BasicLiteralExpression).Token.String()
 	case *ast.UnaryExpression:
 		if node.(*ast.UnaryExpression).Operator.DirectValue == lexer.Not {
-			return node.(*ast.UnaryExpression).Operator.String + " " + walker(node.(*ast.UnaryExpression).X)
+			return node.(*ast.UnaryExpression).Operator.String() + " " + walker(node.(*ast.UnaryExpression).X)
 		}
-		return node.(*ast.UnaryExpression).Operator.String + walker(node.(*ast.UnaryExpression).X)
+		return node.(*ast.UnaryExpression).Operator.String() + walker(node.(*ast.UnaryExpression).X)
 	case *ast.SelectorExpression:
-		return walker(node.(*ast.SelectorExpression).X) + "." + node.(*ast.SelectorExpression).Identifier.Token.String
+		return walker(node.(*ast.SelectorExpression).X) + "." + node.(*ast.SelectorExpression).Identifier.Token.String()
 	case *ast.Identifier:
-		return node.(*ast.Identifier).Token.String
+		return node.(*ast.Identifier).Token.String()
 	case *ast.MethodInvocationExpression:
 		result := walker(node.(*ast.MethodInvocationExpression).Function) + "("
 		for index, child := range node.(*ast.MethodInvocationExpression).Arguments {
@@ -129,7 +129,7 @@ func walker(node ast.Node) string {
 		return "(" + result + walker(node.(*ast.GeneratorExpression).Source) + ")"
 	case *ast.AssignStatement:
 		result := walker(node.(*ast.AssignStatement).LeftHandSide)
-		result += " " + node.(*ast.AssignStatement).AssignOperator.String + " "
+		result += " " + node.(*ast.AssignStatement).AssignOperator.String() + " "
 		return result + walker(node.(*ast.AssignStatement).RightHandSide)
 	case *ast.ContinueStatement:
 		return "continue"
