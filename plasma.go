@@ -1,8 +1,8 @@
 package gplasma
 
 import (
-	"github.com/shoriwe/gplasma/pkg/compiler/lexer"
-	"github.com/shoriwe/gplasma/pkg/compiler/parser"
+	"github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/parser"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
