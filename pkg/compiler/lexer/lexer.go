@@ -45,66 +45,66 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		}
 		lexer.reader.Next()
 		lexer.line++
-		lexer.currentToken.Contents = []rune{char, '\n'}
+		lexer.currentToken.append(char, '\n')
 		lexer.currentToken.Kind = Separator
 		lexer.currentToken.DirectValue = NewLine
 	case NewLineChar:
 		lexer.line++
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.Kind = Separator
 		lexer.currentToken.DirectValue = NewLine
 	case SemiColonChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.Kind = Separator
 		lexer.currentToken.DirectValue = SemiColon
 	case ColonChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = Colon
 		lexer.currentToken.Kind = Punctuation
 	case CommaChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = Comma
 		lexer.currentToken.Kind = Punctuation
 	case OpenParenthesesChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = OpenParentheses
 		lexer.currentToken.Kind = Punctuation
 	case CloseParenthesesChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = CloseParentheses
 		lexer.currentToken.Kind = Punctuation
 	case OpenSquareBracketChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = OpenSquareBracket
 		lexer.currentToken.Kind = Punctuation
 	case CloseSquareBracketChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = CloseSquareBracket
 		lexer.currentToken.Kind = Punctuation
 	case OpenBraceChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = OpenBrace
 		lexer.currentToken.Kind = Punctuation
 	case CloseBraceChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = CloseBrace
 		lexer.currentToken.Kind = Punctuation
 	case DollarSignChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = DollarSign
 		lexer.currentToken.Kind = Punctuation
 	case DotChar:
-		lexer.currentToken.Contents = []rune{char}
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = Dot
 		lexer.currentToken.Kind = Punctuation
 	case WhiteSpaceChar:
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = Blank
 		lexer.currentToken.Kind = Whitespace
-		lexer.currentToken.Contents = []rune{char}
 	case TabChar:
+		lexer.currentToken.append(char)
 		lexer.currentToken.DirectValue = Blank
 		lexer.currentToken.Kind = Whitespace
-		lexer.currentToken.Contents = []rune{char}
 	case CommentChar:
 		lexer.currentToken.append(char)
 		lexer.tokenizeComment()
