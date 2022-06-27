@@ -2,23 +2,28 @@ package lexer
 
 import "github.com/shoriwe/gplasma/pkg/errors"
 
-func (lexer *Lexer) tokenizeBinary(letterB rune) ([]rune, Kind, DirectValue, *errors.Error) {
-	result := []rune{'0', letterB}
+func (lexer *Lexer) tokenizeBinary() *errors.Error {
 	if !lexer.reader.HasNext() {
-		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = InvalidDirectValue
+		return errors.NewUnknownTokenKindError(lexer.line)
 	}
 	nextDigit := lexer.reader.Char()
 	if !(nextDigit == '0' || nextDigit == '1') {
-		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = InvalidDirectValue
+		return errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
-	result = append(result, nextDigit)
+	lexer.currentToken.append(nextDigit)
 	for ; lexer.reader.HasNext(); lexer.reader.Next() {
 		nextDigit = lexer.reader.Char()
 		if !(nextDigit == '0' || nextDigit == '1') && nextDigit != '_' {
-			return result, Literal, BinaryInteger, nil
+			break
 		}
-		result = append(result, nextDigit)
+		lexer.currentToken.append(nextDigit)
 	}
-	return result, Literal, BinaryInteger, nil
+	lexer.currentToken.Kind = Literal
+	lexer.currentToken.DirectValue = BinaryInteger
+	return nil
 }

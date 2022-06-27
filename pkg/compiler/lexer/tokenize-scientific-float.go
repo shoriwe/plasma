@@ -2,33 +2,42 @@ package lexer
 
 import "github.com/shoriwe/gplasma/pkg/errors"
 
-func (lexer *Lexer) tokenizeScientificFloat(base []rune) ([]rune, Kind, DirectValue, *errors.Error) {
-	result := base
+func (lexer *Lexer) tokenizeScientificFloat() *errors.Error {
 	if !lexer.reader.HasNext() {
-		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = InvalidDirectValue
+		return errors.NewUnknownTokenKindError(lexer.line)
 	}
 	direction := lexer.reader.Char()
 	if (direction != '-') && (direction != '+') {
-		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = InvalidDirectValue
+		return errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
 	// Ensure next is a number
 	if !lexer.reader.HasNext() {
-		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = InvalidDirectValue
+		return errors.NewUnknownTokenKindError(lexer.line)
 	}
-	result = append(result, direction)
+	lexer.currentToken.append(direction)
 	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '9') {
-		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = InvalidDirectValue
+		return errors.NewUnknownTokenKindError(lexer.line)
 	}
-	result = append(result, nextDigit)
+	lexer.currentToken.append(nextDigit)
 	lexer.reader.Next()
 	for ; lexer.reader.HasNext(); lexer.reader.Next() {
 		nextDigit = lexer.reader.Char()
 		if !('0' <= nextDigit && nextDigit <= '9') && nextDigit != '_' {
-			return result, Literal, ScientificFloat, nil
+			break
 		}
-		result = append(result, nextDigit)
+		lexer.currentToken.append(nextDigit)
 	}
-	return result, Literal, ScientificFloat, nil
+	lexer.currentToken.Kind = Literal
+	lexer.currentToken.DirectValue = ScientificFloat
+	return nil
 }

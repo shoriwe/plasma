@@ -2,25 +2,30 @@ package lexer
 
 import "github.com/shoriwe/gplasma/pkg/errors"
 
-func (lexer *Lexer) tokenizeHexadecimal(letterX rune) ([]rune, Kind, DirectValue, *errors.Error) {
-	result := []rune{'0', letterX}
+func (lexer *Lexer) tokenizeHexadecimal() *errors.Error {
 	if !lexer.reader.HasNext() {
-		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = InvalidDirectValue
+		return errors.NewUnknownTokenKindError(lexer.line)
 	}
 	nextDigit := lexer.reader.Char()
 	if !(('0' <= nextDigit && nextDigit <= '9') ||
 		('a' <= nextDigit && nextDigit <= 'f') ||
 		('A' <= nextDigit && nextDigit <= 'F')) {
-		return result, Literal, InvalidDirectValue, errors.NewUnknownTokenKindError(lexer.line)
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = InvalidDirectValue
+		return errors.NewUnknownTokenKindError(lexer.line)
 	}
 	lexer.reader.Next()
-	result = append(result, nextDigit)
+	lexer.currentToken.append(nextDigit)
 	for ; lexer.reader.HasNext(); lexer.reader.Next() {
 		nextDigit = lexer.reader.Char()
 		if !(('0' <= nextDigit && nextDigit <= '9') || ('a' <= nextDigit && nextDigit <= 'f') || ('A' <= nextDigit && nextDigit <= 'F')) && nextDigit != '_' {
-			return result, Literal, HexadecimalInteger, nil
+			break
 		}
-		result = append(result, nextDigit)
+		lexer.currentToken.append(nextDigit)
 	}
-	return result, Literal, HexadecimalInteger, nil
+	lexer.currentToken.Kind = Literal
+	lexer.currentToken.DirectValue = HexadecimalInteger
+	return nil
 }

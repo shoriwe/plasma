@@ -2,28 +2,37 @@ package lexer
 
 import "github.com/shoriwe/gplasma/pkg/errors"
 
-func (lexer *Lexer) tokenizeFloat(base []rune) ([]rune, Kind, DirectValue, *errors.Error) {
+func (lexer *Lexer) tokenizeFloat() *errors.Error {
 	if !lexer.reader.HasNext() {
 		lexer.reader.Redo()
-		return base[:len(base)-1], Literal, Integer, nil
+		lexer.currentToken.Contents = lexer.currentToken.Contents[:len(lexer.currentToken.Contents)-1]
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = Integer
+		return nil
 	}
 	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '9') {
 		lexer.reader.Redo()
-		return base[:len(base)-1], Literal, Integer, nil
+		lexer.currentToken.Contents = lexer.currentToken.Contents[:len(lexer.currentToken.Contents)-1]
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = Integer
+		return nil
 	}
 	lexer.reader.Next()
-	result := append(base, nextDigit)
+	lexer.currentToken.append(nextDigit)
 	for ; lexer.reader.HasNext(); lexer.reader.Next() {
 		nextDigit = lexer.reader.Char()
 		if ('0' <= nextDigit && nextDigit <= '9') || nextDigit == '_' {
-			result = append(result, nextDigit)
+			lexer.currentToken.append(nextDigit)
 		} else if (nextDigit == 'e') || (nextDigit == 'E') {
 			lexer.reader.Next()
-			return lexer.tokenizeScientificFloat(append(result, nextDigit))
+			lexer.currentToken.append(nextDigit)
+			return lexer.tokenizeScientificFloat()
 		} else {
 			break
 		}
 	}
-	return result, Literal, Float, nil
+	lexer.currentToken.Kind = Literal
+	lexer.currentToken.DirectValue = Float
+	return nil
 }

@@ -2,34 +2,44 @@ package lexer
 
 import "github.com/shoriwe/gplasma/pkg/errors"
 
-func (lexer *Lexer) tokenizeInteger(base []rune) ([]rune, Kind, DirectValue, *errors.Error) {
+func (lexer *Lexer) tokenizeInteger() *errors.Error {
 	if !lexer.reader.HasNext() {
-		return base, Literal, Integer, nil
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = Integer
+		return nil
 	}
 	nextDigit := lexer.reader.Char()
 	if nextDigit == '.' {
 		lexer.reader.Next()
-		return lexer.tokenizeFloat(append(base, nextDigit))
+		lexer.currentToken.append(nextDigit)
+		return lexer.tokenizeFloat()
 	} else if nextDigit == 'e' || nextDigit == 'E' {
 		lexer.reader.Next()
-		return lexer.tokenizeScientificFloat(append(base, nextDigit))
+		lexer.currentToken.append(nextDigit)
+		return lexer.tokenizeScientificFloat()
 	} else if !('0' <= nextDigit && nextDigit <= '9') {
-		return base, Literal, Integer, nil
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = Integer
+		return nil
 	}
 	lexer.reader.Next()
-	result := append(base, nextDigit)
+	lexer.currentToken.append(nextDigit)
 	for ; lexer.reader.HasNext(); lexer.reader.Next() {
 		nextDigit = lexer.reader.Char()
 		if nextDigit == 'e' || nextDigit == 'E' {
-			return lexer.tokenizeScientificFloat(append(result, nextDigit))
+			lexer.currentToken.append(nextDigit)
+			return lexer.tokenizeScientificFloat()
 		} else if nextDigit == '.' {
 			lexer.reader.Next()
-			return lexer.tokenizeFloat(append(result, nextDigit))
+			lexer.currentToken.append(nextDigit)
+			return lexer.tokenizeFloat()
 		} else if ('0' <= nextDigit && nextDigit <= '9') || nextDigit == '_' {
-			result = append(result, nextDigit)
+			lexer.currentToken.append(nextDigit)
 		} else {
 			break
 		}
 	}
-	return result, Literal, Integer, nil
+	lexer.currentToken.Kind = Literal
+	lexer.currentToken.DirectValue = Integer
+	return nil
 }

@@ -2,41 +2,54 @@ package lexer
 
 import "github.com/shoriwe/gplasma/pkg/errors"
 
-func (lexer *Lexer) tokenizeNumeric(firstDigit rune) ([]rune, Kind, DirectValue, *errors.Error) {
+func (lexer *Lexer) tokenizeNumeric() *errors.Error {
 	if !lexer.reader.HasNext() {
-		return []rune{firstDigit}, Literal, Integer, nil
+		lexer.currentToken.Kind = Literal
+		lexer.currentToken.DirectValue = Integer
+		return nil
 	}
 	nextChar := lexer.reader.Char()
 	lexer.reader.Next()
-	if firstDigit == '0' {
+	if lexer.currentToken.Contents[0] == '0' {
 		switch nextChar {
 		case 'x', 'X': // Hexadecimal
-			return lexer.tokenizeHexadecimal(nextChar)
+			lexer.currentToken.append(nextChar)
+			return lexer.tokenizeHexadecimal()
 		case 'b', 'B': // Binary
-			return lexer.tokenizeBinary(nextChar)
+			lexer.currentToken.append(nextChar)
+			return lexer.tokenizeBinary()
 		case 'o', 'O': // Octal
-			return lexer.tokenizeOctal(nextChar)
+			lexer.currentToken.append(nextChar)
+			return lexer.tokenizeOctal()
 		case 'e', 'E': // Scientific float
-			return lexer.tokenizeScientificFloat([]rune{firstDigit, nextChar})
+			lexer.currentToken.append(nextChar)
+			return lexer.tokenizeScientificFloat()
 		case '.': // Maybe a float
-			return lexer.tokenizeFloat([]rune{firstDigit, nextChar}) // Integer, Float Or Scientific Float
+			lexer.currentToken.append(nextChar)
+			return lexer.tokenizeFloat() // Integer, Float Or Scientific Float
 		default:
 			if ('0' <= nextChar && nextChar <= '9') || nextChar == '_' {
-				return lexer.tokenizeInteger([]rune{firstDigit, nextChar}) // Integer, Float or Scientific Float
+				lexer.currentToken.append(nextChar)
+				return lexer.tokenizeInteger() // Integer, Float or Scientific Float
 			}
 		}
 	} else {
 		switch nextChar {
 		case 'e', 'E': // Scientific float
-			return lexer.tokenizeScientificFloat([]rune{firstDigit, nextChar})
+			lexer.currentToken.append(nextChar)
+			return lexer.tokenizeScientificFloat()
 		case '.': // Maybe a float
-			return lexer.tokenizeFloat([]rune{firstDigit, nextChar}) // Integer, Float Or Scientific Float
+			lexer.currentToken.append(nextChar)
+			return lexer.tokenizeFloat() // Integer, Float Or Scientific Float
 		default:
 			if ('0' <= nextChar && nextChar <= '9') || nextChar == '_' {
-				return lexer.tokenizeInteger([]rune{firstDigit, nextChar}) // Integer, Float or Scientific Float
+				lexer.currentToken.append(nextChar)
+				return lexer.tokenizeInteger() // Integer, Float or Scientific Float
 			}
 		}
 	}
 	lexer.reader.Redo()
-	return []rune{firstDigit}, Literal, Integer, nil
+	lexer.currentToken.Kind = Literal
+	lexer.currentToken.DirectValue = Integer
+	return nil
 }

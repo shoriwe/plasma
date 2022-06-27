@@ -112,7 +112,8 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		lexer.currentToken.append(char)
 		tokenizingError = lexer.tokenizeStringLikeExpressions(char)
 	case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue, tokenizingError = lexer.tokenizeNumeric(char)
+		lexer.currentToken.append(char)
+		tokenizingError = lexer.tokenizeNumeric()
 	case StarChar:
 		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeRepeatableOperator(char, Star, Operator, PowerOf, Operator, StarAssign, Assignment, PowerOfAssign, Assignment)
 	case DivChar:
