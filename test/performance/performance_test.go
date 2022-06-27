@@ -45,14 +45,14 @@ func test(t *testing.T, script string) {
 	fmt.Println(output.String())
 }
 
-func TestWhile(t *testing.T) {
-	test(t, filepath.Join(whileTest))
-}
-
-func TestFor(t *testing.T) {
-	test(t, filepath.Join(forTest))
-}
-
-func TestFibonacci(t *testing.T) {
-	test(t, filepath.Join(fibonacci))
-}
+// func TestWhile(t *testing.T) {
+// 	test(t, filepath.Join(whileTest))
+// }
+//
+// func TestFor(t *testing.T) {
+// 	test(t, filepath.Join(forTest))
+// }
+//
+// func TestFibonacci(t *testing.T) {
+// 	test(t, filepath.Join(fibonacci))
+// }

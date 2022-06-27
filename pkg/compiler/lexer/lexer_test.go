@@ -22,8 +22,8 @@ func test(t *testing.T, samples map[string][]*Token) {
 			return
 		}
 		for index, computedToken := range computedTokens {
-			if computedToken.String != result[index].String {
-				t.Errorf("Expecting Token: '%s' but Received Token: %s in sample %s", result[index].String, computedToken.String, sample)
+			if computedToken.String() != result[index].String() {
+				t.Errorf("Expecting Token: '%s' but Received Token: %s in sample %s", result[index].String(), computedToken.String(), sample)
 				return
 			}
 			if computedToken.Kind != result[index].Kind {
@@ -41,7 +41,7 @@ func test(t *testing.T, samples map[string][]*Token) {
 var stringSamples = map[string][]*Token{
 	"\"this is a string expression\n\"": {
 		{
-			String:      "\"this is a string expression\n\"",
+			Contents:    []rune("\"this is a string expression\n\""),
 			DirectValue: DoubleQuoteString,
 			Kind:        Literal,
 			Line:        0,
@@ -49,8 +49,8 @@ var stringSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -59,7 +59,7 @@ var stringSamples = map[string][]*Token{
 	},
 	"\"concat#{foobar}\"": {
 		{
-			String:      "\"concat#{foobar}\"",
+			Contents:    []rune("\"concat#{foobar}\""),
 			DirectValue: DoubleQuoteString,
 			Kind:        Literal,
 			Line:        0,
@@ -67,8 +67,8 @@ var stringSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -77,7 +77,7 @@ var stringSamples = map[string][]*Token{
 	},
 	"'concat#{foobar}'": {
 		{
-			String:      "'concat#{foobar}'",
+			Contents:    []rune("'concat#{foobar}'"),
 			DirectValue: SingleQuoteString,
 			Kind:        Literal,
 			Line:        0,
@@ -85,8 +85,8 @@ var stringSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -95,7 +95,7 @@ var stringSamples = map[string][]*Token{
 	},
 	"b\"Hello World\"": {
 		{
-			String:      "b\"Hello World\"",
+			Contents:    []rune("b\"Hello World\""),
 			DirectValue: ByteString,
 			Kind:        Literal,
 			Line:        0,
@@ -103,8 +103,8 @@ var stringSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -120,7 +120,7 @@ func TestString(t *testing.T) {
 var commandOutputSamples = map[string][]*Token{
 	"`date`": {
 		{
-			String:      "`date`",
+			Contents:    []rune("`date`"),
 			DirectValue: CommandOutput,
 			Kind:        Literal,
 			Line:        0,
@@ -128,8 +128,8 @@ var commandOutputSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -138,7 +138,7 @@ var commandOutputSamples = map[string][]*Token{
 	},
 	"`whoami\ndate`": {
 		{
-			String:      "`whoami\ndate`",
+			Contents:    []rune("`whoami\ndate`"),
 			DirectValue: CommandOutput,
 			Kind:        Literal,
 			Line:        0,
@@ -146,8 +146,8 @@ var commandOutputSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -163,7 +163,7 @@ func TestCommandOutput(t *testing.T) {
 var numericSamples = map[string][]*Token{
 	"1\n": {
 		{
-			String:      "1",
+			Contents:    []rune("1"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -171,7 +171,7 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "\n",
+			Contents:    []rune("\n"),
 			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
@@ -179,8 +179,8 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -189,7 +189,7 @@ var numericSamples = map[string][]*Token{
 	}, // Integer
 	"0.1234\n": {
 		{
-			String:      "0.1234",
+			Contents:    []rune("0.1234"),
 			DirectValue: Float,
 			Kind:        Literal,
 			Line:        0,
@@ -197,7 +197,7 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "\n",
+			Contents:    []rune("\n"),
 			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
@@ -205,8 +205,8 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -215,7 +215,7 @@ var numericSamples = map[string][]*Token{
 	}, // Float
 	"1e-234\n": {
 		{
-			String:      "1e-234",
+			Contents:    []rune("1e-234"),
 			DirectValue: ScientificFloat,
 			Kind:        Literal,
 			Line:        0,
@@ -223,7 +223,7 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "\n",
+			Contents:    []rune("\n"),
 			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
@@ -231,8 +231,8 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -241,7 +241,7 @@ var numericSamples = map[string][]*Token{
 	}, // Scientific Number
 	"0x34587_345798923": {
 		{
-			String:      "0x34587_345798923",
+			Contents:    []rune("0x34587_345798923"),
 			DirectValue: HexadecimalInteger,
 			Kind:        Literal,
 			Line:        0,
@@ -249,8 +249,8 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -259,7 +259,7 @@ var numericSamples = map[string][]*Token{
 	}, // Hexadecimal Number
 	"0b0010100100101_1001": {
 		{
-			String:      "0b0010100100101_1001",
+			Contents:    []rune("0b0010100100101_1001"),
 			DirectValue: BinaryInteger,
 			Kind:        Literal,
 			Line:        0,
@@ -267,8 +267,8 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -277,7 +277,7 @@ var numericSamples = map[string][]*Token{
 	}, //  Binary Number
 	"0o0004357_435345 << 1": {
 		{
-			String:      "0o0004357_435345",
+			Contents:    []rune("0o0004357_435345"),
 			DirectValue: OctalInteger,
 			Kind:        Literal,
 			Line:        0,
@@ -285,7 +285,7 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "<<",
+			Contents:    []rune("<<"),
 			DirectValue: BitwiseLeft,
 			Kind:        Operator,
 			Line:        0,
@@ -293,7 +293,7 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "1",
+			Contents:    []rune("1"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -301,8 +301,8 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -311,7 +311,7 @@ var numericSamples = map[string][]*Token{
 	},
 	"1 // 2": {
 		{
-			String:      "1",
+			Contents:    []rune("1"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -319,7 +319,7 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "//",
+			Contents:    []rune("//"),
 			DirectValue: FloorDiv,
 			Kind:        Operator,
 			Line:        0,
@@ -327,7 +327,7 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "2",
+			Contents:    []rune("2"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -335,8 +335,8 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -345,7 +345,7 @@ var numericSamples = map[string][]*Token{
 	},
 	"1**2": {
 		{
-			String:      "1",
+			Contents:    []rune("1"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -353,7 +353,7 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "**",
+			Contents:    []rune("**"),
 			DirectValue: PowerOf,
 			Kind:        Operator,
 			Line:        0,
@@ -361,7 +361,7 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "2",
+			Contents:    []rune("2"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -369,8 +369,8 @@ var numericSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
@@ -386,7 +386,7 @@ func TestNumeric(t *testing.T) {
 var complexSamples = map[string][]*Token{
 	"for a in range(1, 2)\n1-\n2*\n4\npass\nend\n": {
 		{
-			String:      "for",
+			Contents:    []rune("for"),
 			DirectValue: For,
 			Kind:        Keyboard,
 			Line:        0,
@@ -394,15 +394,15 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "a",
-			DirectValue: Unknown,
+			Contents:    []rune("a"),
+			DirectValue: InvalidDirectValue,
 			Kind:        IdentifierKind,
 			Line:        0,
 			Column:      0,
 			Index:       0,
 		},
 		{
-			String:      "in",
+			Contents:    []rune("in"),
 			DirectValue: In,
 			Kind:        Comparator,
 			Line:        0,
@@ -410,15 +410,15 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "range",
-			DirectValue: Unknown,
+			Contents:    []rune("range"),
+			DirectValue: InvalidDirectValue,
 			Kind:        IdentifierKind,
 			Line:        0,
 			Column:      0,
 			Index:       0,
 		},
 		{
-			String:      "(",
+			Contents:    []rune("("),
 			DirectValue: OpenParentheses,
 			Kind:        Punctuation,
 			Line:        0,
@@ -426,7 +426,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "1",
+			Contents:    []rune("1"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -434,7 +434,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      ",",
+			Contents:    []rune(","),
 			DirectValue: Comma,
 			Kind:        Punctuation,
 			Line:        0,
@@ -442,7 +442,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "2",
+			Contents:    []rune("2"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -450,7 +450,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      ")",
+			Contents:    []rune(")"),
 			DirectValue: CloseParentheses,
 			Kind:        Punctuation,
 			Line:        0,
@@ -458,7 +458,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "\n",
+			Contents:    []rune("\n"),
 			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
@@ -466,7 +466,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "1",
+			Contents:    []rune("1"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -474,7 +474,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "-",
+			Contents:    []rune("-"),
 			DirectValue: Sub,
 			Kind:        Operator,
 			Line:        0,
@@ -482,7 +482,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "2",
+			Contents:    []rune("2"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -490,7 +490,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "*",
+			Contents:    []rune("*"),
 			DirectValue: Star,
 			Kind:        Operator,
 			Line:        0,
@@ -498,7 +498,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "4",
+			Contents:    []rune("4"),
 			DirectValue: Integer,
 			Kind:        Literal,
 			Line:        0,
@@ -506,7 +506,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "\n",
+			Contents:    []rune("\n"),
 			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
@@ -514,7 +514,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "pass",
+			Contents:    []rune("pass"),
 			DirectValue: Pass,
 			Kind:        Keyboard,
 			Line:        0,
@@ -522,7 +522,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "\n",
+			Contents:    []rune("\n"),
 			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
@@ -530,7 +530,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "end",
+			Contents:    []rune("end"),
 			DirectValue: End,
 			Kind:        Keyboard,
 			Line:        0,
@@ -538,7 +538,7 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "\n",
+			Contents:    []rune("\n"),
 			DirectValue: NewLine,
 			Kind:        Separator,
 			Line:        0,
@@ -546,8 +546,8 @@ var complexSamples = map[string][]*Token{
 			Index:       0,
 		},
 		{
-			String:      "EOF",
-			DirectValue: EOF,
+			Contents:    nil,
+			DirectValue: InvalidDirectValue,
 			Kind:        EOF,
 			Line:        0,
 			Column:      0,
