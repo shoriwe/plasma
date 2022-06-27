@@ -109,7 +109,8 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		lexer.currentToken.append(char)
 		lexer.tokenizeComment()
 	case '\'', '"', '`':
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
+		lexer.currentToken.append(char)
+		tokenizingError = lexer.tokenizeStringLikeExpressions(char)
 	case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
 		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue, tokenizingError = lexer.tokenizeNumeric(char)
 	case StarChar:
@@ -150,23 +151,24 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		}
 		lexer.currentToken.Kind = PendingEscape
 	default:
-		if char == 'b' {
-			if lexer.reader.HasNext() {
-				nextChar := lexer.reader.Char()
-				if nextChar == '\'' || nextChar == '"' {
-					var byteStringPart []rune
-					lexer.reader.Next()
-					byteStringPart, lexer.currentToken.Kind, lexer.currentToken.DirectValue, tokenizingError = lexer.tokenizeStringLikeExpressions(nextChar)
-					lexer.currentToken.Contents = append([]rune{char}, byteStringPart...)
-					if lexer.currentToken.DirectValue != InvalidDirectValue {
-						lexer.currentToken.DirectValue = ByteString
-					}
-					break
-				}
-			}
+		if char != 'b' || !lexer.reader.HasNext() {
+			lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue,
+				tokenizingError = lexer.tokenizeWord(char)
+			break
 		}
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue,
-			tokenizingError = lexer.tokenizeWord(char)
+		nextChar := lexer.reader.Char()
+		if nextChar != '\'' && nextChar != '"' {
+			lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue,
+				tokenizingError = lexer.tokenizeWord(char)
+			break
+		}
+		lexer.reader.Next()
+		lexer.currentToken.append('b', nextChar)
+		tokenizingError = lexer.tokenizeStringLikeExpressions(nextChar)
+		if lexer.currentToken.DirectValue != InvalidDirectValue {
+			lexer.currentToken.DirectValue = ByteString
+		}
+		break
 	}
 	return lexer.currentToken, tokenizingError
 }

@@ -2,8 +2,7 @@ package lexer
 
 import "github.com/shoriwe/gplasma/pkg/errors"
 
-func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener rune) ([]rune, Kind, DirectValue, *errors.Error) {
-	content := []rune{stringOpener}
+func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener rune) *errors.Error {
 	var target DirectValue
 	switch stringOpener {
 	case '\'':
@@ -14,7 +13,6 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener rune) ([]rune, Ki
 		target = CommandOutput
 	}
 	var directValue = InvalidDirectValue
-	var tokenizingError *errors.Error
 	escaped := false
 	finish := false
 	for ; lexer.reader.HasNext() && !finish; lexer.reader.Next() {
@@ -24,8 +22,7 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener rune) ([]rune, Ki
 			case '\\', '\'', '"', '`', 'a', 'b', 'e', 'f', 'n', 'r', 't', '?', 'u', 'x':
 				escaped = false
 			default:
-				tokenizingError = errors.New(lexer.line, "invalid escape sequence", errors.LexingError)
-				finish = true
+				return errors.New(lexer.line, "invalid escape sequence", errors.LexingError)
 			}
 		} else {
 			switch char {
@@ -38,10 +35,12 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener rune) ([]rune, Ki
 				escaped = true
 			}
 		}
-		content = append(content, char)
+		lexer.currentToken.append(char)
 	}
 	if directValue != target {
-		tokenizingError = errors.New(lexer.line, "string never closed", errors.LexingError)
+		return errors.New(lexer.line, "string never closed", errors.LexingError)
 	}
-	return content, Literal, directValue, tokenizingError
+	lexer.currentToken.Kind = Literal
+	lexer.currentToken.DirectValue = directValue
+	return nil
 }
