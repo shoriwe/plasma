@@ -20,7 +20,10 @@ func (lexer *Lexer) tokenizeHexadecimal() *errors.Error {
 	lexer.currentToken.append(nextDigit)
 	for ; lexer.reader.HasNext(); lexer.reader.Next() {
 		nextDigit = lexer.reader.Char()
-		if !(('0' <= nextDigit && nextDigit <= '9') || ('a' <= nextDigit && nextDigit <= 'f') || ('A' <= nextDigit && nextDigit <= 'F')) && nextDigit != '_' {
+		if !(('0' <= nextDigit && nextDigit <= '9') ||
+			('a' <= nextDigit && nextDigit <= 'f') ||
+			('A' <= nextDigit && nextDigit <= 'F')) &&
+			nextDigit != '_' {
 			break
 		}
 		lexer.currentToken.append(nextDigit)

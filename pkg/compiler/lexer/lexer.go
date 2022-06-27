@@ -115,13 +115,17 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		lexer.currentToken.append(char)
 		tokenizingError = lexer.tokenizeNumeric()
 	case StarChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeRepeatableOperator(char, Star, Operator, PowerOf, Operator, StarAssign, Assignment, PowerOfAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeRepeatableOperator(Star, Operator, PowerOf, Operator, StarAssign, Assignment, PowerOfAssign, Assignment)
 	case DivChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeRepeatableOperator(char, Div, Operator, FloorDiv, Operator, DivAssign, Assignment, FloorDivAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeRepeatableOperator(Div, Operator, FloorDiv, Operator, DivAssign, Assignment, FloorDivAssign, Assignment)
 	case LessThanChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeRepeatableOperator(char, LessThan, Comparator, BitwiseLeft, Operator, LessOrEqualThan, Comparator, BitwiseLeftAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeRepeatableOperator(LessThan, Comparator, BitwiseLeft, Operator, LessOrEqualThan, Comparator, BitwiseLeftAssign, Assignment)
 	case GreatThanChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeRepeatableOperator(char, GreaterThan, Comparator, BitwiseRight, Operator, GreaterOrEqualThan, Comparator, BitwiseRightAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeRepeatableOperator(GreaterThan, Comparator, BitwiseRight, Operator, GreaterOrEqualThan, Comparator, BitwiseRightAssign, Assignment)
 	case AddChar:
 		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, Add, Operator, AddAssign, Assignment)
 	case SubChar:

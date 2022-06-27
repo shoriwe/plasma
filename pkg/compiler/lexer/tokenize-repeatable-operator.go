@@ -1,36 +1,34 @@
 package lexer
 
-func (lexer *Lexer) tokenizeRepeatableOperator(char rune,
+func (lexer *Lexer) tokenizeRepeatableOperator(
 	singleDirectValue DirectValue, singleKind Kind,
 	doubleDirectValue DirectValue, doubleKind Kind,
 	assignSingleDirectValue DirectValue, assignSingleKind Kind,
 	assignDoubleDirectValue DirectValue, assignDoubleKind Kind,
-) ([]rune, Kind, DirectValue) {
-	content := []rune{char}
-	kind := singleKind
-	directValue := singleDirectValue
+) {
+	lexer.currentToken.Kind = singleKind
+	lexer.currentToken.DirectValue = singleDirectValue
 	if lexer.reader.HasNext() {
 		nextChar := lexer.reader.Char()
-		if nextChar == char {
-			content = append(content, nextChar)
+		if nextChar == lexer.currentToken.Contents[0] {
+			lexer.currentToken.append(nextChar)
 			lexer.reader.Next()
-			kind = doubleKind
-			directValue = doubleDirectValue
+			lexer.currentToken.Kind = doubleKind
+			lexer.currentToken.DirectValue = doubleDirectValue
 			if lexer.reader.HasNext() {
 				nextNextChar := lexer.reader.Char()
 				if nextNextChar == '=' {
-					content = append(content, nextNextChar)
-					kind = assignDoubleKind
+					lexer.currentToken.append(nextNextChar)
+					lexer.currentToken.Kind = assignDoubleKind
 					lexer.reader.Next()
-					directValue = assignDoubleDirectValue
+					lexer.currentToken.DirectValue = assignDoubleDirectValue
 				}
 			}
 		} else if nextChar == '=' {
-			kind = assignSingleKind
-			content = append(content, nextChar)
+			lexer.currentToken.Kind = assignSingleKind
+			lexer.currentToken.append(nextChar)
 			lexer.reader.Next()
-			directValue = assignSingleDirectValue
+			lexer.currentToken.DirectValue = assignSingleDirectValue
 		}
 	}
-	return content, kind, directValue
 }
