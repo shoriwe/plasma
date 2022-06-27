@@ -1,18 +1,22 @@
 package lexer
 
-import "github.com/shoriwe/gplasma/pkg/errors"
+import "errors"
 
-func (lexer *Lexer) tokenizeBinary() *errors.Error {
+var (
+	BinaryInvalidSyntax = errors.New("invalid binary integer syntax")
+)
+
+func (lexer *Lexer) tokenizeBinary() error {
 	if !lexer.reader.HasNext() {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return BinaryInvalidSyntax
 	}
 	nextDigit := lexer.reader.Char()
 	if !(nextDigit == '0' || nextDigit == '1') {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return BinaryInvalidSyntax
 	}
 	lexer.reader.Next()
 	lexer.currentToken.append(nextDigit)

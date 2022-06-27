@@ -1,7 +1,7 @@
 package vm
 
 import (
-	"github.com/shoriwe/gplasma/pkg/tools"
+	"github.com/shoriwe/gplasma/pkg/common"
 )
 
 func (p *Plasma) Repeat(context *Context, content []*Value, times int64) ([]*Value, *Value) {
@@ -195,7 +195,7 @@ func (p *Plasma) ContentCopy(context *Context, source *Value) (*Value, bool) {
 
 func (p *Plasma) ContentIndex(context *Context, source *Value, indexObject *Value) (*Value, bool) {
 	if indexObject.IsTypeById(IntegerId) {
-		index, calcError := tools.CalcIndex(indexObject.Integer, len(source.Content))
+		index, calcError := common.CalcIndex(indexObject.Integer, len(source.Content))
 		if calcError != nil {
 			return p.NewIndexOutOfRange(context, len(source.Content), indexObject.Integer), false
 		}
@@ -204,12 +204,12 @@ func (p *Plasma) ContentIndex(context *Context, source *Value, indexObject *Valu
 		if len(indexObject.Content) != 2 {
 			return p.NewInvalidNumberOfArgumentsError(context, len(indexObject.Content), 2), false
 		}
-		startIndex, calcError := tools.CalcIndex(indexObject.Content[0].Integer, len(source.Content))
+		startIndex, calcError := common.CalcIndex(indexObject.Content[0].Integer, len(source.Content))
 		if calcError != nil {
 			return p.NewIndexOutOfRange(context, len(source.Content), indexObject.Content[0].Integer), false
 		}
 		var targetIndex int
-		targetIndex, calcError = tools.CalcIndex(indexObject.Content[1].Integer, len(source.Content))
+		targetIndex, calcError = common.CalcIndex(indexObject.Content[1].Integer, len(source.Content))
 		if calcError != nil {
 			return p.NewIndexOutOfRange(context, len(source.Content), indexObject.Content[1].Integer), false
 		}
@@ -253,7 +253,7 @@ func (p *Plasma) ContentAssign(context *Context, source, indexObject *Value, val
 	if !indexObject.IsTypeById(IntegerId) {
 		return p.NewInvalidTypeError(context, indexObject.GetClass(p).Name, IntegerName), false
 	}
-	index, calcError := tools.CalcIndex(indexObject.Integer, len(source.Content))
+	index, calcError := common.CalcIndex(indexObject.Integer, len(source.Content))
 	if calcError != nil {
 		return p.NewIndexOutOfRange(context, len(source.Content), indexObject.Integer), false
 	}
@@ -418,7 +418,7 @@ func (p *Plasma) InterpretAsBool(expression bool) *Value {
 
 func (p *Plasma) StringIndex(context *Context, source *Value, indexObject *Value) (*Value, bool) {
 	if indexObject.IsTypeById(IntegerId) {
-		index, getIndexError := tools.CalcIndex(indexObject.Integer, len(source.String))
+		index, getIndexError := common.CalcIndex(indexObject.Integer, len(source.String))
 		if getIndexError != nil {
 			return p.NewIndexOutOfRange(context, len(source.String), indexObject.Integer), false
 		}
@@ -427,12 +427,12 @@ func (p *Plasma) StringIndex(context *Context, source *Value, indexObject *Value
 		if len(indexObject.Content) != 2 {
 			return p.NewInvalidNumberOfArgumentsError(context, len(indexObject.Content), 2), false
 		}
-		startIndex, calcError := tools.CalcIndex(indexObject.Content[0].Integer, len(source.String))
+		startIndex, calcError := common.CalcIndex(indexObject.Content[0].Integer, len(source.String))
 		if calcError != nil {
 			return p.NewIndexOutOfRange(context, len(source.String), indexObject.Content[0].Integer), false
 		}
 		var targetIndex int
-		targetIndex, calcError = tools.CalcIndex(indexObject.Content[1].Integer, len(source.String))
+		targetIndex, calcError = common.CalcIndex(indexObject.Content[1].Integer, len(source.String))
 		if calcError != nil {
 			return p.NewIndexOutOfRange(context, len(source.String), indexObject.Content[1].Integer), false
 		}
@@ -443,7 +443,7 @@ func (p *Plasma) StringIndex(context *Context, source *Value, indexObject *Value
 
 func (p *Plasma) BytesIndex(context *Context, source *Value, indexObject *Value) (*Value, bool) {
 	if indexObject.IsTypeById(IntegerId) {
-		index, calcError := tools.CalcIndex(indexObject.Integer, len(source.Bytes))
+		index, calcError := common.CalcIndex(indexObject.Integer, len(source.Bytes))
 		if calcError != nil {
 			return p.NewIndexOutOfRange(context, len(source.Bytes), indexObject.Integer), false
 		}
@@ -452,12 +452,12 @@ func (p *Plasma) BytesIndex(context *Context, source *Value, indexObject *Value)
 		if len(indexObject.Content) != 2 {
 			return p.NewInvalidNumberOfArgumentsError(context, len(indexObject.Content), 2), false
 		}
-		startIndex, calcError := tools.CalcIndex(indexObject.Content[0].Integer, len(source.Bytes))
+		startIndex, calcError := common.CalcIndex(indexObject.Content[0].Integer, len(source.Bytes))
 		if calcError != nil {
 			return p.NewIndexOutOfRange(context, len(source.Bytes), indexObject.Content[0].Integer), false
 		}
 		var targetIndex int
-		targetIndex, calcError = tools.CalcIndex(indexObject.Content[1].Integer, len(source.Bytes))
+		targetIndex, calcError = common.CalcIndex(indexObject.Content[1].Integer, len(source.Bytes))
 		if calcError != nil {
 			return p.NewIndexOutOfRange(context, len(source.Bytes), indexObject.Content[1].Integer), false
 		}

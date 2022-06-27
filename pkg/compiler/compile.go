@@ -13,7 +13,7 @@ func Compile(r reader.Reader) (*vm.Bytecode, *errors.Error) {
 	p := parser.NewParser(l)
 	program, parsingError := p.Parse()
 	if parsingError != nil {
-		return nil, parsingError
+		return nil, errors.New(0, parsingError.Error(), "SI")
 	}
 	sourceCode, compilationError := program.Compile()
 	if compilationError != nil {

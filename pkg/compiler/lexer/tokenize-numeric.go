@@ -1,8 +1,6 @@
 package lexer
 
-import "github.com/shoriwe/gplasma/pkg/errors"
-
-func (lexer *Lexer) tokenizeNumeric() *errors.Error {
+func (lexer *Lexer) tokenizeNumeric() error {
 	if !lexer.reader.HasNext() {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = Integer

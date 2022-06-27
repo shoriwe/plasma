@@ -19,7 +19,7 @@ func NewVirtualMachine() *VirtualMachine {
 func (v *VirtualMachine) prepareCode(code string) ([]*vm.Code, *vm.Value) {
 	root, parsingError := parser.NewParser(lexer.NewLexer(reader.NewStringReader(code))).Parse()
 	if parsingError != nil {
-		return nil, v.NewGoRuntimeError(v.BuiltInContext, parsingError.Error())
+		return nil, v.NewGoRuntimeError(v.BuiltInContext, parsingError)
 	}
 	bytecode, compilationError := root.Compile()
 	if compilationError != nil {

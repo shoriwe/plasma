@@ -2,7 +2,7 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/tools"
+	"github.com/shoriwe/gplasma/pkg/common"
 	"math"
 )
 
@@ -155,7 +155,7 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 									float64(self.Integer)*right.Float,
 								), true
 							case StringId:
-								return p.NewString(context, false, tools.Repeat(right.String, self.Integer)), true
+								return p.NewString(context, false, common.Repeat(right.String, self.Integer)), true
 							case BytesId:
 								content, repetitionError := p.Repeat(context, right.Content, self.Integer)
 								if repetitionError != nil {
@@ -192,7 +192,7 @@ func (p *Plasma) IntegerInitialize(isBuiltIn bool) ConstructorCallBack {
 									left.Float*float64(self.Integer),
 								), true
 							case StringId:
-								return p.NewString(context, false, tools.Repeat(left.String, self.Integer)), true
+								return p.NewString(context, false, common.Repeat(left.String, self.Integer)), true
 							case BytesId:
 								content, repetitionError := p.Repeat(context, left.Content, self.Integer)
 								if repetitionError != nil {

@@ -1,8 +1,6 @@
 package lexer
 
-import "github.com/shoriwe/gplasma/pkg/errors"
-
-func (lexer *Lexer) tokenizeFloat() *errors.Error {
+func (lexer *Lexer) tokenizeFloat() error {
 	if !lexer.reader.HasNext() {
 		lexer.reader.Redo()
 		lexer.currentToken.Contents = lexer.currentToken.Contents[:len(lexer.currentToken.Contents)-1]

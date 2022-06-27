@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	"github.com/shoriwe/gplasma/pkg/errors"
+	"errors"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"regexp"
 )
@@ -19,11 +19,16 @@ type Lexer struct {
 	complete     bool
 }
 
+var (
+	CRLFInvalid          = errors.New("invalid CRLF")
+	LineEscapeIncomplete = errors.New("incomplete line escape")
+)
+
 func (lexer *Lexer) HasNext() bool {
 	return !lexer.complete
 }
 
-func (lexer *Lexer) next() (*Token, *errors.Error) {
+func (lexer *Lexer) next() (*Token, error) {
 	lexer.currentToken = &Token{
 		Contents:    nil,
 		DirectValue: InvalidDirectValue,
@@ -35,14 +40,14 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		lexer.complete = true
 		return lexer.currentToken, nil
 	}
-	var tokenizingError *errors.Error
+	var tokenizingError error
 	char := lexer.reader.Char()
 	lexer.currentToken.append(char)
 	lexer.reader.Next()
 	switch char {
 	case '\r':
 		if lexer.reader.Char() != NewLineChar {
-			return nil, errors.New(1, "invalid CRLF", "ssdsdsd")
+			return nil, CRLFInvalid
 		}
 		lexer.reader.Next()
 		lexer.line++
@@ -157,11 +162,11 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 	case BackSlashChar:
 
 		if !lexer.reader.HasNext() {
-			return nil, errors.New(lexer.line, "line escape not followed by a new line", errors.LexingError)
+			return nil, LineEscapeIncomplete
 		}
 		nextChar := lexer.reader.Char()
 		if nextChar != '\n' {
-			return nil, errors.New(lexer.line, "line escape not followed by a new line", errors.LexingError)
+			return nil, LineEscapeIncomplete
 		}
 		lexer.currentToken.append('\n')
 		lexer.reader.Next()
@@ -190,7 +195,7 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 /*
 	This function will yield just the necessary token, this means not repeated separators
 */
-func (lexer *Lexer) Next() (*Token, *errors.Error) {
+func (lexer *Lexer) Next() (*Token, error) {
 	token, tokenizingError := lexer.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError

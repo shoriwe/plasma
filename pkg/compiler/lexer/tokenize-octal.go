@@ -1,18 +1,22 @@
 package lexer
 
-import "github.com/shoriwe/gplasma/pkg/errors"
+import "errors"
 
-func (lexer *Lexer) tokenizeOctal() *errors.Error {
+var (
+	OctalInvalidSyntax = errors.New("invalid octal integer syntax")
+)
+
+func (lexer *Lexer) tokenizeOctal() error {
 	if !lexer.reader.HasNext() {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return OctalInvalidSyntax
 	}
 	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '7') {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return OctalInvalidSyntax
 	}
 	lexer.reader.Next()
 	lexer.currentToken.append(nextDigit)

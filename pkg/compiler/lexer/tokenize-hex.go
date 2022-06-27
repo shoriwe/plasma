@@ -1,12 +1,16 @@
 package lexer
 
-import "github.com/shoriwe/gplasma/pkg/errors"
+import "errors"
 
-func (lexer *Lexer) tokenizeHexadecimal() *errors.Error {
+var (
+	HexInvalidSyntax = errors.New("invalid hex integer syntax")
+)
+
+func (lexer *Lexer) tokenizeHexadecimal() error {
 	if !lexer.reader.HasNext() {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return HexInvalidSyntax
 	}
 	nextDigit := lexer.reader.Char()
 	if !(('0' <= nextDigit && nextDigit <= '9') ||
@@ -14,7 +18,7 @@ func (lexer *Lexer) tokenizeHexadecimal() *errors.Error {
 		('A' <= nextDigit && nextDigit <= 'F')) {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return HexInvalidSyntax
 	}
 	lexer.reader.Next()
 	lexer.currentToken.append(nextDigit)

@@ -12,7 +12,7 @@ func test(t *testing.T, samples map[string][]*Token) {
 		for lexer.HasNext() {
 			token, tokenizationError := lexer.Next()
 			if tokenizationError != nil {
-				t.Error(tokenizationError.String())
+				t.Error(tokenizationError.Error())
 				continue
 			}
 			computedTokens = append(computedTokens, token)

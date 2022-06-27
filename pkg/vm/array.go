@@ -1,6 +1,6 @@
 package vm
 
-import "github.com/shoriwe/gplasma/pkg/tools"
+import "github.com/shoriwe/gplasma/pkg/common"
 
 func (p *Plasma) NewArray(context *Context, isBuiltIn bool, content []*Value) *Value {
 	array := p.NewValue(context, isBuiltIn, ArrayName, nil, context.PeekSymbolTable())
@@ -293,7 +293,7 @@ func (p *Plasma) ArrayInitialize(isBuiltIn bool) ConstructorCallBack {
 								return p.NewInvalidTypeError(context, arguments[0].GetClass(p).Name, IntegerName), false
 							}
 							contentLength := len(self.Content)
-							realIndex, indexCalculationError := tools.CalcIndex(arguments[0].Integer, contentLength)
+							realIndex, indexCalculationError := common.CalcIndex(arguments[0].Integer, contentLength)
 							if indexCalculationError != nil {
 								return p.NewIndexOutOfRange(context, contentLength, arguments[0].Integer), false
 							}

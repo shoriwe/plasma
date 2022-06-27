@@ -2,7 +2,7 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/tools"
+	"github.com/shoriwe/gplasma/pkg/common"
 	"strconv"
 	"strings"
 )
@@ -93,7 +93,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 								return p.NewInvalidTypeError(context, right.TypeName(), IntegerName), false
 							}
 							return p.NewString(context, false,
-								tools.Repeat(self.String, right.Integer),
+								common.Repeat(self.String, right.Integer),
 							), true
 						},
 					),
@@ -110,7 +110,7 @@ func (p *Plasma) StringInitialize(isBuiltIn bool) ConstructorCallBack {
 								return p.NewInvalidTypeError(context, left.TypeName(), IntegerName), false
 							}
 							return p.NewString(context, false,
-								tools.Repeat(self.String, left.Integer),
+								common.Repeat(self.String, left.Integer),
 							), true
 						},
 					),

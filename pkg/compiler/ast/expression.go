@@ -1,9 +1,9 @@
 package ast
 
 import (
+	"github.com/shoriwe/gplasma/pkg/common"
 	"github.com/shoriwe/gplasma/pkg/compiler/lexer"
 	"github.com/shoriwe/gplasma/pkg/errors"
-	"github.com/shoriwe/gplasma/pkg/tools"
 	"github.com/shoriwe/gplasma/pkg/vm"
 	"strconv"
 	"strings"
@@ -199,7 +199,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error
 			vm.NewStringOP, basicLiteral.Token.Line,
 
 			string(
-				tools.ReplaceEscaped(
+				common.ReplaceEscaped(
 					[]rune(basicLiteral.Token.String()[1:len(basicLiteral.Token.String())-1])),
 			),
 		),
@@ -208,7 +208,7 @@ func (basicLiteral *BasicLiteralExpression) Compile() ([]*vm.Code, *errors.Error
 		return []*vm.Code{vm.NewCode(vm.NewBytesOP, basicLiteral.Token.Line,
 			[]byte(
 				string(
-					tools.ReplaceEscaped(
+					common.ReplaceEscaped(
 						[]rune(basicLiteral.Token.String()[2:len(basicLiteral.Token.String())-1]),
 					),
 				),

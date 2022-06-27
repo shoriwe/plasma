@@ -1,32 +1,36 @@
 package lexer
 
-import "github.com/shoriwe/gplasma/pkg/errors"
+import "errors"
 
-func (lexer *Lexer) tokenizeScientificFloat() *errors.Error {
+var (
+	ScientificFloatInvalidSyntax = errors.New("invalid scientific float syntax")
+)
+
+func (lexer *Lexer) tokenizeScientificFloat() error {
 	if !lexer.reader.HasNext() {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return ScientificFloatInvalidSyntax
 	}
 	direction := lexer.reader.Char()
 	if (direction != '-') && (direction != '+') {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return ScientificFloatInvalidSyntax
 	}
 	lexer.reader.Next()
 	// Ensure next is a number
 	if !lexer.reader.HasNext() {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return ScientificFloatInvalidSyntax
 	}
 	lexer.currentToken.append(direction)
 	nextDigit := lexer.reader.Char()
 	if !('0' <= nextDigit && nextDigit <= '9') {
 		lexer.currentToken.Kind = Literal
 		lexer.currentToken.DirectValue = InvalidDirectValue
-		return errors.NewUnknownTokenKindError(lexer.line)
+		return ScientificFloatInvalidSyntax
 	}
 	lexer.currentToken.append(nextDigit)
 	lexer.reader.Next()

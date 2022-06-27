@@ -410,7 +410,7 @@ func test(t *testing.T, samples []string) {
 		parser := NewParser(lex)
 		program, parsingError := parser.Parse()
 		if parsingError != nil {
-			t.Error(fmt.Sprintf("%s in sample %d", parsingError.String(), sampleIndex))
+			t.Error(fmt.Sprintf("%s in sample %d", parsingError.Error(), sampleIndex))
 			return
 		}
 		result := walk(program)
