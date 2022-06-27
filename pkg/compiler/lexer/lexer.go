@@ -127,23 +127,32 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 		lexer.currentToken.append(char)
 		lexer.tokenizeRepeatableOperator(GreaterThan, Comparator, BitwiseRight, Operator, GreaterOrEqualThan, Comparator, BitwiseRightAssign, Assignment)
 	case AddChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, Add, Operator, AddAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeSingleOperator(Add, Operator, AddAssign, Assignment)
 	case SubChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, Sub, Operator, SubAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeSingleOperator(Sub, Operator, SubAssign, Assignment)
 	case ModulusChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, Modulus, Operator, ModulusAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeSingleOperator(Modulus, Operator, ModulusAssign, Assignment)
 	case BitwiseXorChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, BitwiseXor, Operator, BitwiseXorAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeSingleOperator(BitwiseXor, Operator, BitwiseXorAssign, Assignment)
 	case BitWiseAndChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, BitWiseAnd, Operator, BitWiseAndAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeSingleOperator(BitWiseAnd, Operator, BitWiseAndAssign, Assignment)
 	case BitwiseOrChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, BitwiseOr, Operator, BitwiseOrAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeSingleOperator(BitwiseOr, Operator, BitwiseOrAssign, Assignment)
 	case SignNotChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, SignNot, Operator, NotEqual, Comparator)
+		lexer.currentToken.append(char)
+		lexer.tokenizeSingleOperator(SignNot, Operator, NotEqual, Comparator)
 	case NegateBitsChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, NegateBits, Operator, NegateBitsAssign, Assignment)
+		lexer.currentToken.append(char)
+		lexer.tokenizeSingleOperator(NegateBits, Operator, NegateBitsAssign, Assignment)
 	case EqualsChar:
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue = lexer.tokenizeSingleOperator(char, Assign, Assignment, Equals, Comparator)
+		lexer.currentToken.append(char)
+		lexer.tokenizeSingleOperator(Assign, Assignment, Equals, Comparator)
 	case BackSlashChar:
 		lexer.currentToken.Contents = []rune{char}
 		if lexer.reader.HasNext() {

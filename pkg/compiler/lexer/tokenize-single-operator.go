@@ -1,19 +1,19 @@
 package lexer
 
-func (lexer *Lexer) tokenizeSingleOperator(char rune,
+func (lexer *Lexer) tokenizeSingleOperator(
 	single DirectValue, singleKind Kind,
-	assign DirectValue, assignKind Kind) ([]rune, Kind, DirectValue) {
-	content := []rune{char}
-	kind := singleKind
-	directValue := single
-	if lexer.reader.HasNext() {
-		nextChar := lexer.reader.Char()
-		if nextChar == '=' {
-			kind = assignKind
-			directValue = assign
-			content = append(content, nextChar)
-			lexer.reader.Next()
-		}
+	assign DirectValue, assignKind Kind) {
+	lexer.currentToken.Kind = singleKind
+	lexer.currentToken.DirectValue = single
+	if !lexer.reader.HasNext() {
+		return
 	}
-	return content, kind, directValue
+	nextChar := lexer.reader.Char()
+	if nextChar != '=' {
+		return
+	}
+	lexer.currentToken.Kind = assignKind
+	lexer.currentToken.DirectValue = assign
+	lexer.currentToken.append(nextChar)
+	lexer.reader.Next()
 }
