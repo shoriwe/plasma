@@ -131,6 +131,10 @@ func (token *Token) String() string {
 	return string(token.Contents)
 }
 
+func (token *Token) append(r ...rune) {
+	token.Contents = append(token.Contents, r...)
+}
+
 /*
 	Keyboards
 */
