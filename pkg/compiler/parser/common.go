@@ -2,6 +2,16 @@ package parser
 
 import "github.com/shoriwe/gplasma/pkg/compiler/lexer"
 
+func (parser *Parser) removeNewLines() error {
+	for parser.matchDirectValue(lexer.NewLine) {
+		tokenizingError := parser.next()
+		if tokenizingError != nil {
+			return tokenizingError
+		}
+	}
+	return nil
+}
+
 func (parser *Parser) matchDirectValue(directValue lexer.DirectValue) bool {
 	if parser.currentToken == nil {
 		return false
@@ -14,13 +24,6 @@ func (parser *Parser) matchKind(kind lexer.Kind) bool {
 		return false
 	}
 	return parser.currentToken.Kind == kind
-}
-
-func (parser *Parser) currentLine() int {
-	if parser.currentToken == nil {
-		return 0
-	}
-	return parser.currentToken.Line
 }
 
 func (parser *Parser) matchString(value string) bool {
