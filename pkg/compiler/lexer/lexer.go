@@ -108,9 +108,7 @@ func (lexer *Lexer) next() (*Token, *errors.Error) {
 	case CommentChar:
 		lexer.currentToken.Contents, lexer.currentToken.Kind, tokenizingError = lexer.tokenizeComment()
 		lexer.currentToken.Contents = append([]rune{'#'}, lexer.currentToken.Contents...)
-	case '\'', '"': // String1
-		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
-	case '`':
+	case '\'', '"', '`':
 		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue, tokenizingError = lexer.tokenizeStringLikeExpressions(char)
 	case '1', '2', '3', '4', '5', '6', '7', '8', '9', '0':
 		lexer.currentToken.Contents, lexer.currentToken.Kind, lexer.currentToken.DirectValue, tokenizingError = lexer.tokenizeNumeric(char)
