@@ -54,43 +54,27 @@ func (parser *Parser) parseUnlessStatement() (*ast2.UnlessStatement, error) {
 	// Parse Elifs
 	lastCondition := root
 	if parser.matchDirectValue(lexer2.Elif) {
-		var elifBody []ast2.Node
-	parsingElifLoop:
+	elifBlocksParsingLoop:
 		for parser.hasNext() {
-			if parser.matchKind(lexer2.Separator) {
-				tokenizingError = parser.next()
-				if tokenizingError != nil {
-					return nil, tokenizingError
-				}
-				if parser.matchDirectValue(lexer2.Else) ||
-					parser.matchDirectValue(lexer2.End) {
-					break
-				}
-				continue
-			}
-			if !parser.matchDirectValue(lexer2.Elif) {
-				return nil, parser.newSyntaxError(ElifBlock)
+			block := ast2.ElifBlock{
+				Condition: nil,
+				Body:      nil,
 			}
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
 			}
-			newLinesRemoveError = parser.removeNewLines()
-			if newLinesRemoveError != nil {
-				return nil, newLinesRemoveError
-			}
-			var elifCondition ast2.Node
-			elifCondition, parsingError = parser.parseBinaryExpression(0)
+			condition, parsingError = parser.parseBinaryExpression(0)
 			if parsingError != nil {
 				return nil, parsingError
 			}
-			if _, ok := elifCondition.(ast2.IExpression); !ok {
-				return nil, parser.newSyntaxError(ElifBlock)
+			if _, ok := condition.(ast2.IExpression); !ok {
+				return nil, parser.expectingExpressionError(ElifBlock)
 			}
+			block.Condition = condition.(ast2.IExpression)
 			if !parser.matchDirectValue(lexer2.NewLine) {
-				return nil, parser.newSyntaxError(ElifBlock)
+				return nil, parser.newSyntaxError(IfStatement)
 			}
-			var elifBodyNode ast2.Node
 			for parser.hasNext() {
 				if parser.matchKind(lexer2.Separator) {
 					tokenizingError = parser.next()
@@ -98,30 +82,24 @@ func (parser *Parser) parseUnlessStatement() (*ast2.UnlessStatement, error) {
 						return nil, tokenizingError
 					}
 					if parser.matchDirectValue(lexer2.Else) ||
-						parser.matchDirectValue(lexer2.End) ||
-						parser.matchDirectValue(lexer2.Elif) {
+						parser.matchDirectValue(lexer2.End) {
+						root.ElifBlocks = append(root.ElifBlocks, block)
+						break elifBlocksParsingLoop
+					} else if parser.matchDirectValue(lexer2.Elif) {
 						break
 					}
 					continue
 				}
-				elifBodyNode, parsingError = parser.parseBinaryExpression(0)
+				bodyNode, parsingError = parser.parseBinaryExpression(0)
 				if parsingError != nil {
 					return nil, parsingError
 				}
-				elifBody = append(elifBody, elifBodyNode)
+				block.Body = append(block.Body, bodyNode)
 			}
-			lastCondition.Else = append(
-				lastCondition.Else,
-				&ast2.UnlessStatement{
-					Condition: elifCondition.(ast2.IExpression),
-					Body:      elifBody,
-				},
-			)
-			lastCondition = lastCondition.Else[0].(*ast2.UnlessStatement)
-			if parser.matchDirectValue(lexer2.Else) ||
-				parser.matchDirectValue(lexer2.End) {
-				break parsingElifLoop
+			if !parser.matchDirectValue(lexer2.Elif) {
+				return nil, parser.newSyntaxError(ElifBlock)
 			}
+			root.ElifBlocks = append(root.ElifBlocks, block)
 		}
 	}
 	// Parse Default

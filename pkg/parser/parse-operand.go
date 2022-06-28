@@ -19,10 +19,16 @@ func (parser *Parser) parseOperand() (ast2.Node, error) {
 		return &ast2.Identifier{
 			Token: identifier,
 		}, nil
-	case lexer2.Keyboard:
+	case lexer2.Keyword:
 		switch parser.currentToken.DirectValue {
 		case lexer2.Lambda:
 			return parser.parseLambdaExpression()
+		case lexer2.Super:
+			return parser.parseSuperExpression()
+		case lexer2.Delete:
+			return parser.parseDeleteStatement()
+		case lexer2.Require:
+			return parser.parseRequireStatement()
 		case lexer2.While:
 			return parser.parseWhileStatement()
 		case lexer2.For:
@@ -39,6 +45,8 @@ func (parser *Parser) parseOperand() (ast2.Node, error) {
 			return parser.parseModuleStatement()
 		case lexer2.Def:
 			return parser.parseFunctionDefinitionStatement()
+		case lexer2.Generator:
+			return parser.parseGeneratorDefinitionStatement()
 		case lexer2.Interface:
 			return parser.parseInterfaceStatement()
 		case lexer2.Class:

@@ -4,146 +4,173 @@ import (
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-type Statement interface {
-	S()
-	Node
-}
+type (
+	Statement interface {
+		S()
+		Node
+	}
 
-type AssignStatement struct {
-	Statement
-	LeftHandSide   IExpression // Identifiers or Selectors
-	AssignOperator *lexer.Token
-	RightHandSide  IExpression
-}
+	AssignStatement struct {
+		Statement
+		LeftHandSide   IExpression // Identifiers or Selectors
+		AssignOperator *lexer.Token
+		RightHandSide  IExpression
+	}
 
-type DoWhileStatement struct {
-	Statement
-	Condition IExpression
-	Body      []Node
-}
+	DoWhileStatement struct {
+		Statement
+		Condition IExpression
+		Body      []Node
+	}
 
-type WhileLoopStatement struct {
-	Statement
-	Condition IExpression
-	Body      []Node
-}
+	WhileLoopStatement struct {
+		Statement
+		Condition IExpression
+		Body      []Node
+	}
 
-type UntilLoopStatement struct {
-	Statement
-	Condition IExpression
-	Body      []Node
-}
+	UntilLoopStatement struct {
+		Statement
+		Condition IExpression
+		Body      []Node
+	}
 
-type ForLoopStatement struct {
-	Statement
-	Receivers []*Identifier
-	Source    IExpression
-	Body      []Node
-}
+	ForLoopStatement struct {
+		Statement
+		Receivers []*Identifier
+		Source    IExpression
+		Body      []Node
+	}
 
-type IfStatement struct {
-	Statement
-	Condition IExpression
-	Body      []Node
-	Else      []Node
-}
+	ElifBlock struct {
+		Condition IExpression
+		Body      []Node
+	}
 
-type UnlessStatement struct {
-	Statement
-	Condition IExpression
-	Body      []Node
-	Else      []Node
-}
+	IfStatement struct {
+		Statement
+		Condition  IExpression
+		Body       []Node
+		ElifBlocks []ElifBlock
+		Else       []Node
+	}
 
-type CaseBlock struct {
-	Cases []IExpression
-	Body  []Node
-}
+	UnlessStatement struct {
+		Statement
+		Condition  IExpression
+		Body       []Node
+		ElifBlocks []ElifBlock
+		Else       []Node
+	}
 
-type SwitchStatement struct {
-	Statement
-	Target     IExpression
-	CaseBlocks []*CaseBlock
-	Default    []Node
-}
+	CaseBlock struct {
+		Cases []IExpression
+		Body  []Node
+	}
 
-type ModuleStatement struct {
-	Statement
-	Name *Identifier
-	Body []Node
-}
+	SwitchStatement struct {
+		Statement
+		Target     IExpression
+		CaseBlocks []*CaseBlock
+		Default    []Node
+	}
 
-type FunctionDefinitionStatement struct {
-	Statement
-	Name      *Identifier
-	Arguments []*Identifier
-	Body      []Node
-}
+	ModuleStatement struct {
+		Statement
+		Name *Identifier
+		Body []Node
+	}
 
-type InterfaceStatement struct {
-	Statement
-	Name              *Identifier
-	Bases             []IExpression
-	MethodDefinitions []*FunctionDefinitionStatement
-}
+	FunctionDefinitionStatement struct {
+		Statement
+		Name      *Identifier
+		Arguments []*Identifier
+		Body      []Node
+	}
 
-type ClassStatement struct {
-	Statement
-	Name  *Identifier
-	Bases []IExpression // Identifiers and selectors
-	Body  []Node
-}
+	GeneratorDefinitionStatement struct {
+		Statement
+		Name      *Identifier
+		Arguments []*Identifier
+		Body      []Node
+	}
 
-type ExceptBlock struct {
-	Targets     []IExpression
-	CaptureName *Identifier
-	Body        []Node
-}
+	InterfaceStatement struct {
+		Statement
+		Name              *Identifier
+		Bases             []IExpression
+		MethodDefinitions []*FunctionDefinitionStatement
+	}
 
-type RaiseStatement struct {
-	Statement
-	X IExpression
-}
+	ClassStatement struct {
+		Statement
+		Name  *Identifier
+		Bases []IExpression // Identifiers and selectors
+		Body  []Node
+	}
 
-type TryStatement struct {
-	Statement
-	Body         []Node
-	ExceptBlocks []*ExceptBlock
-	Else         []Node
-	Finally      []Node
-}
+	ExceptBlock struct {
+		Targets     []IExpression
+		CaptureName *Identifier
+		Body        []Node
+	}
 
-type BeginStatement struct {
-	Statement
-	Body []Node
-}
+	TryStatement struct {
+		Statement
+		Body         []Node
+		ExceptBlocks []*ExceptBlock
+		Else         []Node
+		Finally      []Node
+	}
 
-type EndStatement struct {
-	Statement
-	Body []Node
-}
-type ReturnStatement struct {
-	Statement
-	Results []IExpression
-}
+	BeginStatement struct {
+		Statement
+		Body []Node
+	}
 
-type YieldStatement struct {
-	Statement
-	Results []IExpression
-}
+	EndStatement struct {
+		Statement
+		Body []Node
+	}
 
-type ContinueStatement struct {
-	Statement
-}
+	ReturnStatement struct {
+		Statement
+		Results []IExpression
+	}
 
-type BreakStatement struct {
-	Statement
-}
+	YieldStatement struct {
+		Statement
+		Results []IExpression
+	}
 
-type RedoStatement struct {
-	Statement
-}
+	ContinueStatement struct {
+		Statement
+	}
 
-type PassStatement struct {
-	Statement
-}
+	BreakStatement struct {
+		Statement
+	}
+
+	RedoStatement struct {
+		Statement
+	}
+
+	PassStatement struct {
+		Statement
+	}
+
+	RaiseStatement struct {
+		Statement
+		X IExpression
+	}
+
+	RequireStatement struct {
+		Statement
+		X IExpression
+	}
+
+	DeleteStatement struct {
+		Statement
+		X IExpression
+	}
+)

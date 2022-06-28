@@ -21,6 +21,8 @@ const (
 
 	Pass
 	Super
+	Delete
+	Require
 	End
 	If
 	Unless
@@ -42,6 +44,7 @@ const (
 	Redo
 	Module
 	Def
+	Generator
 	Lambda
 	Interface
 	Class
@@ -76,6 +79,8 @@ const (
 	Xor
 	In
 
+	Is
+	Implements
 	Equals
 	NotEqual
 	GreaterThan
@@ -136,7 +141,7 @@ func (token *Token) append(r ...rune) {
 }
 
 /*
-	Keyboards
+	Keywords
 */
 
 var (
@@ -170,44 +175,49 @@ var (
 	CommentChar            = '#'
 	BackSlashChar          = '\\'
 
-	PassString      = "pass"
-	SuperString     = "super"
-	EndString       = "end"
-	IfString        = "if"
-	UnlessString    = "unless"
-	ElseString      = "else"
-	ElifString      = "elif"
-	WhileString     = "while"
-	DoString        = "do"
-	ForString       = "for"
-	UntilString     = "until"
-	SwitchString    = "switch"
-	CaseString      = "case"
-	DefaultString   = "default"
-	YieldString     = "yield"
-	ReturnString    = "return"
-	ContinueString  = "continue"
-	BreakString     = "break"
-	RedoString      = "redo"
-	ModuleString    = "module"
-	DefString       = "def"
-	LambdaString    = "lambda"
-	InterfaceString = "interface"
-	ClassString     = "class"
-	TryString       = "try"
-	ExceptString    = "except"
-	FinallyString   = "finally"
-	AndString       = "and"
-	OrString        = "or"
-	XorString       = "xor"
-	InString        = "in"
-	BEGINString     = "BEGIN"
-	ENDString       = "END"
-	NotString       = "not"
-	TrueString      = "True"
-	FalseString     = "False"
-	NoneString      = "None"
-	ContextString   = "context"
-	RaiseString     = "raise"
-	AsString        = "as"
+	PassString       = "pass"
+	SuperString      = "super"
+	DeleteString     = "delete"
+	RequireString    = "require"
+	EndString        = "end"
+	IfString         = "if"
+	UnlessString     = "unless"
+	ElseString       = "else"
+	ElifString       = "elif"
+	WhileString      = "while"
+	DoString         = "do"
+	ForString        = "for"
+	UntilString      = "until"
+	SwitchString     = "switch"
+	CaseString       = "case"
+	DefaultString    = "default"
+	YieldString      = "yield"
+	ReturnString     = "return"
+	ContinueString   = "continue"
+	BreakString      = "break"
+	RedoString       = "redo"
+	ModuleString     = "module"
+	DefString        = "def"
+	GeneratorString  = "gen"
+	LambdaString     = "lambda"
+	InterfaceString  = "interface"
+	ClassString      = "class"
+	TryString        = "try"
+	ExceptString     = "except"
+	FinallyString    = "finally"
+	AndString        = "and"
+	OrString         = "or"
+	XorString        = "xor"
+	InString         = "in"
+	IsString         = "is"
+	ImplementsString = "implements"
+	BEGINString      = "BEGIN"
+	ENDString        = "END"
+	NotString        = "not"
+	TrueString       = "True"
+	FalseString      = "False"
+	NoneString       = "None"
+	ContextString    = "context"
+	RaiseString      = "raise"
+	AsString         = "as"
 )

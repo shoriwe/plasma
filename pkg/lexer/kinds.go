@@ -20,7 +20,7 @@ const (
 	Assignment
 	Comparator
 	Operator
-	Keyboard
+	Keyword
 	Boolean
 	NoneType
 	EOF

@@ -388,7 +388,7 @@ var complexSamples = map[string][]*Token{
 		{
 			Contents:    []rune("for"),
 			DirectValue: For,
-			Kind:        Keyboard,
+			Kind:        Keyword,
 			Line:        0,
 			Column:      0,
 			Index:       0,
@@ -516,7 +516,7 @@ var complexSamples = map[string][]*Token{
 		{
 			Contents:    []rune("pass"),
 			DirectValue: Pass,
-			Kind:        Keyboard,
+			Kind:        Keyword,
 			Line:        0,
 			Column:      0,
 			Index:       0,
@@ -532,7 +532,7 @@ var complexSamples = map[string][]*Token{
 		{
 			Contents:    []rune("end"),
 			DirectValue: End,
-			Kind:        Keyboard,
+			Kind:        Keyword,
 			Line:        0,
 			Column:      0,
 			Index:       0,

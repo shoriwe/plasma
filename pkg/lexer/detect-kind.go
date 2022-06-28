@@ -4,57 +4,65 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 	s := lexer.currentToken.String()
 	switch s {
 	case PassString:
-		return Keyboard, Pass
+		return Keyword, Pass
+	case SuperString:
+		return Keyword, Super
+	case DeleteString:
+		return Keyword, Delete
+	case RequireString:
+		return Keyword, Require
 	case EndString:
-		return Keyboard, End
+		return Keyword, End
 	case IfString:
-		return Keyboard, If
+		return Keyword, If
 	case UnlessString:
-		return Keyboard, Unless
+		return Keyword, Unless
 	case ElseString:
-		return Keyboard, Else
+		return Keyword, Else
 	case ElifString:
-		return Keyboard, Elif
+		return Keyword, Elif
 	case WhileString:
-		return Keyboard, While
+		return Keyword, While
 	case DoString:
-		return Keyboard, Do
+		return Keyword, Do
 	case ForString:
-		return Keyboard, For
+		return Keyword, For
 	case UntilString:
-		return Keyboard, Until
+		return Keyword, Until
 	case SwitchString:
-		return Keyboard, Switch
+		return Keyword, Switch
 	case CaseString:
-		return Keyboard, Case
+		return Keyword, Case
 	case DefaultString:
-		return Keyboard, Default
+		return Keyword, Default
 	case YieldString:
-		return Keyboard, Yield
+		return Keyword, Yield
 	case ReturnString:
-		return Keyboard, Return
+		return Keyword, Return
 	case ContinueString:
-		return Keyboard, Continue
+		return Keyword, Continue
 	case BreakString:
-		return Keyboard, Break
+		return Keyword, Break
 	case RedoString:
-		return Keyboard, Redo
+		return Keyword, Redo
 	case ModuleString:
-		return Keyboard, Module
+		return Keyword, Module
 	case DefString:
-		return Keyboard, Def
+		return Keyword, Def
+	case GeneratorString:
+		return Keyword, Generator
 	case LambdaString:
-		return Keyboard, Lambda
+		return Keyword, Lambda
 	case InterfaceString:
-		return Keyboard, Interface
+		return Keyword, Interface
 	case ClassString:
-		return Keyboard, Class
+		return Keyword, Class
 	case TryString:
-		return Keyboard, Try
+		return Keyword, Try
 	case ExceptString:
-		return Keyboard, Except
+		return Keyword, Except
 	case FinallyString:
-		return Keyboard, Finally
+		return Keyword, Finally
 	case AndString:
 		return Comparator, And
 	case OrString:
@@ -63,14 +71,18 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 		return Comparator, Xor
 	case InString:
 		return Comparator, In
+	case IsString:
+		return Comparator, Is
+	case ImplementsString:
+		return Comparator, Implements
 	case AsString:
-		return Keyboard, As
+		return Keyword, As
 	case RaiseString:
-		return Keyboard, Raise
+		return Keyword, Raise
 	case BEGINString:
-		return Keyboard, BEGIN
+		return Keyword, BEGIN
 	case ENDString:
-		return Keyboard, END
+		return Keyword, END
 	case NotString: // Unary operator
 		return Operator, Not
 	case TrueString:
@@ -80,7 +92,7 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 	case NoneString:
 		return NoneType, None
 	case ContextString:
-		return Keyboard, Context
+		return Keyword, Context
 	default:
 		if identifierCheck.MatchString(s) {
 			return IdentifierKind, InvalidDirectValue

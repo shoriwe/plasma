@@ -11,46 +11,46 @@ import (
 )
 
 func walker(node ast2.Node) string {
-	switch node.(type) {
+	switch n := node.(type) {
 	case *ast2.Program:
 		result := ""
-		if node.(*ast2.Program).Begin != nil {
-			result += walker(node.(*ast2.Program).Begin)
+		if n.Begin != nil {
+			result += walker(n.Begin)
 		}
-		if node.(*ast2.Program).End != nil {
-			if node.(*ast2.Program).End != nil {
+		if n.End != nil {
+			if n.End != nil {
 				result += "\n"
 			}
-			result += walker(node.(*ast2.Program).End)
+			result += walker(n.End)
 		}
-		if node.(*ast2.Program).Begin != nil || node.(*ast2.Program).End != nil {
+		if n.Begin != nil || n.End != nil {
 			result += "\n"
 		}
-		if len(node.(*ast2.Program).Body) > 0 {
-			for _, child := range node.(*ast2.Program).Body {
+		if len(n.Body) > 0 {
+			for _, child := range n.Body {
 				result += walker(child)
 				result += "\n"
 			}
 		}
 		return result
 	case *ast2.BinaryExpression:
-		return walker(node.(*ast2.BinaryExpression).LeftHandSide) +
-			" " + node.(*ast2.BinaryExpression).Operator.String() +
-			" " + walker(node.(*ast2.BinaryExpression).RightHandSide)
+		return walker(n.LeftHandSide) +
+			" " + n.Operator.String() +
+			" " + walker(n.RightHandSide)
 	case *ast2.BasicLiteralExpression:
-		return node.(*ast2.BasicLiteralExpression).Token.String()
+		return n.Token.String()
 	case *ast2.UnaryExpression:
-		if node.(*ast2.UnaryExpression).Operator.DirectValue == lexer2.Not {
-			return node.(*ast2.UnaryExpression).Operator.String() + " " + walker(node.(*ast2.UnaryExpression).X)
+		if n.Operator.DirectValue == lexer2.Not {
+			return n.Operator.String() + " " + walker(n.X)
 		}
-		return node.(*ast2.UnaryExpression).Operator.String() + walker(node.(*ast2.UnaryExpression).X)
+		return n.Operator.String() + walker(n.X)
 	case *ast2.SelectorExpression:
-		return walker(node.(*ast2.SelectorExpression).X) + "." + node.(*ast2.SelectorExpression).Identifier.Token.String()
+		return walker(n.X) + "." + n.Identifier.Token.String()
 	case *ast2.Identifier:
-		return node.(*ast2.Identifier).Token.String()
+		return n.Token.String()
 	case *ast2.MethodInvocationExpression:
-		result := walker(node.(*ast2.MethodInvocationExpression).Function) + "("
-		for index, child := range node.(*ast2.MethodInvocationExpression).Arguments {
+		result := walker(n.Function) + "("
+		for index, child := range n.Arguments {
 			if index != 0 {
 				result += ", "
 			}
@@ -58,24 +58,24 @@ func walker(node ast2.Node) string {
 		}
 		return result + ")"
 	case *ast2.IndexExpression:
-		result := walker(node.(*ast2.IndexExpression).Source) + "["
-		result += walker(node.(*ast2.IndexExpression).Index)
+		result := walker(n.Source) + "["
+		result += walker(n.Index)
 		return result + "]"
 	case *ast2.LambdaExpression:
 		result := "lambda "
-		for index, argument := range node.(*ast2.LambdaExpression).Arguments {
+		for index, argument := range n.Arguments {
 			if index != 0 {
 				result += ", "
 			}
 			result += walker(argument)
 		}
 		result += ": "
-		return result + walker(node.(*ast2.LambdaExpression).Code)
+		return result + walker(n.Code)
 	case *ast2.ParenthesesExpression:
-		return "(" + walker(node.(*ast2.ParenthesesExpression).X) + ")"
+		return "(" + walker(n.X) + ")"
 	case *ast2.TupleExpression:
 		result := "("
-		for index, value := range node.(*ast2.TupleExpression).Values {
+		for index, value := range n.Values {
 			if index != 0 {
 				result += ", "
 			}
@@ -84,7 +84,7 @@ func walker(node ast2.Node) string {
 		return result + ")"
 	case *ast2.ArrayExpression:
 		result := "["
-		for index, value := range node.(*ast2.ArrayExpression).Values {
+		for index, value := range n.Values {
 			if index != 0 {
 				result += ", "
 			}
@@ -93,7 +93,7 @@ func walker(node ast2.Node) string {
 		return result + "]"
 	case *ast2.HashExpression:
 		result := "{"
-		for index, value := range node.(*ast2.HashExpression).Values {
+		for index, value := range n.Values {
 			if index != 0 {
 				result += ", "
 			}
@@ -102,35 +102,35 @@ func walker(node ast2.Node) string {
 		}
 		return result + "}"
 	case *ast2.IfOneLinerExpression:
-		result := walker(node.(*ast2.IfOneLinerExpression).Result)
-		result += " if " + walker(node.(*ast2.IfOneLinerExpression).Condition)
-		if node.(*ast2.IfOneLinerExpression).ElseResult != nil {
-			result += " else " + walker(node.(*ast2.IfOneLinerExpression).ElseResult)
+		result := walker(n.Result)
+		result += " if " + walker(n.Condition)
+		if n.ElseResult != nil {
+			result += " else " + walker(n.ElseResult)
 		}
 		return result
 	case *ast2.UnlessOneLinerExpression:
-		result := walker(node.(*ast2.UnlessOneLinerExpression).Result)
+		result := walker(n.Result)
 		result += " unless "
-		result += walker(node.(*ast2.UnlessOneLinerExpression).Condition)
-		if node.(*ast2.UnlessOneLinerExpression).ElseResult != nil {
-			result += " else " + walker(node.(*ast2.UnlessOneLinerExpression).ElseResult)
+		result += walker(n.Condition)
+		if n.ElseResult != nil {
+			result += " else " + walker(n.ElseResult)
 		}
 		return result
 	case *ast2.GeneratorExpression:
-		result := walker(node.(*ast2.GeneratorExpression).Operation)
+		result := walker(n.Operation)
 		result += " for "
-		for index, variable := range node.(*ast2.GeneratorExpression).Receivers {
+		for index, variable := range n.Receivers {
 			if index != 0 {
 				result += ", "
 			}
 			result += walker(variable)
 		}
 		result += " in "
-		return "(" + result + walker(node.(*ast2.GeneratorExpression).Source) + ")"
+		return "(" + result + walker(n.Source) + ")"
 	case *ast2.AssignStatement:
-		result := walker(node.(*ast2.AssignStatement).LeftHandSide)
-		result += " " + node.(*ast2.AssignStatement).AssignOperator.String() + " "
-		return result + walker(node.(*ast2.AssignStatement).RightHandSide)
+		result := walker(n.LeftHandSide)
+		result += " " + n.AssignOperator.String() + " "
+		return result + walker(n.RightHandSide)
 	case *ast2.ContinueStatement:
 		return "continue"
 	case *ast2.BreakStatement:
@@ -141,7 +141,7 @@ func walker(node ast2.Node) string {
 		return "pass"
 	case *ast2.YieldStatement:
 		result := "yield "
-		for index, output := range node.(*ast2.YieldStatement).Results {
+		for index, output := range n.Results {
 			if index != 0 {
 				result += ", "
 			}
@@ -150,7 +150,7 @@ func walker(node ast2.Node) string {
 		return result
 	case *ast2.ReturnStatement:
 		result := "return "
-		for index, output := range node.(*ast2.ReturnStatement).Results {
+		for index, output := range n.Results {
 			if index != 0 {
 				result += ", "
 			}
@@ -159,63 +159,57 @@ func walker(node ast2.Node) string {
 		return result
 	case *ast2.IfStatement:
 		result := "if "
-		result += walker(node.(*ast2.IfStatement).Condition)
-		for _, bodyNode := range node.(*ast2.IfStatement).Body {
+		result += walker(n.Condition)
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		if len(node.(*ast2.IfStatement).Else) > 0 {
-			if _, isIf := node.(*ast2.IfStatement).Else[0].(*ast2.IfStatement); len(node.(*ast2.IfStatement).Else) == 1 && isIf {
-				elifBlock := node.(*ast2.IfStatement).Else[0].(*ast2.IfStatement)
-				result += "\nelif "
-				result += walker(elifBlock.Condition)
-				for _, bodyNode := range elifBlock.Body {
-					nodeString := walker(bodyNode)
-					nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-					result += "\n\t" + nodeString
-				}
-			} else {
-				result += "\nelse"
-				for _, elseNode := range node.(*ast2.IfStatement).Else {
-					nodeString := walker(elseNode)
-					nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-					result += "\n\t" + nodeString
-				}
+		for _, elifBlock := range n.ElifBlocks {
+			result += "\nelif " + walker(elifBlock.Condition)
+			for _, bodyNode := range elifBlock.Body {
+				nodeString := walker(bodyNode)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
+			}
+		}
+		if len(n.Else) > 0 {
+			result += "\nelse"
+			for _, elseNode := range n.Else {
+				nodeString := walker(elseNode)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
 			}
 		}
 		return result + "\nend"
 	case *ast2.UnlessStatement:
 		result := "unless "
-		result += walker(node.(*ast2.UnlessStatement).Condition)
-		for _, bodyNode := range node.(*ast2.UnlessStatement).Body {
+		result += walker(n.Condition)
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		if len(node.(*ast2.UnlessStatement).Else) > 0 {
-			if _, isUnless := node.(*ast2.UnlessStatement).Else[0].(*ast2.UnlessStatement); len(node.(*ast2.UnlessStatement).Else) == 1 && isUnless {
-				elifBlock := node.(*ast2.UnlessStatement).Else[0].(*ast2.UnlessStatement)
-				result += "\nelif "
-				result += walker(elifBlock.Condition)
-				for _, bodyNode := range elifBlock.Body {
-					nodeString := walker(bodyNode)
-					nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-					result += "\n\t" + nodeString
-				}
-			} else {
-				result += "\nelse"
-				for _, elseNode := range node.(*ast2.UnlessStatement).Else {
-					nodeString := walker(elseNode)
-					nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-					result += "\n\t" + nodeString
-				}
+		for _, elifBlock := range n.ElifBlocks {
+			result += "\nelif " + walker(elifBlock.Condition)
+			for _, bodyNode := range elifBlock.Body {
+				nodeString := walker(bodyNode)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
+			}
+		}
+		if len(n.Else) > 0 {
+			result += "\nelse"
+			for _, elseNode := range n.Else {
+				nodeString := walker(elseNode)
+				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+				result += "\n\t" + nodeString
 			}
 		}
 		return result + "\nend"
 	case *ast2.SwitchStatement:
-		result := "switch " + walker(node.(*ast2.SwitchStatement).Target)
-		for _, caseBlock := range node.(*ast2.SwitchStatement).CaseBlocks {
+		result := "switch " + walker(n.Target)
+		for _, caseBlock := range n.CaseBlocks {
 			result += "\ncase "
 			for index, caseTarget := range caseBlock.Cases {
 				if index != 0 {
@@ -229,9 +223,9 @@ func walker(node ast2.Node) string {
 				result += "\n\t" + nodeString
 			}
 		}
-		if node.(*ast2.SwitchStatement).Default != nil {
+		if n.Default != nil {
 			result += "\ndefault"
-			for _, elseChild := range node.(*ast2.SwitchStatement).Default {
+			for _, elseChild := range n.Default {
 				nodeString := walker(elseChild)
 				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 				result += "\n\t" + nodeString
@@ -239,16 +233,16 @@ func walker(node ast2.Node) string {
 		}
 		return result + "\nend"
 	case *ast2.WhileLoopStatement:
-		result := "while " + walker(node.(*ast2.WhileLoopStatement).Condition)
-		for _, child := range node.(*ast2.WhileLoopStatement).Body {
+		result := "while " + walker(n.Condition)
+		for _, child := range n.Body {
 			nodeString := walker(child)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
 	case *ast2.UntilLoopStatement:
-		result := "until " + walker(node.(*ast2.UntilLoopStatement).Condition)
-		for _, child := range node.(*ast2.UntilLoopStatement).Body {
+		result := "until " + walker(n.Condition)
+		for _, child := range n.Body {
 			nodeString := walker(child)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
@@ -256,32 +250,32 @@ func walker(node ast2.Node) string {
 		return result + "\nend"
 	case *ast2.ForLoopStatement:
 		result := "for "
-		for index, receiver := range node.(*ast2.ForLoopStatement).Receivers {
+		for index, receiver := range n.Receivers {
 			if index != 0 {
 				result += ", "
 			}
 			result += walker(receiver)
 		}
-		result += " in " + walker(node.(*ast2.ForLoopStatement).Source)
-		for _, bodyNode := range node.(*ast2.ForLoopStatement).Body {
+		result += " in " + walker(n.Source)
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
 	case *ast2.ModuleStatement:
-		result := "module " + walker(node.(*ast2.ModuleStatement).Name)
-		for _, bodyNode := range node.(*ast2.ModuleStatement).Body {
+		result := "module " + walker(n.Name)
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
 	case *ast2.ClassStatement:
-		result := "class " + walker(node.(*ast2.ClassStatement).Name)
-		if node.(*ast2.ClassStatement).Bases != nil {
+		result := "class " + walker(n.Name)
+		if n.Bases != nil {
 			result += "("
-			for index, base := range node.(*ast2.ClassStatement).Bases {
+			for index, base := range n.Bases {
 				if index != 0 {
 					result += ", "
 				}
@@ -289,17 +283,17 @@ func walker(node ast2.Node) string {
 			}
 			result += ")"
 		}
-		for _, bodyNode := range node.(*ast2.ClassStatement).Body {
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
 	case *ast2.InterfaceStatement:
-		result := "interface " + walker(node.(*ast2.InterfaceStatement).Name)
-		if node.(*ast2.InterfaceStatement).Bases != nil {
+		result := "interface " + walker(n.Name)
+		if n.Bases != nil {
 			result += "("
-			for index, base := range node.(*ast2.InterfaceStatement).Bases {
+			for index, base := range n.Bases {
 				if index != 0 {
 					result += ", "
 				}
@@ -307,23 +301,39 @@ func walker(node ast2.Node) string {
 			}
 			result += ")"
 		}
-		for _, bodyNode := range node.(*ast2.InterfaceStatement).MethodDefinitions {
+		for _, bodyNode := range n.MethodDefinitions {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
 	case *ast2.FunctionDefinitionStatement:
-		result := "def " + walker(node.(*ast2.FunctionDefinitionStatement).Name)
+		result := "def " + walker(n.Name)
 		result += "("
-		for index, argument := range node.(*ast2.FunctionDefinitionStatement).Arguments {
+		for index, argument := range n.Arguments {
 			if index != 0 {
 				result += ", "
 			}
 			result += walker(argument)
 		}
 		result += ")"
-		for _, bodyNode := range node.(*ast2.FunctionDefinitionStatement).Body {
+		for _, bodyNode := range n.Body {
+			nodeString := walker(bodyNode)
+			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
+			result += "\n\t" + nodeString
+		}
+		return result + "\nend"
+	case *ast2.GeneratorDefinitionStatement:
+		result := "gen " + walker(n.Name)
+		result += "("
+		for index, argument := range n.Arguments {
+			if index != 0 {
+				result += ", "
+			}
+			result += walker(argument)
+		}
+		result += ")"
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
@@ -331,7 +341,7 @@ func walker(node ast2.Node) string {
 		return result + "\nend"
 	case *ast2.EndStatement:
 		result := "END"
-		for _, bodyNode := range node.(*ast2.EndStatement).Body {
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
@@ -339,22 +349,22 @@ func walker(node ast2.Node) string {
 		return result + "\nend"
 	case *ast2.BeginStatement:
 		result := "BEGIN"
-		for _, bodyNode := range node.(*ast2.BeginStatement).Body {
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
 	case *ast2.RaiseStatement:
-		return "raise " + walker(node.(*ast2.RaiseStatement).X)
+		return "raise " + walker(n.X)
 	case *ast2.TryStatement:
 		result := "try"
-		for _, bodyNode := range node.(*ast2.TryStatement).Body {
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		for _, exceptBlock := range node.(*ast2.TryStatement).ExceptBlocks {
+		for _, exceptBlock := range n.ExceptBlocks {
 			result += "\nexcept "
 			for index, target := range exceptBlock.Targets {
 				if index != 0 {
@@ -371,17 +381,17 @@ func walker(node ast2.Node) string {
 				result += "\n\t" + nodeString
 			}
 		}
-		if node.(*ast2.TryStatement).Else != nil {
+		if n.Else != nil {
 			result += "\nelse"
-			for _, bodyNode := range node.(*ast2.TryStatement).Else {
+			for _, bodyNode := range n.Else {
 				nodeString := walker(bodyNode)
 				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 				result += "\n\t" + nodeString
 			}
 		}
-		if node.(*ast2.TryStatement).Finally != nil {
+		if n.Finally != nil {
 			result += "\nfinally"
-			for _, bodyNode := range node.(*ast2.TryStatement).Finally {
+			for _, bodyNode := range n.Finally {
 				nodeString := walker(bodyNode)
 				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 				result += "\n\t" + nodeString
@@ -390,12 +400,18 @@ func walker(node ast2.Node) string {
 		return result + "\nend"
 	case *ast2.DoWhileStatement:
 		result := "do"
-		for _, bodyNode := range node.(*ast2.DoWhileStatement).Body {
+		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
 		}
-		return result + "\nwhile " + walker(node.(*ast2.DoWhileStatement).Condition)
+		return result + "\nwhile " + walker(n.Condition)
+	case *ast2.SuperExpression:
+		return "super " + walker(n.X)
+	case *ast2.RequireStatement:
+		return "require " + walker(n.X)
+	case *ast2.DeleteStatement:
+		return "delete " + walker(n.X)
 	}
 	panic("unknown node type: " + reflect.TypeOf(node).String())
 }
@@ -462,9 +478,16 @@ var basicSamples = []string{
 	"yield 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
 	"return 1",
 	"return 1, 2 + 4, lambda x: x + 2, (1, 2, 3, 4)",
-	"super(1)",
-	"super(1, 2)",
-	"super(1, 2, call((1, 2, 3, 4, 2 * (5 - 3))))",
+	"(super DataType).Initialize",
+	"require \"../my/script.pm\"",
+	"delete a.b",
+	"delete a[b]",
+	"gen a()\n\tyield 1\nend",
+	"1 implements Integer",
+	"1 is Integer",
+	"a_function(1)",
+	"a_function(1, 2)",
+	"a_function(1, 2, call((1, 2, 3, 4, 2 * (5 - 3))))",
 	"if a > 2\n" +
 		"\tcall()\n" +
 		"elif a < 2\n" +
@@ -473,6 +496,15 @@ var basicSamples = []string{
 		"\telse\n" +
 		"\t\tprint(\"\\\"a\\\" is non zero\")" +
 		"\n\tend\n" +
+		"end",
+	"if a > 2\n" +
+		"\tcall()\n" +
+		"elif a < 2\n" +
+		"\tprintln(1)\n" +
+		"elif b == 2\n" +
+		"\tprint(3)\n" +
+		"else\n" +
+		"\texit(1)\n" +
 		"end",
 	"unless a > 2\n" +
 		"\tcall()\n" +
@@ -485,6 +517,15 @@ var basicSamples = []string{
 		"\tif 1 == 2\n" +
 		"\t\tprint(2)\n" +
 		"\tend\n" +
+		"end",
+	"unless a > 2\n" +
+		"\tcall()\n" +
+		"elif a < 2\n" +
+		"\tprintln(1)\n" +
+		"elif b == 2\n" +
+		"\tprint(3)\n" +
+		"else\n" +
+		"\texit(1)\n" +
 		"end",
 	"switch Token.Kind\n" +
 		"case Numeric, CommandOutput\n" +
