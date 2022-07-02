@@ -1,5 +1,10 @@
 package ast
 
+import (
+	"fmt"
+	"reflect"
+)
+
 type Visitor interface {
 	Visit(node Node) Visitor
 }
@@ -11,6 +16,18 @@ func walk(visitor Visitor, node Node) {
 	}
 	// Visit its children
 	switch n := node.(type) {
+	case *Identifier, *BasicLiteralExpression:
+		break
+	case *Program:
+		if n.Begin != nil {
+			walk(visitor, n.Begin)
+		}
+		for _, child := range n.Body {
+			walk(visitor, child)
+		}
+		if n.End != nil {
+			walk(visitor, n.End)
+		}
 	case *ArrayExpression:
 		for _, value := range n.Values {
 			walk(visitor, value)
@@ -166,6 +183,30 @@ func walk(visitor Visitor, node Node) {
 		}
 	case *RaiseStatement:
 		walk(visitor, n.X)
+	case *IfStatement:
+		walk(visitor, n.Condition)
+		for _, bodyChild := range n.Body {
+			walk(visitor, bodyChild)
+		}
+		for _, elifBlock := range n.ElifBlocks {
+			walk(visitor, elifBlock.Condition)
+			for _, elifBlockChild := range elifBlock.Body {
+				walk(visitor, elifBlockChild)
+			}
+		}
+	case *UnlessStatement:
+		walk(visitor, n.Condition)
+		for _, bodyChild := range n.Body {
+			walk(visitor, bodyChild)
+		}
+		for _, elifBlock := range n.ElifBlocks {
+			walk(visitor, elifBlock.Condition)
+			for _, elifBlockChild := range elifBlock.Body {
+				walk(visitor, elifBlockChild)
+			}
+		}
+	default:
+		panic(fmt.Sprintf("unknown node type %s", reflect.TypeOf(node).String()))
 	}
 }
 

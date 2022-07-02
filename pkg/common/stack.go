@@ -2,27 +2,31 @@ package common
 
 type (
 	stackNode struct {
-		value any
-		next  *stackNode
+		Value any
+		Next  *stackNode
 	}
 	Stack[T any] struct {
-		top *stackNode
+		Top *stackNode
 	}
 )
 
 func (s *Stack[T]) Push(value T) {
-	s.top = &stackNode{
-		value: value,
-		next:  s.top,
+	s.Top = &stackNode{
+		Value: value,
+		Next:  s.Top,
 	}
 }
 
 func (s *Stack[T]) Peek() T {
-	return s.top.value.(T)
+	return s.Top.Value.(T)
 }
 
 func (s *Stack[T]) Pop() T {
-	value := s.top.value.(T)
-	s.top = s.top.next
+	value := s.Top.Value.(T)
+	s.Top = s.Top.Next
 	return value
+}
+
+func (s *Stack[T]) HasNext() bool {
+	return s.Top != nil
 }

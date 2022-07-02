@@ -2,4 +2,6 @@
 - Reformatted parser package
 - Adoption of Go error handling
 - Parser now parses if and unless statement elif blocks
-- 
+- Pass to validate return is only inside functions and generator definitions
+- Pass to validate yield is only inside generator definitions
+- Pass to validate break/continue/redo is only inside loops
