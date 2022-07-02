@@ -5,3 +5,4 @@
 - Pass to validate return is only inside functions and generator definitions
 - Pass to validate yield is only inside generator definitions
 - Pass to validate break/continue/redo is only inside loops
+- New lines handled reader side

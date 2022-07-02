@@ -31,8 +31,6 @@ func (lexer *Lexer) tokenizeStringLikeExpressions(stringOpener rune) error {
 			}
 		} else {
 			switch char {
-			case '\n':
-				lexer.line++
 			case stringOpener:
 				directValue = target
 				finish = true

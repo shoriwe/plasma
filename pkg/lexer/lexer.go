@@ -14,7 +14,6 @@ var (
 type Lexer struct {
 	currentToken *Token
 	lastToken    *Token
-	line         int
 	reader       reader.Reader
 	complete     bool
 }
@@ -33,7 +32,7 @@ func (lexer *Lexer) next() (*Token, error) {
 		Contents:    nil,
 		DirectValue: InvalidDirectValue,
 		Kind:        EOF,
-		Line:        lexer.line,
+		Line:        lexer.reader.Line(),
 		Index:       lexer.reader.Index(),
 	}
 	if !lexer.reader.HasNext() {
@@ -50,13 +49,10 @@ func (lexer *Lexer) next() (*Token, error) {
 			return nil, CRLFInvalid
 		}
 		lexer.reader.Next()
-		lexer.line++
 		lexer.currentToken.append(char, '\n')
 		lexer.currentToken.Kind = Separator
 		lexer.currentToken.DirectValue = NewLine
 	case NewLineChar:
-		lexer.line++
-
 		lexer.currentToken.Kind = Separator
 		lexer.currentToken.DirectValue = NewLine
 	case SemiColonChar:
@@ -235,7 +231,6 @@ func (lexer *Lexer) Next() (*Token, error) {
 func NewLexer(codeReader reader.Reader) *Lexer {
 	return &Lexer{
 		lastToken: nil,
-		line:      1,
 		reader:    codeReader,
 		complete:  false,
 	}
