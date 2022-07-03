@@ -1,4 +1,4 @@
-package passes
+package checks
 
 import (
 	"github.com/shoriwe/gplasma/pkg/ast"
