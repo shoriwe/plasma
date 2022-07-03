@@ -1,7 +1,10 @@
 package common
 
 import (
+	"fmt"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 	"strconv"
+	"strings"
 )
 
 var directCharEscapeValue = map[rune][]rune{
@@ -72,4 +75,90 @@ func ReplaceEscaped(s []rune) []rune {
 		}
 	}
 	return result
+}
+
+func ResolveString(token *lexer.Token) *lexer.Token {
+	return &lexer.Token{
+		Contents: []rune(
+			fmt.Sprintf("'%s'", string(token.Contents[1:len(token.Contents)-1])),
+		),
+		DirectValue: lexer.SingleQuoteString,
+		Kind:        lexer.Literal,
+		Line:        token.Line,
+		Column:      token.Column,
+		Index:       token.Index,
+	}
+}
+
+func ResolveBytesString(token *lexer.Token) *lexer.Token {
+	return &lexer.Token{
+		Contents: []rune(
+			fmt.Sprintf("b'%s'", string(token.Contents[2:len(token.Contents)-1])),
+		),
+		DirectValue: lexer.SingleQuoteString,
+		Kind:        lexer.Literal,
+		Line:        token.Line,
+		Column:      token.Column,
+		Index:       token.Index,
+	}
+}
+
+func StringAddToken(left, right *lexer.Token) *lexer.Token {
+	return &lexer.Token{
+		Contents:    append(left.Contents[1:len(left.Contents)-1], right.Contents[1:len(right.Contents)-1]...),
+		DirectValue: lexer.SingleQuoteString,
+		Kind:        lexer.Literal,
+		Line:        left.Line,
+		Column:      left.Column,
+		Index:       left.Index,
+	}
+}
+
+func StringMulToken(left, right *lexer.Token) *lexer.Token {
+	var (
+		rValue     int64
+		parseError error
+	)
+	rValue, parseError = strconv.ParseInt(right.String(), 0, 64)
+	if parseError != nil {
+		panic(parseError)
+	}
+	return &lexer.Token{
+		Contents:    []rune(strings.Repeat(string(left.Contents[1:len(left.Contents)-1]), int(rValue))),
+		DirectValue: lexer.SingleQuoteString,
+		Kind:        lexer.Literal,
+		Line:        left.Line,
+		Column:      left.Column,
+		Index:       left.Index,
+	}
+}
+
+func BytesStringAddToken(left, right *lexer.Token) *lexer.Token {
+	return &lexer.Token{
+		Contents:    append(left.Contents[2:len(left.Contents)-1], right.Contents[2:len(right.Contents)-1]...),
+		DirectValue: lexer.ByteString,
+		Kind:        lexer.Literal,
+		Line:        left.Line,
+		Column:      left.Column,
+		Index:       left.Index,
+	}
+}
+
+func BytesStringMulToken(left, right *lexer.Token) *lexer.Token {
+	var (
+		rValue     int64
+		parseError error
+	)
+	rValue, parseError = strconv.ParseInt(right.String(), 0, 64)
+	if parseError != nil {
+		panic(parseError)
+	}
+	return &lexer.Token{
+		Contents:    []rune(strings.Repeat(string(left.Contents[2:len(left.Contents)-1]), int(rValue))),
+		DirectValue: lexer.SingleQuoteString,
+		Kind:        lexer.Literal,
+		Line:        left.Line,
+		Column:      left.Column,
+		Index:       left.Index,
+	}
 }

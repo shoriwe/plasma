@@ -13,7 +13,7 @@ func (parser *Parser) parseBinaryExpression(precedence lexer2.DirectValue) (ast2
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := leftHandSide.(ast2.Statement); ok {
+	if _, ok := leftHandSide.(ast2.IStatement); ok {
 		return leftHandSide, nil
 	}
 	for parser.hasNext() {

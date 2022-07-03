@@ -123,7 +123,7 @@ func TestGeneratorExpressions(t *testing.T) {
 	test(t, filepath.Join(expressionSamples, generatorExpression))
 }
 
-// Statement tests
+// IStatement tests
 
 func TestAssignStatement(t *testing.T) {
 	test(t, filepath.Join(statementSamples, assignStatement))

@@ -5,38 +5,38 @@ import (
 )
 
 type (
-	Statement interface {
+	IStatement interface {
 		S()
 		Node
 	}
 
 	AssignStatement struct {
-		Statement
+		IStatement
 		LeftHandSide   IExpression // Identifiers or Selectors
 		AssignOperator *lexer.Token
 		RightHandSide  IExpression
 	}
 
 	DoWhileStatement struct {
-		Statement
+		IStatement
 		Condition IExpression
 		Body      []Node
 	}
 
 	WhileLoopStatement struct {
-		Statement
+		IStatement
 		Condition IExpression
 		Body      []Node
 	}
 
 	UntilLoopStatement struct {
-		Statement
+		IStatement
 		Condition IExpression
 		Body      []Node
 	}
 
 	ForLoopStatement struct {
-		Statement
+		IStatement
 		Receivers []*Identifier
 		Source    IExpression
 		Body      []Node
@@ -48,7 +48,7 @@ type (
 	}
 
 	IfStatement struct {
-		Statement
+		IStatement
 		Condition  IExpression
 		Body       []Node
 		ElifBlocks []ElifBlock
@@ -56,7 +56,7 @@ type (
 	}
 
 	UnlessStatement struct {
-		Statement
+		IStatement
 		Condition  IExpression
 		Body       []Node
 		ElifBlocks []ElifBlock
@@ -69,41 +69,41 @@ type (
 	}
 
 	SwitchStatement struct {
-		Statement
+		IStatement
 		Target     IExpression
 		CaseBlocks []*CaseBlock
 		Default    []Node
 	}
 
 	ModuleStatement struct {
-		Statement
+		IStatement
 		Name *Identifier
 		Body []Node
 	}
 
 	FunctionDefinitionStatement struct {
-		Statement
+		IStatement
 		Name      *Identifier
 		Arguments []*Identifier
 		Body      []Node
 	}
 
 	GeneratorDefinitionStatement struct {
-		Statement
+		IStatement
 		Name      *Identifier
 		Arguments []*Identifier
 		Body      []Node
 	}
 
 	InterfaceStatement struct {
-		Statement
+		IStatement
 		Name              *Identifier
 		Bases             []IExpression
 		MethodDefinitions []*FunctionDefinitionStatement
 	}
 
 	ClassStatement struct {
-		Statement
+		IStatement
 		Name  *Identifier
 		Bases []IExpression // Identifiers and selectors
 		Body  []Node
@@ -116,7 +116,7 @@ type (
 	}
 
 	TryStatement struct {
-		Statement
+		IStatement
 		Body         []Node
 		ExceptBlocks []*ExceptBlock
 		Else         []Node
@@ -124,53 +124,53 @@ type (
 	}
 
 	BeginStatement struct {
-		Statement
+		IStatement
 		Body []Node
 	}
 
 	EndStatement struct {
-		Statement
+		IStatement
 		Body []Node
 	}
 
 	ReturnStatement struct {
-		Statement
+		IStatement
 		Results []IExpression
 	}
 
 	YieldStatement struct {
-		Statement
+		IStatement
 		Results []IExpression
 	}
 
 	ContinueStatement struct {
-		Statement
+		IStatement
 	}
 
 	BreakStatement struct {
-		Statement
+		IStatement
 	}
 
 	RedoStatement struct {
-		Statement
+		IStatement
 	}
 
 	PassStatement struct {
-		Statement
+		IStatement
 	}
 
 	RaiseStatement struct {
-		Statement
+		IStatement
 		X IExpression
 	}
 
 	RequireStatement struct {
-		Statement
+		IStatement
 		X IExpression
 	}
 
 	DeleteStatement struct {
-		Statement
+		IStatement
 		X IExpression
 	}
 )

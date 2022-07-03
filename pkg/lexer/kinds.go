@@ -8,11 +8,9 @@ type Kind uint8
 
 const (
 	Unknown Kind = iota
-	PendingEscape
 	Comment
 	Whitespace
 	Literal
-	Tab
 	IdentifierKind
 	JunkKind
 	Separator
