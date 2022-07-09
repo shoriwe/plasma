@@ -56,19 +56,6 @@ type (
 		Bases []Expression
 		Body  []Node
 	}
-	ExceptBlock struct {
-		Targets     []Expression
-		CaptureName *Identifier
-		Body        []Node
-	}
-
-	Try struct {
-		Statement
-		Body         []Node
-		ExceptBlocks []*ExceptBlock
-		Else         []Node
-		Finally      []Node
-	}
 	Return struct {
 		Statement
 		Result Expression
@@ -86,10 +73,6 @@ type (
 	Pass struct {
 		Statement
 	}
-	Raise struct {
-		Statement
-		X Expression
-	}
 	Require struct {
 		Statement
 		X Expression
@@ -103,5 +86,10 @@ type (
 	Block struct {
 		Statement
 		Body []Node
+	}
+
+	Defer struct {
+		Statement
+		X Expression
 	}
 )

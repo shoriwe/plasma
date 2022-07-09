@@ -109,20 +109,6 @@ type (
 		Body  []Node
 	}
 
-	ExceptBlock struct {
-		Targets     []Expression
-		CaptureName *Identifier
-		Body        []Node
-	}
-
-	TryStatement struct {
-		Statement
-		Body         []Node
-		ExceptBlocks []*ExceptBlock
-		Else         []Node
-		Finally      []Node
-	}
-
 	BeginStatement struct {
 		Statement
 		Body []Node
@@ -155,11 +141,6 @@ type (
 		Statement
 	}
 
-	RaiseStatement struct {
-		Statement
-		X Expression
-	}
-
 	BlockStatement struct {
 		Statement
 		Body []Node
@@ -171,6 +152,11 @@ type (
 	}
 
 	DeleteStatement struct {
+		Statement
+		X Expression
+	}
+
+	DeferStatement struct {
 		Statement
 		X Expression
 	}

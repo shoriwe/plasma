@@ -362,49 +362,6 @@ func walker(node ast.Node) string {
 			result += "\n\t" + nodeString
 		}
 		return result + "\nend"
-	case *ast.RaiseStatement:
-		return "raise " + walker(n.X)
-	case *ast.TryStatement:
-		result := "try"
-		for _, bodyNode := range n.Body {
-			nodeString := walker(bodyNode)
-			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-			result += "\n\t" + nodeString
-		}
-		for _, exceptBlock := range n.ExceptBlocks {
-			result += "\nexcept "
-			for index, target := range exceptBlock.Targets {
-				if index != 0 {
-					result += ", "
-				}
-				result += walker(target)
-			}
-			if exceptBlock.CaptureName != nil {
-				result += " as " + walker(exceptBlock.CaptureName)
-			}
-			for _, bodyNode := range exceptBlock.Body {
-				nodeString := walker(bodyNode)
-				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-				result += "\n\t" + nodeString
-			}
-		}
-		if n.Else != nil {
-			result += "\nelse"
-			for _, bodyNode := range n.Else {
-				nodeString := walker(bodyNode)
-				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-				result += "\n\t" + nodeString
-			}
-		}
-		if n.Finally != nil {
-			result += "\nfinally"
-			for _, bodyNode := range n.Finally {
-				nodeString := walker(bodyNode)
-				nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-				result += "\n\t" + nodeString
-			}
-		}
-		return result + "\nend"
 	case *ast.DoWhileStatement:
 		result := "do"
 		for _, bodyNode := range n.Body {
@@ -419,6 +376,8 @@ func walker(node ast.Node) string {
 		return "require " + walker(n.X)
 	case *ast.DeleteStatement:
 		return "delete " + walker(n.X)
+	case *ast.DeferStatement:
+		return "defer " + walker(n.X)
 	}
 	panic("unknown node type: " + reflect.TypeOf(node).String())
 }

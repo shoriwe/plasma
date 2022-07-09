@@ -55,12 +55,6 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 		return Keyword, Interface
 	case ClassString:
 		return Keyword, Class
-	case TryString:
-		return Keyword, Try
-	case ExceptString:
-		return Keyword, Except
-	case FinallyString:
-		return Keyword, Finally
 	case AndString:
 		return Comparator, And
 	case OrString:
@@ -73,10 +67,6 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 		return Comparator, Is
 	case ImplementsString:
 		return Comparator, Implements
-	case AsString:
-		return Keyword, As
-	case RaiseString:
-		return Keyword, Raise
 	case BEGINString:
 		return Keyword, BEGIN
 	case BlockString:
@@ -91,8 +81,8 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 		return Boolean, False
 	case NoneString:
 		return NoneType, None
-	case ContextString:
-		return Keyword, Context
+	case DeferString:
+		return Keyword, Defer
 	default:
 		if identifierCheck.MatchString(s) {
 			return IdentifierKind, InvalidDirectValue

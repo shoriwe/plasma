@@ -9,6 +9,7 @@
 - [ ] `block` statement
 - [ ] `require` statement
 - [ ] `delete` statement
+- [ ] `defer` statement
 - [ ] `super` expression (not function as in previous versions)
 - [ ] Lowercase standard library and default methods names
 - [ ] Bytecode (like literally sequence of bytes)
@@ -19,6 +20,7 @@
 - [ ] Resolve `require`s
 - [ ] Better REPL
 - [ ] Update documentation
+- [ ] Remove try-except-else-finally and raise
 - [ ] Function yield generators (finally implement them)
 
 ## Optional

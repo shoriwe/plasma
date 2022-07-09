@@ -146,25 +146,6 @@ func walk(visitor Visitor, node Node) {
 		for _, bodyNode := range n.Body {
 			walk(visitor, bodyNode)
 		}
-	case *TryStatement:
-		for _, bodyNode := range n.Body {
-			walk(visitor, bodyNode)
-		}
-		for _, except := range n.ExceptBlocks {
-			for _, target := range except.Targets {
-				walk(visitor, target)
-			}
-			walk(visitor, except.CaptureName)
-			for _, exceptBodyNode := range except.Body {
-				walk(visitor, exceptBodyNode)
-			}
-		}
-		for _, elseBodyNode := range n.Else {
-			walk(visitor, elseBodyNode)
-		}
-		for _, finallyBodyNode := range n.Finally {
-			walk(visitor, finallyBodyNode)
-		}
 	case *BeginStatement:
 		for _, bodyNode := range n.Body {
 			walk(visitor, bodyNode)
@@ -181,8 +162,6 @@ func walk(visitor Visitor, node Node) {
 		for _, value := range n.Results {
 			walk(visitor, value)
 		}
-	case *RaiseStatement:
-		walk(visitor, n.X)
 	case *IfStatement:
 		walk(visitor, n.Condition)
 		for _, bodyChild := range n.Body {

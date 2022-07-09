@@ -33,8 +33,6 @@ func simplifyStatement(stmt ast.Statement) ast2.Statement {
 		return simplifyInterface(s)
 	case *ast.ClassStatement:
 		return simplifyClass(s)
-	case *ast.TryStatement:
-		return simplifyTry(s)
 	case *ast.ReturnStatement:
 		return simplifyReturn(s)
 	case *ast.YieldStatement:
@@ -45,14 +43,14 @@ func simplifyStatement(stmt ast.Statement) ast2.Statement {
 		return simplifyBreak(s)
 	case *ast.PassStatement:
 		return simplifyPass(s)
-	case *ast.RaiseStatement:
-		return simplifyRaise(s)
 	case *ast.BlockStatement:
 		return simplifyBlock(s)
 	case *ast.RequireStatement:
 		return simplifyRequire(s)
 	case *ast.DeleteStatement:
 		return simplifyDelete(s)
+	case *ast.DeferStatement:
+		return simplifyDefer(s)
 	default:
 		panic("unknown statement type")
 	}

@@ -26,6 +26,8 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseSuperExpression()
 		case lexer.Delete:
 			return parser.parseDeleteStatement()
+		case lexer.Defer:
+			return parser.parseDeferStatement()
 		case lexer.Require:
 			return parser.parseRequireStatement()
 		case lexer.While:
@@ -52,10 +54,6 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseClassStatement()
 		case lexer.Block:
 			return parser.parseBlockStatement()
-		case lexer.Raise:
-			return parser.parseRaiseStatement()
-		case lexer.Try:
-			return parser.parseTryStatement()
 		case lexer.Return:
 			return parser.parseReturnStatement()
 		case lexer.Yield:

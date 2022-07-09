@@ -22,12 +22,11 @@ const (
 	Pass
 	Super
 	Delete
+	Defer
 	Require
 	End
 	If
 	Unless
-	As
-	Raise
 	Else
 	Elif
 	While
@@ -47,13 +46,9 @@ const (
 	Lambda
 	Interface
 	Class
-	Try
-	Except
-	Finally
 	BEGIN
 	END
 	Block
-	Context
 
 	Assign
 	BitwiseOrAssign
@@ -177,6 +172,7 @@ var (
 	PassString       = "pass"
 	SuperString      = "super"
 	DeleteString     = "delete"
+	DeferString      = "defer"
 	RequireString    = "require"
 	EndString        = "end"
 	IfString         = "if"
@@ -200,9 +196,6 @@ var (
 	LambdaString     = "lambda"
 	InterfaceString  = "interface"
 	ClassString      = "class"
-	TryString        = "try"
-	ExceptString     = "except"
-	FinallyString    = "finally"
 	AndString        = "and"
 	OrString         = "or"
 	XorString        = "xor"
@@ -216,7 +209,4 @@ var (
 	TrueString       = "True"
 	FalseString      = "False"
 	NoneString       = "None"
-	ContextString    = "context"
-	RaiseString      = "raise"
-	AsString         = "as"
 )
