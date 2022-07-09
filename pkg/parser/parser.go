@@ -1,20 +1,20 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/ast"
 	"github.com/shoriwe/gplasma/pkg/common"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
 type Parser struct {
 	lineStack    common.Stack[int]
-	lexer        *lexer2.Lexer
+	lexer        *lexer.Lexer
 	complete     bool
-	currentToken *lexer2.Token
+	currentToken *lexer.Token
 }
 
-func (parser *Parser) Parse() (*ast2.Program, error) {
-	result := &ast2.Program{
+func (parser *Parser) Parse() (*ast.Program, error) {
+	result := &ast.Program{
 		Begin: nil,
 		End:   nil,
 		Body:  nil,
@@ -23,12 +23,14 @@ func (parser *Parser) Parse() (*ast2.Program, error) {
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	var beginStatement *ast2.BeginStatement
-	var endStatement *ast2.EndStatement
-	var parsedExpression ast2.Node
-	var parsingError error
+	var (
+		beginStatement   *ast.BeginStatement
+		endStatement     *ast.EndStatement
+		parsedExpression ast.Node
+		parsingError     error
+	)
 	for parser.hasNext() {
-		if parser.matchKind(lexer2.Separator) {
+		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
@@ -36,7 +38,7 @@ func (parser *Parser) Parse() (*ast2.Program, error) {
 			continue
 		}
 		switch {
-		case parser.matchDirectValue(lexer2.BEGIN):
+		case parser.matchDirectValue(lexer.BEGIN):
 			if result.Begin != nil {
 				return nil, BeginRepeated
 			}
@@ -45,7 +47,7 @@ func (parser *Parser) Parse() (*ast2.Program, error) {
 				return nil, parsingError
 			}
 			result.Begin = beginStatement
-		case parser.matchDirectValue(lexer2.END):
+		case parser.matchDirectValue(lexer.END):
 			if result.End != nil {
 				return nil, EndRepeated
 			}
@@ -66,7 +68,7 @@ func (parser *Parser) Parse() (*ast2.Program, error) {
 	return result, nil
 }
 
-func NewParser(lexer_ *lexer2.Lexer) *Parser {
+func NewParser(lexer_ *lexer.Lexer) *Parser {
 	return &Parser{
 		lineStack:    common.Stack[int]{},
 		lexer:        lexer_,

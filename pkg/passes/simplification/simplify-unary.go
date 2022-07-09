@@ -2,37 +2,24 @@ package simplification
 
 import (
 	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/common"
+	"github.com/shoriwe/gplasma/pkg/ast2"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func evalUnaryExpression(x *ast.BasicLiteralExpression, operator *lexer.Token) ast.IExpression {
-	switch operator.DirectValue {
+func simplifyUnary(unary *ast.UnaryExpression) *ast2.Unary {
+	var operator ast2.UnaryOperator
+	switch unary.Operator.DirectValue {
+	case lexer.Not, lexer.SignNot:
+		operator = ast2.Not
 	case lexer.NegateBits:
-		switch {
-		case literalIsInteger(x):
-			newValue := common.IntegerNegateBitsToken(x.Token)
-			return &ast.BasicLiteralExpression{
-				Token:       newValue,
-				Kind:        newValue.Kind,
-				DirectValue: newValue.DirectValue,
-			}
-		}
+		operator = ast2.NegateBits
+	case lexer.Add:
+		operator = ast2.Positive
+	case lexer.Sub:
+		operator = ast2.Negative
 	}
-	return &ast.UnaryExpression{
+	return &ast2.Unary{
 		Operator: operator,
-		X:        x,
-	}
-}
-
-func simplifyUnary(unary *ast.UnaryExpression) ast.IExpression {
-	newX := SimplifyExpression(unary.X)
-	switch x := newX.(type) {
-	case *ast.BasicLiteralExpression:
-		return evalUnaryExpression(x, unary.Operator)
-	}
-	return &ast.UnaryExpression{
-		Operator: unary.Operator,
-		X:        newX,
+		X:        simplifyExpression(unary.X),
 	}
 }

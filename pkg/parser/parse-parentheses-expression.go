@@ -1,11 +1,11 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/ast"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseParentheses() (ast2.IExpression, error) {
+func (parser *Parser) parseParentheses() (ast.Expression, error) {
 	/*
 		This should also parse generators
 	*/
@@ -25,7 +25,7 @@ func (parser *Parser) parseParentheses() (ast2.IExpression, error) {
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := firstExpression.(ast2.IExpression); !ok {
+	if _, ok := firstExpression.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(ParenthesesExpression)
 	}
 	newLinesRemoveError = parser.removeNewLines()
@@ -33,27 +33,27 @@ func (parser *Parser) parseParentheses() (ast2.IExpression, error) {
 		return nil, newLinesRemoveError
 	}
 	if parser.matchDirectValue(lexer.For) {
-		return parser.parseGeneratorExpression(firstExpression.(ast2.IExpression))
+		return parser.parseGeneratorExpression(firstExpression.(ast.Expression))
 	}
 	if parser.matchDirectValue(lexer.CloseParentheses) {
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
-		return &ast2.ParenthesesExpression{
-			X: firstExpression.(ast2.IExpression),
+		return &ast.ParenthesesExpression{
+			X: firstExpression.(ast.Expression),
 		}, nil
 	}
 	if !parser.matchDirectValue(lexer.Comma) {
 		return nil, parser.newSyntaxError(ParenthesesExpression)
 	}
-	var values []ast2.IExpression
-	values = append(values, firstExpression.(ast2.IExpression))
+	var values []ast.Expression
+	values = append(values, firstExpression.(ast.Expression))
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	var nextValue ast2.Node
+	var nextValue ast.Node
 	for parser.hasNext() {
 		if parser.matchDirectValue(lexer.CloseParentheses) {
 			break
@@ -67,10 +67,10 @@ func (parser *Parser) parseParentheses() (ast2.IExpression, error) {
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		if _, ok := nextValue.(ast2.IExpression); !ok {
+		if _, ok := nextValue.(ast.Expression); !ok {
 			return nil, parser.expectingExpressionError(ParenthesesExpression)
 		}
-		values = append(values, nextValue.(ast2.IExpression))
+		values = append(values, nextValue.(ast.Expression))
 		newLinesRemoveError = parser.removeNewLines()
 		if newLinesRemoveError != nil {
 			return nil, newLinesRemoveError
@@ -95,7 +95,7 @@ func (parser *Parser) parseParentheses() (ast2.IExpression, error) {
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	return &ast2.TupleExpression{
+	return &ast.TupleExpression{
 		Values: values,
 	}, nil
 }

@@ -61,11 +61,11 @@ func (parser *Parser) parseLambdaExpression() (*ast.LambdaExpression, error) {
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := code.(ast.IExpression); !ok {
+	if _, ok := code.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(LambdaExpression)
 	}
 	return &ast.LambdaExpression{
 		Arguments: arguments,
-		Code:      code.(ast.IExpression),
+		Code:      code.(ast.Expression),
 	}, nil
 }

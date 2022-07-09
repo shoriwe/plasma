@@ -5,118 +5,118 @@ import (
 )
 
 type (
-	IStatement interface {
+	Statement interface {
 		S()
 		Node
 	}
 
 	AssignStatement struct {
-		IStatement
-		LeftHandSide   IExpression // Identifiers or Selectors
+		Statement
+		LeftHandSide   Expression // Identifiers or Selectors
 		AssignOperator *lexer.Token
-		RightHandSide  IExpression
+		RightHandSide  Expression
 	}
 
 	DoWhileStatement struct {
-		IStatement
-		Condition IExpression
+		Statement
+		Condition Expression
 		Body      []Node
 	}
 
 	WhileLoopStatement struct {
-		IStatement
-		Condition IExpression
+		Statement
+		Condition Expression
 		Body      []Node
 	}
 
 	UntilLoopStatement struct {
-		IStatement
-		Condition IExpression
+		Statement
+		Condition Expression
 		Body      []Node
 	}
 
 	ForLoopStatement struct {
-		IStatement
+		Statement
 		Receivers []*Identifier
-		Source    IExpression
+		Source    Expression
 		Body      []Node
 	}
 
 	ElifBlock struct {
-		Condition IExpression
+		Condition Expression
 		Body      []Node
 	}
 
 	IfStatement struct {
-		IStatement
-		Condition  IExpression
+		Statement
+		Condition  Expression
 		Body       []Node
 		ElifBlocks []ElifBlock
 		Else       []Node
 	}
 
 	UnlessStatement struct {
-		IStatement
-		Condition  IExpression
+		Statement
+		Condition  Expression
 		Body       []Node
 		ElifBlocks []ElifBlock
 		Else       []Node
 	}
 
 	CaseBlock struct {
-		Cases []IExpression
+		Cases []Expression
 		Body  []Node
 	}
 
 	SwitchStatement struct {
-		IStatement
-		Target     IExpression
+		Statement
+		Target     Expression
 		CaseBlocks []*CaseBlock
 		Default    []Node
 	}
 
 	ModuleStatement struct {
-		IStatement
+		Statement
 		Name *Identifier
 		Body []Node
 	}
 
 	FunctionDefinitionStatement struct {
-		IStatement
+		Statement
 		Name      *Identifier
 		Arguments []*Identifier
 		Body      []Node
 	}
 
 	GeneratorDefinitionStatement struct {
-		IStatement
+		Statement
 		Name      *Identifier
 		Arguments []*Identifier
 		Body      []Node
 	}
 
 	InterfaceStatement struct {
-		IStatement
+		Statement
 		Name              *Identifier
-		Bases             []IExpression
+		Bases             []Expression
 		MethodDefinitions []*FunctionDefinitionStatement
 	}
 
 	ClassStatement struct {
-		IStatement
+		Statement
 		Name  *Identifier
-		Bases []IExpression // Identifiers and selectors
+		Bases []Expression // Identifiers and selectors
 		Body  []Node
 	}
 
 	ExceptBlock struct {
-		Targets     []IExpression
+		Targets     []Expression
 		CaptureName *Identifier
 		Body        []Node
 	}
 
 	TryStatement struct {
-		IStatement
+		Statement
 		Body         []Node
 		ExceptBlocks []*ExceptBlock
 		Else         []Node
@@ -124,53 +124,54 @@ type (
 	}
 
 	BeginStatement struct {
-		IStatement
+		Statement
 		Body []Node
 	}
 
 	EndStatement struct {
-		IStatement
+		Statement
 		Body []Node
 	}
 
 	ReturnStatement struct {
-		IStatement
-		Results []IExpression
+		Statement
+		Results []Expression
 	}
 
 	YieldStatement struct {
-		IStatement
-		Results []IExpression
+		Statement
+		Results []Expression
 	}
 
 	ContinueStatement struct {
-		IStatement
+		Statement
 	}
 
 	BreakStatement struct {
-		IStatement
-	}
-
-	RedoStatement struct {
-		IStatement
+		Statement
 	}
 
 	PassStatement struct {
-		IStatement
+		Statement
 	}
 
 	RaiseStatement struct {
-		IStatement
-		X IExpression
+		Statement
+		X Expression
+	}
+
+	BlockStatement struct {
+		Statement
+		Body []Node
 	}
 
 	RequireStatement struct {
-		IStatement
-		X IExpression
+		Statement
+		X Expression
 	}
 
 	DeleteStatement struct {
-		IStatement
-		X IExpression
+		Statement
+		X Expression
 	}
 )

@@ -75,7 +75,7 @@ func (c *Check) Visit(node ast.Node) ast.Visitor {
 			c.InvalidGeneratorNodesStack.Push(n)
 		}
 		return nil
-	case *ast.BreakStatement, *ast.RedoStatement, *ast.ContinueStatement:
+	case *ast.BreakStatement, *ast.ContinueStatement:
 		if !c.insideLoop {
 			c.InvalidLoopNodesStack.Push(n)
 		}

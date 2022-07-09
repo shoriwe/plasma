@@ -41,7 +41,6 @@ const (
 	Return
 	Continue
 	Break
-	Redo
 	Module
 	Def
 	Generator
@@ -53,13 +52,13 @@ const (
 	Finally
 	BEGIN
 	END
+	Block
 	Context
 
 	Assign
-	NegateBitsAssign
 	BitwiseOrAssign
 	BitwiseXorAssign
-	BitWiseAndAssign
+	BitwiseAndAssign
 	BitwiseLeftAssign
 	BitwiseRightAssign
 	AddAssign
@@ -90,7 +89,7 @@ const (
 
 	BitwiseOr
 	BitwiseXor
-	BitWiseAnd
+	BitwiseAnd
 	BitwiseLeft
 	BitwiseRight
 
@@ -195,7 +194,6 @@ var (
 	ReturnString     = "return"
 	ContinueString   = "continue"
 	BreakString      = "break"
-	RedoString       = "redo"
 	ModuleString     = "module"
 	DefString        = "def"
 	GeneratorString  = "gen"
@@ -213,6 +211,7 @@ var (
 	ImplementsString = "implements"
 	BEGINString      = "BEGIN"
 	ENDString        = "END"
+	BlockString      = "block"
 	NotString        = "not"
 	TrueString       = "True"
 	FalseString      = "False"

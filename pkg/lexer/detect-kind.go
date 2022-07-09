@@ -43,8 +43,6 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 		return Keyword, Continue
 	case BreakString:
 		return Keyword, Break
-	case RedoString:
-		return Keyword, Redo
 	case ModuleString:
 		return Keyword, Module
 	case DefString:
@@ -81,6 +79,8 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 		return Keyword, Raise
 	case BEGINString:
 		return Keyword, BEGIN
+	case BlockString:
+		return Keyword, Block
 	case ENDString:
 		return Keyword, END
 	case NotString: // Unary operator

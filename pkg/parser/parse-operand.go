@@ -1,82 +1,81 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseOperand() (ast2.Node, error) {
+func (parser *Parser) parseOperand() (ast.Node, error) {
 	switch parser.currentToken.Kind {
-	case lexer2.Literal, lexer2.Boolean, lexer2.NoneType:
+	case lexer.Literal, lexer.Boolean, lexer.NoneType:
 		return parser.parseLiteral()
-	case lexer2.IdentifierKind:
+	case lexer.IdentifierKind:
 		identifier := parser.currentToken
-
 		tokenizingError := parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
-		return &ast2.Identifier{
+		return &ast.Identifier{
 			Token: identifier,
 		}, nil
-	case lexer2.Keyword:
+	case lexer.Keyword:
 		switch parser.currentToken.DirectValue {
-		case lexer2.Lambda:
+		case lexer.Lambda:
 			return parser.parseLambdaExpression()
-		case lexer2.Super:
+		case lexer.Super:
 			return parser.parseSuperExpression()
-		case lexer2.Delete:
+		case lexer.Delete:
 			return parser.parseDeleteStatement()
-		case lexer2.Require:
+		case lexer.Require:
 			return parser.parseRequireStatement()
-		case lexer2.While:
+		case lexer.While:
 			return parser.parseWhileStatement()
-		case lexer2.For:
+		case lexer.For:
 			return parser.parseForStatement()
-		case lexer2.Until:
+		case lexer.Until:
 			return parser.parseUntilStatement()
-		case lexer2.If:
+		case lexer.If:
 			return parser.parseIfStatement()
-		case lexer2.Unless:
+		case lexer.Unless:
 			return parser.parseUnlessStatement()
-		case lexer2.Switch:
+		case lexer.Switch:
 			return parser.parseSwitchStatement()
-		case lexer2.Module:
+		case lexer.Module:
 			return parser.parseModuleStatement()
-		case lexer2.Def:
+		case lexer.Def:
 			return parser.parseFunctionDefinitionStatement()
-		case lexer2.Generator:
+		case lexer.Generator:
 			return parser.parseGeneratorDefinitionStatement()
-		case lexer2.Interface:
+		case lexer.Interface:
 			return parser.parseInterfaceStatement()
-		case lexer2.Class:
+		case lexer.Class:
 			return parser.parseClassStatement()
-		case lexer2.Raise:
+		case lexer.Block:
+			return parser.parseBlockStatement()
+		case lexer.Raise:
 			return parser.parseRaiseStatement()
-		case lexer2.Try:
+		case lexer.Try:
 			return parser.parseTryStatement()
-		case lexer2.Return:
+		case lexer.Return:
 			return parser.parseReturnStatement()
-		case lexer2.Yield:
+		case lexer.Yield:
 			return parser.parseYieldStatement()
-		case lexer2.Continue:
+		case lexer.Continue:
 			return parser.parseContinueStatement()
-		case lexer2.Break:
+		case lexer.Break:
 			return parser.parseBreakStatement()
-		case lexer2.Redo:
-			return parser.parseRedoStatement()
-		case lexer2.Pass:
+		case lexer.Pass:
 			return parser.parsePassStatement()
-		case lexer2.Do:
+		case lexer.Do:
 			return parser.parseDoWhileStatement()
 		}
-	case lexer2.Punctuation:
+	case lexer.Punctuation:
 		switch parser.currentToken.DirectValue {
-		case lexer2.OpenParentheses:
+		case lexer.OpenParentheses:
 			return parser.parseParentheses()
-		case lexer2.OpenSquareBracket: // Parse Arrays
+		case lexer.OpenSquareBracket: // Parse Arrays
 			return parser.parseArrayExpression()
-		case lexer2.OpenBrace: // Parse Dictionaries
+		case lexer.OpenBrace: // Parse Dictionaries
 			return parser.parseHashExpression()
 		}
 	}

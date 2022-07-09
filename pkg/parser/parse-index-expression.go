@@ -5,7 +5,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseIndexExpression(expression ast.IExpression) (*ast.IndexExpression, error) {
+func (parser *Parser) parseIndexExpression(expression ast.Expression) (*ast.IndexExpression, error) {
 	tokenizationError := parser.next()
 	if tokenizationError != nil {
 		return nil, tokenizationError
@@ -20,7 +20,7 @@ func (parser *Parser) parseIndexExpression(expression ast.IExpression) (*ast.Ind
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := index.(ast.IExpression); !ok {
+	if _, ok := index.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(IndexExpression)
 	}
 	newLinesRemoveError = parser.removeNewLines()
@@ -36,6 +36,6 @@ func (parser *Parser) parseIndexExpression(expression ast.IExpression) (*ast.Ind
 	}
 	return &ast.IndexExpression{
 		Source: expression,
-		Index:  index.(ast.IExpression),
+		Index:  index.(ast.Expression),
 	}, nil
 }

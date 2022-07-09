@@ -14,7 +14,7 @@ func (parser *Parser) parseArrayExpression() (*ast.ArrayExpression, error) {
 	if newLinesRemoveError != nil {
 		return nil, newLinesRemoveError
 	}
-	var values []ast.IExpression
+	var values []ast.Expression
 	for parser.hasNext() {
 		if parser.matchDirectValue(lexer.CloseSquareBracket) {
 			break
@@ -28,10 +28,10 @@ func (parser *Parser) parseArrayExpression() (*ast.ArrayExpression, error) {
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		if _, ok := value.(ast.IExpression); !ok {
+		if _, ok := value.(ast.Expression); !ok {
 			return nil, parser.expectingExpressionError(ArrayExpression)
 		}
-		values = append(values, value.(ast.IExpression))
+		values = append(values, value.(ast.Expression))
 		newLinesRemoveError = parser.removeNewLines()
 		if newLinesRemoveError != nil {
 			return nil, newLinesRemoveError

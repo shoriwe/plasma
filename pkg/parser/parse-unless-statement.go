@@ -1,11 +1,11 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseUnlessStatement() (*ast2.UnlessStatement, error) {
+func (parser *Parser) parseUnlessStatement() (*ast.UnlessStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -19,28 +19,28 @@ func (parser *Parser) parseUnlessStatement() (*ast2.UnlessStatement, error) {
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := condition.(ast2.IExpression); !ok {
+	if _, ok := condition.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(UnlessStatement)
 	}
-	if !parser.matchDirectValue(lexer2.NewLine) {
+	if !parser.matchDirectValue(lexer.NewLine) {
 		return nil, parser.newSyntaxError(UnlessStatement)
 	}
 	// Parse Unless
-	root := &ast2.UnlessStatement{
-		Condition: condition.(ast2.IExpression),
-		Body:      []ast2.Node{},
-		Else:      []ast2.Node{},
+	root := &ast.UnlessStatement{
+		Condition: condition.(ast.Expression),
+		Body:      []ast.Node{},
+		Else:      []ast.Node{},
 	}
-	var bodyNode ast2.Node
+	var bodyNode ast.Node
 	for parser.hasNext() {
-		if parser.matchKind(lexer2.Separator) {
+		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
 			}
-			if parser.matchDirectValue(lexer2.Elif) ||
-				parser.matchDirectValue(lexer2.Else) ||
-				parser.matchDirectValue(lexer2.End) {
+			if parser.matchDirectValue(lexer.Elif) ||
+				parser.matchDirectValue(lexer.Else) ||
+				parser.matchDirectValue(lexer.End) {
 				break
 			}
 			continue
@@ -53,10 +53,10 @@ func (parser *Parser) parseUnlessStatement() (*ast2.UnlessStatement, error) {
 	}
 	// Parse Elifs
 	lastCondition := root
-	if parser.matchDirectValue(lexer2.Elif) {
+	if parser.matchDirectValue(lexer.Elif) {
 	elifBlocksParsingLoop:
 		for parser.hasNext() {
-			block := ast2.ElifBlock{
+			block := ast.ElifBlock{
 				Condition: nil,
 				Body:      nil,
 			}
@@ -68,24 +68,24 @@ func (parser *Parser) parseUnlessStatement() (*ast2.UnlessStatement, error) {
 			if parsingError != nil {
 				return nil, parsingError
 			}
-			if _, ok := condition.(ast2.IExpression); !ok {
+			if _, ok := condition.(ast.Expression); !ok {
 				return nil, parser.expectingExpressionError(ElifBlock)
 			}
-			block.Condition = condition.(ast2.IExpression)
-			if !parser.matchDirectValue(lexer2.NewLine) {
+			block.Condition = condition.(ast.Expression)
+			if !parser.matchDirectValue(lexer.NewLine) {
 				return nil, parser.newSyntaxError(IfStatement)
 			}
 			for parser.hasNext() {
-				if parser.matchKind(lexer2.Separator) {
+				if parser.matchKind(lexer.Separator) {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
 						return nil, tokenizingError
 					}
-					if parser.matchDirectValue(lexer2.Else) ||
-						parser.matchDirectValue(lexer2.End) {
+					if parser.matchDirectValue(lexer.Else) ||
+						parser.matchDirectValue(lexer.End) {
 						root.ElifBlocks = append(root.ElifBlocks, block)
 						break elifBlocksParsingLoop
-					} else if parser.matchDirectValue(lexer2.Elif) {
+					} else if parser.matchDirectValue(lexer.Elif) {
 						break
 					}
 					continue
@@ -96,29 +96,29 @@ func (parser *Parser) parseUnlessStatement() (*ast2.UnlessStatement, error) {
 				}
 				block.Body = append(block.Body, bodyNode)
 			}
-			if !parser.matchDirectValue(lexer2.Elif) {
+			if !parser.matchDirectValue(lexer.Elif) {
 				return nil, parser.newSyntaxError(ElifBlock)
 			}
 			root.ElifBlocks = append(root.ElifBlocks, block)
 		}
 	}
 	// Parse Default
-	if parser.matchDirectValue(lexer2.Else) {
+	if parser.matchDirectValue(lexer.Else) {
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
-		var elseBodyNode ast2.Node
-		if !parser.matchDirectValue(lexer2.NewLine) {
+		var elseBodyNode ast.Node
+		if !parser.matchDirectValue(lexer.NewLine) {
 			return nil, parser.newSyntaxError(ElseBlock)
 		}
 		for parser.hasNext() {
-			if parser.matchKind(lexer2.Separator) {
+			if parser.matchKind(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
 					return nil, tokenizingError
 				}
-				if parser.matchDirectValue(lexer2.End) {
+				if parser.matchDirectValue(lexer.End) {
 					break
 				}
 				continue
@@ -130,7 +130,7 @@ func (parser *Parser) parseUnlessStatement() (*ast2.UnlessStatement, error) {
 			lastCondition.Else = append(lastCondition.Else, elseBodyNode)
 		}
 	}
-	if !parser.matchDirectValue(lexer2.End) {
+	if !parser.matchDirectValue(lexer.End) {
 		return nil, parser.statementNeverEndedError(UnlessStatement)
 	}
 	tokenizingError = parser.next()

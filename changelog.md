@@ -6,3 +6,10 @@
 - Pass to validate yield is only inside generator definitions
 - Pass to validate break/continue/redo is only inside loops
 - New lines handled reader side
+- New `block` statement
+- New `delete` statement
+- New `require` statement
+- New `super` expression
+- New `is` and `implements` binary operators
+- Directory for test samples
+- Simplify AST pass

@@ -1,28 +1,28 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseEndStatement() (*ast2.EndStatement, error) {
+func (parser *Parser) parseEndStatement() (*ast.EndStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	if !parser.matchDirectValue(lexer2.NewLine) {
+	if !parser.matchDirectValue(lexer.NewLine) {
 		return nil, parser.newSyntaxError(EndStatement)
 	}
-	var body []ast2.Node
-	var bodyNode ast2.Node
+	var body []ast.Node
+	var bodyNode ast.Node
 	var parsingError error
 	for parser.hasNext() {
-		if parser.matchKind(lexer2.Separator) {
+		if parser.matchKind(lexer.Separator) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
 			}
-			if parser.matchDirectValue(lexer2.End) {
+			if parser.matchDirectValue(lexer.End) {
 				break
 			}
 			continue
@@ -33,14 +33,14 @@ func (parser *Parser) parseEndStatement() (*ast2.EndStatement, error) {
 		}
 		body = append(body, bodyNode)
 	}
-	if !parser.matchDirectValue(lexer2.End) {
+	if !parser.matchDirectValue(lexer.End) {
 		return nil, parser.statementNeverEndedError(EndStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	return &ast2.EndStatement{
+	return &ast.EndStatement{
 		Body: body,
 	}, nil
 }

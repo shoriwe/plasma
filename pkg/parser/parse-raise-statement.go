@@ -1,10 +1,10 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/ast"
 )
 
-func (parser *Parser) parseRaiseStatement() (*ast2.RaiseStatement, error) {
+func (parser *Parser) parseRaiseStatement() (*ast.RaiseStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -13,10 +13,10 @@ func (parser *Parser) parseRaiseStatement() (*ast2.RaiseStatement, error) {
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := x.(ast2.IExpression); !ok {
+	if _, ok := x.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(RaiseStatement)
 	}
-	return &ast2.RaiseStatement{
-		X: x.(ast2.IExpression),
+	return &ast.RaiseStatement{
+		X: x.(ast.Expression),
 	}, nil
 }

@@ -1,11 +1,11 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/ast"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseHashExpression() (*ast2.HashExpression, error) {
+func (parser *Parser) parseHashExpression() (*ast.HashExpression, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -14,9 +14,9 @@ func (parser *Parser) parseHashExpression() (*ast2.HashExpression, error) {
 	if newLinesRemoveError != nil {
 		return nil, newLinesRemoveError
 	}
-	var values []*ast2.KeyValue
-	var leftHandSide ast2.Node
-	var rightHandSide ast2.Node
+	var values []*ast.KeyValue
+	var leftHandSide ast.Node
+	var rightHandSide ast.Node
 	var parsingError error
 	for parser.hasNext() {
 		if parser.matchDirectValue(lexer.CloseBrace) {
@@ -31,7 +31,7 @@ func (parser *Parser) parseHashExpression() (*ast2.HashExpression, error) {
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		if _, ok := leftHandSide.(ast2.IExpression); !ok {
+		if _, ok := leftHandSide.(ast.Expression); !ok {
 			return nil, parser.expectingExpressionError(HashExpression)
 		}
 		newLinesRemoveError = parser.removeNewLines()
@@ -54,12 +54,12 @@ func (parser *Parser) parseHashExpression() (*ast2.HashExpression, error) {
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		if _, ok := rightHandSide.(ast2.IExpression); !ok {
+		if _, ok := rightHandSide.(ast.Expression); !ok {
 			return nil, parser.expectingExpressionError(HashExpression)
 		}
-		values = append(values, &ast2.KeyValue{
-			Key:   leftHandSide.(ast2.IExpression),
-			Value: rightHandSide.(ast2.IExpression),
+		values = append(values, &ast.KeyValue{
+			Key:   leftHandSide.(ast.Expression),
+			Value: rightHandSide.(ast.Expression),
 		})
 		newLinesRemoveError = parser.removeNewLines()
 		if newLinesRemoveError != nil {
@@ -80,7 +80,7 @@ func (parser *Parser) parseHashExpression() (*ast2.HashExpression, error) {
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	return &ast2.HashExpression{
+	return &ast.HashExpression{
 		Values: values,
 	}, nil
 }

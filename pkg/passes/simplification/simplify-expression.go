@@ -1,43 +1,50 @@
 package simplification
 
 import (
+	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/ast2"
 	"reflect"
 )
 
-func SimplifyExpression(expression ast.IExpression) ast.IExpression {
-	switch expr := expression.(type) {
-	case *ast.Identifier:
-		return expr
-	case *ast.BasicLiteralExpression:
-		return simplifyBasicLiteral(expr)
+func simplifyExpression(expr ast.Expression) ast2.Expression {
+	if expr == nil {
+		return &ast2.None{}
+	}
+	switch e := expr.(type) {
 	case *ast.ArrayExpression:
-		return simplifyArray(expr)
+		return simplifyArray(e)
 	case *ast.TupleExpression:
-		return simplifyTuple(expr)
+		return simplifyTuple(e)
 	case *ast.HashExpression:
-		return simplifyHash(expr)
+		return simplifyHash(e)
+	case *ast.Identifier:
+		return simplifyIdentifier(e)
+	case *ast.BasicLiteralExpression:
+		return simplifyLiteral(e)
 	case *ast.BinaryExpression:
-		return simplifyBinary(expr)
+		return simplifyBinary(e)
 	case *ast.UnaryExpression:
-		return simplifyUnary(expr)
+		return simplifyUnary(e)
 	case *ast.ParenthesesExpression:
-		return SimplifyExpression(expr.X)
+		return simplifyParentheses(e)
 	case *ast.LambdaExpression:
-		return simplifyLambda(expr)
+		return simplifyLambda(e)
 	case *ast.GeneratorExpression:
-		return simplifyGenerator(expr)
+		return simplifyGeneratorExpr(e)
 	case *ast.SelectorExpression:
-		return expr
+		return simplifySelector(e)
 	case *ast.MethodInvocationExpression:
-		return simplifyMethodInvocation(expr)
+		return simplifyCall(e)
 	case *ast.IndexExpression:
-		return simplifyIndex(expr)
+		return simplifyIndex(e)
 	case *ast.IfOneLinerExpression:
-		return simplifyIfOneLiner(expr)
+		return simplifyIfOneLiner(e)
 	case *ast.UnlessOneLinerExpression:
-		return simplifyUnlessOneLiner(expr)
+		return simplifyUnlessOneLiner(e)
+	case *ast.SuperExpression:
+		return simplifySuper(e)
 	default:
-		panic(reflect.TypeOf(expr))
+		panic(fmt.Sprintf("unknown expression type %s", reflect.TypeOf(expr).String()))
 	}
 }

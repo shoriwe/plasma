@@ -1,8 +1,8 @@
 package parser
 
-import ast2 "github.com/shoriwe/gplasma/pkg/ast"
+import "github.com/shoriwe/gplasma/pkg/ast"
 
-func (parser *Parser) parseDeleteStatement() (*ast2.DeleteStatement, error) {
+func (parser *Parser) parseDeleteStatement() (*ast.DeleteStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -11,10 +11,10 @@ func (parser *Parser) parseDeleteStatement() (*ast2.DeleteStatement, error) {
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := x.(ast2.IExpression); !ok {
+	if _, ok := x.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(DeleteStatement)
 	}
-	return &ast2.DeleteStatement{
-		X: x.(ast2.IExpression),
+	return &ast.DeleteStatement{
+		X: x.(ast.Expression),
 	}, nil
 }

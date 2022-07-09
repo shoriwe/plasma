@@ -142,18 +142,15 @@ func (lexer *Lexer) next() (*Token, error) {
 		lexer.tokenizeSingleOperator(BitwiseXor, Operator, BitwiseXorAssign, Assignment)
 	case BitWiseAndChar:
 
-		lexer.tokenizeSingleOperator(BitWiseAnd, Operator, BitWiseAndAssign, Assignment)
+		lexer.tokenizeSingleOperator(BitwiseAnd, Operator, BitwiseAndAssign, Assignment)
 	case BitwiseOrChar:
-
 		lexer.tokenizeSingleOperator(BitwiseOr, Operator, BitwiseOrAssign, Assignment)
 	case SignNotChar:
-
 		lexer.tokenizeSingleOperator(SignNot, Operator, NotEqual, Comparator)
 	case NegateBitsChar:
-
-		lexer.tokenizeSingleOperator(NegateBits, Operator, NegateBitsAssign, Assignment)
+		lexer.currentToken.Kind = Operator
+		lexer.currentToken.DirectValue = NegateBits
 	case EqualsChar:
-
 		lexer.tokenizeSingleOperator(Assign, Assignment, Equals, Comparator)
 	case BackSlashChar:
 

@@ -5,108 +5,108 @@ import (
 )
 
 type (
-	IExpression interface {
+	Expression interface {
 		Node
 		E()
 	}
 
 	ArrayExpression struct {
-		IExpression
-		Values []IExpression
+		Expression
+		Values []Expression
 	}
 
 	TupleExpression struct {
-		IExpression
-		Values []IExpression
+		Expression
+		Values []Expression
 	}
 
 	KeyValue struct {
-		Key   IExpression
-		Value IExpression
+		Key   Expression
+		Value Expression
 	}
 
 	HashExpression struct {
-		IExpression
+		Expression
 		Values []*KeyValue
 	}
 
 	Identifier struct {
-		IExpression
+		Expression
 		Token *lexer2.Token
 	}
 
 	BasicLiteralExpression struct {
-		IExpression
+		Expression
 		Token       *lexer2.Token
 		Kind        lexer2.Kind
 		DirectValue lexer2.DirectValue
 	}
 
 	BinaryExpression struct {
-		IExpression
-		LeftHandSide  IExpression
+		Expression
+		LeftHandSide  Expression
 		Operator      *lexer2.Token
-		RightHandSide IExpression
+		RightHandSide Expression
 	}
 
 	UnaryExpression struct {
-		IExpression
+		Expression
 		Operator *lexer2.Token
-		X        IExpression
+		X        Expression
 	}
 
 	ParenthesesExpression struct {
-		IExpression
-		X IExpression
+		Expression
+		X Expression
 	}
 
 	LambdaExpression struct {
-		IExpression
+		Expression
 		Arguments []*Identifier
-		Code      IExpression
+		Code      Expression
 	}
 
 	GeneratorExpression struct {
-		IExpression
-		Operation IExpression
+		Expression
+		Operation Expression
 		Receivers []*Identifier
-		Source    IExpression
+		Source    Expression
 	}
 
 	SelectorExpression struct {
-		IExpression
-		X          IExpression
+		Expression
+		X          Expression
 		Identifier *Identifier
 	}
 
 	MethodInvocationExpression struct {
-		IExpression
-		Function  IExpression
-		Arguments []IExpression
+		Expression
+		Function  Expression
+		Arguments []Expression
 	}
 
 	IndexExpression struct {
-		IExpression
-		Source IExpression
-		Index  IExpression
+		Expression
+		Source Expression
+		Index  Expression
 	}
 
 	IfOneLinerExpression struct {
-		IExpression
-		Result     IExpression
-		Condition  IExpression
-		ElseResult IExpression
+		Expression
+		Result     Expression
+		Condition  Expression
+		ElseResult Expression
 	}
 
 	UnlessOneLinerExpression struct {
-		IExpression
-		Result     IExpression
-		Condition  IExpression
-		ElseResult IExpression
+		Expression
+		Result     Expression
+		Condition  Expression
+		ElseResult Expression
 	}
 
 	SuperExpression struct {
-		IExpression
-		X IExpression
+		Expression
+		X Expression
 	}
 )

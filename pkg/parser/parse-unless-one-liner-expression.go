@@ -1,11 +1,11 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/ast"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseUnlessOneLinerExpression(result ast2.IExpression) (*ast2.UnlessOneLinerExpression, error) {
+func (parser *Parser) parseUnlessOneLinerExpression(result ast.Expression) (*ast.UnlessOneLinerExpression, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -19,13 +19,13 @@ func (parser *Parser) parseUnlessOneLinerExpression(result ast2.IExpression) (*a
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := condition.(ast2.IExpression); !ok {
+	if _, ok := condition.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(UnlessOneLinerExpression)
 	}
 	if !parser.matchDirectValue(lexer.Else) {
-		return &ast2.UnlessOneLinerExpression{
+		return &ast.UnlessOneLinerExpression{
 			Result:     result,
-			Condition:  condition.(ast2.IExpression),
+			Condition:  condition.(ast.Expression),
 			ElseResult: nil,
 		}, nil
 	}
@@ -37,18 +37,18 @@ func (parser *Parser) parseUnlessOneLinerExpression(result ast2.IExpression) (*a
 	if newLinesRemoveError != nil {
 		return nil, newLinesRemoveError
 	}
-	var elseResult ast2.Node
+	var elseResult ast.Node
 
 	elseResult, parsingError = parser.parseBinaryExpression(0)
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := condition.(ast2.IExpression); !ok {
+	if _, ok := condition.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(OneLineElseBlock)
 	}
-	return &ast2.UnlessOneLinerExpression{
+	return &ast.UnlessOneLinerExpression{
 		Result:     result,
-		Condition:  condition.(ast2.IExpression),
-		ElseResult: elseResult.(ast2.IExpression),
+		Condition:  condition.(ast.Expression),
+		ElseResult: elseResult.(ast.Expression),
 	}, nil
 }

@@ -16,8 +16,6 @@ var (
 	invalidFunctionScript string
 	//go:embed invalid-yield.pm
 	invalidYieldScript string
-	//go:embed invalid-redo.pm
-	invalidRedoScript string
 	//go:embed invalid-continue.pm
 	invalidContinueScript string
 	//go:embed invalid-break.pm
@@ -72,17 +70,6 @@ func TestInvalidYield(t *testing.T) {
 	const invalidReturns = 4
 	if found := checkPass.CountInvalidGeneratorNodes(); found != invalidReturns {
 		t.Fatalf("Invalid returns bypassed the check pass, expecting %d but found %d", invalidReturns, found)
-	}
-}
-
-func TestInvalidRedo(t *testing.T) {
-	checkPass, passError := executeScript(invalidRedoScript)
-	if passError != nil {
-		t.Fatal(passError)
-	}
-	const invalidCount = 5
-	if found := checkPass.CountInvalidLoopNodes(); found != invalidCount {
-		t.Fatalf("Invalid returns bypassed the check pass, expecting %d but found %d", invalidCount, found)
 	}
 }
 

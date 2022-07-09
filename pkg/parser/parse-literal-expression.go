@@ -2,21 +2,21 @@ package parser
 
 import (
 	"github.com/shoriwe/gplasma/pkg/ast"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseLiteral() (ast.IExpression, error) {
-	if !parser.matchKind(lexer2.Literal) &&
-		!parser.matchKind(lexer2.Boolean) &&
-		!parser.matchKind(lexer2.NoneType) {
+func (parser *Parser) parseLiteral() (ast.Expression, error) {
+	if !parser.matchKind(lexer.Literal) &&
+		!parser.matchKind(lexer.Boolean) &&
+		!parser.matchKind(lexer.NoneType) {
 		return nil, parser.invalidTokenKind()
 	}
 
 	switch parser.currentToken.DirectValue {
-	case lexer2.SingleQuoteString, lexer2.DoubleQuoteString, lexer2.ByteString,
-		lexer2.Integer, lexer2.HexadecimalInteger, lexer2.BinaryInteger, lexer2.OctalInteger,
-		lexer2.Float, lexer2.ScientificFloat,
-		lexer2.True, lexer2.False, lexer2.None:
+	case lexer.SingleQuoteString, lexer.DoubleQuoteString, lexer.ByteString,
+		lexer.Integer, lexer.HexadecimalInteger, lexer.BinaryInteger, lexer.OctalInteger,
+		lexer.Float, lexer.ScientificFloat,
+		lexer.True, lexer.False, lexer.None:
 		currentToken := parser.currentToken
 		tokenizingError := parser.next()
 		if tokenizingError != nil {

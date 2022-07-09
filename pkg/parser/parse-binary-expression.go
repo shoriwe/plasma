@@ -1,24 +1,24 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseBinaryExpression(precedence lexer2.DirectValue) (ast2.Node, error) {
-	var leftHandSide ast2.Node
-	var rightHandSide ast2.Node
+func (parser *Parser) parseBinaryExpression(precedence lexer.DirectValue) (ast.Node, error) {
+	var leftHandSide ast.Node
+	var rightHandSide ast.Node
 	var parsingError error
 	leftHandSide, parsingError = parser.parseUnaryExpression()
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := leftHandSide.(ast2.IStatement); ok {
+	if _, ok := leftHandSide.(ast.Statement); ok {
 		return leftHandSide, nil
 	}
 	for parser.hasNext() {
-		if !parser.matchKind(lexer2.Operator) &&
-			!parser.matchKind(lexer2.Comparator) {
+		if !parser.matchKind(lexer.Operator) &&
+			!parser.matchKind(lexer.Comparator) {
 			break
 		}
 		newLinesRemoveError := parser.removeNewLines()
@@ -39,14 +39,14 @@ func (parser *Parser) parseBinaryExpression(precedence lexer2.DirectValue) (ast2
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		if _, ok := rightHandSide.(ast2.IExpression); !ok {
+		if _, ok := rightHandSide.(ast.Expression); !ok {
 			return nil, parser.expectingExpressionError(BinaryExpression)
 		}
 
-		leftHandSide = &ast2.BinaryExpression{
-			LeftHandSide:  leftHandSide.(ast2.IExpression),
+		leftHandSide = &ast.BinaryExpression{
+			LeftHandSide:  leftHandSide.(ast.Expression),
 			Operator:      operator,
-			RightHandSide: rightHandSide.(ast2.IExpression),
+			RightHandSide: rightHandSide.(ast.Expression),
 		}
 	}
 	return leftHandSide, nil

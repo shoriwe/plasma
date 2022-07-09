@@ -1,11 +1,11 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseSwitchStatement() (*ast2.SwitchStatement, error) {
+func (parser *Parser) parseSwitchStatement() (*ast.SwitchStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -19,10 +19,10 @@ func (parser *Parser) parseSwitchStatement() (*ast2.SwitchStatement, error) {
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := target.(ast2.IExpression); !ok {
+	if _, ok := target.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(SwitchStatement)
 	}
-	if !parser.matchDirectValue(lexer2.NewLine) {
+	if !parser.matchDirectValue(lexer.NewLine) {
 		return nil, parser.newSyntaxError(SwitchStatement)
 	}
 	tokenizingError = parser.next()
@@ -30,11 +30,11 @@ func (parser *Parser) parseSwitchStatement() (*ast2.SwitchStatement, error) {
 		return nil, tokenizingError
 	}
 	// parse Cases
-	var caseBlocks []*ast2.CaseBlock
-	if parser.matchDirectValue(lexer2.Case) {
+	var caseBlocks []*ast.CaseBlock
+	if parser.matchDirectValue(lexer.Case) {
 		for parser.hasNext() {
-			if parser.matchDirectValue(lexer2.Default) ||
-				parser.matchDirectValue(lexer2.End) {
+			if parser.matchDirectValue(lexer.Default) ||
+				parser.matchDirectValue(lexer.End) {
 				break
 			}
 			tokenizingError = parser.next()
@@ -45,20 +45,20 @@ func (parser *Parser) parseSwitchStatement() (*ast2.SwitchStatement, error) {
 			if newLinesRemoveError != nil {
 				return nil, newLinesRemoveError
 			}
-			var cases []ast2.IExpression
-			var caseTarget ast2.Node
+			var cases []ast.Expression
+			var caseTarget ast.Node
 			for parser.hasNext() {
 				caseTarget, parsingError = parser.parseBinaryExpression(0)
 				if parsingError != nil {
 					return nil, parsingError
 				}
-				if _, ok := caseTarget.(ast2.IExpression); !ok {
+				if _, ok := caseTarget.(ast.Expression); !ok {
 					return nil, parser.expectingExpressionError(CaseBlock)
 				}
-				cases = append(cases, caseTarget.(ast2.IExpression))
-				if parser.matchDirectValue(lexer2.NewLine) {
+				cases = append(cases, caseTarget.(ast.Expression))
+				if parser.matchDirectValue(lexer.NewLine) {
 					break
-				} else if parser.matchDirectValue(lexer2.Comma) {
+				} else if parser.matchDirectValue(lexer.Comma) {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
 						return nil, tokenizingError
@@ -67,21 +67,21 @@ func (parser *Parser) parseSwitchStatement() (*ast2.SwitchStatement, error) {
 					return nil, parser.newSyntaxError(CaseBlock)
 				}
 			}
-			if !parser.matchDirectValue(lexer2.NewLine) {
+			if !parser.matchDirectValue(lexer.NewLine) {
 				return nil, parser.newSyntaxError(CaseBlock)
 			}
 			// Targets Body
-			var caseBody []ast2.Node
-			var caseBodyNode ast2.Node
+			var caseBody []ast.Node
+			var caseBodyNode ast.Node
 			for parser.hasNext() {
-				if parser.matchKind(lexer2.Separator) {
+				if parser.matchKind(lexer.Separator) {
 					tokenizingError = parser.next()
 					if tokenizingError != nil {
 						return nil, tokenizingError
 					}
-					if parser.matchDirectValue(lexer2.Case) ||
-						parser.matchDirectValue(lexer2.Default) ||
-						parser.matchDirectValue(lexer2.End) {
+					if parser.matchDirectValue(lexer.Case) ||
+						parser.matchDirectValue(lexer.Default) ||
+						parser.matchDirectValue(lexer.End) {
 						break
 					}
 					continue
@@ -93,30 +93,30 @@ func (parser *Parser) parseSwitchStatement() (*ast2.SwitchStatement, error) {
 				caseBody = append(caseBody, caseBodyNode)
 			}
 			// Targets block
-			caseBlocks = append(caseBlocks, &ast2.CaseBlock{
+			caseBlocks = append(caseBlocks, &ast.CaseBlock{
 				Cases: cases,
 				Body:  caseBody,
 			})
 		}
 	}
 	// Parse Default
-	var defaultBody []ast2.Node
-	if parser.matchDirectValue(lexer2.Default) {
+	var defaultBody []ast.Node
+	if parser.matchDirectValue(lexer.Default) {
 		tokenizingError = parser.next()
 		if tokenizingError != nil {
 			return nil, tokenizingError
 		}
-		if !parser.matchDirectValue(lexer2.NewLine) {
+		if !parser.matchDirectValue(lexer.NewLine) {
 			return nil, parser.newSyntaxError(DefaultBlock)
 		}
-		var defaultBodyNode ast2.Node
+		var defaultBodyNode ast.Node
 		for parser.hasNext() {
-			if parser.matchKind(lexer2.Separator) {
+			if parser.matchKind(lexer.Separator) {
 				tokenizingError = parser.next()
 				if tokenizingError != nil {
 					return nil, tokenizingError
 				}
-				if parser.matchDirectValue(lexer2.End) {
+				if parser.matchDirectValue(lexer.End) {
 					break
 				}
 				continue
@@ -129,15 +129,15 @@ func (parser *Parser) parseSwitchStatement() (*ast2.SwitchStatement, error) {
 		}
 	}
 	// Finally detect valid end
-	if !parser.matchDirectValue(lexer2.End) {
+	if !parser.matchDirectValue(lexer.End) {
 		return nil, parser.statementNeverEndedError(SwitchStatement)
 	}
 	tokenizingError = parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
-	return &ast2.SwitchStatement{
-		Target:     target.(ast2.IExpression),
+	return &ast.SwitchStatement{
+		Target:     target.(ast.Expression),
 		CaseBlocks: caseBlocks,
 		Default:    defaultBody,
 	}, nil

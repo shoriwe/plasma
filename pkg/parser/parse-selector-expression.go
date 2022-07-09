@@ -2,13 +2,13 @@ package parser
 
 import (
 	"github.com/shoriwe/gplasma/pkg/ast"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseSelectorExpression(expression ast.IExpression) (*ast.SelectorExpression, error) {
+func (parser *Parser) parseSelectorExpression(expression ast.Expression) (*ast.SelectorExpression, error) {
 	selector := expression
 	for parser.hasNext() {
-		if !parser.matchDirectValue(lexer2.Dot) {
+		if !parser.matchDirectValue(lexer.Dot) {
 			break
 		}
 		tokenizingError := parser.next()
@@ -16,7 +16,7 @@ func (parser *Parser) parseSelectorExpression(expression ast.IExpression) (*ast.
 			return nil, tokenizingError
 		}
 		identifier := parser.currentToken
-		if identifier.Kind != lexer2.IdentifierKind {
+		if identifier.Kind != lexer.IdentifierKind {
 			return nil, parser.newSyntaxError(SelectorExpression)
 		}
 		selector = &ast.SelectorExpression{

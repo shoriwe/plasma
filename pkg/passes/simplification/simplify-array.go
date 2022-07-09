@@ -1,13 +1,16 @@
 package simplification
 
-import "github.com/shoriwe/gplasma/pkg/ast"
+import (
+	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/ast2"
+)
 
-func simplifyArray(array *ast.ArrayExpression) *ast.ArrayExpression {
-	newContents := make([]ast.IExpression, 0, len(array.Values))
+func simplifyArray(array *ast.ArrayExpression) *ast2.Array {
+	values := make([]ast2.Expression, 0, len(array.Values))
 	for _, value := range array.Values {
-		newContents = append(newContents, SimplifyExpression(value))
+		values = append(values, simplifyExpression(value))
 	}
-	return &ast.ArrayExpression{
-		Values: newContents,
+	return &ast2.Array{
+		Values: values,
 	}
 }

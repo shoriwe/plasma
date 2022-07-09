@@ -1,13 +1,16 @@
 package simplification
 
-import "github.com/shoriwe/gplasma/pkg/ast"
+import (
+	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/ast2"
+)
 
-func simplifyTuple(tuple *ast.TupleExpression) *ast.TupleExpression {
-	newContents := make([]ast.IExpression, 0, len(tuple.Values))
+func simplifyTuple(tuple *ast.TupleExpression) *ast2.Tuple {
+	values := make([]ast2.Expression, 0, len(tuple.Values))
 	for _, value := range tuple.Values {
-		newContents = append(newContents, SimplifyExpression(value))
+		values = append(values, simplifyExpression(value))
 	}
-	return &ast.TupleExpression{
-		Values: newContents,
+	return &ast2.Tuple{
+		Values: values,
 	}
 }

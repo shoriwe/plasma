@@ -1,15 +1,15 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseUnaryExpression() (ast2.Node, error) {
+func (parser *Parser) parseUnaryExpression() (ast.Node, error) {
 	// Do something to parse Unary
-	if parser.matchKind(lexer2.Operator) {
+	if parser.matchKind(lexer.Operator) {
 		switch parser.currentToken.DirectValue {
-		case lexer2.Sub, lexer2.Add, lexer2.NegateBits, lexer2.SignNot, lexer2.Not:
+		case lexer.Sub, lexer.Add, lexer.NegateBits, lexer.SignNot, lexer.Not:
 			operator := parser.currentToken
 			tokenizingError := parser.next()
 			if tokenizingError != nil {
@@ -20,12 +20,12 @@ func (parser *Parser) parseUnaryExpression() (ast2.Node, error) {
 			if parsingError != nil {
 				return nil, parsingError
 			}
-			if _, ok := x.(ast2.IExpression); !ok {
+			if _, ok := x.(ast.Expression); !ok {
 				return nil, parser.expectingExpressionError(PointerExpression)
 			}
-			return &ast2.UnaryExpression{
+			return &ast.UnaryExpression{
 				Operator: operator,
-				X:        x.(ast2.IExpression),
+				X:        x.(ast.Expression),
 			}, nil
 		}
 	}

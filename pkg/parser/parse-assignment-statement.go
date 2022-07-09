@@ -1,10 +1,10 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/ast"
 )
 
-func (parser *Parser) parseAssignmentStatement(leftHandSide ast2.IExpression) (*ast2.AssignStatement, error) {
+func (parser *Parser) parseAssignmentStatement(leftHandSide ast.Expression) (*ast.AssignStatement, error) {
 	assignmentToken := parser.currentToken
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -19,12 +19,12 @@ func (parser *Parser) parseAssignmentStatement(leftHandSide ast2.IExpression) (*
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := rightHandSide.(ast2.IExpression); !ok {
+	if _, ok := rightHandSide.(ast.Expression); !ok {
 		return nil, parser.expectingExpressionError(AssignStatement)
 	}
-	return &ast2.AssignStatement{
+	return &ast.AssignStatement{
 		LeftHandSide:   leftHandSide,
 		AssignOperator: assignmentToken,
-		RightHandSide:  rightHandSide.(ast2.IExpression),
+		RightHandSide:  rightHandSide.(ast.Expression),
 	}, nil
 }

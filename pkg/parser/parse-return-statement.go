@@ -1,11 +1,11 @@
 package parser
 
 import (
-	ast2 "github.com/shoriwe/gplasma/pkg/ast"
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseReturnStatement() (*ast2.ReturnStatement, error) {
+func (parser *Parser) parseReturnStatement() (*ast.ReturnStatement, error) {
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
 		return nil, tokenizingError
@@ -14,9 +14,9 @@ func (parser *Parser) parseReturnStatement() (*ast2.ReturnStatement, error) {
 	if newLinesRemoveError != nil {
 		return nil, newLinesRemoveError
 	}
-	var results []ast2.IExpression
+	var results []ast.Expression
 	for parser.hasNext() {
-		if parser.matchKind(lexer2.Separator) || parser.matchKind(lexer2.EOF) {
+		if parser.matchKind(lexer.Separator) || parser.matchKind(lexer.EOF) {
 			break
 		}
 
@@ -24,20 +24,20 @@ func (parser *Parser) parseReturnStatement() (*ast2.ReturnStatement, error) {
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		if _, ok := result.(ast2.IExpression); !ok {
+		if _, ok := result.(ast.Expression); !ok {
 			return nil, parser.expectingExpressionError(ReturnStatement)
 		}
-		results = append(results, result.(ast2.IExpression))
-		if parser.matchDirectValue(lexer2.Comma) {
+		results = append(results, result.(ast.Expression))
+		if parser.matchDirectValue(lexer.Comma) {
 			tokenizingError = parser.next()
 			if tokenizingError != nil {
 				return nil, tokenizingError
 			}
-		} else if !(parser.matchKind(lexer2.Separator) || parser.matchKind(lexer2.EOF)) {
+		} else if !(parser.matchKind(lexer.Separator) || parser.matchKind(lexer.EOF)) {
 			return nil, parser.newSyntaxError(ReturnStatement)
 		}
 	}
-	return &ast2.ReturnStatement{
+	return &ast.ReturnStatement{
 		Results: results,
 	}, nil
 }

@@ -5,8 +5,8 @@ import (
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (parser *Parser) parseMethodInvocationExpression(expression ast.IExpression) (*ast.MethodInvocationExpression, error) {
-	var arguments []ast.IExpression
+func (parser *Parser) parseMethodInvocationExpression(expression ast.Expression) (*ast.MethodInvocationExpression, error) {
+	var arguments []ast.Expression
 	// The first token is open parentheses
 	tokenizingError := parser.next()
 	if tokenizingError != nil {
@@ -29,10 +29,10 @@ func (parser *Parser) parseMethodInvocationExpression(expression ast.IExpression
 		if parsingError != nil {
 			return nil, parsingError
 		}
-		if _, ok := argument.(ast.IExpression); !ok {
+		if _, ok := argument.(ast.Expression); !ok {
 			return nil, parser.expectingExpressionError(MethodInvocationExpression)
 		}
-		arguments = append(arguments, argument.(ast.IExpression))
+		arguments = append(arguments, argument.(ast.Expression))
 		newLinesRemoveError = parser.removeNewLines()
 		if newLinesRemoveError != nil {
 			return nil, newLinesRemoveError

@@ -1,11 +1,11 @@
 package parser
 
 import (
-	lexer2 "github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
 func (parser *Parser) removeNewLines() error {
-	for parser.matchDirectValue(lexer2.NewLine) {
+	for parser.matchDirectValue(lexer.NewLine) {
 		tokenizingError := parser.next()
 		if tokenizingError != nil {
 			return tokenizingError
@@ -14,14 +14,14 @@ func (parser *Parser) removeNewLines() error {
 	return nil
 }
 
-func (parser *Parser) matchDirectValue(directValue lexer2.DirectValue) bool {
+func (parser *Parser) matchDirectValue(directValue lexer.DirectValue) bool {
 	if parser.currentToken == nil {
 		return false
 	}
 	return parser.currentToken.DirectValue == directValue
 }
 
-func (parser *Parser) matchKind(kind lexer2.Kind) bool {
+func (parser *Parser) matchKind(kind lexer.Kind) bool {
 	if parser.currentToken == nil {
 		return false
 	}
