@@ -13,3 +13,5 @@
 - New `is` and `implements` binary operators
 - Directory for test samples
 - Simplify AST pass
+- Lowercase True, False and None
+- New AST3 for the transformation phase
