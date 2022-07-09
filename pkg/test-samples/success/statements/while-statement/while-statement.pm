@@ -1,5 +1,5 @@
 a = 0
-while True
+while true
     a += 1
     break
 end

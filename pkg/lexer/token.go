@@ -206,7 +206,7 @@ var (
 	ENDString        = "END"
 	BlockString      = "block"
 	NotString        = "not"
-	TrueString       = "True"
-	FalseString      = "False"
-	NoneString       = "None"
+	TrueString       = "true"
+	FalseString      = "false"
+	NoneString       = "none"
 )

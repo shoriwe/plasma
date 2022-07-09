@@ -1,4 +1,4 @@
-while True
+while true
 	if a > b
 		break
 	end

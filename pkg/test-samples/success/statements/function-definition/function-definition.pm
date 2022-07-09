@@ -19,7 +19,7 @@ println(special(2, 1, 3) == 1)
 def help()
 end
 
-println(help() == None)
+println(help() == none)
 
 def return_for()
     for a in range(0, 10, 1)
@@ -59,17 +59,17 @@ def return_do_while()
 end
 
 def return_if()
-    if True
-        return True
+    if true
+        return true
     end
-    return False
+    return false
 end
 
 def return_unless()
-    unless False
-        return True
+    unless false
+        return true
     end
-    return False
+    return false
 end
 
 def fib(n)

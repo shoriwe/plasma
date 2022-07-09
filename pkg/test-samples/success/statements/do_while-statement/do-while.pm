@@ -1,7 +1,7 @@
 a = 0
 do
     a += 1
-while False
+while false
 println(a == 1)
 
 a = 0

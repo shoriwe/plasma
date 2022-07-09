@@ -1,23 +1,23 @@
 a = 2
 if a < 2
-    println(False)
+    println(false)
 elif a > 2
-    println(False)
+    println(false)
 else
-    println(True)
+    println(true)
 end
 
 b = 2
 if a == 2
     if a**b == 4
-        println(True)
+        println(true)
     elif a**b == 8
-        println(False)
+        println(false)
     end
 elif a == 3
     if a ** b == 9
-        println(False)
+        println(false)
     elif a ** b == 27
-        println(False)
+        println(false)
     end
 end

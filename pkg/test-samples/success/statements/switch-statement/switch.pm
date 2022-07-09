@@ -2,23 +2,23 @@ number = 2
 
 switch number
 case 1
-    println(False)
+    println(false)
 case 2
-    println(True)
+    println(true)
 default
-    println(False)
+    println(false)
 end
 
 switch number
 case 1
-    println(False)
+    println(false)
 case 2
     switch number + 1
     case 3
-        println(True)
+        println(true)
     case 4
-        println(False)
+        println(false)
     end
 default
-    println(False)
+    println(false)
 end

@@ -1,6 +1,6 @@
 a = 0
 
-until False
+until false
     a += 1
     break
 end

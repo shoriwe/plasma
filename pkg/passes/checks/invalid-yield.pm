@@ -5,7 +5,7 @@ def my_function()
 end
 
 gen my_generator()
-    yield None
+    yield none
 end
 
 for a in range(100)
@@ -18,6 +18,6 @@ for value in range(2000)
     end
 end
 
-if False
+if false
     yield 4
 end

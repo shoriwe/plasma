@@ -1,5 +1,5 @@
 # Booleans
-println(True)
-println(False.ToString() == "False")
-# None Type
-println(None.ToBool() == False)
+println(true)
+println(false.ToString() == "false")
+# none Type
+println(none.ToBool() == false)

@@ -1,11 +1,11 @@
 return 1
 
 def my_function()
-    return None
+    return none
 end
 
 gen my_generator()
-    return None
+    return none
 end
 
 for a in range(100)
@@ -18,6 +18,6 @@ for value in range(2000)
     end
 end
 
-if False
+if false
     return 3
 end

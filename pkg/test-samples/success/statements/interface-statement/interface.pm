@@ -15,12 +15,12 @@ class Engineer(Person)
     end
 end
 
-found = False
+found = false
 antonio = Engineer("Antonio")
 
 for subClass in antonio.SubClasses()
     if subClass == Person
-        found = True
+        found = true
         break
     end
 end

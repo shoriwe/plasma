@@ -1,4 +1,4 @@
-if False
+if false
     a = "Hello"
 else
     a = "Goodbye"
