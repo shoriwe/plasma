@@ -3,6 +3,7 @@ package simplification
 import (
 	"github.com/shoriwe/gplasma/pkg/ast"
 	"github.com/shoriwe/gplasma/pkg/ast2"
+	"github.com/shoriwe/gplasma/pkg/common"
 )
 
 func (simplify *simplifyPass) For(for_ *ast.ForLoopStatement) *ast2.While {
@@ -11,7 +12,7 @@ func (simplify *simplifyPass) For(for_ *ast.ForLoopStatement) *ast2.While {
 		Function: &ast2.Selector{
 			X: simplify.Expression(for_.Source),
 			Identifier: &ast2.Identifier{
-				Symbol: ast2.HasNextString,
+				Symbol: common.HasNextString,
 			},
 		},
 		Arguments: nil,
@@ -22,7 +23,7 @@ func (simplify *simplifyPass) For(for_ *ast.ForLoopStatement) *ast2.While {
 			Function: &ast2.Selector{
 				X: simplify.Expression(for_.Source),
 				Identifier: &ast2.Identifier{
-					Symbol: ast2.NextString,
+					Symbol: common.NextString,
 				},
 			},
 			Arguments: nil,

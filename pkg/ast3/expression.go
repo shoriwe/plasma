@@ -1,36 +1,5 @@
 package ast3
 
-const (
-	Not                = "not"
-	Positive           = "positive"
-	Negative           = "negative"
-	NegateBits         = "negate_its"
-	And                = "and"
-	Or                 = "or"
-	Xor                = "xor"
-	In                 = "in"
-	Is                 = "is"
-	Implements         = "implements"
-	Equals             = "equals"
-	NotEqual           = "not_equal"
-	GreaterThan        = "greater_than"
-	GreaterOrEqualThan = "greater_or_equal_than"
-	LessThan           = "less_than"
-	LessOrEqualThan    = "less_or_equal_than"
-	BitwiseOr          = "bitwise_or"
-	BitwiseXor         = "bitwise_xor"
-	BitwiseAnd         = "bitwise_and"
-	BitwiseLeft        = "bitwise_left"
-	BitwiseRight       = "bitwise_right"
-	Add                = "add"
-	Sub                = "sub"
-	Mul                = "mul"
-	Div                = "div"
-	FloorDiv           = "floor_div"
-	Modulus            = "mod"
-	PowerOf            = "pow"
-)
-
 type (
 	Expression interface {
 		Node
@@ -39,6 +8,15 @@ type (
 	Assignable interface {
 		Expression
 		A2()
+	}
+	Function struct {
+		Expression
+		Arguments []*Identifier
+		Body      []Node
+	}
+	Class struct {
+		Expression
+		Body []Node
 	}
 	Call struct {
 		Expression

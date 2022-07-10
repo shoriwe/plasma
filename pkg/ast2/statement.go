@@ -1,10 +1,5 @@
 package ast2
 
-const (
-	HasNextString = "has_next"
-	NextString    = "next"
-)
-
 type (
 	AssignmentOperator int
 	Statement          interface {

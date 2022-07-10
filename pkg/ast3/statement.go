@@ -2,12 +2,8 @@ package ast3
 
 type (
 	Statement interface {
+		Node
 		S3()
-	}
-	Module struct {
-		Statement
-		Name *Identifier
-		Body []Node
 	}
 	Assignment struct {
 		Statement
@@ -22,21 +18,18 @@ type (
 		Statement
 		Target *Label
 	}
-	IfJump struct {
+	ContinueJump Jump
+	BreakJump    Jump
+	IfJump       struct {
 		Statement
 		Condition Expression
 		Target    *Label
-	}
-	Function struct {
-		Statement
-		Name      *Identifier
-		Arguments []*Identifier
-		Body      []Node
 	}
 	Return struct {
 		Statement
 		Result Expression
 	}
+	Yield   Return
 	Require struct {
 		Statement
 		X Expression
