@@ -1,4 +1,4 @@
-package common
+package special_symbols
 
 const (
 	Self = "self"

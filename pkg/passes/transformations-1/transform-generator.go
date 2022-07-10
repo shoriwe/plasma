@@ -5,6 +5,8 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 	"github.com/shoriwe/gplasma/pkg/ast3"
 	"github.com/shoriwe/gplasma/pkg/common"
+	"github.com/shoriwe/gplasma/pkg/common/magic-functions"
+	"github.com/shoriwe/gplasma/pkg/common/special-symbols"
 	"reflect"
 )
 
@@ -24,7 +26,7 @@ func getRoot(expr ast3.Expression) ast3.Expression {
 
 type generatorTransform struct {
 	transform       *transformPass
-	selfSymbols     map[string]struct{} // TODO: Init me
+	selfSymbols     map[string]struct{}
 	hasNextVariable *ast3.Selector
 	labelsOrder     []*ast3.Selector
 	labels          map[*ast3.Selector]*ast3.Label
@@ -36,7 +38,7 @@ func newGeneratorTransform(transform *transformPass) *generatorTransform {
 		selfSymbols: map[string]struct{}{},
 		hasNextVariable: &ast3.Selector{
 			X: &ast3.Identifier{
-				Symbol: common.Self,
+				Symbol: special_symbols.Self,
 			},
 			Identifier: &ast3.Identifier{
 				Symbol: "____has_next",
@@ -51,7 +53,7 @@ func (gt *generatorTransform) nextLabelIdentifier() (*ast3.Label, *ast3.Selector
 	label := gt.transform.nextLabel()
 	return label, &ast3.Selector{
 		X: &ast3.Identifier{
-			Symbol: common.Self,
+			Symbol: special_symbols.Self,
 		},
 		Identifier: &ast3.Identifier{
 			Symbol: fmt.Sprintf("_______label_%d", label.Code),
@@ -213,7 +215,7 @@ func (gt *generatorTransform) resolve(node ast3.Node, symbols map[string]struct{
 		if _, found := symbolsCopy[n.Symbol]; found {
 			return []ast3.Node{&ast3.Selector{
 				X: &ast3.Identifier{
-					Symbol: common.Self,
+					Symbol: special_symbols.Self,
 				},
 				Identifier: n,
 			}}
@@ -309,7 +311,7 @@ func (gt *generatorTransform) setup(body []ast3.Node) []ast3.Node {
 	result = append(result, &ast3.IfJump{
 		Condition: &ast3.Call{
 			Function: &ast3.Identifier{
-				Symbol: common.Not,
+				Symbol: magic_functions.Not,
 			},
 			Arguments: []ast3.Expression{gt.hasNextVariable},
 		},
@@ -344,7 +346,7 @@ func (gt *generatorTransform) next(rawBody []ast3.Node) *ast3.Assignment {
 	}
 	return &ast3.Assignment{
 		Left: &ast3.Identifier{
-			Symbol: common.NextString,
+			Symbol: magic_functions.Next,
 		},
 		Right: &ast3.Function{
 			Body: gt.setup(body),
@@ -361,7 +363,7 @@ func (gt *generatorTransform) hasNext() *ast3.Assignment {
 	return &ast3.Assignment{
 		Statement: nil,
 		Left: &ast3.Identifier{
-			Symbol: common.HasNextString,
+			Symbol: magic_functions.HasNext,
 		},
 		Right: &ast3.Function{
 			Body: body,
@@ -369,7 +371,34 @@ func (gt *generatorTransform) hasNext() *ast3.Assignment {
 	}
 }
 
-func (gt *generatorTransform) class(rawFunctionBody []ast3.Node) *ast3.Class {
+func (gt *generatorTransform) init(arguments []*ast3.Identifier) *ast3.Assignment {
+	body := make([]ast3.Node, 0, len(arguments))
+	for _, argument := range arguments {
+		gt.selfSymbols[argument.Symbol] = struct{}{}
+		body = append(body, &ast3.Assignment{
+			Left: &ast3.Selector{
+				Assignable: nil,
+				X: &ast3.Identifier{
+					Symbol: special_symbols.Self,
+				},
+				Identifier: argument,
+			},
+			Right: argument,
+		})
+	}
+	return &ast3.Assignment{
+		Left: &ast3.Identifier{
+			Symbol: magic_functions.Init,
+		},
+		Right: &ast3.Function{
+			Arguments: arguments,
+			Body:      body,
+		},
+	}
+}
+
+func (gt *generatorTransform) class(rawFunctionBody []ast3.Node, arguments []*ast3.Identifier) *ast3.Class {
+	initFunction := gt.init(arguments)
 	nextFunction := gt.next(rawFunctionBody)
 	hasNextFunction := gt.hasNext()
 	body := make([]ast3.Node, 0, 3+len(gt.selfSymbols))
@@ -385,7 +414,7 @@ func (gt *generatorTransform) class(rawFunctionBody []ast3.Node) *ast3.Class {
 			Right: ast3.None{},
 		})
 	}
-	body = append(body, nextFunction, hasNextFunction)
+	body = append(body, initFunction, hasNextFunction, nextFunction)
 	return &ast3.Class{
 		Body: body,
 	}
@@ -396,6 +425,14 @@ func (transform *transformPass) GeneratorDef(generator *ast2.GeneratorDefinition
 	for _, node := range generator.Body {
 		rawNextFunctionBody = append(rawNextFunctionBody, transform.Node(node)...)
 	}
-	class := newGeneratorTransform(transform).class(rawNextFunctionBody)
-	return []ast3.Node{class}
+	arguments := make([]*ast3.Identifier, 0, len(generator.Arguments))
+	for _, argument := range generator.Arguments {
+		arguments = append(arguments, transform.Identifier(argument))
+	}
+	class := newGeneratorTransform(transform).class(rawNextFunctionBody, arguments)
+	return []ast3.Node{&ast3.Assignment{
+		Statement: nil,
+		Left:      transform.Identifier(generator.Name),
+		Right:     class,
+	}}
 }

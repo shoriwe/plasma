@@ -1,8 +1,9 @@
-package common
+package magic_functions
 
 const (
-	HasNextString      = "__has_next__"
-	NextString         = "__next__"
+	Init               = "__init__"
+	HasNext            = "__has_next__"
+	Next               = "__next__"
 	Not                = "__not__"
 	Positive           = "__positive__"
 	Negative           = "__negative__"
