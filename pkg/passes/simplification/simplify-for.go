@@ -17,7 +17,7 @@ func (simplify *simplifyPass) For(for_ *ast.ForLoopStatement) *ast2.While {
 		},
 		Arguments: nil,
 	}
-	next := ast2.Assignment{
+	next := &ast2.Assignment{
 		Left: anonymousIdentifier,
 		Right: &ast2.FunctionCall{
 			Function: &ast2.Selector{

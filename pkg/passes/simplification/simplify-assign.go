@@ -10,7 +10,7 @@ import (
 func (simplify *simplifyPass) Assign(assign *ast.AssignStatement) *ast2.Assignment {
 	var (
 		left  ast2.Assignable
-		right ast2.Expression = simplify.Expression(assign.RightHandSide)
+		right = simplify.Expression(assign.RightHandSide)
 	)
 	switch l := assign.LeftHandSide.(type) {
 	case *ast.Identifier:

@@ -8,7 +8,8 @@ import (
 )
 
 type transformPass struct {
-	currentLabel int
+	currentLabel      int
+	currentIdentifier int
 }
 
 func (transform *transformPass) Node(node ast2.Node) []ast3.Node {
@@ -24,7 +25,10 @@ func (transform *transformPass) Node(node ast2.Node) []ast3.Node {
 
 func Transform(program ast2.Program) ast3.Program {
 	result := make(ast3.Program, 0, len(program))
-	transform := transformPass{currentLabel: 1}
+	transform := transformPass{
+		currentLabel:      1,
+		currentIdentifier: 1,
+	}
 	for _, node := range program {
 		result = append(result, transform.Node(node)...)
 	}
