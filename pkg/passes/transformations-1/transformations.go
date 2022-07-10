@@ -16,7 +16,7 @@ func (transform *transformPass) Node(node ast2.Node) []ast3.Node {
 	case ast2.Statement:
 		return transform.Statement(n)
 	case ast2.Expression:
-		return transform.Expression(n)
+		return []ast3.Node{transform.Expression(n)}
 	default:
 		panic(fmt.Sprintf("unknown node type %s", reflect.TypeOf(n).String()))
 	}
