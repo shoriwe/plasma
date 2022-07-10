@@ -16,7 +16,8 @@ type (
 	}
 	Class struct {
 		Expression
-		Body []Node
+		Bases []Expression
+		Body  []Node
 	}
 	Call struct {
 		Expression
