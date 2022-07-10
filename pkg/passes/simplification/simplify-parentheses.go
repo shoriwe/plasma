@@ -5,6 +5,6 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func (simp *simplify) simplifyParentheses(expression *ast.ParenthesesExpression) ast2.Expression {
-	return simp.simplifyExpression(expression.X)
+func (simplify *simplifyPass) Parentheses(expression *ast.ParenthesesExpression) ast2.Expression {
+	return simplify.Expression(expression.X)
 }

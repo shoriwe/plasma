@@ -5,12 +5,12 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func (simp *simplify) simplifySwitch(switch_ *ast.SwitchStatement) *ast2.If {
-	anonymousIdentifier := simp.nextAnonIdentifier()
+func (simplify *simplifyPass) Switch(switch_ *ast.SwitchStatement) *ast2.If {
+	anonymousIdentifier := simplify.nextAnonIdentifier()
 	root := &ast2.If{
 		SwitchSetup: &ast2.Assignment{
 			Left:  anonymousIdentifier,
-			Right: simp.simplifyExpression(switch_.Target),
+			Right: simplify.Expression(switch_.Target),
 		},
 		Condition: nil,
 		Body:      nil,
@@ -22,7 +22,7 @@ func (simp *simplify) simplifySwitch(switch_ *ast.SwitchStatement) *ast2.If {
 			if targetIndex == 0 {
 				currentIf.Condition = &ast2.Binary{
 					Left:     anonymousIdentifier,
-					Right:    simp.simplifyExpression(caseTarget),
+					Right:    simplify.Expression(caseTarget),
 					Operator: ast2.Equals,
 				}
 				continue
@@ -31,7 +31,7 @@ func (simp *simplify) simplifySwitch(switch_ *ast.SwitchStatement) *ast2.If {
 				Left: currentIf.Condition,
 				Right: &ast2.Binary{
 					Left:     anonymousIdentifier,
-					Right:    simp.simplifyExpression(caseTarget),
+					Right:    simplify.Expression(caseTarget),
 					Operator: ast2.Equals,
 				},
 				Operator: ast2.Or,
@@ -39,7 +39,7 @@ func (simp *simplify) simplifySwitch(switch_ *ast.SwitchStatement) *ast2.If {
 		}
 		currentIf.Body = make([]ast2.Node, 0, len(case_.Body))
 		for _, node := range case_.Body {
-			currentIf.Body = append(currentIf.Body, simp.simplifyNode(node))
+			currentIf.Body = append(currentIf.Body, simplify.Node(node))
 		}
 		if caseIndex+1 < len(switch_.CaseBlocks) {
 			newCurrentIf := &ast2.If{
@@ -53,7 +53,7 @@ func (simp *simplify) simplifySwitch(switch_ *ast.SwitchStatement) *ast2.If {
 	}
 	currentIf.Else = make([]ast2.Node, 0, len(switch_.Default))
 	for _, node := range switch_.Default {
-		currentIf.Else = append(currentIf.Else, simp.simplifyNode(node))
+		currentIf.Else = append(currentIf.Else, simplify.Node(node))
 	}
 	return root
 }

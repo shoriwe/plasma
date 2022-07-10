@@ -5,9 +5,9 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func (simp *simplify) nextAnonIdentifier() *ast2.Identifier {
-	ident := simp.currentAnonIdent
-	simp.currentAnonIdent++
+func (simplify *simplifyPass) nextAnonIdentifier() *ast2.Identifier {
+	ident := simplify.currentAnonIdent
+	simplify.currentAnonIdent++
 	return &ast2.Identifier{
 		Symbol: fmt.Sprintf("____%d", ident),
 	}

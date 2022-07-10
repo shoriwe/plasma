@@ -7,7 +7,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (simp *simplify) simplifyBinary(binary *ast.BinaryExpression) *ast2.Binary {
+func (simplify *simplifyPass) Binary(binary *ast.BinaryExpression) *ast2.Binary {
 	var operator ast2.BinaryOperator
 	switch binary.Operator.DirectValue {
 	case lexer.And:
@@ -62,8 +62,8 @@ func (simp *simplify) simplifyBinary(binary *ast.BinaryExpression) *ast2.Binary 
 		panic(fmt.Sprintf("unknown binary operator %d", binary.Operator.DirectValue))
 	}
 	return &ast2.Binary{
-		Left:     simp.simplifyExpression(binary.LeftHandSide),
-		Right:    simp.simplifyExpression(binary.RightHandSide),
+		Left:     simplify.Expression(binary.LeftHandSide),
+		Right:    simplify.Expression(binary.RightHandSide),
 		Operator: operator,
 	}
 }

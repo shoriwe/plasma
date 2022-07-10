@@ -5,13 +5,13 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func (simp *simplify) simplifyModule(module *ast.ModuleStatement) *ast2.Module {
+func (simplify *simplifyPass) Module(module *ast.ModuleStatement) *ast2.Module {
 	body := make([]ast2.Node, 0, len(module.Body))
 	for _, node := range module.Body {
-		body = append(body, simp.simplifyNode(node))
+		body = append(body, simplify.Node(node))
 	}
 	return &ast2.Module{
-		Name: simp.simplifyIdentifier(module.Name),
+		Name: simplify.Identifier(module.Name),
 		Body: body,
 	}
 }

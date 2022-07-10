@@ -5,13 +5,13 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func (simp *simplify) simplifyIf(if_ *ast.IfStatement) *ast2.If {
+func (simplify *simplifyPass) If(if_ *ast.IfStatement) *ast2.If {
 	body := make([]ast2.Node, 0, len(if_.Body))
 	for _, node := range if_.Body {
-		body = append(body, simp.simplifyNode(node))
+		body = append(body, simplify.Node(node))
 	}
 	root := &ast2.If{
-		Condition: simp.simplifyExpression(if_.Condition),
+		Condition: simplify.Expression(if_.Condition),
 		Body:      body,
 		Else:      nil,
 	}
@@ -19,10 +19,10 @@ func (simp *simplify) simplifyIf(if_ *ast.IfStatement) *ast2.If {
 	for _, elif := range if_.ElifBlocks {
 		elifBody := make([]ast2.Node, 0, len(elif.Body))
 		for _, node := range elif.Body {
-			elifBody = append(elifBody, simp.simplifyNode(node))
+			elifBody = append(elifBody, simplify.Node(node))
 		}
 		newLastIf := &ast2.If{
-			Condition: simp.simplifyExpression(elif.Condition),
+			Condition: simplify.Expression(elif.Condition),
 			Body:      elifBody,
 			Else:      nil,
 		}
@@ -31,7 +31,7 @@ func (simp *simplify) simplifyIf(if_ *ast.IfStatement) *ast2.If {
 	}
 	lastIf.Else = make([]ast2.Node, 0, len(if_.Else))
 	for _, node := range if_.Else {
-		lastIf.Else = append(lastIf.Else, simp.simplifyNode(node))
+		lastIf.Else = append(lastIf.Else, simplify.Node(node))
 	}
 	return root
 }

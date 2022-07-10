@@ -5,52 +5,52 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func (simp *simplify) simplifyStatement(stmt ast.Statement) ast2.Statement {
+func (simplify *simplifyPass) Statement(stmt ast.Statement) ast2.Statement {
 	switch s := stmt.(type) {
 	case *ast.AssignStatement:
-		return simp.simplifyAssign(s)
+		return simplify.Assign(s)
 	case *ast.DoWhileStatement:
-		return simp.simplifyDoWhile(s)
+		return simplify.DoWhile(s)
 	case *ast.WhileLoopStatement:
-		return simp.simplifyWhile(s)
+		return simplify.While(s)
 	case *ast.UntilLoopStatement:
-		return simp.simplifyUntil(s)
+		return simplify.Until(s)
 	case *ast.ForLoopStatement:
-		return simp.simplifyFor(s)
+		return simplify.For(s)
 	case *ast.IfStatement:
-		return simp.simplifyIf(s)
+		return simplify.If(s)
 	case *ast.UnlessStatement:
-		return simp.simplifyUnless(s)
+		return simplify.Unless(s)
 	case *ast.SwitchStatement:
-		return simp.simplifySwitch(s)
+		return simplify.Switch(s)
 	case *ast.ModuleStatement:
-		return simp.simplifyModule(s)
+		return simplify.Module(s)
 	case *ast.FunctionDefinitionStatement:
-		return simp.simplifyFunction(s)
+		return simplify.Function(s)
 	case *ast.GeneratorDefinitionStatement:
-		return simp.simplifyGeneratorDef(s)
+		return simplify.GeneratorDef(s)
 	case *ast.InterfaceStatement:
-		return simp.simplifyInterface(s)
+		return simplify.Interface(s)
 	case *ast.ClassStatement:
-		return simp.simplifyClass(s)
+		return simplify.Class(s)
 	case *ast.ReturnStatement:
-		return simp.simplifyReturn(s)
+		return simplify.Return(s)
 	case *ast.YieldStatement:
-		return simp.simplifyYield(s)
+		return simplify.Yield(s)
 	case *ast.ContinueStatement:
-		return simp.simplifyContinue(s)
+		return simplify.Continue(s)
 	case *ast.BreakStatement:
-		return simp.simplifyBreak(s)
+		return simplify.Break(s)
 	case *ast.PassStatement:
-		return simp.simplifyPass(s)
+		return simplify.Pass(s)
 	case *ast.BlockStatement:
-		return simp.simplifyBlock(s)
+		return simplify.Block(s)
 	case *ast.RequireStatement:
-		return simp.simplifyRequire(s)
+		return simplify.Require(s)
 	case *ast.DeleteStatement:
-		return simp.simplifyDelete(s)
+		return simplify.Delete(s)
 	case *ast.DeferStatement:
-		return simp.simplifyDefer(s)
+		return simplify.Defer(s)
 	default:
 		panic("unknown statement type")
 	}

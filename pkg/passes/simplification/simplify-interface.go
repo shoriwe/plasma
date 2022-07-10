@@ -5,17 +5,17 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func (simp *simplify) simplifyInterface(i *ast.InterfaceStatement) *ast2.Class {
+func (simplify *simplifyPass) Interface(i *ast.InterfaceStatement) *ast2.Class {
 	bases := make([]ast2.Expression, 0, len(i.Bases))
 	for _, base := range i.Bases {
-		bases = append(bases, simp.simplifyExpression(base))
+		bases = append(bases, simplify.Expression(base))
 	}
 	body := make([]ast2.Node, 0, len(i.MethodDefinitions))
 	for _, methodDefinition := range i.MethodDefinitions {
-		body = append(body, simp.simplifyFunction(methodDefinition))
+		body = append(body, simplify.Function(methodDefinition))
 	}
 	return &ast2.Class{
-		Name:  simp.simplifyIdentifier(i.Name),
+		Name:  simplify.Identifier(i.Name),
 		Bases: bases,
 		Body:  body,
 	}

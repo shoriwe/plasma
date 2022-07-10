@@ -5,18 +5,18 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func (simp *simplify) simplifyReturn(ret *ast.ReturnStatement) *ast2.Return {
+func (simplify *simplifyPass) Return(ret *ast.ReturnStatement) *ast2.Return {
 	switch len(ret.Results) {
 	case 0:
 		return &ast2.Return{}
 	case 1:
 		return &ast2.Return{
-			Result: simp.simplifyExpression(ret.Results[0]),
+			Result: simplify.Expression(ret.Results[0]),
 		}
 	}
 	values := make([]ast2.Expression, 0, len(ret.Results))
 	for _, result := range ret.Results {
-		values = append(values, simp.simplifyExpression(result))
+		values = append(values, simplify.Expression(result))
 	}
 	return &ast2.Return{
 		Result: &ast2.Tuple{
@@ -25,18 +25,18 @@ func (simp *simplify) simplifyReturn(ret *ast.ReturnStatement) *ast2.Return {
 	}
 }
 
-func (simp *simplify) simplifyYield(yield *ast.YieldStatement) *ast2.Yield {
+func (simplify *simplifyPass) Yield(yield *ast.YieldStatement) *ast2.Yield {
 	switch len(yield.Results) {
 	case 0:
 		return &ast2.Yield{}
 	case 1:
 		return &ast2.Yield{
-			Result: simp.simplifyExpression(yield.Results[0]),
+			Result: simplify.Expression(yield.Results[0]),
 		}
 	}
 	values := make([]ast2.Expression, 0, len(yield.Results))
 	for _, result := range yield.Results {
-		values = append(values, simp.simplifyExpression(result))
+		values = append(values, simplify.Expression(result))
 	}
 	return &ast2.Yield{
 		Result: &ast2.Tuple{

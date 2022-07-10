@@ -6,7 +6,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (simp *simplify) simplifyUnary(unary *ast.UnaryExpression) *ast2.Unary {
+func (simplify *simplifyPass) Unary(unary *ast.UnaryExpression) *ast2.Unary {
 	var operator ast2.UnaryOperator
 	switch unary.Operator.DirectValue {
 	case lexer.Not, lexer.SignNot:
@@ -20,6 +20,6 @@ func (simp *simplify) simplifyUnary(unary *ast.UnaryExpression) *ast2.Unary {
 	}
 	return &ast2.Unary{
 		Operator: operator,
-		X:        simp.simplifyExpression(unary.X),
+		X:        simplify.Expression(unary.X),
 	}
 }

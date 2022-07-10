@@ -7,18 +7,18 @@ import (
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
 
-func (simp *simplify) simplifyAssign(assign *ast.AssignStatement) *ast2.Assignment {
+func (simplify *simplifyPass) Assign(assign *ast.AssignStatement) *ast2.Assignment {
 	var (
 		left  ast2.Assignable
-		right ast2.Expression = simp.simplifyExpression(assign.RightHandSide)
+		right ast2.Expression = simplify.Expression(assign.RightHandSide)
 	)
 	switch l := assign.LeftHandSide.(type) {
 	case *ast.Identifier:
-		left = simp.simplifyIdentifier(l)
+		left = simplify.Identifier(l)
 	case *ast.SelectorExpression:
-		left = simp.simplifySelector(l)
+		left = simplify.Selector(l)
 	case *ast.IndexExpression:
-		left = simp.simplifyIndex(l)
+		left = simplify.Index(l)
 	default:
 		panic("invalid identifier left hand side type")
 	}

@@ -5,10 +5,10 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func (simp *simplify) simplifyContinue(c *ast.ContinueStatement) *ast2.Continue {
+func (simplify *simplifyPass) Continue(c *ast.ContinueStatement) *ast2.Continue {
 	return &ast2.Continue{}
 }
 
-func (simp *simplify) simplifyBreak(c *ast.BreakStatement) *ast2.Break {
+func (simplify *simplifyPass) Break(c *ast.BreakStatement) *ast2.Break {
 	return &ast2.Break{}
 }
