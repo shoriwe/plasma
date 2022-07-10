@@ -5,8 +5,8 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifySuper(super *ast.SuperExpression) *ast2.Super {
+func (simp *simplify) simplifySuper(super *ast.SuperExpression) *ast2.Super {
 	return &ast2.Super{
-		X: simplifyExpression(super.X),
+		X: simp.simplifyExpression(super.X),
 	}
 }

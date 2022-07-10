@@ -5,11 +5,11 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifyFor(for_ *ast.ForLoopStatement) *ast2.While {
-	anonymousIdentifier := nextAnonIdentifier()
+func (simp *simplify) simplifyFor(for_ *ast.ForLoopStatement) *ast2.While {
+	anonymousIdentifier := simp.nextAnonIdentifier()
 	hasNext := &ast2.FunctionCall{
 		Function: &ast2.Selector{
-			X: simplifyExpression(for_.Source),
+			X: simp.simplifyExpression(for_.Source),
 			Identifier: &ast2.Identifier{
 				Symbol: ast2.HasNextString,
 			},
@@ -20,7 +20,7 @@ func simplifyFor(for_ *ast.ForLoopStatement) *ast2.While {
 		Left: anonymousIdentifier,
 		Right: &ast2.FunctionCall{
 			Function: &ast2.Selector{
-				X: simplifyExpression(for_.Source),
+				X: simp.simplifyExpression(for_.Source),
 				Identifier: &ast2.Identifier{
 					Symbol: ast2.NextString,
 				},
@@ -31,7 +31,7 @@ func simplifyFor(for_ *ast.ForLoopStatement) *ast2.While {
 	expand := make([]ast2.Node, 0, len(for_.Receivers))
 	for index, receiver := range for_.Receivers {
 		expand = append(expand, &ast2.Assignment{
-			Left: simplifyIdentifier(receiver),
+			Left: simp.simplifyIdentifier(receiver),
 			Right: &ast2.Index{
 				Source: anonymousIdentifier,
 				Index: &ast2.Integer{
@@ -44,7 +44,7 @@ func simplifyFor(for_ *ast.ForLoopStatement) *ast2.While {
 	body = append(body, next)
 	body = append(body, expand...)
 	for _, node := range for_.Body {
-		body = append(body, simplifyNode(node))
+		body = append(body, simp.simplifyNode(node))
 	}
 	return &ast2.While{
 		Condition: hasNext,

@@ -5,15 +5,15 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifyUnless(unless *ast.UnlessStatement) *ast2.If {
+func (simp *simplify) simplifyUnless(unless *ast.UnlessStatement) *ast2.If {
 	body := make([]ast2.Node, 0, len(unless.Body))
 	for _, node := range unless.Body {
-		body = append(body, simplifyNode(node))
+		body = append(body, simp.simplifyNode(node))
 	}
 	root := &ast2.If{
 		Condition: &ast2.Unary{
 			Operator: ast2.Not,
-			X:        simplifyExpression(unless.Condition),
+			X:        simp.simplifyExpression(unless.Condition),
 		},
 		Body: body,
 		Else: nil,
@@ -22,12 +22,12 @@ func simplifyUnless(unless *ast.UnlessStatement) *ast2.If {
 	for _, elif := range unless.ElifBlocks {
 		elifBody := make([]ast2.Node, 0, len(elif.Body))
 		for _, node := range elif.Body {
-			elifBody = append(elifBody, simplifyNode(node))
+			elifBody = append(elifBody, simp.simplifyNode(node))
 		}
 		newLastIf := &ast2.If{
 			Condition: &ast2.Unary{
 				Operator: ast2.Not,
-				X:        simplifyExpression(elif.Condition),
+				X:        simp.simplifyExpression(elif.Condition),
 			},
 			Body: elifBody,
 			Else: nil,
@@ -37,7 +37,7 @@ func simplifyUnless(unless *ast.UnlessStatement) *ast2.If {
 	}
 	lastIf.Else = make([]ast2.Node, 0, len(unless.Else))
 	for _, node := range unless.Else {
-		lastIf.Else = append(lastIf.Else, simplifyNode(node))
+		lastIf.Else = append(lastIf.Else, simp.simplifyNode(node))
 	}
 	return root
 }

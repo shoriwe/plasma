@@ -5,15 +5,15 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifyDelete(del *ast.DeleteStatement) *ast2.Delete {
+func (simp *simplify) simplifyDelete(del *ast.DeleteStatement) *ast2.Delete {
 	var x ast2.Assignable
 	switch dx := del.X.(type) {
 	case *ast.Identifier:
-		x = simplifyIdentifier(dx)
+		x = simp.simplifyIdentifier(dx)
 	case *ast.IndexExpression:
-		x = simplifyIndex(dx)
+		x = simp.simplifyIndex(dx)
 	case *ast.SelectorExpression:
-		x = simplifySelector(dx)
+		x = simp.simplifySelector(dx)
 	default:
 		panic("unknown selector type")
 	}

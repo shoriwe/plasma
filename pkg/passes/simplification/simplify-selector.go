@@ -5,9 +5,9 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifySelector(selector *ast.SelectorExpression) *ast2.Selector {
+func (simp *simplify) simplifySelector(selector *ast.SelectorExpression) *ast2.Selector {
 	return &ast2.Selector{
-		X:          simplifyExpression(selector.X),
-		Identifier: simplifyIdentifier(selector.Identifier),
+		X:          simp.simplifyExpression(selector.X),
+		Identifier: simp.simplifyIdentifier(selector.Identifier),
 	}
 }

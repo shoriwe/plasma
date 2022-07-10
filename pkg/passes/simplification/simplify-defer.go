@@ -5,8 +5,8 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifyDefer(d *ast.DeferStatement) *ast2.Defer {
+func (simp *simplify) simplifyDefer(d *ast.DeferStatement) *ast2.Defer {
 	return &ast2.Defer{
-		X: simplifyExpression(d.X),
+		X: simp.simplifyExpression(d.X),
 	}
 }

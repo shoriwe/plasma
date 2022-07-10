@@ -20,7 +20,7 @@ var directCharEscapeValue = map[rune][]rune{
 	'?': {'\\', '?'},
 }
 
-func simplifyInteger(s string) *ast2.Integer {
+func (simp *simplify) simplifyInteger(s string) *ast2.Integer {
 	s = strings.ReplaceAll(strings.ToLower(s), "_", "")
 	value, parseError := strconv.ParseInt(s, 0, 64)
 	if parseError != nil {
@@ -31,7 +31,7 @@ func simplifyInteger(s string) *ast2.Integer {
 	}
 }
 
-func simplifyFloat(s string) *ast2.Float {
+func (simp *simplify) simplifyFloat(s string) *ast2.Float {
 	s = strings.ReplaceAll(strings.ToLower(s), "_", "")
 	value, parseError := strconv.ParseFloat(s, 64)
 	if parseError != nil {
@@ -42,7 +42,7 @@ func simplifyFloat(s string) *ast2.Float {
 	}
 }
 
-func simplifyString(rawS string) *ast2.String {
+func (simp *simplify) simplifyString(rawS string) *ast2.String {
 	s := []rune(rawS)
 	s = s[1 : len(s)-1]
 	sLength := len(s)
@@ -89,7 +89,7 @@ func simplifyString(rawS string) *ast2.String {
 	}
 }
 
-func simplifyBytes(rawS string) *ast2.Bytes {
+func (simp *simplify) simplifyBytes(rawS string) *ast2.Bytes {
 	s := []rune(rawS)
 	s = s[2 : len(s)-1]
 	sLength := len(s)
@@ -136,14 +136,14 @@ func simplifyBytes(rawS string) *ast2.Bytes {
 	}
 }
 
-func simplifyLiteral(literal *ast.BasicLiteralExpression) ast2.Expression {
+func (simp *simplify) simplifyLiteral(literal *ast.BasicLiteralExpression) ast2.Expression {
 	switch literal.DirectValue {
 	case lexer.Integer, lexer.BinaryInteger, lexer.OctalInteger, lexer.HexadecimalInteger:
-		return simplifyInteger(literal.Token.String())
+		return simp.simplifyInteger(literal.Token.String())
 	case lexer.Float, lexer.ScientificFloat:
-		return simplifyFloat(literal.Token.String())
+		return simp.simplifyFloat(literal.Token.String())
 	case lexer.SingleQuoteString, lexer.DoubleQuoteString, lexer.CommandOutput:
-		return simplifyString(literal.Token.String())
+		return simp.simplifyString(literal.Token.String())
 	case lexer.True:
 		return &ast2.True{}
 	case lexer.False:
@@ -151,7 +151,7 @@ func simplifyLiteral(literal *ast.BasicLiteralExpression) ast2.Expression {
 	case lexer.None:
 		return &ast2.None{}
 	case lexer.ByteString:
-		return simplifyBytes(literal.Token.String())
+		return simp.simplifyBytes(literal.Token.String())
 	default:
 		panic(fmt.Sprintf("unknown literal %d", literal.DirectValue))
 	}

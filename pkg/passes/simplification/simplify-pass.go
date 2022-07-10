@@ -5,6 +5,6 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifyPass(pass *ast.PassStatement) *ast2.Pass {
+func (simp *simplify) simplifyPass(pass *ast.PassStatement) *ast2.Pass {
 	return &ast2.Pass{}
 }

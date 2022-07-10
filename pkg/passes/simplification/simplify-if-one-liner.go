@@ -5,21 +5,21 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifyIfOneLiner(if_ *ast.IfOneLinerExpression) *ast2.IfOneLiner {
+func (simp *simplify) simplifyIfOneLiner(if_ *ast.IfOneLinerExpression) *ast2.IfOneLiner {
 	return &ast2.IfOneLiner{
-		Condition: simplifyExpression(if_.Condition),
-		Result:    simplifyExpression(if_.Result),
-		Else:      simplifyExpression(if_.ElseResult),
+		Condition: simp.simplifyExpression(if_.Condition),
+		Result:    simp.simplifyExpression(if_.Result),
+		Else:      simp.simplifyExpression(if_.ElseResult),
 	}
 }
 
-func simplifyUnlessOneLiner(unless *ast.UnlessOneLinerExpression) *ast2.IfOneLiner {
+func (simp *simplify) simplifyUnlessOneLiner(unless *ast.UnlessOneLinerExpression) *ast2.IfOneLiner {
 	return &ast2.IfOneLiner{
 		Condition: &ast2.Unary{
 			Operator: ast2.Not,
-			X:        simplifyExpression(unless.Condition),
+			X:        simp.simplifyExpression(unless.Condition),
 		},
-		Result: simplifyExpression(unless.Result),
-		Else:   simplifyExpression(unless.ElseResult),
+		Result: simp.simplifyExpression(unless.Result),
+		Else:   simp.simplifyExpression(unless.ElseResult),
 	}
 }

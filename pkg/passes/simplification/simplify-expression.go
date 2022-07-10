@@ -7,43 +7,43 @@ import (
 	"reflect"
 )
 
-func simplifyExpression(expr ast.Expression) ast2.Expression {
+func (simp *simplify) simplifyExpression(expr ast.Expression) ast2.Expression {
 	if expr == nil {
 		return &ast2.None{}
 	}
 	switch e := expr.(type) {
 	case *ast.ArrayExpression:
-		return simplifyArray(e)
+		return simp.simplifyArray(e)
 	case *ast.TupleExpression:
-		return simplifyTuple(e)
+		return simp.simplifyTuple(e)
 	case *ast.HashExpression:
-		return simplifyHash(e)
+		return simp.simplifyHash(e)
 	case *ast.Identifier:
-		return simplifyIdentifier(e)
+		return simp.simplifyIdentifier(e)
 	case *ast.BasicLiteralExpression:
-		return simplifyLiteral(e)
+		return simp.simplifyLiteral(e)
 	case *ast.BinaryExpression:
-		return simplifyBinary(e)
+		return simp.simplifyBinary(e)
 	case *ast.UnaryExpression:
-		return simplifyUnary(e)
+		return simp.simplifyUnary(e)
 	case *ast.ParenthesesExpression:
-		return simplifyParentheses(e)
+		return simp.simplifyParentheses(e)
 	case *ast.LambdaExpression:
-		return simplifyLambda(e)
+		return simp.simplifyLambda(e)
 	case *ast.GeneratorExpression:
-		return simplifyGeneratorExpr(e)
+		return simp.simplifyGeneratorExpr(e)
 	case *ast.SelectorExpression:
-		return simplifySelector(e)
+		return simp.simplifySelector(e)
 	case *ast.MethodInvocationExpression:
-		return simplifyCall(e)
+		return simp.simplifyCall(e)
 	case *ast.IndexExpression:
-		return simplifyIndex(e)
+		return simp.simplifyIndex(e)
 	case *ast.IfOneLinerExpression:
-		return simplifyIfOneLiner(e)
+		return simp.simplifyIfOneLiner(e)
 	case *ast.UnlessOneLinerExpression:
-		return simplifyUnlessOneLiner(e)
+		return simp.simplifyUnlessOneLiner(e)
 	case *ast.SuperExpression:
-		return simplifySuper(e)
+		return simp.simplifySuper(e)
 	default:
 		panic(fmt.Sprintf("unknown expression type %s", reflect.TypeOf(expr).String()))
 	}

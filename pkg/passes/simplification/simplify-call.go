@@ -5,13 +5,13 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifyCall(call *ast.MethodInvocationExpression) *ast2.FunctionCall {
+func (simp *simplify) simplifyCall(call *ast.MethodInvocationExpression) *ast2.FunctionCall {
 	arguments := make([]ast2.Expression, 0, len(call.Arguments))
 	for _, argument := range call.Arguments {
-		arguments = append(arguments, simplifyExpression(argument))
+		arguments = append(arguments, simp.simplifyExpression(argument))
 	}
 	return &ast2.FunctionCall{
-		Function:  simplifyExpression(call.Function),
+		Function:  simp.simplifyExpression(call.Function),
 		Arguments: arguments,
 	}
 }

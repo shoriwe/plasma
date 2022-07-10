@@ -5,13 +5,13 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifyWhile(while *ast.WhileLoopStatement) *ast2.While {
+func (simp *simplify) simplifyWhile(while *ast.WhileLoopStatement) *ast2.While {
 	var (
-		body                      = make([]ast2.Node, 0, len(while.Body))
-		condition ast2.Expression = simplifyExpression(while.Condition)
+		body      = make([]ast2.Node, 0, len(while.Body))
+		condition = simp.simplifyExpression(while.Condition)
 	)
 	for _, node := range while.Body {
-		body = append(body, simplifyNode(node))
+		body = append(body, simp.simplifyNode(node))
 	}
 	return &ast2.While{
 		Body:      body,

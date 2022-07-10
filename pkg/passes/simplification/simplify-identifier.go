@@ -5,7 +5,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast2"
 )
 
-func simplifyIdentifier(ident *ast.Identifier) *ast2.Identifier {
+func (simp *simplify) simplifyIdentifier(ident *ast.Identifier) *ast2.Identifier {
 	return &ast2.Identifier{
 		Symbol: ident.Token.String(),
 	}
