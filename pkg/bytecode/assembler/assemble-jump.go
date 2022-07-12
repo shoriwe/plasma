@@ -6,45 +6,30 @@ import (
 )
 
 func (a *assembler) Jump(jump *ast3.Jump) []byte {
-	lAccess, found := a.labels[jump.Target.Code]
+	_, found := a.labels[jump.Target.Code]
 	if !found {
-		lAccess = &labelAccess{
-			index:         0,
-			jumpIndexes:   nil,
-			ifJumpIndexes: nil,
-		}
-		a.labels[jump.Target.Code] = lAccess
+		a.labels[jump.Target.Code] = -1
 	}
-	lAccess.jumpIndexes = append(lAccess.jumpIndexes, a.bytecodeIndex)
-	return []byte{opcodes.Jump, 0, 0, 0, 0, 0, 0, 0, 0}
+	a.jumpsIndexes[a.bytecodeIndex] = jump.Target.Code
+	return []byte{opcodes.Jump}
 }
 
 func (a *assembler) ContinueJump(jump *ast3.ContinueJump) []byte {
-	lAccess, found := a.labels[jump.Target.Code]
+	_, found := a.labels[jump.Target.Code]
 	if !found {
-		lAccess = &labelAccess{
-			index:         0,
-			jumpIndexes:   nil,
-			ifJumpIndexes: nil,
-		}
-		a.labels[jump.Target.Code] = lAccess
+		a.labels[jump.Target.Code] = -1
 	}
-	lAccess.jumpIndexes = append(lAccess.jumpIndexes, a.bytecodeIndex)
-	return []byte{opcodes.Jump, 0, 0, 0, 0, 0, 0, 0, 0}
+	a.jumpsIndexes[a.bytecodeIndex] = jump.Target.Code
+	return []byte{opcodes.Jump}
 }
 
 func (a *assembler) BreakJump(jump *ast3.BreakJump) []byte {
-	lAccess, found := a.labels[jump.Target.Code]
+	_, found := a.labels[jump.Target.Code]
 	if !found {
-		lAccess = &labelAccess{
-			index:         0,
-			jumpIndexes:   nil,
-			ifJumpIndexes: nil,
-		}
-		a.labels[jump.Target.Code] = lAccess
+		a.labels[jump.Target.Code] = -1
 	}
-	lAccess.jumpIndexes = append(lAccess.jumpIndexes, a.bytecodeIndex)
-	return []byte{opcodes.Jump, 0, 0, 0, 0, 0, 0, 0, 0}
+	a.jumpsIndexes[a.bytecodeIndex] = jump.Target.Code
+	return []byte{opcodes.Jump}
 }
 
 func (a *assembler) IfJump(jump *ast3.IfJump) []byte {
@@ -52,17 +37,12 @@ func (a *assembler) IfJump(jump *ast3.IfJump) []byte {
 	condition := a.Expression(jump.Condition)
 	index += 1 + len(condition)
 
-	lAccess, found := a.labels[jump.Target.Code]
+	_, found := a.labels[jump.Target.Code]
 	if !found {
-		lAccess = &labelAccess{
-			index:         0,
-			jumpIndexes:   nil,
-			ifJumpIndexes: nil,
-		}
-		a.labels[jump.Target.Code] = lAccess
+		a.labels[jump.Target.Code] = -1
 	}
-	lAccess.ifJumpIndexes = append(lAccess.jumpIndexes, index)
+	a.jumpsIndexes[index] = jump.Target.Code
 
-	result := append(condition, opcodes.Push, opcodes.IfJump, 0, 0, 0, 0, 0, 0, 0, 0)
+	result := append(condition, opcodes.Push, opcodes.IfJump)
 	return result
 }

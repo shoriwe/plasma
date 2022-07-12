@@ -1,6 +1,8 @@
 package assembler
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 	"github.com/shoriwe/gplasma/pkg/parser"
@@ -29,6 +31,12 @@ func test(t *testing.T, samples map[string]string) {
 			for _, n := range transformedProgram {
 				fmt.Println(reflect.TypeOf(n))
 			}
+			asGzip := &bytes.Buffer{}
+			writer := gzip.NewWriter(asGzip)
+			writer.Write(bytecode)
+			writer.Flush()
+			writer.Close()
+			t.Errorf("As GZIP - %d bytes - %dmb", asGzip.Len(), asGzip.Len()/1000000)
 			fmt.Println(bytecode[:100])
 			fmt.Println(bytecode[len(bytecode)-100:])
 		}

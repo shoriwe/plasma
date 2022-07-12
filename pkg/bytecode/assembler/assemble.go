@@ -3,25 +3,23 @@ package assembler
 import (
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast3"
+	"github.com/shoriwe/gplasma/pkg/common"
 	"reflect"
 )
 
 type (
-	labelAccess struct {
-		index         int
-		jumpIndexes   []int
-		ifJumpIndexes []int
-	}
 	assembler struct {
 		bytecodeIndex int
-		labels        map[int]*labelAccess
+		labels        map[int]int
+		jumpsIndexes  map[int]int
 	}
 )
 
 func newAssembler() *assembler {
 	return &assembler{
 		bytecodeIndex: 0,
-		labels:        map[int]*labelAccess{},
+		labels:        map[int]int{},
+		jumpsIndexes:  map[int]int{},
 	}
 }
 
@@ -43,18 +41,18 @@ func Assemble(program ast3.Program) []byte {
 	bytecode := make([]byte, 0, len(program))
 	a := newAssembler()
 	for _, node := range program {
-		chunk := append(bytecode, a.assemble(node)...)
+		chunk := a.assemble(node)
 		a.bytecodeIndex += len(chunk)
 		bytecode = append(bytecode, chunk...)
 	}
-	// finalBytecode := make([]byte, 0, len(bytecode))
-	// for _, la := range a.labels {
-	// 	for _, jump := range la.jumpIndexes {
-	// 		copy(bytecode[la.index+1:la.index+9], common.IntToBytes(la.index-jump))
-	// 	}
-	// 	for _, jump := range la.ifJumpIndexes {
-	// 		copy(bytecode[la.index+1:la.index+9], common.IntToBytes(la.index-jump))
-	// 	}
-	// }
-	return bytecode
+	finalBytecode := make([]byte, 0, len(bytecode))
+	for index, operation := range bytecode {
+		finalBytecode = append(finalBytecode, operation)
+		if labelCode, found := a.jumpsIndexes[index]; found {
+			labelIndex := a.labels[labelCode]
+			fmt.Printf("%d - %d = %d\n", labelIndex, index, labelIndex-index)
+			finalBytecode = append(finalBytecode, common.IntToBytes(labelIndex-index)...)
+		}
+	}
+	return finalBytecode
 }
