@@ -3,7 +3,6 @@ package assembler
 import (
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast3"
-	"github.com/shoriwe/gplasma/pkg/common"
 	"reflect"
 )
 
@@ -48,13 +47,14 @@ func Assemble(program ast3.Program) []byte {
 		a.bytecodeIndex += len(chunk)
 		bytecode = append(bytecode, chunk...)
 	}
-	for _, la := range a.labels {
-		for _, jump := range la.jumpIndexes {
-			copy(bytecode[la.index+1:la.index+9], common.IntToBytes(la.index-jump))
-		}
-		for _, jump := range la.ifJumpIndexes {
-			copy(bytecode[la.index+1:la.index+9], common.IntToBytes(la.index-jump))
-		}
-	}
+	// finalBytecode := make([]byte, 0, len(bytecode))
+	// for _, la := range a.labels {
+	// 	for _, jump := range la.jumpIndexes {
+	// 		copy(bytecode[la.index+1:la.index+9], common.IntToBytes(la.index-jump))
+	// 	}
+	// 	for _, jump := range la.ifJumpIndexes {
+	// 		copy(bytecode[la.index+1:la.index+9], common.IntToBytes(la.index-jump))
+	// 	}
+	// }
 	return bytecode
 }

@@ -8,6 +8,7 @@ import (
 	transformations_1 "github.com/shoriwe/gplasma/pkg/passes/transformations-1"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/test-samples/basic"
+	"reflect"
 	"testing"
 )
 
@@ -22,7 +23,15 @@ func test(t *testing.T, samples map[string]string) {
 		simplifiedProgram := simplification.Simplify(program)
 		transformedProgram := transformations_1.Transform(simplifiedProgram)
 		bytecode := Assemble(transformedProgram)
-		fmt.Println(len(bytecode))
+		megabytesSize := len(bytecode) / 1000000
+		if megabytesSize > 1 {
+			t.Errorf("Failed %s - %dmb", script, megabytesSize)
+			for _, n := range transformedProgram {
+				fmt.Println(reflect.TypeOf(n))
+			}
+			fmt.Println(bytecode[:100])
+			fmt.Println(bytecode[len(bytecode)-100:])
+		}
 	}
 }
 

@@ -1,9 +1,11 @@
 package assembler
 
 import (
+	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast3"
 	"github.com/shoriwe/gplasma/pkg/bytecode/opcodes"
 	"github.com/shoriwe/gplasma/pkg/common"
+	"reflect"
 )
 
 func (a *assembler) Assignment(assign *ast3.Assignment) []byte {
@@ -26,6 +28,8 @@ func (a *assembler) Assignment(assign *ast3.Assignment) []byte {
 		result = append(result, a.Expression(left.Index)...)
 		result = append(result, opcodes.Push)
 		result = append(result, opcodes.IndexAssign)
+	default:
+		panic(fmt.Sprintf("unknown left hand side type %s", reflect.TypeOf(left).String()))
 	}
 	return result
 }
