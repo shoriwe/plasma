@@ -71,7 +71,7 @@ func (transform *transformPass) GeneratorExpr(generator *ast2.Generator) *ast3.C
 			Left: transform.Identifier(receiver),
 			Right: &ast3.Index{
 				Source: anonReceiver,
-				Index: ast3.Integer{
+				Index: &ast3.Integer{
 					Value: int64(index),
 				},
 			},

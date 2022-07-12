@@ -7,6 +7,9 @@ import (
 )
 
 func (a *assembler) Expression(expr ast3.Expression) []byte {
+	if expr == nil {
+		return nil
+	}
 	switch e := expr.(type) {
 	case *ast3.Function:
 		return a.Function(e)

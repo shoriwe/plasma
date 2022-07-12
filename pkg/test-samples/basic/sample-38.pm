@@ -1,1 +1,1 @@
-delete a[b]
+super Hello

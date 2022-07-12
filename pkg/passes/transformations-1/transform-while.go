@@ -8,7 +8,7 @@ import (
 func (transform *transformPass) While(while *ast2.While) []ast3.Node {
 	startLabel := transform.nextLabel()
 	endLabel := transform.nextLabel()
-	condition := ast3.IfJump{
+	condition := &ast3.IfJump{
 		Condition: transform.Expression(&ast2.Unary{
 			Operator: ast2.Not,
 			X:        while.Condition,

@@ -3,6 +3,7 @@ package assembler
 import (
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast3"
+	"github.com/shoriwe/gplasma/pkg/common"
 	"reflect"
 )
 
@@ -26,6 +27,9 @@ func newAssembler() *assembler {
 }
 
 func (a *assembler) assemble(node ast3.Node) []byte {
+	if node == nil {
+		return nil
+	}
 	switch n := node.(type) {
 	case ast3.Statement:
 		return a.Statement(n)
@@ -43,6 +47,14 @@ func Assemble(program ast3.Program) []byte {
 		chunk := append(bytecode, a.assemble(node)...)
 		a.bytecodeIndex += len(chunk)
 		bytecode = append(bytecode, chunk...)
+	}
+	for _, la := range a.labels {
+		for _, jump := range la.jumpIndexes {
+			copy(bytecode[la.index+1:la.index+9], common.IntToBytes(la.index-jump))
+		}
+		for _, jump := range la.ifJumpIndexes {
+			copy(bytecode[la.index+1:la.index+9], common.IntToBytes(la.index-jump))
+		}
 	}
 	return bytecode
 }

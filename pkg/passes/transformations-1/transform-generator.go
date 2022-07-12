@@ -99,7 +99,7 @@ func (gt *generatorTransform) resolve(node ast3.Node, symbols map[string]struct{
 		return []ast3.Node{
 			&ast3.Assignment{
 				Left:  gt.hasNextVariable,
-				Right: ast3.False{},
+				Right: &ast3.False{},
 			},
 			&ast3.Return{
 				Result: gt.resolve(n.Result, symbolsCopy)[0].(ast3.Expression),
@@ -112,7 +112,7 @@ func (gt *generatorTransform) resolve(node ast3.Node, symbols map[string]struct{
 		return []ast3.Node{
 			&ast3.Assignment{
 				Left:  selector,
-				Right: ast3.True{},
+				Right: &ast3.True{},
 			},
 			&ast3.Yield{
 				Result: gt.resolve(n.Result, symbolsCopy)[0].(ast3.Expression),
@@ -404,14 +404,14 @@ func (gt *generatorTransform) class(rawFunctionBody []ast3.Node, arguments []*as
 	body := make([]ast3.Node, 0, 3+len(gt.selfSymbols))
 	body = append(body, &ast3.Assignment{
 		Left:  gt.hasNextVariable,
-		Right: ast3.True{},
+		Right: &ast3.True{},
 	})
 	for selfSymbol := range gt.selfSymbols {
 		body = append(body, &ast3.Assignment{
 			Left: &ast3.Identifier{
 				Symbol: selfSymbol,
 			},
-			Right: ast3.None{},
+			Right: &ast3.None{},
 		})
 	}
 	body = append(body, initFunction, hasNextFunction, nextFunction)

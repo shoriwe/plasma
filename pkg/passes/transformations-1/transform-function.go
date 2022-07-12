@@ -16,7 +16,7 @@ func (transform *transformPass) Function(function *ast2.FunctionDefinition) []as
 	}
 	return []ast3.Node{&ast3.Assignment{
 		Left: transform.Identifier(function.Name),
-		Right: ast3.Function{
+		Right: &ast3.Function{
 			Arguments: arguments,
 			Body:      body,
 		},

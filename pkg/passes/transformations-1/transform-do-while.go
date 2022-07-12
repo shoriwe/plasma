@@ -8,7 +8,7 @@ import (
 func (transform *transformPass) DoWhile(doWhile *ast2.DoWhile) []ast3.Node {
 	startLabel := transform.nextLabel()
 	endLabel := transform.nextLabel()
-	condition := ast3.IfJump{
+	condition := &ast3.IfJump{
 		Condition: transform.Expression(doWhile.Condition),
 		Target:    startLabel,
 	}
