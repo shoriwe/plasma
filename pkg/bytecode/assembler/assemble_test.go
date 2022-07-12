@@ -1,21 +1,18 @@
 package assembler
 
 import (
-	"bytes"
-	"compress/gzip"
-	"fmt"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 	"github.com/shoriwe/gplasma/pkg/parser"
 	"github.com/shoriwe/gplasma/pkg/passes/simplification"
 	transformations_1 "github.com/shoriwe/gplasma/pkg/passes/transformations-1"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/test-samples/basic"
-	"reflect"
 	"testing"
 )
 
 func test(t *testing.T, samples map[string]string) {
 	for script, sample := range samples {
+		t.Logf("Testing: %s", script)
 		l := lexer.NewLexer(reader.NewStringReader(sample))
 		p := parser.NewParser(l)
 		program, parseError := p.Parse()
@@ -25,21 +22,8 @@ func test(t *testing.T, samples map[string]string) {
 		simplifiedProgram := simplification.Simplify(program)
 		transformedProgram := transformations_1.Transform(simplifiedProgram)
 		bytecode := Assemble(transformedProgram)
-		megabytesSize := len(bytecode) / 1000000
-		if megabytesSize > 1 {
-			t.Errorf("Failed %s - %dmb", script, megabytesSize)
-			for _, n := range transformedProgram {
-				fmt.Println(reflect.TypeOf(n))
-			}
-			asGzip := &bytes.Buffer{}
-			writer := gzip.NewWriter(asGzip)
-			writer.Write(bytecode)
-			writer.Flush()
-			writer.Close()
-			t.Errorf("As GZIP - %d bytes - %dmb", asGzip.Len(), asGzip.Len()/1000000)
-			fmt.Println(bytecode[:100])
-			fmt.Println(bytecode[len(bytecode)-100:])
-		}
+		bytecodeSize := float64(len(bytecode)) / 1024
+		t.Logf("Size of %s: %db => %fkb", script, len(bytecode), bytecodeSize)
 	}
 }
 
