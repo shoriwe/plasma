@@ -13,6 +13,7 @@ NewBool
 	- NotEqual: Bool != Any
 	- Bool
 	- Copy
+	- Class TODO
 	- String
 */
 func (ctx *Context) NewBool() *Value {
@@ -23,7 +24,7 @@ func (ctx *Context) NewBool() *Value {
 				if self.GetClass() == argument[0].GetClass() {
 					return ctx.TrueValue(), nil
 				}
-				if self.Bool() == argument[0].Bool() {
+				if self.GetInt() == argument[0].GetInt() {
 					return ctx.TrueValue(), nil
 				}
 				return ctx.FalseValue(), nil
@@ -36,7 +37,7 @@ func (ctx *Context) NewBool() *Value {
 				if self.GetClass() != argument[0].GetClass() {
 					return ctx.TrueValue(), nil
 				}
-				if self.Bool() != argument[0].Bool() {
+				if self.GetInt() != argument[0].GetInt() {
 					return ctx.TrueValue(), nil
 				}
 				return ctx.FalseValue(), nil
@@ -46,7 +47,7 @@ func (ctx *Context) NewBool() *Value {
 	value.OnDemand[magic_functions.Bool] = func(self *Value) (*Value, error) {
 		return ctx.NewFunctionValue(NewBuiltInCallable(
 			func(left bool, argument ...*Value) (*Value, error) {
-				if self.Bool() {
+				if self.GetInt() == 1 {
 					return ctx.TrueValue(), nil
 				}
 				return ctx.FalseValue(), nil
@@ -56,7 +57,7 @@ func (ctx *Context) NewBool() *Value {
 	value.OnDemand[magic_functions.Copy] = func(self *Value) (*Value, error) {
 		return ctx.NewFunctionValue(NewBuiltInCallable(
 			func(left bool, argument ...*Value) (*Value, error) {
-				if self.Bool() {
+				if self.GetInt() == 1 {
 					return ctx.TrueValue(), nil
 				}
 				return ctx.FalseValue(), nil
@@ -66,7 +67,7 @@ func (ctx *Context) NewBool() *Value {
 	value.OnDemand[magic_functions.String] = func(self *Value) (*Value, error) {
 		return ctx.NewFunctionValue(NewBuiltInCallable(
 			func(left bool, argument ...*Value) (*Value, error) {
-				if self.Bool() {
+				if self.GetInt() == 1 {
 					return ctx.StringValue([]byte(lexer.TrueString)), nil
 				}
 				return ctx.StringValue([]byte(lexer.FalseString)), nil

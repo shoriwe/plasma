@@ -11,6 +11,7 @@ NoneValue
 	Methods:
 	- Bool
 	- Copy
+	- Class TODO
 	- String
 */
 func (ctx *Context) NoneValue() *Value {

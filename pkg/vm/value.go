@@ -10,6 +10,7 @@ import (
 var (
 	NotCallable    = fmt.Errorf("value not callable")
 	NotImplemented = fmt.Errorf("not implemented")
+	NotComparable  = fmt.Errorf("not comparable")
 )
 
 var (
@@ -33,6 +34,7 @@ type (
 		Contents     []byte
 		Int          int64
 		Float        float64
+		Values       []*Value
 		VirtualTable *Symbols
 		OnDemand     map[string]OnDemand
 		Callable     Callable
@@ -90,6 +92,18 @@ func (value *Value) SetFloat(f float64) {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	value.Float = f
+}
+
+func (value *Value) GetValues() []*Value {
+	value.mutex.Lock()
+	defer value.mutex.Unlock()
+	return value.Values
+}
+
+func (value *Value) SetValues(values []*Value) {
+	value.mutex.Lock()
+	defer value.mutex.Unlock()
+	value.Values = values
 }
 
 func (ctx *Context) NewValue() *Value {
