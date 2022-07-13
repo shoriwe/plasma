@@ -117,9 +117,27 @@ func (vm *VM) Call(ctx *Context) { panic("implement me!") }
 
 func (vm *VM) IfOneLiner(ctx *Context) { panic("implement me!") }
 
-func (vm *VM) NewArray(ctx *Context) { panic("implement me!") }
+func (vm *VM) NewArray(ctx *Context) {
+	ctx.Index++
+	numberOfValues := common.BytesToInt(ctx.Bytecode[ctx.Index : ctx.Index+8])
+	ctx.Index += 8
+	values := make([]*Value, numberOfValues)
+	for i := numberOfValues - 1; i >= 0; i-- {
+		values[i] = ctx.Stack.Pop()
+	}
+	ctx.TempMem = ctx.ArrayValue(values)
+}
 
-func (vm *VM) NewTuple(ctx *Context) { panic("implement me!") }
+func (vm *VM) NewTuple(ctx *Context) {
+	ctx.Index++
+	numberOfValues := common.BytesToInt(ctx.Bytecode[ctx.Index : ctx.Index+8])
+	ctx.Index += 8
+	values := make([]*Value, numberOfValues)
+	for i := numberOfValues - 1; i >= 0; i-- {
+		values[i] = ctx.Stack.Pop()
+	}
+	ctx.TempMem = ctx.TupleValue(values)
+}
 
 func (vm *VM) NewHash(ctx *Context) { panic("implement me!") }
 

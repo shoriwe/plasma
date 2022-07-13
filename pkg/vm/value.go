@@ -300,12 +300,16 @@ func (ctx *Context) NewValue() *Value {
 		},
 	}
 	return &Value{
+		IsFunction:   false,
 		mutex:        &sync.Mutex{},
+		Class:        nil,
 		Contents:     nil,
 		Int:          0,
 		Float:        0,
-		VirtualTable: NewSymbols(nil),
+		Values:       nil,
+		VirtualTable: NewSymbols(ctx.Namespace),
 		OnDemand:     onDemand,
+		Callable:     nil,
 	}
 }
 
