@@ -10,7 +10,7 @@ func (a *assembler) Block(block *ast3.Block) []byte {
 	body = append(body, opcodes.EnterBlock)
 	for _, node := range block.Body {
 		switch node.(type) {
-		case *ast3.Yield, *ast3.Return:
+		case *ast3.Yield, *ast3.Return, *ast3.Jump, *ast3.ContinueJump, *ast3.BreakJump:
 			body = append(body, opcodes.ExitBlock)
 		default:
 			break
