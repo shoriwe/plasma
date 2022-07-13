@@ -35,9 +35,9 @@ func (vm *VM) init() {
 		- Array class TODO
 		- Tuple class TODO
 		- Hash class TODO
-		- True TODO
-		- False TODO
-		- None TODO
+		- True
+		- False
+		- None
 		- All global magic methods TODO
 		- All global special symbols TODO
 	*/

@@ -295,6 +295,9 @@ func (ctx *Context) NewValue() *Value {
 		magic_functions.String: func(self *Value) (*Value, error) {
 			return ctx.NewFunctionValue(NotImplementedCallable)
 		},
+		magic_functions.Iter: func(self *Value) (*Value, error) {
+			return ctx.NewFunctionValue(NotImplementedCallable)
+		},
 	}
 	return &Value{
 		mutex:        &sync.Mutex{},

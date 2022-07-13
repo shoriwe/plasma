@@ -10,6 +10,7 @@ import (
 
 var (
 	NotBitwiseOperable = fmt.Errorf("not bitwise operable")
+	NotOperable        = fmt.Errorf("not operable")
 )
 
 /*
@@ -343,7 +344,7 @@ func (ctx *Context) IntegerValue(i int64) *Value {
 				case floatClass:
 					return ctx.FloatValue(float64(self.GetInt()) + argument[0].GetFloat()), nil
 				default:
-					return nil, NotComparable
+					return nil, NotOperable
 				}
 			},
 		))
@@ -360,7 +361,7 @@ func (ctx *Context) IntegerValue(i int64) *Value {
 				case floatClass:
 					return ctx.FloatValue(float64(self.GetInt()) - argument[0].GetFloat()), nil
 				default:
-					return nil, NotComparable
+					return nil, NotOperable
 				}
 			},
 		))
@@ -386,7 +387,7 @@ func (ctx *Context) IntegerValue(i int64) *Value {
 				case arrayClass:
 					return ctx.ArrayValue(RepeatValues(argument[0], self.GetInt())), nil
 				default:
-					return nil, NotComparable
+					return nil, NotOperable
 				}
 			},
 		))
@@ -409,7 +410,7 @@ func (ctx *Context) IntegerValue(i int64) *Value {
 					}
 					return ctx.FloatValue(argument[0].GetFloat() / float64(self.GetInt())), nil
 				default:
-					return nil, NotComparable
+					return nil, NotOperable
 				}
 			},
 		))
@@ -432,7 +433,7 @@ func (ctx *Context) IntegerValue(i int64) *Value {
 					}
 					return ctx.IntegerValue(int64(argument[0].GetFloat() / float64(self.GetInt()))), nil
 				default:
-					return nil, NotComparable
+					return nil, NotOperable
 				}
 			},
 		))
@@ -455,7 +456,7 @@ func (ctx *Context) IntegerValue(i int64) *Value {
 					}
 					return ctx.FloatValue(math.Mod(argument[0].GetFloat(), float64(self.GetInt()))), nil
 				default:
-					return nil, NotComparable
+					return nil, NotOperable
 				}
 			},
 		))
@@ -478,7 +479,7 @@ func (ctx *Context) IntegerValue(i int64) *Value {
 					}
 					return ctx.FloatValue(math.Pow(argument[0].GetFloat(), float64(self.GetInt()))), nil
 				default:
-					return nil, NotComparable
+					return nil, NotOperable
 				}
 			},
 		))

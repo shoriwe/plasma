@@ -41,4 +41,5 @@ const (
 	Class              = "__class__"
 	Copy               = "__copy__"
 	String             = "__string__"
+	Iter               = "__iter__"
 )
