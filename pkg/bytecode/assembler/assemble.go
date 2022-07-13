@@ -266,9 +266,6 @@ func (a *assembler) resolveLabels(bytecode []byte, labels map[int64]int64) []byt
 			panic(fmt.Sprintf("unknown opcode %d in %v", op, bytecode[index-5:]))
 		}
 	}
-	if len(labels) > 0 {
-		fmt.Println(bytecode)
-	}
 	return bytecode
 }
 
