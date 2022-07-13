@@ -30,9 +30,9 @@ FloatValue
 	- Copy
 	- String
 */
-func (ctx *Context) FloatValue(i float64) *Value {
+func (ctx *Context) FloatValue(f float64) *Value {
 	value := ctx.NewValue()
-	value.Float = i
+	value.Float = f
 	value.OnDemand[magic_functions.Positive] = func(self *Value) (*Value, error) {
 		return ctx.NewFunctionValue(NewBuiltInCallable(
 			func(left bool, argument ...*Value) (*Value, error) {
@@ -88,7 +88,7 @@ func (ctx *Context) FloatValue(i float64) *Value {
 					}
 					return ctx.FalseValue(), nil
 				default:
-					return ctx.FalseValue(), nil
+					return ctx.TrueValue(), nil
 				}
 			},
 		))

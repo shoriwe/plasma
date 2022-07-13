@@ -108,7 +108,7 @@ func (ctx *Context) IntegerValue(i int64) *Value {
 					}
 					return ctx.FalseValue(), nil
 				default:
-					return ctx.FalseValue(), nil
+					return ctx.TrueValue(), nil
 				}
 			},
 		))
@@ -385,7 +385,7 @@ func (ctx *Context) IntegerValue(i int64) *Value {
 				case bytesClass:
 					return ctx.BytesValue(bytes.Repeat(argument[0].GetContents(), int(self.GetInt()))), nil
 				case arrayClass:
-					return ctx.ArrayValue(RepeatValues(argument[0], self.GetInt())), nil
+					return ctx.ArrayValue(RepeatValues(argument[0].GetValues(), self.GetInt())), nil
 				default:
 					return nil, NotOperable
 				}

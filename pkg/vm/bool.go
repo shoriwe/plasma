@@ -40,7 +40,7 @@ func (ctx *Context) NewBool() *Value {
 				if self.GetInt() != argument[0].GetInt() {
 					return ctx.TrueValue(), nil
 				}
-				return ctx.FalseValue(), nil
+				return ctx.TrueValue(), nil
 			},
 		))
 	}
