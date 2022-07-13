@@ -23,24 +23,24 @@ const (
 )
 
 func IntToBytes[T integer](i T) []byte {
-	ui64 := uint64(i)
-	var bytes []byte
-	switch {
-	case i == 0:
-		return []byte{Zero}
-	case ui64 < uint64(^uint8(0)):
-		bytes = []byte{Bits8, byte(i)}
-	case ui64 < uint64(^uint16(0)):
-		bytes = []byte{Bits16, 0, 0}
-		binary.BigEndian.PutUint16(bytes[1:], uint16(i))
-	case ui64 < uint64(^uint32(0)):
-		bytes = []byte{Bits32, 0, 0, 0, 0}
-		binary.BigEndian.PutUint32(bytes[1:], uint32(i))
+	var bytes [8]byte
+	binary.BigEndian.PutUint64(bytes[:], uint64(i))
+	return bytes[:]
+}
+
+func BytesToInt(i []byte) int64 {
+	switch len(i) {
+	case 1:
+		return int64(i[0])
+	case 2:
+		return int64(binary.BigEndian.Uint16(i))
+	case 4:
+		return int64(binary.BigEndian.Uint32(i))
+	case 8:
+		return int64(binary.BigEndian.Uint64(i))
 	default:
-		bytes = []byte{Bits64, 0, 0, 0, 0, 0, 0, 0, 0}
-		binary.BigEndian.PutUint64(bytes[1:], uint64(i))
+		panic("invalid integer length")
 	}
-	return bytes
 }
 
 func FloatToBytes[T float](f T) []byte {

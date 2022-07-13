@@ -9,19 +9,11 @@ import (
 )
 
 type (
-	assembler struct {
-		bytecodeIndex int
-		labels        map[int]int
-		jumpsIndexes  map[int]int
-	}
+	assembler struct{}
 )
 
 func newAssembler() *assembler {
-	return &assembler{
-		bytecodeIndex: 0,
-		labels:        map[int]int{},
-		jumpsIndexes:  map[int]int{},
-	}
+	return &assembler{}
 }
 
 func (a *assembler) assemble(node ast3.Node) []byte {
@@ -38,22 +30,259 @@ func (a *assembler) assemble(node ast3.Node) []byte {
 	}
 }
 
-func Assemble(program ast3.Program) []byte {
-	bytecode := make([]byte, 0, len(program))
-	a := newAssembler()
-	for _, node := range program {
-		chunk := a.assemble(node)
-		a.bytecodeIndex += len(chunk)
-		bytecode = append(bytecode, chunk...)
-	}
-	finalBytecode := make([]byte, 0, len(bytecode))
-	for index, operation := range bytecode {
-		finalBytecode = append(finalBytecode, operation)
-		if labelCode, found := a.jumpsIndexes[index]; found && operation == opcodes.Jump || operation == opcodes.IfJump {
-			labelIndex := a.labels[labelCode]
-			// fmt.Printf("(%d): %d - %d = %d\n", operation, labelIndex, index, labelIndex-index)
-			finalBytecode = append(finalBytecode, common.IntToBytes(labelIndex-index)...)
+func (a *assembler) enumLabels(bytecode []byte) map[int64]int64 {
+	bytecodeLength := int64(len(bytecode))
+	labels := map[int64]int64{}
+	for index := int64(0); index < bytecodeLength; {
+		op := bytecode[index]
+		switch op {
+		case opcodes.Push:
+			index++
+		case opcodes.Pop:
+			index++
+		case opcodes.IdentifierAssign:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.SelectorAssign:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.IndexAssign:
+			index++
+		case opcodes.Label:
+			index++
+			labelCode := common.BytesToInt(bytecode[index : index+8])
+			labels[labelCode] = index - 1
+			index += 8
+		case opcodes.Jump:
+			index++
+			index += 8
+		case opcodes.IfJump:
+			index++
+			index += 8
+		case opcodes.Return:
+			index++
+		case opcodes.Require:
+			index++
+		case opcodes.DeleteIdentifier:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.DeleteSelector:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.Defer:
+			index++
+			index += 8
+		case opcodes.EnterBlock:
+			index++
+		case opcodes.ExitBlock:
+			index++
+		case opcodes.NewFunction:
+			index++
+			argsNumber := common.BytesToInt(bytecode[index : index+8])
+			index += 8
+			for arg := int64(0); arg < argsNumber; arg++ {
+				argSymbolLength := common.BytesToInt(bytecode[index : index+8])
+				index += 8 + argSymbolLength
+			}
+			index += 8
+		case opcodes.NewClass:
+			index++
+			index += 8
+			index += 8
+		case opcodes.Call:
+			index++
+			index += 8
+		case opcodes.IfOneLiner:
+			index++
+			index += 8
+			index += 8
+		case opcodes.NewArray:
+			index++
+			index += 8
+		case opcodes.NewTuple:
+			index++
+			index += 8
+		case opcodes.NewHash:
+			index++
+			index += 8
+		case opcodes.Identifier:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.Integer:
+			index++
+			index += 8
+		case opcodes.Float:
+			index++
+			index += 8
+		case opcodes.String:
+			index++
+			stringLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + stringLength
+		case opcodes.Bytes:
+			index++
+			bytesLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + bytesLength
+		case opcodes.True:
+			index++
+		case opcodes.False:
+			index++
+		case opcodes.None:
+			index++
+		case opcodes.Selector:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.Index:
+			index++
+		case opcodes.Super:
+			index++
+		default:
+			panic(fmt.Sprintf("unknown opcode %d in %v", op, bytecode[index-5:]))
 		}
 	}
-	return finalBytecode
+	return labels
+}
+
+func (a *assembler) resolveLabels(bytecode []byte, labels map[int64]int64) []byte {
+	bytecodeLength := int64(len(bytecode))
+	for index := int64(0); index < bytecodeLength; {
+		op := bytecode[index]
+		switch op {
+		case opcodes.Push:
+			index++
+		case opcodes.Pop:
+			index++
+		case opcodes.IdentifierAssign:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.SelectorAssign:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.IndexAssign:
+			index++
+		case opcodes.Label:
+			index++
+			index += 8
+		case opcodes.Jump:
+			labelCode := common.BytesToInt(bytecode[index+1 : index+9])
+			jump := labels[labelCode] - index
+			index++
+			copy(bytecode[index:index+8], common.IntToBytes(jump))
+			index += 8
+		case opcodes.IfJump:
+			labelCode := common.BytesToInt(bytecode[index+1 : index+9])
+			jump := labels[labelCode] - index
+			index++
+			copy(bytecode[index:index+8], common.IntToBytes(jump))
+			index += 8
+		case opcodes.Return:
+			index++
+		case opcodes.Require:
+			index++
+		case opcodes.DeleteIdentifier:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.DeleteSelector:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.Defer:
+			index++
+			index += 8
+		case opcodes.EnterBlock:
+			index++
+		case opcodes.ExitBlock:
+			index++
+		case opcodes.NewFunction:
+			index++
+			argsNumber := common.BytesToInt(bytecode[index : index+8])
+			index += 8
+			for arg := int64(0); arg < argsNumber; arg++ {
+				argSymbolLength := common.BytesToInt(bytecode[index : index+8])
+				index += 8 + argSymbolLength
+			}
+			index += 8
+		case opcodes.NewClass:
+			index++
+			index += 8
+			index += 8
+		case opcodes.Call:
+			index++
+			index += 8
+		case opcodes.IfOneLiner:
+			index++
+			index += 8
+			index += 8
+		case opcodes.NewArray:
+			index++
+			index += 8
+		case opcodes.NewTuple:
+			index++
+			index += 8
+		case opcodes.NewHash:
+			index++
+			index += 8
+		case opcodes.Identifier:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.Integer:
+			index++
+			index += 8
+		case opcodes.Float:
+			index++
+			index += 8
+		case opcodes.String:
+			index++
+			stringLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + stringLength
+		case opcodes.Bytes:
+			index++
+			bytesLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + bytesLength
+		case opcodes.True:
+			index++
+		case opcodes.False:
+			index++
+		case opcodes.None:
+			index++
+		case opcodes.Selector:
+			index++
+			symbolLength := common.BytesToInt(bytecode[index : index+8])
+			index += 8 + symbolLength
+		case opcodes.Index:
+			index++
+		case opcodes.Super:
+			index++
+		default:
+			panic(fmt.Sprintf("unknown opcode %d in %v", op, bytecode[index-5:]))
+		}
+	}
+	if len(labels) > 0 {
+		fmt.Println(bytecode)
+	}
+	return bytecode
+}
+
+func (a *assembler) Assemble(program ast3.Program) []byte {
+	bytecode := make([]byte, 0, len(program))
+	for _, node := range program {
+		chunk := a.assemble(node)
+		bytecode = append(bytecode, chunk...)
+	}
+	labels := a.enumLabels(bytecode)
+	return a.resolveLabels(bytecode, labels)
+}
+
+func Assemble(program ast3.Program) []byte {
+	a := newAssembler()
+	return a.Assemble(program)
 }

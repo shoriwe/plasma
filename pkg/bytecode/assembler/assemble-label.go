@@ -1,16 +1,13 @@
 package assembler
 
 import (
-	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast3"
+	"github.com/shoriwe/gplasma/pkg/bytecode/opcodes"
+	"github.com/shoriwe/gplasma/pkg/common"
 )
 
 func (a *assembler) Label(label *ast3.Label) []byte {
-	oldIndex, found := a.labels[label.Code]
-	if found && oldIndex != -1 {
-		// fmt.Printf("Repeated label %d - Old: %d and New: %d\n", label.Code, oldIndex, a.bytecodeIndex)
-		panic(fmt.Sprintf("Label %d should be unique", label.Code))
-	}
-	a.labels[label.Code] = a.bytecodeIndex
-	return nil
+	result := []byte{opcodes.Label}
+	result = append(result, common.IntToBytes(label.Code)...)
+	return result
 }

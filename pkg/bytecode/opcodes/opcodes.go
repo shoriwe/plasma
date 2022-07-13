@@ -6,6 +6,7 @@ const (
 	IdentifierAssign
 	SelectorAssign
 	IndexAssign
+	Label
 	Jump
 	IfJump
 	Return

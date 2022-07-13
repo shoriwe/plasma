@@ -17,6 +17,7 @@ func (a *assembler) Class(class *ast3.Class) []byte {
 		body = append(body, a.assemble(node)...)
 	}
 	var result []byte
+	result = append(result, bases...)
 	result = append(result, opcodes.NewClass)
 	result = append(result, common.IntToBytes(len(class.Bases))...)
 	result = append(result, common.IntToBytes(len(body))...)
