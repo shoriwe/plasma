@@ -14,14 +14,6 @@ type (
 	}
 )
 
-const (
-	Zero byte = iota
-	Bits8
-	Bits16
-	Bits32
-	Bits64
-)
-
 func IntToBytes[T integer](i T) []byte {
 	var bytes [8]byte
 	binary.BigEndian.PutUint64(bytes[:], uint64(i))
@@ -48,4 +40,8 @@ func FloatToBytes[T float](f T) []byte {
 	u := math.Float64bits(float64(f))
 	binary.BigEndian.PutUint64(bytes[:], u)
 	return bytes[:]
+}
+
+func BytesToFloat(i []byte) float64 {
+	return math.Float64frombits(binary.BigEndian.Uint64(i))
 }

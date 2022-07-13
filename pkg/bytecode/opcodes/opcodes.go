@@ -5,7 +5,6 @@ const (
 	Pop
 	IdentifierAssign
 	SelectorAssign
-	IndexAssign
 	Label
 	Jump
 	IfJump
@@ -32,6 +31,5 @@ const (
 	False
 	None
 	Selector
-	Index
 	Super
 )

@@ -7,7 +7,7 @@ import (
 )
 
 type Parser struct {
-	lineStack    common.Stack[int]
+	lineStack    common.ListStack[int]
 	lexer        *lexer.Lexer
 	complete     bool
 	currentToken *lexer.Token
@@ -70,7 +70,7 @@ func (parser *Parser) Parse() (*ast.Program, error) {
 
 func NewParser(lexer_ *lexer.Lexer) *Parser {
 	return &Parser{
-		lineStack:    common.Stack[int]{},
+		lineStack:    common.ListStack[int]{},
 		lexer:        lexer_,
 		complete:     false,
 		currentToken: nil,

@@ -32,4 +32,13 @@ const (
 	FloorDiv           = "__floor_div__"
 	Modulus            = "__mod__"
 	PowerOf            = "__pow__"
+	Length             = "__len__"
+	Bool               = "__bool__"
+	Get                = "__get__"
+	Set                = "__set__"
+	Del                = "__del__"
+	Call               = "__call__"
+	Class              = "__class__"
+	Copy               = "__copy__"
+	String             = "__string__"
 )

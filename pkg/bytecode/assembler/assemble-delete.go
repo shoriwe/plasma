@@ -5,6 +5,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast3"
 	"github.com/shoriwe/gplasma/pkg/bytecode/opcodes"
 	"github.com/shoriwe/gplasma/pkg/common"
+	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 	"reflect"
 )
 
@@ -21,6 +22,18 @@ func (a *assembler) Delete(del *ast3.Delete) []byte {
 		result = append(result, opcodes.DeleteSelector)
 		result = append(result, common.IntToBytes(len(x.Identifier.Symbol))...)
 		result = append(result, []byte(x.Identifier.Symbol)...)
+	case *ast3.Index:
+		return a.Call(
+			&ast3.Call{
+				Function: &ast3.Selector{
+					X: x.Source,
+					Identifier: &ast3.Identifier{
+						Symbol: magic_functions.Del,
+					},
+				},
+				Arguments: []ast3.Expression{x.Index},
+			},
+		)
 	default:
 		panic(fmt.Sprintf("invalid type of delete target %s", reflect.TypeOf(x).String()))
 	}

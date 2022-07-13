@@ -15,3 +15,4 @@
 - Simplify AST pass
 - Lowercase True, False and None
 - New AST3 for the transformation phase
+- Assembler

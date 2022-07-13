@@ -48,8 +48,6 @@ func (a *assembler) enumLabels(bytecode []byte) map[int64]int64 {
 			index++
 			symbolLength := common.BytesToInt(bytecode[index : index+8])
 			index += 8 + symbolLength
-		case opcodes.IndexAssign:
-			index++
 		case opcodes.Label:
 			index++
 			labelCode := common.BytesToInt(bytecode[index : index+8])
@@ -165,8 +163,6 @@ func (a *assembler) resolveLabels(bytecode []byte, labels map[int64]int64) []byt
 			index++
 			symbolLength := common.BytesToInt(bytecode[index : index+8])
 			index += 8 + symbolLength
-		case opcodes.IndexAssign:
-			index++
 		case opcodes.Label:
 			index++
 			index += 8

@@ -1,5 +1,6 @@
 package special_symbols
 
 const (
-	Self = "self"
+	Self  = "self"
+	Value = "Value"
 )

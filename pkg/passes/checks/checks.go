@@ -12,9 +12,9 @@ Check verifies:
 - Return statement is only on functions and generator statements
 */
 type Check struct {
-	InvalidFunctionNodesStack  common.Stack[ast.Node]
-	InvalidGeneratorNodesStack common.Stack[ast.Node]
-	InvalidLoopNodesStack      common.Stack[ast.Node]
+	InvalidFunctionNodesStack  common.ListStack[ast.Node]
+	InvalidGeneratorNodesStack common.ListStack[ast.Node]
+	InvalidLoopNodesStack      common.ListStack[ast.Node]
 	insideFunction             bool
 	insideGenerator            bool
 	insideLoop                 bool
@@ -110,9 +110,9 @@ func (c *Check) CountInvalidLoopNodes() int {
 
 func NewCheckPass() *Check {
 	return &Check{
-		InvalidFunctionNodesStack:  common.Stack[ast.Node]{},
-		InvalidGeneratorNodesStack: common.Stack[ast.Node]{},
-		InvalidLoopNodesStack:      common.Stack[ast.Node]{},
+		InvalidFunctionNodesStack:  common.ListStack[ast.Node]{},
+		InvalidGeneratorNodesStack: common.ListStack[ast.Node]{},
+		InvalidLoopNodesStack:      common.ListStack[ast.Node]{},
 		insideFunction:             false,
 		insideGenerator:            false,
 		insideLoop:                 false,

@@ -5,6 +5,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/ast3"
 	"github.com/shoriwe/gplasma/pkg/bytecode/opcodes"
 	"github.com/shoriwe/gplasma/pkg/common"
+	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 	"reflect"
 )
 
@@ -23,11 +24,15 @@ func (a *assembler) Assignment(assign *ast3.Assignment) []byte {
 		result = append(result, common.IntToBytes(len(left.Identifier.Symbol))...)
 		result = append(result, []byte(left.Identifier.Symbol)...)
 	case *ast3.Index:
-		result = append(result, a.Expression(left.Source)...)
-		result = append(result, opcodes.Push)
-		result = append(result, a.Expression(left.Index)...)
-		result = append(result, opcodes.Push)
-		result = append(result, opcodes.IndexAssign)
+		return a.Call(&ast3.Call{
+			Function: &ast3.Selector{
+				X: left.Source,
+				Identifier: &ast3.Identifier{
+					Symbol: magic_functions.Set,
+				},
+			},
+			Arguments: []ast3.Expression{left.Index, assign.Right},
+		})
 	default:
 		panic(fmt.Sprintf("unknown left hand side type %s", reflect.TypeOf(left).String()))
 	}

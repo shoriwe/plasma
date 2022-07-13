@@ -10,3 +10,5 @@ elif a < 2
 		print(2)
 	end
 end
+
+delete a[100]
