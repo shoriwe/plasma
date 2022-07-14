@@ -178,12 +178,6 @@ func (gt *generatorTransform) resolve(node ast3.Node, symbols map[string]struct{
 			Function:  gt.resolve(n.Function, symbolsCopy)[0].(ast3.Expression),
 			Arguments: arguments,
 		}}
-	case *ast3.IfOneLiner:
-		return []ast3.Node{&ast3.IfOneLiner{
-			Condition: gt.resolve(n.Condition, symbolsCopy)[0].(ast3.Expression),
-			Result:    gt.resolve(n.Result, symbolsCopy)[0].(ast3.Expression),
-			Else:      gt.resolve(n.Else, symbolsCopy)[0].(ast3.Expression),
-		}}
 	case *ast3.Array:
 		values := make([]ast3.Expression, 0, len(n.Values))
 		for _, value := range n.Values {

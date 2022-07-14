@@ -18,7 +18,6 @@ const (
 	NewFunction
 	NewClass
 	Call
-	IfOneLiner
 	NewArray
 	NewTuple
 	NewHash

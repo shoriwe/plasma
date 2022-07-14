@@ -17,8 +17,6 @@ func (a *assembler) Expression(expr ast3.Expression) []byte {
 		return a.Class(e)
 	case *ast3.Call:
 		return a.Call(e)
-	case *ast3.IfOneLiner:
-		return a.IfOneLiner(e)
 	case *ast3.Array:
 		return a.Array(e)
 	case *ast3.Tuple:

@@ -24,10 +24,6 @@ type (
 		Function  Expression
 		Arguments []Expression
 	}
-	IfOneLiner struct {
-		Expression
-		Condition, Result, Else Expression
-	}
 
 	Array struct {
 		Expression

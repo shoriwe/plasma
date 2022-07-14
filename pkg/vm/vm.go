@@ -115,8 +115,6 @@ func (vm *VM) NewClass(ctx *Context) { panic("implement me!") }
 
 func (vm *VM) Call(ctx *Context) { panic("implement me!") }
 
-func (vm *VM) IfOneLiner(ctx *Context) { panic("implement me!") }
-
 func (vm *VM) NewArray(ctx *Context) {
 	ctx.Index++
 	numberOfValues := common.BytesToInt(ctx.Bytecode[ctx.Index : ctx.Index+8])
@@ -260,8 +258,6 @@ func (vm *VM) ExecuteContext(ctx *Context) {
 			vm.NewClass(ctx)
 		case opcodes.Call:
 			vm.Call(ctx)
-		case opcodes.IfOneLiner:
-			vm.IfOneLiner(ctx)
 		case opcodes.NewArray:
 			vm.NewArray(ctx)
 		case opcodes.NewTuple:

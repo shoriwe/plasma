@@ -94,10 +94,6 @@ func (a *assembler) enumLabels(bytecode []byte) map[int64]int64 {
 		case opcodes.Call:
 			index++
 			index += 8
-		case opcodes.IfOneLiner:
-			index++
-			index += 8
-			index += 8
 		case opcodes.NewArray:
 			index++
 			index += 8
@@ -135,8 +131,6 @@ func (a *assembler) enumLabels(bytecode []byte) map[int64]int64 {
 			index++
 			symbolLength := common.BytesToInt(bytecode[index : index+8])
 			index += 8 + symbolLength
-		case opcodes.Index:
-			index++
 		case opcodes.Super:
 			index++
 		default:
@@ -213,10 +207,6 @@ func (a *assembler) resolveLabels(bytecode []byte, labels map[int64]int64) []byt
 		case opcodes.Call:
 			index++
 			index += 8
-		case opcodes.IfOneLiner:
-			index++
-			index += 8
-			index += 8
 		case opcodes.NewArray:
 			index++
 			index += 8
@@ -254,8 +244,6 @@ func (a *assembler) resolveLabels(bytecode []byte, labels map[int64]int64) []byt
 			index++
 			symbolLength := common.BytesToInt(bytecode[index : index+8])
 			index += 8 + symbolLength
-		case opcodes.Index:
-			index++
 		case opcodes.Super:
 			index++
 		default:
