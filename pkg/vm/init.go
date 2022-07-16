@@ -1,6 +1,7 @@
 package vm
 
 import (
+	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 	special_symbols "github.com/shoriwe/gplasma/pkg/common/special-symbols"
 )
 
@@ -81,4 +82,68 @@ func (plasma *Plasma) init() {
 			return plasma.none, nil
 		},
 	))
+	// On Demand values
+	plasma.onDemand = map[string]func(*Value) *Value{
+		magic_functions.And: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					if self.Bool() && argument[0].Bool() {
+						return plasma.true, nil
+					}
+					return plasma.false, nil
+				})
+		},
+		magic_functions.Or: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					if self.Bool() || argument[0].Bool() {
+						return plasma.true, nil
+					}
+					return plasma.false, nil
+				})
+		},
+		magic_functions.Xor: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					if self.Bool() != argument[0].Bool() {
+						return plasma.true, nil
+					}
+					return plasma.false, nil
+				})
+		},
+		magic_functions.Is: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					class := argument[0]
+					switch class.TypeId() {
+					case BuiltInClassId, ClassId:
+						return plasma.NewBool(self.GetClass() == class), nil
+					}
+					return plasma.false, nil
+				})
+		},
+		magic_functions.Implements: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					class := argument[0]
+					switch class.TypeId() {
+					case BuiltInClassId, ClassId:
+						return plasma.NewBool(self.Implements(class)), nil
+					}
+					return plasma.false, nil
+				})
+		},
+		magic_functions.Bool: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					return plasma.NewBool(self.Bool()), nil
+				})
+		},
+		magic_functions.Class: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					return self.class, nil
+				})
+		},
+	}
 }

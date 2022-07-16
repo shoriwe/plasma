@@ -10,7 +10,8 @@ type (
 		Stdin             io.Reader
 		Stdout, Stderr    io.Writer
 		rootSymbols       *Symbols // TODO: init me
-		true, false, none *Value   // TODO: init me
+		onDemand          map[string]func(self *Value) *Value
+		true, false, none *Value
 		value             *Value
 		string            *Value
 		bytes             *Value

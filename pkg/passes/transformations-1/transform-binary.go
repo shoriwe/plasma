@@ -19,7 +19,20 @@ func (transform *transformPass) Binary(binary *ast2.Binary) *ast3.Call {
 	case ast2.Xor:
 		function = magic_functions.Xor
 	case ast2.In:
-		function = magic_functions.In
+		return transform.Call(
+			&ast2.FunctionCall{
+				Expression: nil,
+				Function: &ast2.Selector{
+					Assignable: nil,
+					X:          binary.Right,
+					Identifier: &ast2.Identifier{
+						Assignable: nil,
+						Symbol:     magic_functions.In,
+					},
+				},
+				Arguments: []ast2.Expression{binary.Left},
+			},
+		)
 	case ast2.Is:
 		function = magic_functions.Is
 	case ast2.Implements:

@@ -31,3 +31,35 @@ const (
 	Selector
 	Super
 )
+
+var OpCodes = map[byte]string{
+	Push:             "Push",
+	Pop:              "Pop",
+	IdentifierAssign: "IdentifierAssign",
+	SelectorAssign:   "SelectorAssign",
+	Label:            "Label",
+	Jump:             "Jump",
+	IfJump:           "IfJump",
+	Return:           "Return",
+	DeleteIdentifier: "DeleteIdentifier",
+	DeleteSelector:   "DeleteSelector",
+	Defer:            "Defer",
+	EnterBlock:       "EnterBlock",
+	ExitBlock:        "ExitBlock",
+	NewFunction:      "NewFunction",
+	NewClass:         "NewClass",
+	Call:             "Call",
+	NewArray:         "NewArray",
+	NewTuple:         "NewTuple",
+	NewHash:          "NewHash",
+	Identifier:       "Identifier",
+	Integer:          "Integer",
+	Float:            "Float",
+	String:           "String",
+	Bytes:            "Bytes",
+	True:             "True",
+	False:            "False",
+	None:             "None",
+	Selector:         "Selector",
+	Super:            "Super",
+}

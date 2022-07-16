@@ -36,11 +36,12 @@ type (
 		Bytecode []byte
 	}
 	Value struct {
-		class  *Value
-		typeId TypeId
-		mutex  *sync.Mutex
-		v      any
-		vtable *Symbols
+		onDemand map[string]func(self *Value) *Value
+		class    *Value
+		typeId   TypeId
+		mutex    *sync.Mutex
+		v        any
+		vtable   *Symbols
 	}
 )
 
@@ -141,7 +142,19 @@ func (value *Value) Set(symbol string, v *Value) {
 }
 
 func (value *Value) Get(symbol string) (*Value, error) {
-	return value.vtable.Get(symbol)
+	result, getError := value.vtable.Get(symbol)
+	if getError == nil {
+		return result, nil
+	}
+	value.mutex.Lock()
+	defer value.mutex.Unlock()
+	onDemand, found := value.onDemand[symbol]
+	if !found {
+		return nil, SymbolNotFoundError
+	}
+	result = onDemand(value)
+	value.vtable.Set(symbol, result)
+	return result, nil
 }
 
 func (value *Value) Del(symbol string) error {
@@ -355,53 +368,35 @@ func (value *Value) Call(argument ...*Value) (*Value, error) {
 	return value.GetCallback()(argument...)
 }
 
+func (value *Value) Implements(class *Value) bool {
+	if value.GetClass() == class {
+		return true
+	}
+	for _, base := range class.GetClassInfo().Bases {
+		if value.Implements(base) {
+			return true
+		}
+	}
+	return false
+}
+
 /*
-NewValue magic functions
-TODO Not                __not__
-TODO Positive           __positive__
-TODO Negative           __negative__
-TODO NegateBits         __negate_its__
-TODO And                __and__
-TODO Or                 __or__
-TODO Xor                __xor__
-TODO In                 __in__
-TODO Is                 __is__
-TODO Implements         __implements__
-TODO Equals             __equals__
-TODO NotEqual           __not_equal__
-TODO GreaterThan        __greater_than__
-TODO GreaterOrEqualThan __greater_or_equal
-TODO LessThan           __less_than__
-TODO LessOrEqualThan    __less_or_equal_th
-TODO Add                __add__
-TODO Sub                __sub__
-TODO Mul                __mul__
-TODO Div                __div__
-TODO FloorDiv           __floor_div__
-TODO Modulus            __mod__
-TODO PowerOf            __pow__
-TODO Length             __len__
-TODO Bool               __bool__
-TODO String             __string__
-TODO Int                __int__
-TODO Float              __float__
-TODO Bytes              __bytes__
-TODO Array              __array__
-TODO Tuple              __tuple__
-TODO Get                __get__
-TODO Set                __set__
-TODO Del                __del__
-TODO Call               __call__
-TODO Class              __class__
-TODO Copy               __copy__
-TODO Iter               __iter__
+NewValue magic functions (on demand)
+And                __and__
+Or                 __or__
+Xor                __xor__
+Is                 __is__
+Implements         __implements__
+Bool               __bool__
+Class              __class__
 */
 func (plasma *Plasma) NewValue(parent *Symbols, typeId TypeId, class *Value) *Value {
 	return &Value{
-		class:  class,
-		typeId: typeId,
-		mutex:  &sync.Mutex{},
-		v:      nil,
-		vtable: NewSymbols(parent),
+		onDemand: plasma.onDemand,
+		class:    class,
+		typeId:   typeId,
+		mutex:    &sync.Mutex{},
+		v:        nil,
+		vtable:   NewSymbols(parent),
 	}
 }
