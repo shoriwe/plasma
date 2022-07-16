@@ -48,9 +48,9 @@ func TestSampleScripts(t *testing.T) {
 		s := out.String()
 		if s != script.Result {
 			t.Log("Expecting:")
-			t.Log(script.Result)
+			fmt.Println(script.Result)
 			t.Log("But obtained:")
-			t.Log(s)
+			fmt.Println(s)
 			t.Fatal("Invalid result")
 		}
 	}

@@ -1,6 +1,6 @@
 1.666667
 5.000000
-Hello Hello Hello Hello Hello
+Hello-Hello-Hello-Hello-Hello-
 true
 true
 true

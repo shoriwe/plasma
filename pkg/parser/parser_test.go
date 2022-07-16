@@ -372,8 +372,6 @@ func walker(node ast.Node) string {
 		return result + "\nwhile " + walker(n.Condition)
 	case *ast.SuperExpression:
 		return "super " + walker(n.X)
-	case *ast.RequireStatement:
-		return "require " + walker(n.X)
 	case *ast.DeleteStatement:
 		return "delete " + walker(n.X)
 	case *ast.DeferStatement:
