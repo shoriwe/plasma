@@ -123,6 +123,11 @@ func (plasma *Plasma) NewArray(values []*Value) *Value {
 			rawString = append(rawString, ']')
 			return plasma.NewBytes(rawString), nil
 		}))
+	result.Set(magic_functions.Array, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return result, nil
+		}))
 	result.Set(magic_functions.Tuple, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {

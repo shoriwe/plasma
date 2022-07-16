@@ -23,3 +23,6 @@
 - Bool magic functions
 - Float magic functions
 - Integer magic functions
+- Class magic functions
+- Hash magic functions
+- None magic functions

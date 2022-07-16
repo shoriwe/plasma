@@ -13,6 +13,10 @@ var (
 	sample2 string
 	//go:embed result-2.txt
 	result2 string
+	//go:embed sample-3.pm
+	sample3 string
+	//go:embed result-3.txt
+	result3 string
 )
 
 type Script struct {
@@ -29,10 +33,10 @@ var Samples = map[string]Script{
 		Code:   sample2,
 		Result: result2,
 	},
-	// "sample-3.pm":  Script{
-	// 	Code:   sample3,
-	// 	Result: result3,
-	// },
+	"sample-3.pm": Script{
+		Code:   sample3,
+		Result: result3,
+	},
 	// "sample-4.pm":  Script{
 	// 	Code:   sample4,
 	// 	Result: result4,

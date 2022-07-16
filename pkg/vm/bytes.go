@@ -15,19 +15,19 @@ func (plasma *Plasma) bytesClass() *Value {
 
 /*
 NewBytes magic function:
-TODO Equals              __equals__
-TODO NotEqual            __not_equal__
-TODO Add                 __add__
-TODO Mul                 __mul__
-TODO Length              __len__
-TODO Bool                __bool__
-TODO String              __string__
-TODO Bytes               __bytes__
-TODO Array               __array__
-TODO Tuple               __tuple__
-TODO Get                 __get__
-TODO Copy                __copy__
-TODO Iter                __iter__
+Equals              __equals__
+NotEqual            __not_equal__
+Add                 __add__
+Mul                 __mul__
+Length              __len__
+Bool                __bool__
+String              __string__
+Bytes               __bytes__
+Array               __array__
+Tuple               __tuple__
+Get                 __get__
+Copy                __copy__
+Iter                __iter__
 */
 func (plasma *Plasma) NewBytes(contents []byte) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, BytesId, plasma.bytes)

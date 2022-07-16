@@ -52,8 +52,8 @@ func (plasma *Plasma) prepareClassInitCode(classInfo *ClassInfo) {
 func (plasma *Plasma) do(ctx *context) {
 	ctxCode := ctx.code.Peek()
 	instruction := ctxCode.bytecode[ctxCode.index]
-	fmt.Println(opcodes.OpCodes[instruction])
-	plasma.printStack(ctx)
+	// fmt.Println(opcodes.OpCodes[instruction])
+	// plasma.printStack(ctx)
 	switch instruction {
 	case opcodes.Push:
 		ctxCode.index++
@@ -310,10 +310,13 @@ func (plasma *Plasma) do(ctx *context) {
 		ctxCode.index += stringLength
 		ctx.register = plasma.NewBytes(contents)
 	case opcodes.True:
+		ctxCode.index++
 		ctx.register = plasma.true
 	case opcodes.False:
+		ctxCode.index++
 		ctx.register = plasma.false
 	case opcodes.None:
+		ctxCode.index++
 		ctx.register = plasma.none
 	case opcodes.Selector:
 		ctxCode.index++

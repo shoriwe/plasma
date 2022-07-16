@@ -83,6 +83,22 @@ func (plasma *Plasma) init() {
 	))
 	// On Demand values
 	plasma.onDemand = map[string]func(*Value) *Value{
+		magic_functions.Equals: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(
+				self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					return plasma.NewBool(self == argument[0]), nil
+				},
+			)
+		},
+		magic_functions.NotEqual: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(
+				self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					return plasma.NewBool(self != argument[0]), nil
+				},
+			)
+		},
 		magic_functions.And: func(self *Value) *Value {
 			return plasma.NewBuiltInFunction(self.vtable,
 				func(argument ...*Value) (*Value, error) {
