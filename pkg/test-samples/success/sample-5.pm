@@ -6,4 +6,3 @@ def fib(n)
 end
 a = 20
 println(fib(a))
-# println("fib("+a.ToString()+") = "+fib(a).ToString())

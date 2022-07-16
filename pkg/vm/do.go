@@ -84,9 +84,10 @@ func (plasma *Plasma) do(ctx *context) {
 		if ctx.stack.Pop().Bool() {
 			ctxCode.index += common.BytesToInt(ctxCode.bytecode[1+ctxCode.index : 9+ctxCode.index])
 		} else {
-			ctxCode.index++
+			ctxCode.index += 9
 		}
 	case opcodes.Return:
+		ctxCode.index++
 		ctx.register = ctx.stack.Pop()
 		ctx.popBlock()
 	case opcodes.DeleteIdentifier:
