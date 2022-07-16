@@ -73,7 +73,6 @@ func (plasma *Plasma) init() {
 				if writeError != nil {
 					panic(writeError)
 				}
-
 			}
 			_, writeError := plasma.Stdout.Write([]byte("\n"))
 			if writeError != nil {

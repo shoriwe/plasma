@@ -1,7 +1,6 @@
 package vm
 
 import (
-	"bufio"
 	"bytes"
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast"
@@ -19,9 +18,9 @@ import (
 func TestSampleScripts(t *testing.T) {
 	for i := 1; i <= len(success.Samples); i++ {
 		sampleScript := fmt.Sprintf("sample-%d.pm", i)
-		sampleCode := success.Samples[sampleScript]
+		script := success.Samples[sampleScript]
 		t.Logf("Testing - %s", sampleScript)
-		l := lexer.NewLexer(reader.NewStringReader(sampleCode))
+		l := lexer.NewLexer(reader.NewStringReader(script.Code))
 		p := parser.NewParser(l)
 		program, parseError := p.Parse()
 		if parseError != nil {
@@ -41,11 +40,18 @@ func TestSampleScripts(t *testing.T) {
 		transformed := transformations_1.Transform(simplified)
 		bytecode := assembler.Assemble(transformed)
 		out := &bytes.Buffer{}
-		writer := bufio.NewWriter(out)
-		v := NewVM(nil, writer, writer)
+		v := NewVM(nil, out, out)
 		_, err, _ := v.Execute(bytecode)
 		if e := <-err; e != nil {
 			t.Fatal(e)
+		}
+		s := out.String()
+		if s != script.Result {
+			t.Log("Expecting:")
+			t.Log(script.Result)
+			t.Log("But obtained:")
+			t.Log(s)
+			t.Fatal("Invalid result")
 		}
 	}
 }

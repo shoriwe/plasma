@@ -26,9 +26,11 @@ func (transform *transformPass) Unary(unary *ast2.Unary) *ast3.Call {
 	}
 	x = transform.Expression(unary.X)
 	return &ast3.Call{
-		Function: &ast3.Identifier{
-			Symbol: function,
+		Function: &ast3.Selector{
+			X: x,
+			Identifier: &ast3.Identifier{
+				Symbol: function,
+			},
 		},
-		Arguments: []ast3.Expression{x},
 	}
 }

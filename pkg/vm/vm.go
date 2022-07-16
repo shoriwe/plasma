@@ -9,7 +9,7 @@ type (
 	Plasma struct {
 		Stdin             io.Reader
 		Stdout, Stderr    io.Writer
-		rootSymbols       *Symbols // TODO: init me
+		rootSymbols       *Symbols
 		onDemand          map[string]func(self *Value) *Value
 		true, false, none *Value
 		value             *Value
@@ -43,6 +43,9 @@ func (plasma *Plasma) executeCtx(ctx *context) {
 			plasma.do(ctx)
 		}
 	}
+	ctx.result <- ctx.register
+	ctx.err <- nil
+	ctx.stop <- struct{}{}
 }
 
 func (plasma *Plasma) Execute(bytecode []byte) (result chan *Value, err chan error, stop chan struct{}) {
@@ -52,7 +55,7 @@ func (plasma *Plasma) Execute(bytecode []byte) (result chan *Value, err chan err
 	ctx.err = make(chan error, 1)
 	ctx.stop = make(chan struct{}, 1)
 	// Execute bytecode with context
-	plasma.executeCtx(ctx)
+	go plasma.executeCtx(ctx)
 	return ctx.result, ctx.err, ctx.stop
 }
 

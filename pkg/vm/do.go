@@ -52,8 +52,8 @@ func (plasma *Plasma) prepareClassInitCode(classInfo *ClassInfo) {
 func (plasma *Plasma) do(ctx *context) {
 	ctxCode := ctx.code.Peek()
 	instruction := ctxCode.bytecode[ctxCode.index]
-	// fmt.Println(opcodes.OpCodes[instruction])
-	// plasma.printStack(ctx)
+	fmt.Println(opcodes.OpCodes[instruction])
+	plasma.printStack(ctx)
 	switch instruction {
 	case opcodes.Push:
 		ctxCode.index++
@@ -127,7 +127,7 @@ func (plasma *Plasma) do(ctx *context) {
 		ctxCode.index++
 		numberOfArgument := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
 		ctxCode.index += 8
-		arguments := make([]string, numberOfArgument)
+		arguments := make([]string, 0, numberOfArgument)
 		for i := int64(0); i < numberOfArgument; i++ {
 			symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
 			ctxCode.index += 8
