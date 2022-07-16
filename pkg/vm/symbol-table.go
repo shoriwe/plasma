@@ -12,7 +12,8 @@ var (
 type (
 	Symbols struct {
 		mutex  *sync.Mutex
-		Values map[string]*Value
+		values map[string]*Value
+		call   *Symbols
 		Parent *Symbols
 	}
 )
@@ -20,7 +21,7 @@ type (
 func NewSymbols(parent *Symbols) *Symbols {
 	return &Symbols{
 		mutex:  &sync.Mutex{},
-		Values: map[string]*Value{},
+		values: map[string]*Value{},
 		Parent: parent,
 	}
 }
@@ -28,7 +29,7 @@ func NewSymbols(parent *Symbols) *Symbols {
 func (symbols *Symbols) Set(name string, value *Value) {
 	symbols.mutex.Lock()
 	defer symbols.mutex.Unlock()
-	symbols.Values[name] = value
+	symbols.values[name] = value
 }
 
 func (symbols *Symbols) Get(name string) (*Value, error) {
@@ -38,12 +39,12 @@ func (symbols *Symbols) Get(name string) (*Value, error) {
 		value *Value
 		found bool
 	)
-	value, found = symbols.Values[name]
+	value, found = symbols.values[name]
 	if found {
 		return value, nil
 	}
 	for current := symbols.Parent; current != nil; current = current.Parent {
-		value, found = current.Values[name]
+		value, found = current.values[name]
 		if found {
 			return value, nil
 		}
@@ -54,10 +55,10 @@ func (symbols *Symbols) Get(name string) (*Value, error) {
 func (symbols *Symbols) Del(name string) error {
 	symbols.mutex.Lock()
 	defer symbols.mutex.Unlock()
-	_, found := symbols.Values[name]
+	_, found := symbols.values[name]
 	if !found {
 		return SymbolNotFoundError
 	}
-	delete(symbols.Values, name)
+	delete(symbols.values, name)
 	return nil
 }

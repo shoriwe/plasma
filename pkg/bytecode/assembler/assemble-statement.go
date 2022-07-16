@@ -24,8 +24,6 @@ func (a *assembler) Statement(stmt ast3.Statement) []byte {
 		return a.Return(s)
 	case *ast3.Yield:
 		return a.Yield(s)
-	case *ast3.Require:
-		return a.Require(s)
 	case *ast3.Delete:
 		return a.Delete(s)
 	case *ast3.Defer:

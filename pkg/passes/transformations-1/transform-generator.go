@@ -119,11 +119,6 @@ func (gt *generatorTransform) resolve(node ast3.Node, symbols map[string]struct{
 			},
 			label,
 		}
-	case *ast3.Require:
-		return []ast3.Node{&ast3.Require{
-			Statement: nil,
-			X:         gt.resolve(n.X, symbolsCopy)[0].(ast3.Expression),
-		}}
 	case *ast3.Delete:
 		return []ast3.Node{&ast3.Delete{
 			Statement: nil,

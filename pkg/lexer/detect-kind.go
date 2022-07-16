@@ -9,8 +9,6 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 		return Keyword, Super
 	case DeleteString:
 		return Keyword, Delete
-	case RequireString:
-		return Keyword, Require
 	case EndString:
 		return Keyword, End
 	case IfString:

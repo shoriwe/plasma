@@ -28,8 +28,6 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseDeleteStatement()
 		case lexer.Defer:
 			return parser.parseDeferStatement()
-		case lexer.Require:
-			return parser.parseRequireStatement()
 		case lexer.While:
 			return parser.parseWhileStatement()
 		case lexer.For:

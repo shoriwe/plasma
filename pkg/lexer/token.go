@@ -23,7 +23,6 @@ const (
 	Super
 	Delete
 	Defer
-	Require
 	End
 	If
 	Unless

@@ -68,10 +68,6 @@ type (
 	Pass struct {
 		Statement
 	}
-	Require struct {
-		Statement
-		X Expression
-	}
 
 	Delete struct {
 		Statement

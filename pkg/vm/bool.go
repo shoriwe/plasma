@@ -1,100 +1,37 @@
 package vm
 
-import (
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
-	"github.com/shoriwe/gplasma/pkg/lexer"
-)
+func (plasma *Plasma) boolClass() *Value {
+	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
+	class.SetAny(func(argument ...*Value) (*Value, error) {
+		return plasma.NewBool(argument[0].Bool()), nil
+	})
+	return class
+}
 
 /*
-NewBool
-	Class: Bool TODO
-	Methods:
-	- Equals: Bool == Any
-	- NotEqual: Bool != Any
-	- Bool
-	- Copy
-	- Class TODO
-	- String
+NewBool magic function:
+TODO Not                 __not__
+TODO And                 __and__
+TODO Or                  __or__
+TODO Xor                 __xor__
+TODO Equals              __equals__
+TODO NotEqual            __not_equal__
+TODO Bool                __bool__
+TODO String              __string__
+TODO Int                 __int__
+TODO Float               __float__
+TODO Bytes               __bytes__
+TODO Call                __call__
+TODO Copy                __copy__
 */
-func (ctx *Context) NewBool() *Value {
-	value := ctx.NewValue()
-	value.OnDemand[magic_functions.Equals] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				if self.GetClass() == argument[0].GetClass() {
-					return ctx.TrueValue(), nil
-				}
-				if self.GetInt() == argument[0].GetInt() {
-					return ctx.TrueValue(), nil
-				}
-				return ctx.FalseValue(), nil
-			},
-		))
+func (plasma *Plasma) NewBool(b bool) *Value {
+	if b && plasma.true != nil {
+		return plasma.true
+	} else if !b && plasma.false != nil {
+		return plasma.false
 	}
-	value.OnDemand[magic_functions.NotEqual] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				if self.GetClass() != argument[0].GetClass() {
-					return ctx.TrueValue(), nil
-				}
-				if self.GetInt() != argument[0].GetInt() {
-					return ctx.TrueValue(), nil
-				}
-				return ctx.TrueValue(), nil
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Bool] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				if self.GetInt() == 1 {
-					return ctx.TrueValue(), nil
-				}
-				return ctx.FalseValue(), nil
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Copy] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				if self.GetInt() == 1 {
-					return ctx.TrueValue(), nil
-				}
-				return ctx.FalseValue(), nil
-			},
-		))
-	}
-	value.OnDemand[magic_functions.String] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				if self.GetInt() == 1 {
-					return ctx.StringValue([]byte(lexer.TrueString)), nil
-				}
-				return ctx.StringValue([]byte(lexer.FalseString)), nil
-			},
-		))
-	}
-	return value
-}
-
-func (ctx *Context) TrueValue() *Value {
-	if ctx.VM.TrueValue != nil {
-		return ctx.VM.TrueValue
-	}
-	ctx.VM.mutex.Lock()
-	defer ctx.VM.mutex.Unlock()
-	ctx.VM.TrueValue = ctx.NewBool()
-	ctx.VM.TrueValue.Int = 1
-	return ctx.VM.TrueValue
-}
-
-func (ctx *Context) FalseValue() *Value {
-	if ctx.VM.FalseValue == nil {
-		return ctx.VM.FalseValue
-	}
-	ctx.VM.mutex.Lock()
-	defer ctx.VM.mutex.Unlock()
-	ctx.VM.FalseValue = ctx.NewBool()
-	ctx.VM.FalseValue.Int = 0
-	return ctx.VM.FalseValue
+	result := plasma.NewValue(plasma.rootSymbols, BoolId, plasma.bool)
+	result.SetAny(b)
+	// TODO: init magic functions
+	return result
 }

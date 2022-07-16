@@ -61,8 +61,6 @@ func (a *assembler) enumLabels(bytecode []byte) map[int64]int64 {
 			index += 8
 		case opcodes.Return:
 			index++
-		case opcodes.Require:
-			index++
 		case opcodes.DeleteIdentifier:
 			index++
 			symbolLength := common.BytesToInt(bytecode[index : index+8])
@@ -174,8 +172,6 @@ func (a *assembler) resolveLabels(bytecode []byte, labels map[int64]int64) []byt
 			index += 8
 		case opcodes.Return:
 			index++
-		case opcodes.Require:
-			index++
 		case opcodes.DeleteIdentifier:
 			index++
 			symbolLength := common.BytesToInt(bytecode[index : index+8])
@@ -261,6 +257,11 @@ func (a *assembler) Assemble(program ast3.Program) []byte {
 	}
 	labels := a.enumLabels(bytecode)
 	return a.resolveLabels(bytecode, labels)
+}
+
+func AssembleAny(node ast3.Node) []byte {
+	a := newAssembler()
+	return a.Assemble(ast3.Program{node})
 }
 
 func Assemble(program ast3.Program) []byte {

@@ -1,15 +1,16 @@
 package vm
 
-func (plasma *Plasma) noneClass() *Value {
-	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
-		return plasma.NewNone(), nil
+func (plasma *Plasma) metaClass() *Value {
+	plasma.class = plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
+	plasma.class.class = plasma.class
+	plasma.class.SetAny(func(argument ...*Value) (*Value, error) {
+		return plasma.NewClass(), nil
 	})
-	return class
+	return plasma.class
 }
 
 /*
-NewNone magic function:
+NewClass magic function:
 TODO Init                __init__
 TODO HasNext             __has_next__
 TODO Next                __next__
@@ -57,11 +58,8 @@ TODO Class               __class__
 TODO Copy                __copy__
 TODO Iter                __iter__
 */
-func (plasma *Plasma) NewNone() *Value {
-	if plasma.none != nil {
-		return plasma.none
-	}
-	result := plasma.NewValue(plasma.rootSymbols, NoneId, plasma.noneType)
+func (plasma *Plasma) NewClass() *Value {
+	result := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
 	// TODO: init magic functions
 	return result
 }

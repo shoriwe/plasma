@@ -9,7 +9,6 @@ const (
 	Jump
 	IfJump
 	Return
-	Require
 	DeleteIdentifier
 	DeleteSelector
 	Defer

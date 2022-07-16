@@ -35,8 +35,6 @@ func (transform *transformPass) Statement(stmt ast2.Statement) []ast3.Node {
 		return transform.Break(s)
 	case *ast2.Pass:
 		return transform.Pass(s)
-	case *ast2.Require:
-		return transform.Require(s)
 	case *ast2.Delete:
 		return transform.Delete(s)
 	case *ast2.Block:

@@ -8,7 +8,6 @@ import (
 
 func (a *assembler) Function(function *ast3.Function) []byte {
 	arguments := make([]byte, 0, len(function.Arguments))
-	arguments = append(arguments, common.IntToBytes(len(function.Arguments))...)
 	for _, argument := range function.Arguments {
 		arguments = append(arguments, common.IntToBytes(len(argument.Symbol))...)
 		arguments = append(arguments, []byte(argument.Symbol)...)
@@ -19,6 +18,7 @@ func (a *assembler) Function(function *ast3.Function) []byte {
 	}
 	var result []byte
 	result = append(result, opcodes.NewFunction)
+	result = append(result, common.IntToBytes(len(function.Arguments))...)
 	result = append(result, arguments...)
 	result = append(result, common.IntToBytes(len(body))...)
 	result = append(result, body...)

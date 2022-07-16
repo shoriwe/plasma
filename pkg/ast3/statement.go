@@ -29,11 +29,7 @@ type (
 		Statement
 		Result Expression
 	}
-	Yield   Return
-	Require struct {
-		Statement
-		X Expression
-	}
+	Yield Return
 
 	Delete struct {
 		Statement

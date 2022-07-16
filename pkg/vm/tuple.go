@@ -1,195 +1,32 @@
 package vm
 
-import (
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
-	special_symbols "github.com/shoriwe/gplasma/pkg/common/special-symbols"
-)
+func (plasma *Plasma) tupleClass() *Value {
+	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
+	class.SetAny(func(argument ...*Value) (*Value, error) {
+		return plasma.NewTuple(argument[0].Values()), nil
+	})
+	return class
+}
 
 /*
-TupleValue
-	Class: Tuple TODO
-	Methods:
-	- Equals: Tuple == Any
-	- NotEqual: Tuple != Any
-	- Length
-	- Bool
-	- Get
-	- Class
-	- Copy
-	- String
-	- Iter TODO
+NewTuple magic function:
+TODO In                  __in__
+TODO Equals              __equals__
+TODO NotEqual            __not_equal__
+TODO Mul                 __mul__
+TODO Length              __len__
+TODO Bool                __bool__
+TODO String              __string__
+TODO Bytes               __bytes__
+TODO Array               __array__
+TODO Tuple               __tuple__
+TODO Get                 __get__
+TODO Copy                __copy__
+TODO Iter                __iter__
 */
-func (ctx *Context) TupleValue(values []*Value) *Value {
-	value := ctx.NewValue()
-	value.Values = values
-	value.OnDemand[magic_functions.Equals] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				otherClass := argument[0].GetClass()
-				tupleClass, _ := ctx.VM.RootNamespace.Get(special_symbols.Tuple)
-				switch otherClass {
-				case tupleClass:
-					selfValues := self.GetValues()
-					otherValues := argument[0].GetValues()
-					if len(selfValues) != len(otherValues) {
-						return ctx.FalseValue(), nil
-					}
-					for index, v := range selfValues {
-						if !ctx.Equals(v, otherValues[index]) {
-							return ctx.FalseValue(), nil
-						}
-					}
-					return ctx.TrueValue(), nil
-				default:
-					return ctx.FalseValue(), nil
-				}
-			},
-		))
-	}
-	value.OnDemand[magic_functions.NotEqual] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				otherClass := argument[0].GetClass()
-				tupleClass, _ := ctx.VM.RootNamespace.Get(special_symbols.Tuple)
-				switch otherClass {
-				case tupleClass:
-					selfValues := self.GetValues()
-					otherValues := argument[0].GetValues()
-					if len(selfValues) != len(otherValues) {
-						return ctx.TrueValue(), nil
-					}
-					for index, v := range selfValues {
-						if ctx.Equals(v, otherValues[index]) {
-							return ctx.FalseValue(), nil
-						}
-					}
-					return ctx.TrueValue(), nil
-				default:
-					return ctx.TrueValue(), nil
-				}
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Mul] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				otherClass := argument[0].GetClass()
-				integerClass, _ := ctx.VM.RootNamespace.Get(special_symbols.Integer)
-				switch otherClass {
-				case integerClass:
-					return ctx.TupleValue(RepeatValues(self.GetValues(), argument[0].GetInt())), nil
-				default:
-					return nil, NotOperable
-				}
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Length] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				v := self.GetValues()
-				return ctx.IntegerValue(int64(len(v))), nil
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Bool] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				v := self.GetValues()
-				if len(v) > 0 {
-					return ctx.TrueValue(), nil
-				}
-				return ctx.FalseValue(), nil
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Get] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				c := self.GetValues()
-				otherClass := argument[0].GetClass()
-				integerClass, _ := ctx.VM.RootNamespace.Get(special_symbols.Integer)
-				tupleClass, _ := ctx.VM.RootNamespace.Get(special_symbols.Tuple)
-				switch otherClass {
-				case integerClass:
-					return c[argument[0].GetInt()], nil
-				case tupleClass:
-					indexes := argument[0].GetValues()
-					return ctx.TupleValue(c[indexes[0].GetInt():indexes[1].GetInt()]), nil
-				default:
-					return nil, NotIndexable
-				}
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Set] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				otherClass := argument[0].GetClass()
-				integerClass, _ := ctx.VM.RootNamespace.Get(special_symbols.Integer)
-				switch otherClass {
-				case integerClass:
-					self.mutex.Lock()
-					defer self.mutex.Unlock()
-					self.Values[argument[0].GetInt()] = argument[1]
-					return ctx.NoneValue(), nil
-				default:
-					return nil, NotIndexable
-				}
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Class] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				self.mutex.Lock()
-				defer self.mutex.Unlock()
-				if self.Class == nil {
-					var getError error
-					self.Class, getError = ctx.VM.RootNamespace.Get(special_symbols.Tuple)
-					if getError != nil {
-						panic("Tuple class not implemented")
-					}
-				}
-				return self.Class, nil
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Copy] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				c := self.GetValues()
-				copyValues := make([]*Value, 0, len(c))
-				for _, v := range c {
-					copyValues = append(copyValues, v.Copy())
-				}
-				return ctx.TupleValue(copyValues), nil
-			},
-		))
-	}
-	value.OnDemand[magic_functions.String] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				var contents []byte
-				contents = append(contents, '[')
-				for index, v := range self.GetValues() {
-					if index != 0 {
-						contents = append(contents, ',')
-					}
-					contents = append(contents, v.String()...)
-				}
-				contents = append(contents, ']')
-				return ctx.StringValue(contents), nil
-			},
-		))
-	}
-	value.OnDemand[magic_functions.Iter] = func(self *Value) (*Value, error) {
-		return ctx.NewFunctionValue(NewBuiltInCallable(
-			func(left bool, argument ...*Value) (*Value, error) {
-				// TODO: Implement me!
-				panic("implement me!")
-			},
-		))
-	}
-	return value
+func (plasma *Plasma) NewTuple(values []*Value) *Value {
+	result := plasma.NewValue(plasma.rootSymbols, TupleId, plasma.tuple)
+	result.SetAny(values)
+	// TODO: init magic functions
+	return result
 }

@@ -2,383 +2,406 @@ package vm
 
 import (
 	"fmt"
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
-	special_symbols "github.com/shoriwe/gplasma/pkg/common/special-symbols"
+	"github.com/shoriwe/gplasma/pkg/lexer"
 	"sync"
 )
 
-var (
-	NotCallable    = fmt.Errorf("value not callable")
-	NotImplemented = fmt.Errorf("not implemented")
-	NotComparable  = fmt.Errorf("not comparable")
-)
-
-var (
-	NotImplementedCallable = NewBuiltInCallable(
-		func(left bool, argument ...*Value) (*Value, error) {
-			return nil, NotImplemented
-		},
-	)
+const (
+	ValueId TypeId = iota
+	StringId
+	BytesId
+	BoolId
+	NoneId
+	IntId
+	FloatId
+	ArrayId
+	TupleId
+	HashId
+	BuiltInFunctionId
+	FunctionId
+	BuiltInClassId
+	ClassId
 )
 
 type (
-	OnDemand func(self *Value) (*Value, error)
-	Callable interface {
-		LoadArguments(left bool, argument ...*Value)
-		Call() (*Value, error)
+	TypeId   int
+	Callback func(argument ...*Value) (*Value, error)
+	FuncInfo struct {
+		Arguments []string
+		Bytecode  []byte
+	}
+	ClassInfo struct {
+		prepared bool
+		Bases    []*Value
+		Bytecode []byte
 	}
 	Value struct {
-		IsFunction   bool
-		mutex        *sync.Mutex
-		Class        *Value
-		Contents     []byte
-		Int          int64
-		Float        float64
-		Values       []*Value
-		VirtualTable *Symbols
-		OnDemand     map[string]OnDemand
-		Callable     Callable
+		class  *Value
+		typeId TypeId
+		mutex  *sync.Mutex
+		v      any
+		vtable *Symbols
 	}
 )
 
+func (plasma *Plasma) valueClass() *Value {
+	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
+	class.SetAny(func(argument ...*Value) (*Value, error) {
+		return plasma.NewValue(plasma.rootSymbols, ValueId, plasma.value), nil
+	})
+	return class
+}
+
 func (value *Value) GetClass() *Value {
-	// TODO: implement me!
-	panic("implement me!")
-}
-
-func (value *Value) GetIsFunction() bool {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
-	return value.IsFunction
+	return value.class
 }
 
-func (value *Value) SetIsFunction(isFunction bool) {
+func (value *Value) TypeId() TypeId {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
-	value.IsFunction = isFunction
+	return value.typeId
 }
 
-func (value *Value) GetContents() []byte {
+func (value *Value) VirtualTable() *Symbols {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
-	return value.Contents
+	return value.vtable
 }
 
-func (value *Value) SetContents(contents []byte) {
+func (value *Value) SetAny(v any) {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
-	value.Contents = contents
+	value.v = v
 }
 
-func (value *Value) GetInt() int64 {
+func (value *Value) GetHash() *Hash {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
-	return value.Int
+	return value.v.(*Hash)
 }
 
-func (value *Value) SetInt(i int64) {
+func (value *Value) GetCallback() Callback {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
-	value.Int = i
-}
-
-func (value *Value) GetFloat() float64 {
-	value.mutex.Lock()
-	defer value.mutex.Unlock()
-	return value.Float
-}
-
-func (value *Value) SetFloat(f float64) {
-	value.mutex.Lock()
-	defer value.mutex.Unlock()
-	value.Float = f
+	return value.v.(Callback)
 }
 
 func (value *Value) GetValues() []*Value {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
-	return value.Values
+	return value.v.([]*Value)
 }
 
-func (value *Value) SetValues(values []*Value) {
+func (value *Value) GetFuncInfo() FuncInfo {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
-	value.Values = values
+	return value.v.(FuncInfo)
 }
 
-func (ctx *Context) NewValue() *Value {
-	onDemand := map[string]OnDemand{
-		magic_functions.Init: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.HasNext: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Next: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Not: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NewBuiltInCallable(
-				func(left bool, argument ...*Value) (*Value, error) {
-					if self.Bool() {
-						return ctx.FalseValue(), nil
-					}
-					return ctx.TrueValue(), nil
-				},
-			))
-		},
-		magic_functions.Positive: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Negative: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.NegateBits: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.And: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NewBuiltInCallable(
-				func(left bool, argument ...*Value) (*Value, error) {
-					if self.Bool() && argument[0].Bool() {
-						return ctx.TrueValue(), nil
-					}
-					return ctx.FalseValue(), nil
-				},
-			))
-		},
-		magic_functions.Or: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NewBuiltInCallable(
-				func(left bool, argument ...*Value) (*Value, error) {
-					if self.Bool() || argument[0].Bool() {
-						return ctx.TrueValue(), nil
-					}
-					return ctx.FalseValue(), nil
-				},
-			))
-		},
-		magic_functions.Xor: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NewBuiltInCallable(
-				func(left bool, argument ...*Value) (*Value, error) {
-					if self.Bool() != argument[0].Bool() {
-						return ctx.TrueValue(), nil
-					}
-					return ctx.FalseValue(), nil
-				},
-			))
-		},
-		magic_functions.In: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Is: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NewBuiltInCallable(
-				func(left bool, argument ...*Value) (*Value, error) {
-					self.mutex.Lock()
-					defer self.mutex.Unlock()
-					classMethod, getError := self.Get(magic_functions.Class)
-					if getError != nil {
-						panic(getError)
-					}
-					class, callError := classMethod.Call(false)
-					if callError != nil {
-						return nil, callError
-					}
-					if class == argument[0] {
-						return ctx.TrueValue(), nil
-					}
-					return ctx.FalseValue(), nil
-				},
-			))
-		},
-		magic_functions.Implements: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NewBuiltInCallable(
-				func(left bool, argument ...*Value) (*Value, error) {
-					// TODO: Implement me!
-					panic("implement me!")
-				},
-			))
-		},
-		magic_functions.Equals: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.NotEqual: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.GreaterThan: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.GreaterOrEqualThan: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.LessThan: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.LessOrEqualThan: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.BitwiseOr: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.BitwiseXor: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.BitwiseAnd: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.BitwiseLeft: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.BitwiseRight: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Add: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Sub: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Mul: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Div: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.FloorDiv: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Modulus: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.PowerOf: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Length: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Bool: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NewBuiltInCallable(
-				func(left bool, argument ...*Value) (*Value, error) {
-					return ctx.TrueValue(), nil
-				},
-			))
-		},
-		magic_functions.Get: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Set: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Del: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Call: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Class: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NewBuiltInCallable(
-				func(left bool, argument ...*Value) (*Value, error) {
-					self.mutex.Lock()
-					defer self.mutex.Unlock()
-					if self.Class == nil {
-						var getError error
-						self.Class, getError = ctx.VM.RootNamespace.Get(special_symbols.Value)
-						if getError != nil {
-							panic("Value class not implemented")
-						}
-					}
-					return self.Class, nil
-				},
-			))
-		},
-		magic_functions.Copy: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.String: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-		magic_functions.Iter: func(self *Value) (*Value, error) {
-			return ctx.NewFunctionValue(NotImplementedCallable)
-		},
-	}
-	return &Value{
-		IsFunction:   false,
-		mutex:        &sync.Mutex{},
-		Class:        nil,
-		Contents:     nil,
-		Int:          0,
-		Float:        0,
-		Values:       nil,
-		VirtualTable: NewSymbols(ctx.Namespace),
-		OnDemand:     onDemand,
-		Callable:     nil,
-	}
+func (value *Value) GetClassInfo() *ClassInfo {
+	value.mutex.Lock()
+	defer value.mutex.Unlock()
+	return value.v.(*ClassInfo)
+}
+
+func (value *Value) GetBytes() []byte {
+	value.mutex.Lock()
+	defer value.mutex.Unlock()
+	return value.v.([]byte)
+}
+
+func (value *Value) GetBool() bool {
+	value.mutex.Lock()
+	defer value.mutex.Unlock()
+	return value.v.(bool)
+}
+
+func (value *Value) GetInt64() int64 {
+	value.mutex.Lock()
+	defer value.mutex.Unlock()
+	return value.v.(int64)
+}
+
+func (value *Value) GetFloat64() float64 {
+	value.mutex.Lock()
+	defer value.mutex.Unlock()
+	return value.v.(float64)
+}
+
+func (value *Value) GetAny() any {
+	value.mutex.Lock()
+	defer value.mutex.Unlock()
+	return value.v
+}
+
+func (value *Value) Set(symbol string, v *Value) {
+	value.vtable.Set(symbol, v)
 }
 
 func (value *Value) Get(symbol string) (*Value, error) {
-	result, getError := value.VirtualTable.Get(symbol)
-	if getError == nil {
-		return result, nil
-	}
-	value.mutex.Lock()
-	defer value.mutex.Unlock()
-	onDemand, found := value.OnDemand[symbol]
-	if !found {
-		return nil, SymbolNotFoundError
-	}
-	var onDemandError error
-	result, onDemandError = onDemand(value)
-	if onDemandError != nil {
-		return nil, onDemandError
-	}
-	value.VirtualTable.Set(symbol, result)
-	return result, nil
+	return value.vtable.Get(symbol)
 }
 
-func (value *Value) Call(left bool, argument ...*Value) (*Value, error) {
-	if !value.IsFunction {
-		call, getError := value.Get(magic_functions.Call)
-		if getError != nil {
-			return nil, NotCallable
-		}
-		return call.Call(left, argument...)
-	}
-	value.mutex.Lock()
-	defer value.mutex.Unlock()
-	value.Callable.LoadArguments(left, argument...)
-	return value.Callable.Call()
+func (value *Value) Del(symbol string) error {
+	return value.vtable.Del(symbol)
 }
 
 func (value *Value) Bool() bool {
-	boolMethod, getError := value.Get(magic_functions.Bool)
-	if getError != nil {
-		panic("Value doesn't implement __bool__")
-	}
-	result, callError := boolMethod.Call(false)
-	if callError != nil {
+	switch value.typeId {
+	case ValueId:
+		return true
+	case StringId, BytesId:
+		return len(value.GetBytes()) > 0
+	case BoolId:
+		return value.GetBool()
+	case NoneId:
 		return false
+	case IntId:
+		return value.GetInt64() != 0
+	case FloatId:
+		return value.GetFloat64() != 0
+	case ArrayId, TupleId:
+		return len(value.GetValues()) > 0
+	case HashId:
+		return value.GetHash().Size() > 0
+	case BuiltInFunctionId:
+		return true
+	case FunctionId:
+		return true
+	case BuiltInClassId:
+		return true
+	case ClassId:
+		return true
 	}
-	return result.Int == 1
+	return false
 }
 
 func (value *Value) String() string {
-	stringMethod, getError := value.Get(magic_functions.String)
-	if getError != nil {
-		panic("Value doesn't implement __string__")
+	switch value.typeId {
+	case ValueId:
+		return "?Value"
+	case StringId, BytesId:
+		return string(value.GetBytes())
+	case BoolId:
+		if value.GetBool() {
+			return lexer.TrueString
+		}
+		return lexer.FalseString
+	case NoneId:
+		return lexer.NoneString
+	case IntId:
+		return fmt.Sprintf("%d", value.GetInt64())
+	case FloatId:
+		return fmt.Sprintf("%f", value.GetFloat64())
+	case ArrayId:
+		return "[...]"
+	case TupleId:
+		return "(...)"
+	case HashId:
+		return "{...}"
+	case BuiltInFunctionId:
+		return "?BuiltInFunction"
+	case FunctionId:
+		return "?Function"
+	case BuiltInClassId:
+		return "?BuiltInClass"
+	case ClassId:
+		return "?Class"
 	}
-	result, callError := stringMethod.Call(false)
-	if callError != nil {
-		return fmt.Sprintf("%#v", value)
-	}
-	return string(result.Contents)
+	return ""
 }
 
-func (value *Value) Copy() *Value {
-	copyMethod, getError := value.Get(magic_functions.Copy)
-	if getError != nil {
-		panic("Value doesn't implement __copy__")
+func (value *Value) Contents() []byte {
+	switch value.typeId {
+	case ValueId:
+		return nil
+	case StringId, BytesId:
+		return value.GetBytes()
+	case BoolId:
+		return nil
+	case NoneId:
+		return nil
+	case IntId:
+		return nil
+	case FloatId:
+		return nil
+	case ArrayId:
+		return nil
+	case TupleId:
+		return nil
+	case HashId:
+		return nil
+	case BuiltInFunctionId:
+		return nil
+	case FunctionId:
+		return nil
+	case BuiltInClassId:
+		return nil
+	case ClassId:
+		return nil
 	}
-	copied, callError := copyMethod.Call(false)
-	if callError != nil {
-		return value
+	return nil
+}
+
+func (value *Value) Int() int64 {
+	switch value.typeId {
+	case ValueId:
+		return 0
+	case StringId:
+		return 0
+	case BytesId:
+		return 0
+	case BoolId:
+		if value.GetBool() {
+			return 1
+		}
+		return 0
+	case NoneId:
+		return 0
+	case IntId:
+		return value.GetInt64()
+	case FloatId:
+		return int64(value.GetFloat64())
+	case ArrayId:
+		return 0
+	case TupleId:
+		return 0
+	case HashId:
+		return 0
+	case BuiltInFunctionId:
+		return 0
+	case FunctionId:
+		return 0
+	case BuiltInClassId:
+		return 0
+	case ClassId:
+		return 0
 	}
-	return copied
+	return 0
+}
+
+func (value *Value) Float() float64 {
+	switch value.typeId {
+	case ValueId:
+		return 0
+	case StringId:
+		return 0
+	case BytesId:
+		return 0
+	case BoolId:
+		if value.GetBool() {
+			return 1
+		}
+		return 0
+	case NoneId:
+		return 0
+	case IntId:
+		return float64(value.GetInt64())
+	case FloatId:
+		return value.GetFloat64()
+	case ArrayId:
+		return 0
+	case TupleId:
+		return 0
+	case HashId:
+		return 0
+	case BuiltInFunctionId:
+		return 0
+	case FunctionId:
+		return 0
+	case BuiltInClassId:
+		return 0
+	case ClassId:
+		return 0
+	}
+	return 0
+}
+
+func (value *Value) Values() []*Value {
+	switch value.typeId {
+	case ValueId:
+		return nil
+	case StringId:
+		return nil
+	case BytesId:
+		return nil
+	case BoolId:
+		return nil
+	case NoneId:
+		return nil
+	case IntId:
+		return nil
+	case FloatId:
+		return nil
+	case ArrayId, TupleId:
+		return value.GetValues()
+	case HashId:
+		return nil
+	case BuiltInFunctionId:
+		return nil
+	case FunctionId:
+		return nil
+	case BuiltInClassId:
+		return nil
+	case ClassId:
+		return nil
+	}
+	return nil
+}
+
+func (value *Value) Call(argument ...*Value) (*Value, error) {
+	return value.GetCallback()(argument...)
+}
+
+/*
+NewValue magic functions
+TODO Not                __not__
+TODO Positive           __positive__
+TODO Negative           __negative__
+TODO NegateBits         __negate_its__
+TODO And                __and__
+TODO Or                 __or__
+TODO Xor                __xor__
+TODO In                 __in__
+TODO Is                 __is__
+TODO Implements         __implements__
+TODO Equals             __equals__
+TODO NotEqual           __not_equal__
+TODO GreaterThan        __greater_than__
+TODO GreaterOrEqualThan __greater_or_equal
+TODO LessThan           __less_than__
+TODO LessOrEqualThan    __less_or_equal_th
+TODO Add                __add__
+TODO Sub                __sub__
+TODO Mul                __mul__
+TODO Div                __div__
+TODO FloorDiv           __floor_div__
+TODO Modulus            __mod__
+TODO PowerOf            __pow__
+TODO Length             __len__
+TODO Bool               __bool__
+TODO String             __string__
+TODO Int                __int__
+TODO Float              __float__
+TODO Bytes              __bytes__
+TODO Array              __array__
+TODO Tuple              __tuple__
+TODO Get                __get__
+TODO Set                __set__
+TODO Del                __del__
+TODO Call               __call__
+TODO Class              __class__
+TODO Copy               __copy__
+TODO Iter               __iter__
+*/
+func (plasma *Plasma) NewValue(parent *Symbols, typeId TypeId, class *Value) *Value {
+	return &Value{
+		class:  class,
+		typeId: typeId,
+		mutex:  &sync.Mutex{},
+		v:      nil,
+		vtable: NewSymbols(parent),
+	}
 }

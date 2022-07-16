@@ -146,11 +146,6 @@ type (
 		Body []Node
 	}
 
-	RequireStatement struct {
-		Statement
-		X Expression
-	}
-
 	DeleteStatement struct {
 		Statement
 		X Expression

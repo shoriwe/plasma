@@ -1,18 +1,18 @@
 package vm
 
-func (plasma *Plasma) bytesClass() *Value {
+func (plasma *Plasma) hashClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
 	class.SetAny(func(argument ...*Value) (*Value, error) {
-		return plasma.NewBytes(argument[0].Contents()), nil
+		return plasma.NewHash(argument[0].GetHash()), nil
 	})
 	return class
 }
 
 /*
-NewBytes magic function:
+NewHash magic function:
+TODO In                  __in__
 TODO Equals              __equals__
 TODO NotEqual            __not_equal__
-TODO Add                 __add__
 TODO Mul                 __mul__
 TODO Length              __len__
 TODO Bool                __bool__
@@ -21,12 +21,14 @@ TODO Bytes               __bytes__
 TODO Array               __array__
 TODO Tuple               __tuple__
 TODO Get                 __get__
+TODO Set                 __set__
+TODO Del				 __del__
 TODO Copy                __copy__
 TODO Iter                __iter__
 */
-func (plasma *Plasma) NewBytes(contents []byte) *Value {
-	result := plasma.NewValue(plasma.rootSymbols, BytesId, plasma.bytes)
-	result.SetAny(contents)
+func (plasma *Plasma) NewHash(hash *Hash) *Value {
+	result := plasma.NewValue(plasma.rootSymbols, HashId, plasma.hash)
+	result.SetAny(hash)
 	// TODO: init magic functions
 	return result
 }

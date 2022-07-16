@@ -9,8 +9,7 @@ import (
 
 func (transform *transformPass) Binary(binary *ast2.Binary) *ast3.Call {
 	var (
-		function    string
-		left, right ast3.Expression
+		function string
 	)
 	switch binary.Operator {
 	case ast2.And:
@@ -64,12 +63,18 @@ func (transform *transformPass) Binary(binary *ast2.Binary) *ast3.Call {
 	default:
 		panic(fmt.Sprintf("unknown binary operator %d", binary.Operator))
 	}
-	left = transform.Expression(binary.Left)
-	right = transform.Expression(binary.Right)
-	return &ast3.Call{
-		Function: &ast3.Identifier{
-			Symbol: function,
+	return transform.Call(
+		&ast2.FunctionCall{
+			Expression: nil,
+			Function: &ast2.Selector{
+				Assignable: nil,
+				X:          binary.Left,
+				Identifier: &ast2.Identifier{
+					Assignable: nil,
+					Symbol:     function,
+				},
+			},
+			Arguments: []ast2.Expression{binary.Right},
 		},
-		Arguments: []ast3.Expression{left, right},
-	}
+	)
 }

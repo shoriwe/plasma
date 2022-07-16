@@ -1,1 +1,3 @@
-require "../my/script.pm"
+block
+    defer call()
+end
