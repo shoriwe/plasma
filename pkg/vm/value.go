@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 	"sync"
@@ -162,7 +163,7 @@ func (value *Value) Del(symbol string) error {
 }
 
 func (value *Value) Bool() bool {
-	switch value.typeId {
+	switch value.TypeId() {
 	case ValueId:
 		return true
 	case StringId, BytesId:
@@ -192,7 +193,7 @@ func (value *Value) Bool() bool {
 }
 
 func (value *Value) String() string {
-	switch value.typeId {
+	switch value.TypeId() {
 	case ValueId:
 		return "?Value"
 	case StringId, BytesId:
@@ -227,7 +228,7 @@ func (value *Value) String() string {
 }
 
 func (value *Value) Contents() []byte {
-	switch value.typeId {
+	switch value.TypeId() {
 	case ValueId:
 		return nil
 	case StringId, BytesId:
@@ -259,7 +260,7 @@ func (value *Value) Contents() []byte {
 }
 
 func (value *Value) Int() int64 {
-	switch value.typeId {
+	switch value.TypeId() {
 	case ValueId:
 		return 0
 	case StringId:
@@ -296,7 +297,7 @@ func (value *Value) Int() int64 {
 }
 
 func (value *Value) Float() float64 {
-	switch value.typeId {
+	switch value.TypeId() {
 	case ValueId:
 		return 0
 	case StringId:
@@ -333,7 +334,7 @@ func (value *Value) Float() float64 {
 }
 
 func (value *Value) Values() []*Value {
-	switch value.typeId {
+	switch value.TypeId() {
 	case ValueId:
 		return nil
 	case StringId:
@@ -378,6 +379,137 @@ func (value *Value) Implements(class *Value) bool {
 		}
 	}
 	return false
+}
+
+func (value *Value) Equal(other *Value) bool {
+	switch value.TypeId() {
+	case ValueId:
+		return value.ValueEqual(other)
+	case StringId:
+		return value.StringEqual(other)
+	case BytesId:
+		return value.BytesEqual(other)
+	case BoolId:
+		return value.BoolEqual(other)
+	case NoneId:
+		return value.NoneEqual(other)
+	case IntId:
+		return value.IntEqual(other)
+	case FloatId:
+		return value.FloatEqual(other)
+	case ArrayId:
+		return value.ArrayEqual(other)
+	case TupleId:
+		return value.TupleEqual(other)
+	case HashId:
+		return value.HashEqual(other)
+	case BuiltInFunctionId:
+		return value.BuiltInFunctionEqual(other)
+	case FunctionId:
+		return value.FunctionEqual(other)
+	case BuiltInClassId:
+		return value.BuiltInClassEqual(other)
+	case ClassId:
+		return value.ClassEqual(other)
+	}
+	return false
+}
+
+func (value *Value) ValueEqual(other *Value) bool {
+	return value == other
+}
+
+func (value *Value) StringEqual(other *Value) bool {
+	return value.String() == other.String()
+}
+
+func (value *Value) BytesEqual(other *Value) bool {
+	return bytes.Equal(value.GetBytes(), other.GetBytes())
+}
+
+func (value *Value) BoolEqual(other *Value) bool {
+	return value.Bool() == other.Bool()
+}
+
+func (value *Value) NoneEqual(other *Value) bool {
+	return value == other
+}
+
+func (value *Value) IntEqual(other *Value) bool {
+	switch other.TypeId() {
+	case IntId:
+		return value.Int() == other.Int()
+	case FloatId:
+		return value.Float() == other.Float()
+	}
+	return false
+}
+
+func (value *Value) FloatEqual(other *Value) bool {
+	switch other.TypeId() {
+	case IntId:
+		return value.Int() == other.Int()
+	case FloatId:
+		return value.Float() == other.Float()
+	}
+	return false
+}
+
+func (value *Value) ArrayEqual(other *Value) bool {
+	switch other.TypeId() {
+	case ArrayId:
+		values := value.GetValues()
+		otherValues := other.GetValues()
+		if len(values) != len(otherValues) {
+			return false
+		}
+		for index, internalValue := range values {
+			if !internalValue.Equal(otherValues[index]) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func (value *Value) TupleEqual(other *Value) bool {
+	switch other.TypeId() {
+	case TupleId:
+		values := value.GetValues()
+		otherValues := other.GetValues()
+		if len(values) != len(otherValues) {
+			return false
+		}
+		for index, internalValue := range values {
+			if !internalValue.Equal(otherValues[index]) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func (value *Value) HashEqual(other *Value) bool {
+	// TODO: implement me!
+	return value == other
+}
+
+func (value *Value) BuiltInFunctionEqual(other *Value) bool {
+	return value == other
+}
+
+func (value *Value) FunctionEqual(other *Value) bool {
+	return value == other
+}
+
+func (value *Value) BuiltInClassEqual(other *Value) bool {
+	return value == other
+}
+
+func (value *Value) ClassEqual(other *Value) bool {
+	return value == other
 }
 
 /*

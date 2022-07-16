@@ -29,16 +29,11 @@ type (
 
 func (plasma *Plasma) executeCtx(ctx *context) {
 	defer func() {
-		switch err := recover().(type) {
-		case error:
-			ctx.err <- err
-		case string:
-			ctx.err <- fmt.Errorf(err)
-		case nil:
-			ctx.err <- nil
-		default:
-			panic("invalid panic, it should be error, string or nil")
+		err := recover()
+		if err != nil {
+			ctx.err <- fmt.Errorf("execution error: %v", err)
 		}
+		return
 	}()
 	for ctx.hasNext() {
 		select {
@@ -53,9 +48,9 @@ func (plasma *Plasma) executeCtx(ctx *context) {
 func (plasma *Plasma) Execute(bytecode []byte) (result chan *Value, err chan error, stop chan struct{}) {
 	// Create new context
 	ctx := plasma.newContext(bytecode)
-	ctx.result = make(chan *Value)
-	ctx.err = make(chan error)
-	ctx.stop = make(chan struct{})
+	ctx.result = make(chan *Value, 1)
+	ctx.err = make(chan error, 1)
+	ctx.stop = make(chan struct{}, 1)
 	// Execute bytecode with context
 	plasma.executeCtx(ctx)
 	return ctx.result, ctx.err, ctx.stop

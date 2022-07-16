@@ -13,6 +13,7 @@ func (a *assembler) Call(call *ast3.Call) []byte {
 		result = append(result, opcodes.Push)
 	}
 	result = append(result, a.Expression(call.Function)...)
+	result = append(result, opcodes.Push)
 	result = append(result, opcodes.Call)
 	result = append(result, common.IntToBytes(len(call.Arguments))...)
 	return result

@@ -52,6 +52,8 @@ func (plasma *Plasma) prepareClassInitCode(classInfo *ClassInfo) {
 func (plasma *Plasma) do(ctx *context) {
 	ctxCode := ctx.code.Peek()
 	instruction := ctxCode.bytecode[ctxCode.index]
+	// fmt.Println(opcodes.OpCodes[instruction])
+	// plasma.printStack(ctx)
 	switch instruction {
 	case opcodes.Push:
 		ctxCode.index++
@@ -166,9 +168,9 @@ func (plasma *Plasma) do(ctx *context) {
 		ctx.register = classObject
 	case opcodes.Call:
 		ctxCode.index++
-		function := ctx.stack.Pop()
 		numberOfArguments := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
 		ctxCode.index += 8
+		function := ctx.stack.Pop()
 		arguments := make([]*Value, numberOfArguments)
 		for i := numberOfArguments - 1; i >= 0; i-- {
 			arguments[i] = ctx.stack.Pop()
@@ -179,7 +181,7 @@ func (plasma *Plasma) do(ctx *context) {
 		if tries == MaxDoCallSearch {
 			panic("infinite nested __call__")
 		}
-		switch function.typeId {
+		switch function.TypeId() {
 		case BuiltInFunctionId, BuiltInClassId:
 			ctx.register, callError = function.Call(arguments...)
 			if callError != nil {
@@ -277,6 +279,7 @@ func (plasma *Plasma) do(ctx *context) {
 		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
 		ctxCode.index += 8
 		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
+		ctxCode.index += symbolLength
 		var getError error
 		ctx.register, getError = ctx.currentSymbols.Get(symbol)
 		if getError != nil {
@@ -317,6 +320,7 @@ func (plasma *Plasma) do(ctx *context) {
 		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
 		ctxCode.index += 8
 		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
+		ctxCode.index += symbolLength
 		selector := ctx.stack.Pop()
 		var getError error
 		ctx.register, getError = selector.Get(symbol)
