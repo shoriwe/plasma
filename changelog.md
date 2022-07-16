@@ -19,3 +19,7 @@
 - VM
 - Array magic functions
 - String magic functions
+- Bytes magic functions
+- Bool magic functions
+- Float magic functions
+- Integer magic functions

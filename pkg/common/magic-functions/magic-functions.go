@@ -7,7 +7,7 @@ const (
 	Not                = "__not__"
 	Positive           = "__positive__"
 	Negative           = "__negative__"
-	NegateBits         = "__negate_its__"
+	NegateBits         = "__negate_bits__"
 	And                = "__and__"
 	Or                 = "__or__"
 	Xor                = "__xor__"

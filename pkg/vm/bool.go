@@ -1,5 +1,7 @@
 package vm
 
+import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+
 func (plasma *Plasma) boolClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
 	class.SetAny(func(argument ...*Value) (*Value, error) {
@@ -10,19 +12,18 @@ func (plasma *Plasma) boolClass() *Value {
 
 /*
 NewBool magic function:
-TODO Not                 __not__
-TODO And                 __and__
-TODO Or                  __or__
-TODO Xor                 __xor__
-TODO Equals              __equals__
-TODO NotEqual            __not_equal__
-TODO Bool                __bool__
-TODO String              __string__
-TODO Int                 __int__
-TODO Float               __float__
-TODO Bytes               __bytes__
-TODO Call                __call__
-TODO Copy                __copy__
+Not                 __not__
+And                 __and__
+Or                  __or__
+Xor                 __xor__
+Equals              __equals__
+NotEqual            __not_equal__
+Bool                __bool__
+String              __string__
+Int                 __int__
+Float               __float__
+Bytes               __bytes__
+Copy                __copy__
 */
 func (plasma *Plasma) NewBool(b bool) *Value {
 	if b && plasma.true != nil {
@@ -32,6 +33,73 @@ func (plasma *Plasma) NewBool(b bool) *Value {
 	}
 	result := plasma.NewValue(plasma.rootSymbols, BoolId, plasma.bool)
 	result.SetAny(b)
-	// TODO: init magic functions
+	result.Set(magic_functions.Not, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBool(!result.GetBool()), nil
+		},
+	))
+	result.Set(magic_functions.Equals, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case BoolId:
+				return plasma.NewBool(result.GetBool() == argument[0].GetBool()), nil
+			}
+			return plasma.false, nil
+		},
+	))
+	result.Set(magic_functions.NotEqual, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			switch argument[0].TypeId() {
+			case BoolId:
+				return plasma.NewBool(result.GetBool() != argument[0].GetBool()), nil
+			}
+			return plasma.false, nil
+		},
+	))
+	result.Set(magic_functions.Bool, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return result, nil
+		},
+	))
+	result.Set(magic_functions.String, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewString([]byte(result.String())), nil
+		},
+	))
+	result.Set(magic_functions.Int, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			if result.GetBool() {
+				return plasma.NewInt(1), nil
+			}
+			return plasma.NewInt(0), nil
+		},
+	))
+	result.Set(magic_functions.Float, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			if result.GetBool() {
+				return plasma.NewFloat(1), nil
+			}
+			return plasma.NewFloat(0), nil
+		},
+	))
+	result.Set(magic_functions.Bytes, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBytes([]byte(result.String())), nil
+		},
+	))
+	result.Set(magic_functions.Copy, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return result, nil
+		},
+	))
 	return result
 }
