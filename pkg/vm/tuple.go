@@ -1,6 +1,8 @@
 package vm
 
-import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+import (
+	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+)
 
 func (plasma *Plasma) tupleClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
@@ -33,11 +35,11 @@ func (plasma *Plasma) NewTuple(values []*Value) *Value {
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			for _, value := range result.GetValues() {
-				if !value.Equal(argument[0]) {
-					return plasma.false, nil
+				if value.Equal(argument[0]) {
+					return plasma.true, nil
 				}
 			}
-			return plasma.true, nil
+			return plasma.false, nil
 		}))
 	result.Set(magic_functions.Equals, plasma.NewBuiltInFunction(
 		result.vtable,
