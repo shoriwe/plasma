@@ -42,9 +42,13 @@ func (plasma *Plasma) NewArray(values []*Value) *Value {
 	result.Set(magic_functions.Equals, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
-			for _, value := range result.GetValues() {
-				if !value.Equal(argument[0]) {
-					return plasma.false, nil
+			switch argument[0].TypeId() {
+			case ArrayId:
+				otherValues := argument[0].GetValues()
+				for index, value := range result.GetValues() {
+					if !value.Equal(otherValues[index]) {
+						return plasma.false, nil
+					}
 				}
 			}
 			return plasma.true, nil
@@ -52,9 +56,13 @@ func (plasma *Plasma) NewArray(values []*Value) *Value {
 	result.Set(magic_functions.NotEqual, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
-			for _, value := range result.GetValues() {
-				if value.Equal(argument[0]) {
-					return plasma.false, nil
+			switch argument[0].TypeId() {
+			case ArrayId:
+				otherValues := argument[0].GetValues()
+				for index, value := range result.GetValues() {
+					if value.Equal(otherValues[index]) {
+						return plasma.false, nil
+					}
 				}
 			}
 			return plasma.true, nil
@@ -155,6 +163,7 @@ func (plasma *Plasma) NewArray(values []*Value) *Value {
 				func(argument ...*Value) (*Value, error) {
 					currentValues := result.GetValues()
 					index := iter.GetInt64()
+					iter.SetAny(index + 1)
 					if index < int64(len(currentValues)) {
 						return currentValues[index], nil
 					}

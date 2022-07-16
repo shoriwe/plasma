@@ -28,7 +28,7 @@ func (h *Hash) Size() int64 {
 func (h *Hash) Set(key, value *Value) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	switch key.typeId {
+	switch key.TypeId() {
 	case StringId:
 		h.internalMap[createHashString(createHashString(key.GetBytes()))] = value
 	case BytesId:
@@ -46,7 +46,7 @@ func (h *Hash) Set(key, value *Value) error {
 func (h *Hash) Get(key *Value) (*Value, error) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	switch key.typeId {
+	switch key.TypeId() {
 	case StringId:
 		return h.internalMap[createHashString(string(key.GetBytes()))], nil
 	case BytesId:
@@ -64,7 +64,7 @@ func (h *Hash) Get(key *Value) (*Value, error) {
 func (h *Hash) Del(key *Value) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
-	switch key.typeId {
+	switch key.TypeId() {
 	case StringId:
 		delete(h.internalMap, createHashString(key.GetBytes()))
 	case BytesId:

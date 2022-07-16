@@ -16,3 +16,6 @@
 - Lowercase True, False and None
 - New AST3 for the transformation phase
 - Assembler
+- VM
+- Array magic functions
+- String magic functions

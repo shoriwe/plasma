@@ -35,7 +35,7 @@ func (ctx *context) popBlock() {
 func (plasma *Plasma) prepareClassInitCode(classInfo *ClassInfo) {
 	var result []byte
 	for _, base := range classInfo.Bases {
-		if base.typeId != ClassId {
+		if base.TypeId() != ClassId {
 			panic("no type received as base for class")
 		}
 		baseClassInfo := base.GetClassInfo()

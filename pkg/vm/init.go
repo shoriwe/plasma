@@ -142,7 +142,7 @@ func (plasma *Plasma) init() {
 		magic_functions.Class: func(self *Value) *Value {
 			return plasma.NewBuiltInFunction(self.vtable,
 				func(argument ...*Value) (*Value, error) {
-					return self.class, nil
+					return self.GetClass(), nil
 				})
 		},
 	}
