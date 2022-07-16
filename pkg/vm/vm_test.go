@@ -3,6 +3,7 @@ package vm
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast"
 	"github.com/shoriwe/gplasma/pkg/bytecode/assembler"
 	"github.com/shoriwe/gplasma/pkg/lexer"
@@ -16,7 +17,9 @@ import (
 )
 
 func TestSampleScripts(t *testing.T) {
-	for sampleScript, sampleCode := range success.Samples {
+	for i := 1; i <= len(success.Samples); i++ {
+		sampleScript := fmt.Sprintf("sample-%d.pm", i)
+		sampleCode := success.Samples[sampleScript]
 		t.Logf("Testing - %s", sampleScript)
 		l := lexer.NewLexer(reader.NewStringReader(sampleCode))
 		p := parser.NewParser(l)
