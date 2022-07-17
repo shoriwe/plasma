@@ -11,11 +11,12 @@ import (
 	"github.com/shoriwe/gplasma/pkg/passes/simplification"
 	transformations_1 "github.com/shoriwe/gplasma/pkg/passes/transformations-1"
 	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/shoriwe/gplasma/pkg/test-samples/fail"
 	"github.com/shoriwe/gplasma/pkg/test-samples/success"
 	"testing"
 )
 
-func TestSampleScripts(t *testing.T) {
+func TestSuccessSampleScripts(t *testing.T) {
 	for i := 1; i <= len(success.Samples); i++ {
 		sampleScript := fmt.Sprintf("sample-%d.pm", i)
 		script := success.Samples[sampleScript]
@@ -52,6 +53,39 @@ func TestSampleScripts(t *testing.T) {
 			t.Log("But obtained:")
 			fmt.Println(s)
 			t.Fatal("Invalid result")
+		}
+	}
+}
+
+func TestFailSampleScripts(t *testing.T) {
+	for i := 1; i <= len(fail.Samples); i++ {
+		sampleScript := fmt.Sprintf("sample-%d.pm", i)
+		script := fail.Samples[sampleScript]
+		t.Logf("Testing - %s", sampleScript)
+		l := lexer.NewLexer(reader.NewStringReader(script))
+		p := parser.NewParser(l)
+		program, parseError := p.Parse()
+		if parseError != nil {
+			t.Fatal(parseError)
+		}
+		checkPass := checks.NewCheckPass()
+		ast.Walk(checkPass, program)
+		switch {
+		case checkPass.CountInvalidLoopNodes() > 0:
+			t.Fatal("invalid loop nodes")
+		case checkPass.CountInvalidGeneratorNodes() > 0:
+			t.Fatal("invalid generator nodes")
+		case checkPass.CountInvalidFunctionNodes() > 0:
+			t.Fatal("invalid function nodes")
+		}
+		simplified := simplification.Simplify(program)
+		transformed := transformations_1.Transform(simplified)
+		bytecode := assembler.Assemble(transformed)
+		out := &bytes.Buffer{}
+		v := NewVM(nil, out, out)
+		_, err, _ := v.Execute(bytecode)
+		if e := <-err; e == nil {
+			t.Fatal("should fail")
 		}
 	}
 }
