@@ -28,6 +28,12 @@ Tuple               __tuple__
 Get                 __get__
 Copy                __copy__
 Iter                __iter__
+TODO	Join				join
+TODO	Split				split
+TODO	Upper				upper
+TODO	Lower				lower
+TODO	Count				count
+TODO	Index				Index
 */
 func (plasma *Plasma) NewBytes(contents []byte) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, BytesId, plasma.bytes)
@@ -184,6 +190,49 @@ func (plasma *Plasma) NewBytes(contents []byte) *Value {
 				},
 			))
 			return iter, nil
+		},
+	))
+	result.Set(magic_functions.Join, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			values := argument[0].Values()
+			valuesBytes := make([][]byte, 0, len(values))
+			for _, value := range values {
+				valuesBytes = append(valuesBytes, []byte(value.String()))
+			}
+			return plasma.NewBytes(bytes.Join(valuesBytes, []byte(result.String()))), nil
+		},
+	))
+	result.Set(magic_functions.Split, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			sep := argument[0].String()
+			splitted := bytes.Split(result.GetBytes(), []byte(sep))
+			values := make([]*Value, 0, len(splitted))
+			for _, b := range splitted {
+				values = append(values, plasma.NewBytes(b))
+			}
+			return plasma.NewTuple(values), nil
+		},
+	))
+	result.Set(magic_functions.Upper, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBytes(bytes.ToUpper(result.GetBytes())), nil
+		},
+	))
+	result.Set(magic_functions.Lower, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewBytes(bytes.ToLower(result.GetBytes())), nil
+		},
+	))
+	result.Set(magic_functions.Count, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			sep := argument[0].String()
+			return plasma.NewInt(int64(bytes.Count(result.GetBytes(), []byte(sep)))), nil
+		},
+	))
+	result.Set(magic_functions.Index, plasma.NewBuiltInFunction(result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			sep := argument[0].String()
+			return plasma.NewInt(int64(bytes.Index(result.GetBytes(), []byte(sep)))), nil
 		},
 	))
 	return result
