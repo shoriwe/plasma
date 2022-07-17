@@ -1,7 +1,7 @@
 END
-    println(a == 2)
+    println(a)
 end
-println(a == 1)
+println(a)
 a = 2
 BEGIN
     a = 1

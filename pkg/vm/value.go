@@ -48,9 +48,9 @@ type (
 
 func (plasma *Plasma) valueClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
 		return plasma.NewValue(plasma.rootSymbols, ValueId, plasma.value), nil
-	})
+	}))
 	return class
 }
 

@@ -4,9 +4,9 @@ import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 
 func (plasma *Plasma) hashClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
 		return plasma.NewHash(argument[0].GetHash()), nil
-	})
+	}))
 	return class
 }
 

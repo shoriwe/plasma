@@ -38,9 +38,9 @@ func Simplify(program *ast.Program) ast2.Program {
 		body = append(body, simp.Node(node))
 	}
 	if program.End != nil {
-		begin = make([]ast2.Node, 0, len(program.End.Body))
+		end = make([]ast2.Node, 0, len(program.End.Body))
 		for _, node := range program.End.Body {
-			begin = append(begin, simp.Node(node))
+			end = append(end, simp.Node(node))
 		}
 	}
 	result := make(ast2.Program, 0, len(begin)+len(body)+len(end))

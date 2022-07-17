@@ -1,2 +1,4 @@
-println("1".ToInteger().Negative().Add(2345235) == 2345234)
-println(("a".Class()()+"Calling a type!").Class().Class() == Type)
+println(1.__negative__().__add__(2345235) == 2345234)
+
+ref = "a".__class__()("") + "Calling a type!"
+println(ref == "Calling a type!")

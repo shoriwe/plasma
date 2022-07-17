@@ -8,9 +8,9 @@ import (
 
 func (plasma *Plasma) integerClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
 		return plasma.NewInt(argument[0].Int()), nil
-	})
+	}))
 	return class
 }
 

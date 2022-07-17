@@ -1,17 +1,22 @@
 module Business
-    class Person( Value)
-        def Initialize(name)
+    class Person
+        def __init__(name)
             self.name = name
         end
 
-        def ToString()
+        def __string__()
             return self.name
         end
     end
 end
 
-class Person
+class Citizen(Business.Person)
+    id = 0
+    country = 'US'
+    def __string__()
+        return self.name + " - FROM: " + self.country
+    end
 end
 
-antonio = Business.Person("Antonio")
-println(antonio.ToString() == "Antonio")
+antonio = Citizen("Antonio")
+println( antonio.__string__())

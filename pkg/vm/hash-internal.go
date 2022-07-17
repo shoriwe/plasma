@@ -30,7 +30,7 @@ func (h *Hash) Set(key, value *Value) error {
 	defer h.mutex.Unlock()
 	switch key.TypeId() {
 	case StringId:
-		h.internalMap[createHashString(createHashString(key.GetBytes()))] = value
+		h.internalMap[createHashString(string(key.GetBytes()))] = value
 	case BytesId:
 		h.internalMap[createHashString(key.GetBytes())] = value
 	case BoolId:
@@ -68,7 +68,7 @@ func (h *Hash) Del(key *Value) error {
 	defer h.mutex.Unlock()
 	switch key.TypeId() {
 	case StringId:
-		delete(h.internalMap, createHashString(key.GetBytes()))
+		delete(h.internalMap, createHashString(string(key.GetBytes())))
 	case BytesId:
 		delete(h.internalMap, createHashString(key.GetBytes()))
 	case BoolId:

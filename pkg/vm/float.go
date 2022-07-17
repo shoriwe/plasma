@@ -7,9 +7,9 @@ import (
 
 func (plasma *Plasma) floatClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
 		return plasma.NewFloat(argument[0].Float()), nil
-	})
+	}))
 	return class
 }
 

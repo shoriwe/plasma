@@ -1,8 +1,8 @@
 a = 0
 do
     a += 1
-while false
-println(a == 1)
+while a < 10
+println(a)
 
 a = 0
 c = 0

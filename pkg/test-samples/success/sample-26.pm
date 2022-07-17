@@ -2,7 +2,7 @@ a = 0
 map = {}
 while a < 100
     map[a] = a
-    map[a.ToString()] = a
+    map[a.__string__()] = a
     a += 1
 end
-println(map["1"] == 1)
+println(map["11"])

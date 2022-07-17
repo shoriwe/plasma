@@ -6,9 +6,9 @@ import (
 
 func (plasma *Plasma) tupleClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
 		return plasma.NewTuple(argument[0].Values()), nil
-	})
+	}))
 	return class
 }
 

@@ -4,9 +4,11 @@ import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 
 func (plasma *Plasma) arrayClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
-		return plasma.NewArray(argument[0].Values()), nil
-	})
+	class.SetAny(
+		Callback(func(argument ...*Value) (*Value, error) {
+			return plasma.NewArray(argument[0].Values()), nil
+		}),
+	)
 	return class
 }
 

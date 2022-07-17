@@ -7,9 +7,9 @@ import (
 
 func (plasma *Plasma) stringClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
 		return plasma.NewString(argument[0].Contents()), nil
-	})
+	}))
 	return class
 }
 

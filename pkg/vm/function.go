@@ -2,13 +2,13 @@ package vm
 
 func (plasma *Plasma) functionClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
 		return plasma.NewBuiltInFunction(
 			plasma.rootSymbols,
 			func(argument ...*Value) (*Value, error) {
 				return plasma.none, nil
 			}), nil
-	})
+	}))
 	return class
 }
 

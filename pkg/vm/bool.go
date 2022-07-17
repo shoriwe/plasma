@@ -4,9 +4,9 @@ import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 
 func (plasma *Plasma) boolClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	class.SetAny(func(argument ...*Value) (*Value, error) {
+	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
 		return plasma.NewBool(argument[0].Bool()), nil
-	})
+	}))
 	return class
 }
 

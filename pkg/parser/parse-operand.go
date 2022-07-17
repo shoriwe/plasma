@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
@@ -75,5 +76,6 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseHashExpression()
 		}
 	}
+	fmt.Println(parser.currentToken)
 	return nil, UnknownToken
 }

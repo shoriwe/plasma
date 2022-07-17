@@ -2,24 +2,24 @@ def pow(a, b)
     return a**b
 end
 
-println(pow(1, 2) == 1)
+println(pow(1, 2))
 
-println(pow(2, 1) == 2)
+println(pow(2, 1))
 
-println(pow(2, 2) == 4)
+println(pow(2, 2))
 
 def special(a, b, c)
     return a ** 2 ** b - c
 end
 
-println(special(1, 2, 3) == -2)
+println(special(1, 2, 3))
 
-println(special(2, 1, 3) == 1)
+println(special(2, 1, 3))
 
 def help()
 end
 
-println(help() == none)
+println(help())
 
 def return_for()
     for a in range(0, 10, 1)
@@ -82,9 +82,9 @@ def fib(n)
     return fib(n-1) + fib(n-2)
 end
 
-println(return_for() == 100)
-println(return_while() == 100)
-println(return_do_while() == 100)
+println(return_for())
+println(return_while())
+println(return_do_while())
 println(return_if())
 println(return_unless())
-println(fib(10) == 55)
+println(fib(10))

@@ -10,7 +10,7 @@ func (transform *transformPass) Class(class *ast2.Class) []ast3.Node {
 	for _, node := range class.Body {
 		body = append(body, transform.Node(node)...)
 	}
-	bases := make([]ast3.Expression, len(class.Bases))
+	bases := make([]ast3.Expression, 0, len(class.Bases))
 	for _, base := range class.Bases {
 		bases = append(bases, transform.Expression(base))
 	}

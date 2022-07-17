@@ -107,6 +107,17 @@ func (parser *Parser) parseGeneratorDefinitionStatement() (*ast.GeneratorDefinit
 	if tokenizingError != nil {
 		return nil, tokenizingError
 	}
+	body = append(body, &ast.ReturnStatement{
+		Results: []ast.Expression{&ast.BasicLiteralExpression{
+			Token: &lexer.Token{
+				Contents:    []rune(lexer.NoneString),
+				DirectValue: lexer.None,
+				Kind:        lexer.NoneType,
+			},
+			Kind:        lexer.NoneType,
+			DirectValue: lexer.None,
+		}},
+	})
 	return &ast.GeneratorDefinitionStatement{
 		Name:      name,
 		Arguments: arguments,

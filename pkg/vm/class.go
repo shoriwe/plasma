@@ -5,9 +5,9 @@ import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 func (plasma *Plasma) metaClass() *Value {
 	plasma.class = plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
 	plasma.class.class = plasma.class
-	plasma.class.SetAny(func(argument ...*Value) (*Value, error) {
+	plasma.class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
 		return plasma.NewClass(), nil
-	})
+	}))
 	return plasma.class
 }
 
