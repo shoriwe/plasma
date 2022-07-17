@@ -59,9 +59,9 @@ This are the expressions and statements that **`plasma`** currently supports:
     - [X] Index
     - [X] Parentheses Expressions
     - [X] Selector Expressions
-- [ ] Statements
+- [X] Statements
     - [X] Assign Statement
-    - [ ] DeferStatement
+    - [X] DeferStatement
     - [x] Do While
         - [X] Continue
         - [X] Break
@@ -92,4 +92,4 @@ This are the expressions and statements that **`plasma`** currently supports:
     - [X] Return
     - [X] Super
     - [X] Pass
-    - [ ] Yield
+    - [X] Yield
