@@ -281,6 +281,7 @@ func (plasma *Plasma) do(ctx *context) {
 		ctxCode.index += 8
 		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
 		ctxCode.index += symbolLength
+		//fmt.Println(symbol)
 		var getError error
 		ctx.register, getError = ctx.currentSymbols.Get(symbol)
 		if getError != nil {
@@ -325,6 +326,7 @@ func (plasma *Plasma) do(ctx *context) {
 		ctxCode.index += 8
 		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
 		ctxCode.index += symbolLength
+		// fmt.Println(symbol)
 		selector := ctx.stack.Pop()
 		var getError error
 		ctx.register, getError = selector.Get(symbol)

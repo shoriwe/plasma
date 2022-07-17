@@ -299,10 +299,13 @@ func (gt *generatorTransform) setup(body []ast3.Node) []ast3.Node {
 	// Has next jump
 	result = append(result, &ast3.IfJump{
 		Condition: &ast3.Call{
-			Function: &ast3.Identifier{
-				Symbol: magic_functions.Not,
+			Function: &ast3.Selector{
+				Assignable: nil,
+				X:          gt.hasNextVariable,
+				Identifier: &ast3.Identifier{
+					Symbol: magic_functions.Not,
+				},
 			},
-			Arguments: []ast3.Expression{gt.hasNextVariable},
 		},
 		Target: onFinishLabel,
 	})
@@ -404,6 +407,13 @@ func (gt *generatorTransform) class(rawFunctionBody []ast3.Node, arguments []*as
 		})
 	}
 	body = append(body, initFunction, hasNextFunction, nextFunction)
+	for selector := range gt.labels {
+		body = append(body, &ast3.Assignment{
+			Statement: nil,
+			Left:      selector.Identifier,
+			Right:     &ast3.False{},
+		})
+	}
 	return &ast3.Class{
 		Body: body,
 	}
