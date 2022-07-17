@@ -56,7 +56,7 @@ func (plasma *Plasma) NewBool(b bool) *Value {
 			case BoolId:
 				return plasma.NewBool(result.GetBool() != argument[0].GetBool()), nil
 			}
-			return plasma.false, nil
+			return plasma.true, nil
 		},
 	))
 	result.Set(magic_functions.Bool, plasma.NewBuiltInFunction(

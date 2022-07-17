@@ -1,11 +1,10 @@
 a = 0
 
-until false
+until a > 100
     a += 1
-    break
 end
 
-println(a == 1)
+println(a)
 
 a = 0
 until a > 100
@@ -20,4 +19,4 @@ until a > 100
     a += 1
 end
 
-println(a == 102)
+println(a)

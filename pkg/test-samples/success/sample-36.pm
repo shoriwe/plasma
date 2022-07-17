@@ -4,6 +4,6 @@ for
 a
 in
 "abc"
-    println(a == reference[index])
+    println(a[0] == reference[index])
     index += 1
 end

@@ -84,9 +84,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId, FloatId:
-					return plasma.NewBool(result.Equal(argument[0])), nil
+					return plasma.NewBool(!result.Equal(argument[0])), nil
 				}
-				return plasma.false, nil
+				return plasma.true, nil
 			},
 		))
 	result.Set(magic_functions.GreaterThan,

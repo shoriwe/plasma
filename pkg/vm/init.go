@@ -85,6 +85,12 @@ func (plasma *Plasma) init() {
 					return self.GetClass(), nil
 				})
 		},
+		magic_functions.SubClasses: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					return plasma.NewTuple(self.GetClass().GetClassInfo().Bases), nil
+				})
+		},
 		magic_functions.Iter: func(self *Value) *Value {
 			return plasma.NewBuiltInFunction(
 				self.vtable,

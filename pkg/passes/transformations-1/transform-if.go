@@ -9,11 +9,9 @@ func (transform *transformPass) If(if_ *ast2.If) []ast3.Node {
 	elseLabel := transform.nextLabel()
 	endLabel := transform.nextLabel()
 	condition := &ast3.IfJump{
-		Statement: nil,
 		Condition: transform.Expression(&ast2.Unary{
-			Expression: nil,
-			Operator:   ast2.Not,
-			X:          if_.Condition,
+			Operator: ast2.Not,
+			X:        if_.Condition,
 		}),
 		Target: elseLabel,
 	}

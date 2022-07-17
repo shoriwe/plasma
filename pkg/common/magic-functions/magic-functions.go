@@ -45,6 +45,7 @@ const (
 	Del                = "__del__"
 	Call               = "__call__"
 	Class              = "__class__"
+	SubClasses         = "__sub_classes__"
 	Copy               = "__copy__"
 	Iter               = "__iter__"
 )
