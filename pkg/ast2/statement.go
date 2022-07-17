@@ -18,6 +18,7 @@ type (
 	}
 	While struct {
 		Statement
+		Setup     []Node
 		Condition Expression
 		Body      []Node
 	}

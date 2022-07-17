@@ -158,7 +158,7 @@ func (plasma *Plasma) NewArray(values []*Value) *Value {
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			iter := plasma.NewValue(result.vtable, ValueId, plasma.value)
-			iter.SetAny(0)
+			iter.SetAny(int64(0))
 			iter.Set(magic_functions.HasNext, plasma.NewBuiltInFunction(iter.vtable,
 				func(argument ...*Value) (*Value, error) {
 					return plasma.NewBool(iter.GetInt64() < int64(len(result.GetValues()))), nil

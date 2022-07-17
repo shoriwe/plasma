@@ -85,6 +85,14 @@ func (plasma *Plasma) init() {
 					return self.GetClass(), nil
 				})
 		},
+		magic_functions.Iter: func(self *Value) *Value {
+			return plasma.NewBuiltInFunction(
+				self.vtable,
+				func(argument ...*Value) (*Value, error) {
+					return self, nil
+				},
+			)
+		},
 	}
 	// Init classes
 	plasma.metaClass()
@@ -120,7 +128,7 @@ func (plasma *Plasma) init() {
 	/*
 		- print
 		- println
-		- range TODO
+		- range
 	*/
 	plasma.rootSymbols.Set(special_symbols.Print, plasma.NewBuiltInFunction(plasma.rootSymbols,
 		func(argument ...*Value) (*Value, error) {
@@ -159,6 +167,60 @@ func (plasma *Plasma) init() {
 				panic(writeError)
 			}
 			return plasma.none, nil
+		},
+	))
+	plasma.rootSymbols.Set(special_symbols.Range, plasma.NewBuiltInFunction(plasma.rootSymbols,
+		func(argument ...*Value) (*Value, error) {
+			var (
+				start              = argument[0]
+				end                = argument[1]
+				intStep      int64 = 1
+				floatStep          = 1.0
+				useFloatStep       = start.TypeId() == FloatId || end.TypeId() == FloatId
+			)
+			if len(argument) == 3 {
+				step := argument[2]
+				intStep = step.Int()
+				floatStep = step.Float()
+				if !useFloatStep {
+					useFloatStep = step.TypeId() == FloatId
+				}
+			}
+			iter := plasma.NewValue(plasma.rootSymbols, ValueId, plasma.value)
+			if useFloatStep {
+				iter.SetAny(start.Float())
+				iter.Set(magic_functions.HasNext, plasma.NewBuiltInFunction(
+					iter.vtable,
+					func(_ ...*Value) (*Value, error) {
+						return plasma.NewBool(iter.GetFloat64() < end.Float()), nil
+					},
+				))
+				iter.Set(magic_functions.Next, plasma.NewBuiltInFunction(
+					iter.vtable,
+					func(_ ...*Value) (*Value, error) {
+						current := iter.GetFloat64()
+						iter.SetAny(current + floatStep)
+						return plasma.NewFloat(current), nil
+					},
+				))
+			} else {
+				iter.SetAny(start.Int())
+				iter.Set(magic_functions.HasNext, plasma.NewBuiltInFunction(
+					iter.vtable,
+					func(_ ...*Value) (*Value, error) {
+						return plasma.NewBool(iter.GetInt64() < end.Int()), nil
+					},
+				))
+				iter.Set(magic_functions.Next, plasma.NewBuiltInFunction(
+					iter.vtable,
+					func(_ ...*Value) (*Value, error) {
+						current := iter.GetInt64()
+						iter.SetAny(current + intStep)
+						return plasma.NewInt(current), nil
+					},
+				))
+			}
+			return iter, nil
 		},
 	))
 }

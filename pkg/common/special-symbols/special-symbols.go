@@ -16,4 +16,5 @@ const (
 	Class    = "Class"
 	Print    = "print"
 	Println  = "println"
+	Range    = "range"
 )

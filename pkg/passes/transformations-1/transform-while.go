@@ -6,6 +6,10 @@ import (
 )
 
 func (transform *transformPass) While(while *ast2.While) []ast3.Node {
+	setup := make([]ast3.Node, 0, len(while.Setup))
+	for _, node := range while.Setup {
+		setup = append(setup, transform.Node(node)...)
+	}
 	startLabel := transform.nextLabel()
 	endLabel := transform.nextLabel()
 	condition := &ast3.IfJump{
@@ -31,9 +35,13 @@ func (transform *transformPass) While(while *ast2.While) []ast3.Node {
 			}
 		}
 	}
-	result := make([]ast3.Node, 0, 3+len(body))
+	result := make([]ast3.Node, 0, 3+len(setup)+len(body))
+	result = append(result, setup...)
 	result = append(result, startLabel, condition)
 	result = append(result, body...)
+	result = append(result, &ast3.Jump{
+		Target: startLabel,
+	})
 	result = append(result, endLabel)
 	return result
 }
