@@ -16,7 +16,7 @@ Not                 __not__
 And                 __and__
 Or                  __or__
 Xor                 __xor__
-Equals              __equals__
+Equal              __equal__
 NotEqual            __not_equal__
 Bool                __bool__
 String              __string__
@@ -39,7 +39,7 @@ func (plasma *Plasma) NewBool(b bool) *Value {
 			return plasma.NewBool(!result.GetBool()), nil
 		},
 	))
-	result.Set(magic_functions.Equals, plasma.NewBuiltInFunction(
+	result.Set(magic_functions.Equal, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {

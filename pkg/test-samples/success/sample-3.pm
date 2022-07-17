@@ -20,7 +20,7 @@ class A
     def __init__()
         pass
     end
-    def __equals__(other)
+    def __equal__(other)
         return self.__class__() == other.__class__()
     end
 end

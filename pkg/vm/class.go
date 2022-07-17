@@ -13,12 +13,12 @@ func (plasma *Plasma) metaClass() *Value {
 
 /*
 NewClass magic function:
-Equals              __equals__
+Equal              __equal__
 NotEqual            __not_equal__
 */
 func (plasma *Plasma) NewClass() *Value {
 	result := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
-	result.Set(magic_functions.Equals, plasma.NewBuiltInFunction(
+	result.Set(magic_functions.Equal, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			return plasma.NewBool(result == argument[0]), nil

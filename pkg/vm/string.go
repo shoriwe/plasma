@@ -16,7 +16,7 @@ func (plasma *Plasma) stringClass() *Value {
 /*
 NewString magic function:
 In                  __in__
-Equals              __equals__
+Equal              __equal__
 NotEqual            __not_equal__
 Add                 __add__
 Mul                 __mul__
@@ -51,7 +51,7 @@ func (plasma *Plasma) NewString(contents []byte) *Value {
 			return plasma.false, nil
 		},
 	))
-	result.Set(magic_functions.Equals, plasma.NewBuiltInFunction(
+	result.Set(magic_functions.Equal, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			return plasma.NewBool(result.Equal(argument[0])), nil

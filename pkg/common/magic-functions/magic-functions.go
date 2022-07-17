@@ -14,7 +14,7 @@ const (
 	In                 = "__in__"
 	Is                 = "__is__"
 	Implements         = "__implements__"
-	Equals             = "__equals__"
+	Equal              = "__equal__"
 	NotEqual           = "__not_equal__"
 	GreaterThan        = "__greater_than__"
 	GreaterOrEqualThan = "__greater_or_equal_than__"

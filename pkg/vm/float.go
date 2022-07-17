@@ -18,7 +18,7 @@ NewFloat magic function:
 Positive:           __positive__
 Negative:           __negative__
 NegateBits:         __negate_bits__
-Equals:             __equals__
+Equal:             __equal__
 NotEqual:           __not_equal__
 GreaterThan:        __greater_than__
 GreaterOrEqualThan: __greater_or_equal_than__
@@ -63,7 +63,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 			return plasma.NewFloat(math.Float64frombits(^math.Float64bits(result.Float()))), nil
 		},
 	))
-	result.Set(magic_functions.Equals, plasma.NewBuiltInFunction(
+	result.Set(magic_functions.Equal, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {

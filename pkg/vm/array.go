@@ -15,7 +15,7 @@ func (plasma *Plasma) arrayClass() *Value {
 /*
 NewArray magic function:
 In                  __in__
-Equals              __equals__
+Equal              __equal__
 NotEqual            __not_equal__
 Mul                 __mul__
 Length              __len__
@@ -41,7 +41,7 @@ func (plasma *Plasma) NewArray(values []*Value) *Value {
 			}
 			return plasma.false, nil
 		}))
-	result.Set(magic_functions.Equals, plasma.NewBuiltInFunction(
+	result.Set(magic_functions.Equal, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {

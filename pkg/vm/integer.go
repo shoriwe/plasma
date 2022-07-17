@@ -19,7 +19,7 @@ NewInt magic function:
 Positive:           __positive__
 Negative:           __negative__
 NegateBits:         __negate_its__
-Equals:             __equals__
+Equal:             __equal__
 NotEqual:           __not_equal__
 GreaterThan:        __greater_than__
 GreaterOrEqualThan: __greater_or_equal_than__
@@ -67,7 +67,7 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 				return plasma.NewInt(^result.GetInt64()), nil
 			},
 		))
-	result.Set(magic_functions.Equals,
+	result.Set(magic_functions.Equal,
 		plasma.NewBuiltInFunction(
 			result.vtable,
 			func(argument ...*Value) (*Value, error) {

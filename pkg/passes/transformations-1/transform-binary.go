@@ -38,7 +38,7 @@ func (transform *transformPass) Binary(binary *ast2.Binary) *ast3.Call {
 	case ast2.Implements:
 		function = magic_functions.Implements
 	case ast2.Equals:
-		function = magic_functions.Equals
+		function = magic_functions.Equal
 	case ast2.NotEqual:
 		function = magic_functions.NotEqual
 	case ast2.GreaterThan:
