@@ -16,7 +16,7 @@ import (
 )
 
 func TestSampleScripts(t *testing.T) {
-	for i := 0; i <= len(success.Samples); i++ {
+	for i := 1; i <= len(success.Samples); i++ {
 		sampleScript := fmt.Sprintf("sample-%d.pm", i)
 		script := success.Samples[sampleScript]
 		t.Logf("Testing - %s", sampleScript)

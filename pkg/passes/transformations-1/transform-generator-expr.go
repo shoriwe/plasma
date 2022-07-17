@@ -27,9 +27,15 @@ func (transform *transformPass) GeneratorExpr(generator *ast2.Generator) *ast3.C
 			Arguments: []*ast3.Identifier{initSourceArgument},
 			Body: []ast3.Node{
 				&ast3.Assignment{
-					Statement: nil,
-					Left:      selfSource,
-					Right:     initSourceArgument,
+					Left: selfSource,
+					Right: &ast3.Call{
+						Function: &ast3.Selector{
+							X: initSourceArgument,
+							Identifier: &ast3.Identifier{
+								Symbol: magic_functions.Iter,
+							},
+						},
+					},
 				},
 			},
 		},
@@ -66,15 +72,24 @@ func (transform *transformPass) GeneratorExpr(generator *ast2.Generator) *ast3.C
 		},
 	}
 	expand := make([]ast3.Node, 0, len(generator.Receivers))
-	for index, receiver := range generator.Receivers {
-		expand = append(expand, &ast3.Assignment{
-			Left: transform.Identifier(receiver),
-			Right: &ast3.Index{
-				Source: anonReceiver,
-				Index: &ast3.Integer{
-					Value: int64(index),
+	if len(generator.Receivers) > 1 {
+		for index, receiver := range generator.Receivers {
+			expand = append(expand, &ast3.Assignment{
+				Left: transform.Identifier(receiver),
+				Right: &ast3.Index{
+					Source: anonReceiver,
+					Index: &ast3.Integer{
+						Value: int64(index),
+					},
 				},
+			})
+		}
+	} else {
+		expand = append(expand, &ast3.Assignment{
+			Left: &ast3.Identifier{
+				Symbol: generator.Receivers[0].Symbol,
 			},
+			Right: anonReceiver,
 		})
 	}
 	result := &ast3.Return{
