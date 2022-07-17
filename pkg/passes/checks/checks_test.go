@@ -56,7 +56,7 @@ func TestInvalidReturn(t *testing.T) {
 	if passError != nil {
 		t.Fatal(passError)
 	}
-	const invalidReturns = 3
+	const invalidReturns = 4
 	if found := checkPass.CountInvalidFunctionNodes(); found != invalidReturns {
 		t.Fatalf("Invalid returns bypassed the check pass, expecting %d but found %d", invalidReturns, found)
 	}

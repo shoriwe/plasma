@@ -29,7 +29,7 @@
 - [X] Braces
 - [X] Square Brackets
 
-## Keyboards
+## Keywords
 
 - [X] Pass
 - [X] super

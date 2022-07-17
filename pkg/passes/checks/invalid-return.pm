@@ -5,8 +5,11 @@ def my_function()
 end
 
 gen my_generator()
+    defer yes()
     return none
 end
+
+defer no()
 
 for a in range(100)
     return 2
