@@ -184,6 +184,8 @@ func walk(visitor Visitor, node Node) {
 				walk(visitor, elifBlockChild)
 			}
 		}
+	case nil:
+		break // Ignore nil
 	default:
 		panic(fmt.Sprintf("unknown node type %s", reflect.TypeOf(node).String()))
 	}

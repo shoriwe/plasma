@@ -45,6 +45,26 @@ var (
 	sample10 string
 	//go:embed result-10.txt
 	result10 string
+	//go:embed sample-11.pm
+	sample11 string
+	//go:embed result-11.txt
+	result11 string
+	//go:embed sample-12.pm
+	sample12 string
+	//go:embed result-12.txt
+	result12 string
+	//go:embed sample-13.pm
+	sample13 string
+	//go:embed result-13.txt
+	result13 string
+	//go:embed sample-14.pm
+	sample14 string
+	//go:embed result-14.txt
+	result14 string
+	//go:embed sample-15.pm
+	sample15 string
+	//go:embed result-15.txt
+	result15 string
 )
 
 type Script struct {
@@ -89,30 +109,30 @@ var Samples = map[string]Script{
 		Code:   sample9,
 		Result: result9,
 	},
-	"sample-10.pm": Script{
+	"sample-10.pm": {
 		Code:   sample10,
 		Result: result10,
 	},
-	// "sample-11.pm": Script{
-	// 	Code:   sample11,
-	// 	Result: result11,
-	// },
-	// "sample-12.pm": Script{
-	// 	Code:   sample12,
-	// 	Result: result12,
-	// },
-	// "sample-13.pm": Script{
-	// 	Code:   sample13,
-	// 	Result: result13,
-	// },
-	// "sample-14.pm": Script{
-	// 	Code:   sample14,
-	// 	Result: result14,
-	// },
-	// "sample-15.pm": Script{
-	// 	Code:   sample15,
-	// 	Result: result15,
-	// },
+	"sample-11.pm": {
+		Code:   sample11,
+		Result: result11,
+	},
+	"sample-12.pm": {
+		Code:   sample12,
+		Result: result12,
+	},
+	"sample-13.pm": {
+		Code:   sample13,
+		Result: result13,
+	},
+	"sample-14.pm": {
+		Code:   sample14,
+		Result: result14,
+	},
+	"sample-15.pm": {
+		Code:   sample15,
+		Result: result15,
+	},
 	// "sample-16.pm": Script{
 	// 	Code:   sample16,
 	// 	Result: result16,
