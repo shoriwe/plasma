@@ -12,7 +12,10 @@ var (
 )
 
 func (parser *Parser) newError(message string) error {
-	return fmt.Errorf("SyntaxError: %s, at line %d", message, parser.lineStack.Peek())
+	if parser.lineStack.HasNext() {
+		return fmt.Errorf("SyntaxError: %s, at line %d", message, parser.lineStack.Peek())
+	}
+	return fmt.Errorf("SyntaxError: %s", message)
 }
 
 func (parser *Parser) newSyntaxError(nodeType string) error {

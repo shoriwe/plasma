@@ -37,9 +37,18 @@ func TestSuccessSampleScripts(t *testing.T) {
 		case checkPass.CountInvalidFunctionNodes() > 0:
 			t.Fatal("invalid function nodes")
 		}
-		simplified := simplification.Simplify(program)
-		transformed := transformations_1.Transform(simplified)
-		bytecode := assembler.Assemble(transformed)
+		simplified, simplificationError := simplification.Simplify(program)
+		if simplificationError != nil {
+			t.Fatal(simplificationError)
+		}
+		transformed, transformError := transformations_1.Transform(simplified)
+		if transformError != nil {
+			t.Fatal(transformError)
+		}
+		bytecode, assembleError := assembler.Assemble(transformed)
+		if assembleError != nil {
+			t.Fatal(assembleError)
+		}
 		out := &bytes.Buffer{}
 		v := NewVM(nil, out, out)
 		_, err, _ := v.Execute(bytecode)
@@ -78,9 +87,18 @@ func TestFailSampleScripts(t *testing.T) {
 		case checkPass.CountInvalidFunctionNodes() > 0:
 			t.Fatal("invalid function nodes")
 		}
-		simplified := simplification.Simplify(program)
-		transformed := transformations_1.Transform(simplified)
-		bytecode := assembler.Assemble(transformed)
+		simplified, simplificationError := simplification.Simplify(program)
+		if simplificationError != nil {
+			t.Fatal(simplificationError)
+		}
+		transformed, transformError := transformations_1.Transform(simplified)
+		if transformError != nil {
+			t.Fatal(transformError)
+		}
+		bytecode, assembleError := assembler.Assemble(transformed)
+		if assembleError != nil {
+			t.Fatal(assembleError)
+		}
 		out := &bytes.Buffer{}
 		v := NewVM(nil, out, out)
 		_, err, _ := v.Execute(bytecode)

@@ -241,22 +241,35 @@ func (a *assembler) resolveLabels(bytecode []byte, labels map[int64]int64) []byt
 	return bytecode
 }
 
-func (a *assembler) Assemble(program ast3.Program) []byte {
-	bytecode := make([]byte, 0, len(program))
-	for _, node := range program {
-		chunk := a.assemble(node)
-		bytecode = append(bytecode, chunk...)
-	}
-	labels := a.enumLabels(bytecode)
-	return a.resolveLabels(bytecode, labels)
+func (a *assembler) Assemble(program ast3.Program) ([]byte, error) {
+	resultChan := make(chan []byte, 1)
+	errorChan := make(chan error, 1)
+	go func(rChan chan []byte, eChan chan error) {
+		defer func() {
+			err := recover()
+			if err != nil {
+				rChan <- nil
+				eChan <- err.(error)
+			}
+		}()
+		bytecode := make([]byte, 0, len(program))
+		for _, node := range program {
+			chunk := a.assemble(node)
+			bytecode = append(bytecode, chunk...)
+		}
+		labels := a.enumLabels(bytecode)
+		rChan <- a.resolveLabels(bytecode, labels)
+		eChan <- nil
+	}(resultChan, errorChan)
+	return <-resultChan, <-errorChan
 }
 
-func AssembleAny(node ast3.Node) []byte {
+func AssembleAny(node ast3.Node) ([]byte, error) {
 	a := newAssembler()
 	return a.Assemble(ast3.Program{node})
 }
 
-func Assemble(program ast3.Program) []byte {
+func Assemble(program ast3.Program) ([]byte, error) {
 	a := newAssembler()
 	return a.Assemble(program)
 }

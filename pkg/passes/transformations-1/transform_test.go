@@ -17,8 +17,14 @@ func test(t *testing.T, samples map[string]string) {
 		if parseError != nil {
 			t.Fatalf("Failed in %s with error %s", script, parseError.Error())
 		}
-		simplified := simplification.Simplify(program)
-		Transform(simplified)
+		simplified, simplificationError := simplification.Simplify(program)
+		if simplificationError != nil {
+			t.Fatal(simplificationError)
+		}
+		_, transformError := Transform(simplified)
+		if transformError != nil {
+			t.Fatal(transformError)
+		}
 	}
 }
 

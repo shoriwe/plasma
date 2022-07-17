@@ -19,9 +19,18 @@ func test(t *testing.T, samples map[string]string) {
 		if parseError != nil {
 			t.Fatalf("Failed in %s with error %s", script, parseError.Error())
 		}
-		simplifiedProgram := simplification.Simplify(program)
-		transformedProgram := transformations_1.Transform(simplifiedProgram)
-		bytecode := Assemble(transformedProgram)
+		simplified, simplificationError := simplification.Simplify(program)
+		if simplificationError != nil {
+			t.Fatal(simplificationError)
+		}
+		transformed, transformError := transformations_1.Transform(simplified)
+		if transformError != nil {
+			t.Fatal(transformError)
+		}
+		bytecode, assembleError := Assemble(transformed)
+		if assembleError != nil {
+			t.Fatal(assembleError)
+		}
 		bytecodeSize := float64(len(bytecode)) / 1024
 		t.Logf("Size of %s: %db => %fkb", script, len(bytecode), bytecodeSize)
 	}

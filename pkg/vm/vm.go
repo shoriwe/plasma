@@ -2,10 +2,12 @@ package vm
 
 import (
 	"fmt"
+	"github.com/shoriwe/gplasma/pkg/compiler"
 	"io"
 )
 
 type (
+	Loader func(plasma *Plasma) *Value
 	Plasma struct {
 		Stdin             io.Reader
 		Stdout, Stderr    io.Writer
@@ -32,7 +34,10 @@ func (plasma *Plasma) executeCtx(ctx *context) {
 		err := recover()
 		if err != nil {
 			ctx.err <- fmt.Errorf("execution error: %v", err)
+		} else {
+			ctx.err <- nil
 		}
+		ctx.result <- ctx.register
 		return
 	}()
 	for ctx.hasNext() {
@@ -43,9 +48,10 @@ func (plasma *Plasma) executeCtx(ctx *context) {
 			plasma.do(ctx)
 		}
 	}
-	ctx.result <- ctx.register
-	ctx.err <- nil
-	ctx.stop <- struct{}{}
+}
+
+func (plasma *Plasma) Load(symbol string, loader Loader) {
+	plasma.rootSymbols.Set(symbol, loader(plasma))
 }
 
 func (plasma *Plasma) Execute(bytecode []byte) (result chan *Value, err chan error, stop chan struct{}) {
@@ -56,6 +62,23 @@ func (plasma *Plasma) Execute(bytecode []byte) (result chan *Value, err chan err
 	ctx.stop = make(chan struct{}, 1)
 	// Execute bytecode with context
 	go plasma.executeCtx(ctx)
+	return ctx.result, ctx.err, ctx.stop
+}
+
+func (plasma *Plasma) ExecuteString(scriptCode string) (result chan *Value, err chan error, stop chan struct{}) {
+	bytecode, compileError := compiler.Compile(scriptCode)
+	// Create new context
+	ctx := plasma.newContext(bytecode)
+	ctx.result = make(chan *Value, 1)
+	ctx.err = make(chan error, 1)
+	ctx.stop = make(chan struct{}, 1)
+	if compileError != nil {
+		ctx.result <- nil
+		ctx.err <- compileError
+	} else {
+		// Execute bytecode with context
+		go plasma.executeCtx(ctx)
+	}
 	return ctx.result, ctx.err, ctx.stop
 }
 

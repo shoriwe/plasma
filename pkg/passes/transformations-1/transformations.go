@@ -23,14 +23,27 @@ func (transform *transformPass) Node(node ast2.Node) []ast3.Node {
 	}
 }
 
-func Transform(program ast2.Program) ast3.Program {
-	result := make(ast3.Program, 0, len(program))
-	transform := transformPass{
-		currentLabel:      1,
-		currentIdentifier: 1,
-	}
-	for _, node := range program {
-		result = append(result, transform.Node(node)...)
-	}
-	return result
+func Transform(program ast2.Program) (ast3.Program, error) {
+	resultChan := make(chan ast3.Program, 1)
+	errorChan := make(chan error, 1)
+	go func(rChan chan ast3.Program, eChan chan error) {
+		defer func() {
+			err := recover()
+			if err != nil {
+				rChan <- nil
+				eChan <- err.(error)
+			}
+		}()
+		result := make(ast3.Program, 0, len(program))
+		transform := transformPass{
+			currentLabel:      1,
+			currentIdentifier: 1,
+		}
+		for _, node := range program {
+			result = append(result, transform.Node(node)...)
+		}
+		rChan <- result
+		eChan <- nil
+	}(resultChan, errorChan)
+	return <-resultChan, <-errorChan
 }
