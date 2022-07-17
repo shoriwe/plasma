@@ -22,6 +22,7 @@ func NewSymbols(parent *Symbols) *Symbols {
 	return &Symbols{
 		mutex:  &sync.Mutex{},
 		values: map[string]*Value{},
+		call:   nil,
 		Parent: parent,
 	}
 }

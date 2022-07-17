@@ -39,9 +39,4 @@ type (
 		Statement
 		X Expression
 	}
-
-	Block struct {
-		Statement
-		Body []Node
-	}
 )

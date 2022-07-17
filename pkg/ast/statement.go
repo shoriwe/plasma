@@ -141,11 +141,6 @@ type (
 		Statement
 	}
 
-	BlockStatement struct {
-		Statement
-		Body []Node
-	}
-
 	DeleteStatement struct {
 		Statement
 		X Expression
@@ -153,6 +148,6 @@ type (
 
 	DeferStatement struct {
 		Statement
-		X Expression
+		X *MethodInvocationExpression
 	}
 )

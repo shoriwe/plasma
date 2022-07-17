@@ -68,7 +68,7 @@ func (plasma *Plasma) init() {
 					class := argument[0]
 					switch class.TypeId() {
 					case BuiltInClassId, ClassId:
-						return plasma.NewBool(self.Implements(class)), nil
+						return plasma.NewBool(self.GetClass().Implements(class)), nil
 					}
 					return plasma.false, nil
 				})
@@ -205,6 +205,7 @@ func (plasma *Plasma) init() {
 					iter.vtable,
 					func(_ ...*Value) (*Value, error) {
 						current := iter.GetFloat64()
+						// fmt.Println(current)
 						iter.SetAny(current + floatStep)
 						return plasma.NewFloat(current), nil
 					},

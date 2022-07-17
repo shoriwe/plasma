@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 )
@@ -51,8 +50,6 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseInterfaceStatement()
 		case lexer.Class:
 			return parser.parseClassStatement()
-		case lexer.Block:
-			return parser.parseBlockStatement()
 		case lexer.Return:
 			return parser.parseReturnStatement()
 		case lexer.Yield:
@@ -76,6 +73,5 @@ func (parser *Parser) parseOperand() (ast.Node, error) {
 			return parser.parseHashExpression()
 		}
 	}
-	fmt.Println(parser.currentToken)
 	return nil, UnknownToken
 }

@@ -129,14 +129,6 @@ func (gt *generatorTransform) resolve(node ast3.Node, symbols map[string]struct{
 			Statement: nil,
 			X:         gt.resolve(n.X, symbolsCopy)[0].(ast3.Expression),
 		}}
-	case *ast3.Block:
-		body := make([]ast3.Node, 0, len(n.Body))
-		for _, child := range n.Body {
-			body = append(body, gt.resolve(child, symbolsCopy)...)
-		}
-		return []ast3.Node{&ast3.Block{
-			Body: body,
-		}}
 	case *ast3.Function:
 		for _, argument := range n.Arguments {
 			if _, found := symbolsCopy[argument.Symbol]; found {

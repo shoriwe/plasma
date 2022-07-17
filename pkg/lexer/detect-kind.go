@@ -67,8 +67,6 @@ func (lexer *Lexer) detectKindAndDirectValue() (Kind, DirectValue) {
 		return Comparator, Implements
 	case BEGINString:
 		return Keyword, BEGIN
-	case BlockString:
-		return Keyword, Block
 	case ENDString:
 		return Keyword, END
 	case NotString: // Unary operator

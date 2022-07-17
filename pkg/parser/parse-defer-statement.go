@@ -11,10 +11,10 @@ func (parser *Parser) parseDeferStatement() (*ast.DeferStatement, error) {
 	if parsingError != nil {
 		return nil, parsingError
 	}
-	if _, ok := x.(ast.Expression); !ok {
+	if _, ok := x.(*ast.MethodInvocationExpression); !ok {
 		return nil, parser.expectingExpressionError(DeferStatement)
 	}
 	return &ast.DeferStatement{
-		X: x.(ast.Expression),
+		X: x.(*ast.MethodInvocationExpression),
 	}, nil
 }

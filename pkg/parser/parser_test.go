@@ -316,7 +316,10 @@ func walker(node ast.Node) string {
 			result += walker(argument)
 		}
 		result += ")"
-		for _, bodyNode := range n.Body {
+		for index, bodyNode := range n.Body {
+			if index == len(n.Body)-1 {
+				continue
+			}
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
@@ -332,7 +335,10 @@ func walker(node ast.Node) string {
 			result += walker(argument)
 		}
 		result += ")"
-		for _, bodyNode := range n.Body {
+		for index, bodyNode := range n.Body {
+			if index == len(n.Body)-1 {
+				continue
+			}
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
 			result += "\n\t" + nodeString
@@ -348,14 +354,6 @@ func walker(node ast.Node) string {
 		return result + "\nend"
 	case *ast.BeginStatement:
 		result := "BEGIN"
-		for _, bodyNode := range n.Body {
-			nodeString := walker(bodyNode)
-			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")
-			result += "\n\t" + nodeString
-		}
-		return result + "\nend"
-	case *ast.BlockStatement:
-		result := "block"
 		for _, bodyNode := range n.Body {
 			nodeString := walker(bodyNode)
 			nodeString = strings.ReplaceAll(nodeString, "\n", "\n\t")

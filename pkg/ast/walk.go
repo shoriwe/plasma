@@ -184,6 +184,8 @@ func walk(visitor Visitor, node Node) {
 				walk(visitor, elifBlockChild)
 			}
 		}
+	case *DeleteStatement:
+		walk(visitor, n.X)
 	case nil:
 		break // Ignore nil
 	default:

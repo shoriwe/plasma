@@ -74,12 +74,6 @@ type (
 		Statement
 		X Assignable
 	}
-
-	Block struct {
-		Statement
-		Body []Node
-	}
-
 	Defer struct {
 		Statement
 		X Expression

@@ -72,10 +72,6 @@ func (a *assembler) enumLabels(bytecode []byte) map[int64]int64 {
 		case opcodes.Defer:
 			index++
 			index += 8
-		case opcodes.EnterBlock:
-			index++
-		case opcodes.ExitBlock:
-			index++
 		case opcodes.NewFunction:
 			index++
 			argsNumber := common.BytesToInt(bytecode[index : index+8])
@@ -183,10 +179,6 @@ func (a *assembler) resolveLabels(bytecode []byte, labels map[int64]int64) []byt
 		case opcodes.Defer:
 			index++
 			index += 8
-		case opcodes.EnterBlock:
-			index++
-		case opcodes.ExitBlock:
-			index++
 		case opcodes.NewFunction:
 			index++
 			argsNumber := common.BytesToInt(bytecode[index : index+8])

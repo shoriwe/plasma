@@ -43,8 +43,6 @@ func (simplify *simplifyPass) Statement(stmt ast.Statement) ast2.Statement {
 		return simplify.Break(s)
 	case *ast.PassStatement:
 		return simplify.Pass(s)
-	case *ast.BlockStatement:
-		return simplify.Block(s)
 	case *ast.DeleteStatement:
 		return simplify.Delete(s)
 	case *ast.DeferStatement:

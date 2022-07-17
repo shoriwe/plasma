@@ -25,7 +25,7 @@ func (ctx *context) hasNext() bool {
 	for ctx.code.HasNext() {
 		ctxCode := ctx.code.Peek()
 		if ctxCode.index >= int64(len(ctxCode.bytecode)) {
-			ctx.popBlock()
+			ctx.popCode()
 			continue
 		}
 		return true

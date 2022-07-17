@@ -17,14 +17,22 @@ func (ctx *context) pushCode(bytecode []byte) {
 		},
 	)
 }
-func (ctx *context) popBlock() {
-	// Pop bytecode
-	ctxCode := ctx.code.Pop()
-	// Load on exit code
-	for ctxCode.onExit.HasNext() {
-		ctx.pushCode(ctxCode.onExit.Pop())
+func (ctx *context) popCode() {
+	// If there is defer code
+	if ctxCode := ctx.code.Peek(); ctxCode.onExit.HasNext() {
+		ctxCode.index = int64(len(ctxCode.bytecode)) + 1
+		if ctx.register != nil {
+			ctx.stack.Push(ctx.register)
+			ctx.pushCode([]byte{opcodes.Return})
+			ctx.currentSymbols = NewSymbols(ctx.currentSymbols)
+		}
+		for ctxCode.onExit.HasNext() {
+			ctx.pushCode(ctxCode.onExit.Pop())
+			ctx.currentSymbols = NewSymbols(ctx.currentSymbols)
+		}
+		return
 	}
-	// Update symbols
+	ctx.code.Pop()
 	if ctx.currentSymbols.call != nil {
 		ctx.currentSymbols = ctx.currentSymbols.call
 	} else {
@@ -66,6 +74,7 @@ func (plasma *Plasma) do(ctx *context) {
 		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
 		ctxCode.index += 8
 		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
+		// fmt.Println(symbol)
 		ctxCode.index += symbolLength
 		ctx.currentSymbols.Set(symbol, ctx.stack.Pop())
 	case opcodes.SelectorAssign:
@@ -89,7 +98,7 @@ func (plasma *Plasma) do(ctx *context) {
 	case opcodes.Return:
 		ctxCode.index++
 		ctx.register = ctx.stack.Pop()
-		ctx.popBlock()
+		ctx.popCode()
 	case opcodes.DeleteIdentifier:
 		ctxCode.index++
 		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
@@ -118,12 +127,6 @@ func (plasma *Plasma) do(ctx *context) {
 		onExitCode := ctxCode.bytecode[ctxCode.index : ctxCode.index+exprLength]
 		ctxCode.index += exprLength
 		ctxCode.onExit.Push(onExitCode)
-	case opcodes.EnterBlock:
-		ctxCode.index++
-		ctx.currentSymbols = NewSymbols(ctx.currentSymbols)
-	case opcodes.ExitBlock:
-		ctxCode.index++
-		ctx.popBlock()
 	case opcodes.NewFunction:
 		ctxCode.index++
 		numberOfArgument := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])

@@ -12,8 +12,6 @@ const (
 	DeleteIdentifier
 	DeleteSelector
 	Defer
-	EnterBlock
-	ExitBlock
 	NewFunction
 	NewClass
 	Call
@@ -44,8 +42,6 @@ var OpCodes = map[byte]string{
 	DeleteIdentifier: "DeleteIdentifier",
 	DeleteSelector:   "DeleteSelector",
 	Defer:            "Defer",
-	EnterBlock:       "EnterBlock",
-	ExitBlock:        "ExitBlock",
 	NewFunction:      "NewFunction",
 	NewClass:         "NewClass",
 	Call:             "Call",

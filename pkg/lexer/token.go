@@ -47,7 +47,6 @@ const (
 	Class
 	BEGIN
 	END
-	Block
 
 	Assign
 	BitwiseOrAssign
@@ -203,7 +202,6 @@ var (
 	ImplementsString = "implements"
 	BEGINString      = "BEGIN"
 	ENDString        = "END"
-	BlockString      = "block"
 	NotString        = "not"
 	TrueString       = "true"
 	FalseString      = "false"

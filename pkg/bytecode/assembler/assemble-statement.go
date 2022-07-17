@@ -28,8 +28,6 @@ func (a *assembler) Statement(stmt ast3.Statement) []byte {
 		return a.Delete(s)
 	case *ast3.Defer:
 		return a.Defer(s)
-	case *ast3.Block:
-		return a.Block(s)
 	default:
 		panic(fmt.Sprintf("unknown type of statement %s", reflect.TypeOf(s).String()))
 	}

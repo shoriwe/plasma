@@ -2,26 +2,23 @@
 
 ## Fully required
 
-- [ ] Thread safe VM
-- [ ] Simplified VM
-- [ ] `is` operator
-- [ ] `implements` operator
-- [ ] `block` statement
-- [ ] `require` statement
+- [X] Thread safe VM
+- [X] Simplified VM
+- [X] `is` operator
+- [X] `implements` operator
 - [ ] `delete` statement
-- [ ] `defer` statement
+- [X] `defer` statement
 - [ ] `super` expression (not function as in previous versions)
 - [ ] Lowercase standard library and default methods names
-- [ ] Bytecode (like literally sequence of bytes)
-- [ ] Remove redo statement
-- [ ] Syntax check pass
-- [ ] Simplify AST pass
-- [ ] Simplify AST2 pass
-- [ ] Resolve `require`s
+- [X] Bytecode (like literally sequence of bytes)
+- [X] Remove redo statement
+- [X] Syntax check pass
+- [X] Simplify AST pass
+- [X] Simplify AST2 pass
 - [ ] Better REPL
 - [ ] Update documentation
-- [ ] Remove try-except-else-finally and raise
-- [ ] Function yield generators (finally implement them)
+- [X] Remove try-except-else-finally and raise
+- [X] Function yield generators (finally implement them)
 
 ## Optional
 

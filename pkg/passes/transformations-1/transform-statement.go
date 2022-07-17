@@ -37,8 +37,6 @@ func (transform *transformPass) Statement(stmt ast2.Statement) []ast3.Node {
 		return transform.Pass(s)
 	case *ast2.Delete:
 		return transform.Delete(s)
-	case *ast2.Block:
-		return transform.Block(s)
 	case *ast2.Defer:
 		return transform.Defer(s)
 	default:

@@ -370,11 +370,11 @@ func (value *Value) Call(argument ...*Value) (*Value, error) {
 }
 
 func (value *Value) Implements(class *Value) bool {
-	if value.GetClass() == class {
+	if value == class {
 		return true
 	}
-	for _, base := range class.GetClassInfo().Bases {
-		if value.Implements(base) {
+	for _, base := range value.GetClassInfo().Bases {
+		if base.Implements(class) {
 			return true
 		}
 	}
