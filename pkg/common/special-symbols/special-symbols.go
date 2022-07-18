@@ -14,6 +14,7 @@ const (
 	Hash     = "Hash"
 	Function = "Function"
 	Class    = "Class"
+	Input    = "input"
 	Print    = "print"
 	Println  = "println"
 	Range    = "range"

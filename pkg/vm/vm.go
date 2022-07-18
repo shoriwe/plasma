@@ -29,6 +29,70 @@ type (
 	}
 )
 
+func (plasma *Plasma) Symbols() *Symbols {
+	return plasma.rootSymbols
+}
+
+func (plasma *Plasma) True() *Value {
+	return plasma.true
+}
+
+func (plasma *Plasma) False() *Value {
+	return plasma.false
+}
+
+func (plasma *Plasma) None() *Value {
+	return plasma.none
+}
+
+func (plasma *Plasma) Value() *Value {
+	return plasma.value
+}
+
+func (plasma *Plasma) String() *Value {
+	return plasma.string
+}
+
+func (plasma *Plasma) Bytes() *Value {
+	return plasma.bytes
+}
+
+func (plasma *Plasma) Bool() *Value {
+	return plasma.bool
+}
+
+func (plasma *Plasma) NoneType() *Value {
+	return plasma.noneType
+}
+
+func (plasma *Plasma) Int() *Value {
+	return plasma.int
+}
+
+func (plasma *Plasma) Float() *Value {
+	return plasma.float
+}
+
+func (plasma *Plasma) Array() *Value {
+	return plasma.array
+}
+
+func (plasma *Plasma) Tuple() *Value {
+	return plasma.tuple
+}
+
+func (plasma *Plasma) Hash() *Value {
+	return plasma.hash
+}
+
+func (plasma *Plasma) Function() *Value {
+	return plasma.function
+}
+
+func (plasma *Plasma) Class() *Value {
+	return plasma.class
+}
+
 func (plasma *Plasma) executeCtx(ctx *context) {
 	defer func() {
 		err := recover()

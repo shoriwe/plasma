@@ -12,7 +12,7 @@ func (ctx *context) pushCode(bytecode []byte) {
 	ctx.code.Push(
 		&contextCode{
 			bytecode: bytecode,
-			index:    0,
+			rip:      0,
 			onExit:   &common.ListStack[[]byte]{},
 		},
 	)
@@ -20,7 +20,7 @@ func (ctx *context) pushCode(bytecode []byte) {
 func (ctx *context) popCode() {
 	// If there is defer code
 	if ctxCode := ctx.code.Peek(); ctxCode.onExit.HasNext() {
-		ctxCode.index = int64(len(ctxCode.bytecode)) + 1
+		ctxCode.rip = int64(len(ctxCode.bytecode)) + 1
 		if ctx.register != nil {
 			ctx.stack.Push(ctx.register)
 			ctx.pushCode([]byte{opcodes.Return})
@@ -59,90 +59,90 @@ func (plasma *Plasma) prepareClassInitCode(classInfo *ClassInfo) {
 
 func (plasma *Plasma) do(ctx *context) {
 	ctxCode := ctx.code.Peek()
-	instruction := ctxCode.bytecode[ctxCode.index]
+	instruction := ctxCode.bytecode[ctxCode.rip]
 	// fmt.Println(opcodes.OpCodes[instruction])
 	// plasma.printStack(ctx)
 	switch instruction {
 	case opcodes.Push:
-		ctxCode.index++
+		ctxCode.rip++
 		ctx.stack.Push(ctx.register)
 	case opcodes.Pop:
-		ctxCode.index++
+		ctxCode.rip++
 		ctx.register = ctx.stack.Pop()
 	case opcodes.IdentifierAssign:
-		ctxCode.index++
-		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
+		ctxCode.rip++
+		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		symbol := string(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+symbolLength])
 		// fmt.Println(symbol)
-		ctxCode.index += symbolLength
+		ctxCode.rip += symbolLength
 		ctx.currentSymbols.Set(symbol, ctx.stack.Pop())
 	case opcodes.SelectorAssign:
-		ctxCode.index++
-		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
-		ctxCode.index += symbolLength
+		ctxCode.rip++
+		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		symbol := string(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+symbolLength])
+		ctxCode.rip += symbolLength
 		selector := ctx.stack.Pop()
 		selector.Set(symbol, ctx.stack.Pop())
 	case opcodes.Label:
-		ctxCode.index += 9 // OP + Label
+		ctxCode.rip += 9 // OP + Label
 	case opcodes.Jump:
-		ctxCode.index += common.BytesToInt(ctxCode.bytecode[1+ctxCode.index : 9+ctxCode.index])
+		ctxCode.rip += common.BytesToInt(ctxCode.bytecode[1+ctxCode.rip : 9+ctxCode.rip])
 	case opcodes.IfJump:
 		if ctx.stack.Pop().Bool() {
-			ctxCode.index += common.BytesToInt(ctxCode.bytecode[1+ctxCode.index : 9+ctxCode.index])
+			ctxCode.rip += common.BytesToInt(ctxCode.bytecode[1+ctxCode.rip : 9+ctxCode.rip])
 		} else {
-			ctxCode.index += 9
+			ctxCode.rip += 9
 		}
 	case opcodes.Return:
-		ctxCode.index++
+		ctxCode.rip++
 		ctx.register = ctx.stack.Pop()
 		ctx.popCode()
 	case opcodes.DeleteIdentifier:
-		ctxCode.index++
-		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
-		ctxCode.index += symbolLength
+		ctxCode.rip++
+		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		symbol := string(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+symbolLength])
+		ctxCode.rip += symbolLength
 		delError := ctx.currentSymbols.Del(symbol)
 		if delError != nil {
 			panic(delError)
 		}
 	case opcodes.DeleteSelector:
-		ctxCode.index++
-		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
-		ctxCode.index += symbolLength
+		ctxCode.rip++
+		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		symbol := string(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+symbolLength])
+		ctxCode.rip += symbolLength
 		selector := ctx.stack.Pop()
 		delError := selector.Del(symbol)
 		if delError != nil {
 			panic(delError)
 		}
 	case opcodes.Defer:
-		ctxCode.index++
-		exprLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		onExitCode := ctxCode.bytecode[ctxCode.index : ctxCode.index+exprLength]
-		ctxCode.index += exprLength
+		ctxCode.rip++
+		exprLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		onExitCode := ctxCode.bytecode[ctxCode.rip : ctxCode.rip+exprLength]
+		ctxCode.rip += exprLength
 		ctxCode.onExit.Push(onExitCode)
 	case opcodes.NewFunction:
-		ctxCode.index++
-		numberOfArgument := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
+		ctxCode.rip++
+		numberOfArgument := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
 		arguments := make([]string, 0, numberOfArgument)
 		for i := int64(0); i < numberOfArgument; i++ {
-			symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-			ctxCode.index += 8
-			symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
-			ctxCode.index += symbolLength
+			symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+			ctxCode.rip += 8
+			symbol := string(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+symbolLength])
+			ctxCode.rip += symbolLength
 			arguments = append(arguments, symbol)
 		}
-		bytecodeLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		bytecode := ctxCode.bytecode[ctxCode.index : ctxCode.index+bytecodeLength]
-		ctxCode.index += bytecodeLength
+		bytecodeLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		bytecode := ctxCode.bytecode[ctxCode.rip : ctxCode.rip+bytecodeLength]
+		ctxCode.rip += bytecodeLength
 		funcInfo := FuncInfo{
 			Arguments: arguments,
 			Bytecode:  bytecode,
@@ -151,13 +151,13 @@ func (plasma *Plasma) do(ctx *context) {
 		funcObject.SetAny(funcInfo)
 		ctx.register = funcObject
 	case opcodes.NewClass:
-		ctxCode.index++
-		numberOfBases := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		bodyLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		body := ctxCode.bytecode[ctxCode.index : ctxCode.index+bodyLength]
-		ctxCode.index += bodyLength
+		ctxCode.rip++
+		numberOfBases := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		bodyLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		body := ctxCode.bytecode[ctxCode.rip : ctxCode.rip+bodyLength]
+		ctxCode.rip += bodyLength
 		// Get bases
 		bases := make([]*Value, numberOfBases)
 		for i := numberOfBases - 1; i >= 0; i-- {
@@ -171,9 +171,9 @@ func (plasma *Plasma) do(ctx *context) {
 		classObject.SetAny(classInfo)
 		ctx.register = classObject
 	case opcodes.Call:
-		ctxCode.index++
-		numberOfArguments := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
+		ctxCode.rip++
+		numberOfArguments := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
 		function := ctx.stack.Pop()
 		arguments := make([]*Value, numberOfArguments)
 		for i := numberOfArguments - 1; i >= 0; i-- {
@@ -247,27 +247,27 @@ func (plasma *Plasma) do(ctx *context) {
 			goto doCall
 		}
 	case opcodes.NewArray:
-		ctxCode.index++
-		numberOfValues := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
+		ctxCode.rip++
+		numberOfValues := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
 		values := make([]*Value, numberOfValues)
 		for i := numberOfValues - 1; i >= 0; i-- {
 			values[i] = ctx.stack.Pop()
 		}
 		ctx.register = plasma.NewArray(values)
 	case opcodes.NewTuple:
-		ctxCode.index++
-		numberOfValues := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
+		ctxCode.rip++
+		numberOfValues := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
 		values := make([]*Value, numberOfValues)
 		for i := numberOfValues - 1; i >= 0; i-- {
 			values[i] = ctx.stack.Pop()
 		}
 		ctx.register = plasma.NewTuple(values)
 	case opcodes.NewHash:
-		ctxCode.index++
-		numberOfValues := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
+		ctxCode.rip++
+		numberOfValues := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
 		hash := plasma.NewInternalHash()
 		for i := numberOfValues - 1; i >= 0; i-- {
 			key := ctx.stack.Pop()
@@ -279,11 +279,11 @@ func (plasma *Plasma) do(ctx *context) {
 		}
 		ctx.register = plasma.NewHash(hash)
 	case opcodes.Identifier:
-		ctxCode.index++
-		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
-		ctxCode.index += symbolLength
+		ctxCode.rip++
+		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		symbol := string(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+symbolLength])
+		ctxCode.rip += symbolLength
 		//fmt.Println(symbol)
 		var getError error
 		ctx.register, getError = ctx.currentSymbols.Get(symbol)
@@ -291,44 +291,44 @@ func (plasma *Plasma) do(ctx *context) {
 			panic(getError)
 		}
 	case opcodes.Integer:
-		ctxCode.index++
-		value := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
+		ctxCode.rip++
+		value := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
 		ctx.register = plasma.NewInt(value)
 	case opcodes.Float:
-		ctxCode.index++
-		value := common.BytesToFloat(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
+		ctxCode.rip++
+		value := common.BytesToFloat(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
 		ctx.register = plasma.NewFloat(value)
 	case opcodes.String:
-		ctxCode.index++
-		stringLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		contents := ctxCode.bytecode[ctxCode.index : ctxCode.index+stringLength]
-		ctxCode.index += stringLength
+		ctxCode.rip++
+		stringLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		contents := ctxCode.bytecode[ctxCode.rip : ctxCode.rip+stringLength]
+		ctxCode.rip += stringLength
 		ctx.register = plasma.NewString(contents)
 	case opcodes.Bytes:
-		ctxCode.index++
-		stringLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		contents := ctxCode.bytecode[ctxCode.index : ctxCode.index+stringLength]
-		ctxCode.index += stringLength
+		ctxCode.rip++
+		stringLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		contents := ctxCode.bytecode[ctxCode.rip : ctxCode.rip+stringLength]
+		ctxCode.rip += stringLength
 		ctx.register = plasma.NewBytes(contents)
 	case opcodes.True:
-		ctxCode.index++
+		ctxCode.rip++
 		ctx.register = plasma.true
 	case opcodes.False:
-		ctxCode.index++
+		ctxCode.rip++
 		ctx.register = plasma.false
 	case opcodes.None:
-		ctxCode.index++
+		ctxCode.rip++
 		ctx.register = plasma.none
 	case opcodes.Selector:
-		ctxCode.index++
-		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.index : ctxCode.index+8])
-		ctxCode.index += 8
-		symbol := string(ctxCode.bytecode[ctxCode.index : ctxCode.index+symbolLength])
-		ctxCode.index += symbolLength
+		ctxCode.rip++
+		symbolLength := common.BytesToInt(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+8])
+		ctxCode.rip += 8
+		symbol := string(ctxCode.bytecode[ctxCode.rip : ctxCode.rip+symbolLength])
+		ctxCode.rip += symbolLength
 		// fmt.Println(symbol)
 		selector := ctx.stack.Pop()
 		var getError error

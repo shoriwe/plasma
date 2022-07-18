@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"bufio"
 	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 	special_symbols "github.com/shoriwe/gplasma/pkg/common/special-symbols"
 )
@@ -132,10 +133,24 @@ func (plasma *Plasma) init() {
 	plasma.rootSymbols.Set(special_symbols.Function, plasma.function)
 	plasma.rootSymbols.Set(special_symbols.Class, plasma.class)
 	/*
+		- input
 		- print
 		- println
 		- range
 	*/
+	plasma.rootSymbols.Set(special_symbols.Input, plasma.NewBuiltInFunction(plasma.rootSymbols,
+		func(argument ...*Value) (*Value, error) {
+			_, writeError := plasma.Stdout.Write([]byte(argument[0].String()))
+			if writeError != nil {
+				panic(writeError)
+			}
+			scanner := bufio.NewScanner(plasma.Stdin)
+			if scanner.Scan() {
+				return plasma.NewString(scanner.Bytes()), nil
+			}
+			return plasma.none, nil
+		},
+	))
 	plasma.rootSymbols.Set(special_symbols.Print, plasma.NewBuiltInFunction(plasma.rootSymbols,
 		func(argument ...*Value) (*Value, error) {
 			for index, arg := range argument {

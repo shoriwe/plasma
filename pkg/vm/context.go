@@ -7,7 +7,7 @@ import (
 type (
 	contextCode struct {
 		bytecode []byte
-		index    int64
+		rip      int64
 		onExit   *common.ListStack[[]byte]
 	}
 	context struct {
@@ -24,7 +24,7 @@ type (
 func (ctx *context) hasNext() bool {
 	for ctx.code.HasNext() {
 		ctxCode := ctx.code.Peek()
-		if ctxCode.index >= int64(len(ctxCode.bytecode)) {
+		if ctxCode.rip >= int64(len(ctxCode.bytecode)) {
 			ctx.popCode()
 			continue
 		}
@@ -37,7 +37,7 @@ func (plasma *Plasma) newContext(bytecode []byte) *context {
 	codeStack := &common.ListStack[*contextCode]{}
 	codeStack.Push(&contextCode{
 		bytecode: bytecode,
-		index:    0,
+		rip:      0,
 		onExit:   &common.ListStack[[]byte]{},
 	})
 	return &context{
