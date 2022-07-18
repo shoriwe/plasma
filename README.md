@@ -1,146 +1,87 @@
 # plasma
 
-[![made-with-Go](https://img.shields.io/badge/Made%20with-Go-1f425f.svg)](http://golang.org)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/shoriwe/gplasma)
 [![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/gplasma)](https://goreportcard.com/report/github.com/shoriwe/gplasma)
+
+Plasma is an embeddable scripting ruby like language.
+
+<img src="logos/plasma-logos.jpeg" alt="logo" style="zoom:50%;" />
+
+## Features
+
+- Simple extensibility: Easy to add new go bindings
+- Zero dependency: The language used as a library doesn't depend on any external project.
+- Thread safe: the virtual machine and all the objects created during runtime are thread safe
+- Rich syntax: Generators, defer, special boolean operators and more (check documentation for more details)
+- Bytecode VM backend: the language compiles to a custom bytecode that can then stored and preloaded in the machine
+  without recompiling scripts.
+- Stop vm execution: Plasma let you stop at any the time the execution of the VM.
 
 ## Documentation
 
 You can find documentation in:
 
-- [Offical documentation](https://shoriwe.github.io/plasma/index.html)
+- [Official documentation](https://shoriwe.github.io/plasma/index.html)
 - [pkg.go.dev](https://pkg.go.dev/github.com/shoriwe/gplasma)
 
-## Description
-
-**`plasma`** is a dynamic programming language highly inspired in **`ruby`** syntax and semantics with interfaces and
-design focused in application embedding.
-
-## Try it
-
-You can have a working interpreter by compiling `cmd/plasma`.
-
-- You can compile a binary with (using **`Go-1.16`**)
+## Install interpreter
 
 ```shell
 go install github.com/shoriwe/gplasma/cmd/plasma@latest
 ```
 
-```
-...>plasma [MODE] [FLAG [FLAG [FLAG]]] [PROGRAM [PROGRAM [PROGRAM]]]
+## Preview
 
-[+] Notes
-        - No PROGRAM arguments will spawn a REPL
+## REPL
 
-[+] Flags
-        -h, --help              Show this help message
+You can start a REPL with:
 
-[+] Modes
-        module          tool to install, uninstall and initialize modules
-
-[+] Environment Variables
-        NoColor -> TRUE or FALSE                Disable color printing for this CLI
-        SitePackages -> PATH            This is the path to the Site-Packages of the running VM; Default is PATH/TO/PLASMA/EXECUTABLE/site-packages
+```shell
+plasma
 ```
 
-## Features
+![Repl demo](demos/repl-demo.gif)
 
-### Embedding
-
-**`plasma`** was designed to be embedded in other go applications, you should do it like:
+## Embedding and creating Go bindings
 
 ```go
 package main
 
 import (
-	"fmt"
-	"github.com/shoriwe/gplasma"
-	"github.com/shoriwe/gplasma/pkg/std/features/importlib"
+	"github.com/shoriwe/gplasma/pkg/vm"
 	"os"
 )
 
-var (
-	files                   []string
-	virtualMachine          *gplasma.VirtualMachine
-	sitePackagesPath        = "site-packages"
-)
+const myScript = `
+args = get_args()
+if args.__len__() > 1
+    println(args.__string__())
+else
+    println("No")
+end
+`
 
-// Setup the vm based on the options
-func setupVM() {
-	virtualMachine = gplasma.NewVirtualMachine()
-	currentDir, err := os.Getwd()
+func main() {
+	plasma := vm.NewVM(os.Stdin, os.Stdout, os.Stderr)
+	plasma.Load("get_args", func(plasma *vm.Plasma) *vm.Value {
+		return plasma.NewBuiltInFunction(plasma.Symbols(),
+			func(argument ...*vm.Value) (*vm.Value, error) {
+				tupleValues := make([]*vm.Value, 0, len(os.Args))
+				for _, cmdArg := range os.Args {
+					tupleValues = append(tupleValues, plasma.NewString([]byte(cmdArg)))
+				}
+				return plasma.NewTuple(tupleValues), nil
+			})
+	})
+	_, errorChannel, _ := plasma.ExecuteString(myScript)
+	err := <-errorChannel
 	if err != nil {
-		currentDir = "."
-	}
-	importSystem := importlib.NewImporter()
-	// Load Default modules to use with the VM
-	importSystem.LoadModule(regex.Regex)
-	//
-	virtualMachine.LoadFeature(
-		importSystem.Result(
-			importlib.NewRealFileSystem(sitePackagesPath),
-			importlib.NewRealFileSystem(currentDir),
-		),
-	)
-}
-
-func program() {
-	setupVM()
-	for _, filePath := range files {
-		fileHandler, openError := os.Open(filePath)
-		if openError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, openError.Error())
-			os.Exit(1)
-		}
-		content, readingError := io.ReadAll(fileHandler)
-		if readingError != nil {
-			_, _ = fmt.Fprintf(os.Stderr, readingError.Error())
-			os.Exit(1)
-		}
-		result, success := virtualMachine.ExecuteMain(string(content))
-		if !success {
-			_, _ = fmt.Fprintf(os.Stderr, "[%s] %s: %s\n", color.RedString("-"), result.TypeName(), result.String)
-			os.Exit(1)
-		}
+		panic(err)
 	}
 }
 ```
 
-In the future there will be a simpler way to embed it in your application, which shouldn't break the one provided
-before.
+## Contributing
 
-## Notable Differences
-
-The major difference between **`ruby`** and **`plasma`** is that in the first the last expression in a function will be
-returned without specifying the keyboard `return` but in **`plasma`** you should.
-
-Another one will be that function calls, will always need parentheses to be executed, other way their will be evaluated
-as objects.
-
-Example:
-
-This example shows a valid **`ruby`** code that returns from a function a string.
-
-```ruby
-def hello()
-    "Hello World"
-end
-
-puts hello
-```
-
-But in **`plasma`** you should code it something like:
-
-```ruby
-def hello()
-    return "Hello World" # Notice that here is used the keyboard "return"
-end
-
-println(hello())
-```
-
-# Useful references
-
-This where useful references that made this project possible.
-
-- [BNF grammar](https://ruby-doc.org/docs/ruby-doc-bundle/Manual/man-1.4/yacc.html)
-- [Syntax Documentation](https://ruby-doc.org/docs/ruby-doc-bundle/Manual/man-1.4/syntax.html)
+To contribute to this project please follow the [contribution guidelines](CONTRIBUTING.md) and
+the [code of conduct](CODE_OF_CONDUCT.md)
