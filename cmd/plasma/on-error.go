@@ -7,5 +7,5 @@ import (
 )
 
 func onError(file string, a ...any) {
-	_, _ = fmt.Fprint(os.Stderr, color.RedString("%s: %s\n", file, fmt.Sprint(a)))
+	_, _ = fmt.Fprint(os.Stderr, color.RedString("%s: %s\n", file, fmt.Sprint(a...)))
 }
