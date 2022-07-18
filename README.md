@@ -44,6 +44,10 @@ plasma
 
 ## Embedding and creating Go bindings
 
+```shell
+go get -u github.com/shoriwe/gplasma@v1
+```
+
 ```go
 package main
 
