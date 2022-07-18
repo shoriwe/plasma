@@ -123,12 +123,8 @@ func (plasma *Plasma) NewArray(values []*Value) *Value {
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			var rawString []byte
-			rawString = append(rawString, '[')
-			for index, value := range result.GetValues() {
-				if index != 0 {
-					rawString = append(rawString, ',', ' ')
-				}
-				rawString = append(rawString, value.String()...)
+			for _, value := range result.GetValues() {
+				rawString = append(rawString, byte(value.Int()))
 			}
 			rawString = append(rawString, ']')
 			return plasma.NewBytes(rawString), nil

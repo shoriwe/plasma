@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"encoding/binary"
 	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
 	"math"
 )
@@ -37,10 +38,14 @@ FloorDiv:           __floor_div__
 Modulus:            __mod__
 PowerOf:            __pow__
 Bool:               __bool__
-String             __string__
-Int                __int__
-Float              __float__
+String             	__string__
+Int                	__int__
+Float              	__float__
 Copy:               __copy__
+BigEndian			big_endian
+LittleEndian		little_endian
+FromBig				from_big
+FromLittle			from_little
 */
 func (plasma *Plasma) NewFloat(f float64) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, FloatId, plasma.float)
@@ -291,6 +296,34 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			return plasma.NewFloat(result.Float()), nil
+		},
+	))
+	result.Set(magic_functions.BigEndian, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			b := make([]byte, 8)
+			binary.BigEndian.PutUint64(b, math.Float64bits(result.Float()))
+			return plasma.NewBytes(b), nil
+		},
+	))
+	result.Set(magic_functions.LittleEndian, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			b := make([]byte, 8)
+			binary.LittleEndian.PutUint64(b, math.Float64bits(result.Float()))
+			return plasma.NewBytes(b), nil
+		},
+	))
+	result.Set(magic_functions.FromBig, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewFloat(math.Float64frombits(binary.BigEndian.Uint64(argument[0].GetBytes()))), nil
+		},
+	))
+	result.Set(magic_functions.FromLittle, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			return plasma.NewFloat(math.Float64frombits(binary.LittleEndian.Uint64(argument[0].GetBytes()))), nil
 		},
 	))
 	return result
