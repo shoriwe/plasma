@@ -47,6 +47,6 @@ func (plasma *Plasma) newContext(bytecode []byte) *context {
 		code:           codeStack,
 		stack:          &common.ListStack[*Value]{},
 		register:       nil,
-		currentSymbols: NewSymbols(plasma.rootSymbols),
+		currentSymbols: plasma.rootSymbols,
 	}
 }

@@ -186,6 +186,8 @@ func walk(visitor Visitor, node Node) {
 		}
 	case *DeleteStatement:
 		walk(visitor, n.X)
+	case *PassStatement:
+		return
 	case nil:
 		break // Ignore nil
 	default:
