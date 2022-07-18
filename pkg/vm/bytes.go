@@ -28,12 +28,12 @@ Tuple               __tuple__
 Get                 __get__
 Copy                __copy__
 Iter                __iter__
-TODO	Join				join
-TODO	Split				split
-TODO	Upper				upper
-TODO	Lower				lower
-TODO	Count				count
-TODO	Index				Index
+Join				join
+Split				split
+Upper				upper
+Lower				lower
+Count				count
+Index				Index
 */
 func (plasma *Plasma) NewBytes(contents []byte) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, BytesId, plasma.bytes)

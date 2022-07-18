@@ -1,6 +1,8 @@
 package vm
 
-import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+import (
+	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+)
 
 func (plasma *Plasma) arrayClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
@@ -27,6 +29,12 @@ Tuple               __tuple__
 Get                 __get__
 Set                 __set__
 Iter                __iter__
+Append				append
+Clear				clear
+Index				index
+Pop					pop
+Insert				insert
+Remove				remove
 */
 func (plasma *Plasma) NewArray(values []*Value) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, ArrayId, plasma.array)
@@ -179,5 +187,66 @@ func (plasma *Plasma) NewArray(values []*Value) *Value {
 			))
 			return iter, nil
 		}))
+	result.Set(magic_functions.Append, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			result.SetAny(append(result.GetValues(), argument[0]))
+			return plasma.none, nil
+		},
+	))
+	result.Set(magic_functions.Clear, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			result.SetAny([]*Value{})
+			return plasma.none, nil
+		},
+	))
+	result.Set(magic_functions.Index, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			for index, value := range result.GetValues() {
+				if value.Equal(argument[0]) {
+					return plasma.NewInt(int64(index)), nil
+				}
+			}
+			return plasma.NewInt(-1), nil
+		},
+	))
+	result.Set(magic_functions.Pop, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			currentValues := result.GetValues()
+			r := currentValues[len(currentValues)-1]
+			currentValues = currentValues[:len(currentValues)-1]
+			result.SetAny(currentValues)
+			return r, nil
+		},
+	))
+	result.Set(magic_functions.Insert, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			index := argument[0].Int()
+			value := argument[1]
+			currentValues := result.GetValues()
+			newValues := make([]*Value, 0, 1+int64(len(currentValues)))
+			newValues = append(newValues, currentValues[:index]...)
+			newValues = append(newValues, value)
+			newValues = append(newValues, currentValues[index:]...)
+			result.SetAny(newValues)
+			return plasma.none, nil
+		},
+	))
+	result.Set(magic_functions.Remove, plasma.NewBuiltInFunction(
+		result.vtable,
+		func(argument ...*Value) (*Value, error) {
+			index := argument[0].Int()
+			currentValues := result.GetValues()
+			newValues := make([]*Value, 0, 1+int64(len(currentValues)))
+			newValues = append(newValues, currentValues[:index]...)
+			newValues = append(newValues, currentValues[index+1:]...)
+			result.SetAny(newValues)
+			return plasma.none, nil
+		},
+	))
 	return result
 }
