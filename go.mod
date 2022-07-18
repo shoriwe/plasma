@@ -2,10 +2,7 @@ module github.com/shoriwe/gplasma
 
 go 1.18
 
-require (
-	github.com/fatih/color v1.12.0
-	github.com/otiai10/copy v1.6.0
-)
+require github.com/fatih/color v1.12.0
 
 require (
 	github.com/mattn/go-colorable v0.1.8 // indirect
