@@ -42,7 +42,9 @@ You can start a REPL with:
 plasma
 ```
 
-![Repl demo](demos/repl-demo.gif)
+<p align="center">
+	<img src="https://github.com/shoriwe/gplasma/raw/main/demos/repl-demo.gif" alt="logo" style="zoom:50%;" />
+</p>
 
 ## Embedding and creating Go bindings
 
