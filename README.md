@@ -5,7 +5,9 @@
 
 Plasma is an embeddable scripting ruby like language.
 
-<img src="https://github.com/shoriwe/gplasma/raw/main/logos/plasma-logos.jpeg" alt="logo" style="zoom:50%;" />
+<p align="center">
+	<img src="https://github.com/shoriwe/gplasma/raw/main/logos/plasma-logos.jpeg" alt="logo" style="zoom:50%;" />
+</p>
 
 ## Features
 
