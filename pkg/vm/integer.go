@@ -311,11 +311,18 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 				case IntId:
 					times := argument[0].Int()
 					value := result.Int()
+					if times >= 0 {
+						v := int64(1)
+						for t := int64(0); t < times; t++ {
+							v *= value
+						}
+						return plasma.NewInt(v), nil
+					}
 					v := int64(1)
-					for t := int64(0); t < times; t++ {
+					for t := int64(0); times < t; t-- {
 						v *= value
 					}
-					return plasma.NewInt(v), nil
+					return plasma.NewFloat(1 / float64(v)), nil
 				case FloatId:
 					return plasma.NewFloat(math.Pow(result.Float(), argument[0].Float())), nil
 				}

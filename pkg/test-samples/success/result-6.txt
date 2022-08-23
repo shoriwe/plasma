@@ -2,3 +2,6 @@ true
 true
 true
 true
+0.100000
+10
+0.100000

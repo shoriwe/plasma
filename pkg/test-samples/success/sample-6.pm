@@ -4,3 +4,6 @@ println(3248.35_2495.__string__() == "3248.352495")
 println(0.22 == 22E-2)
 # Scientific Notation
 println(10.22e-3 == 0.01022)
+println(10 ** -1)
+println(10 ** 1)
+println(10 ** -1.0)
