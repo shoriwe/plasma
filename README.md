@@ -1,5 +1,6 @@
 # plasma
 
+[![Build](https://github.com/shoriwe/gplasma/actions/workflows/build.yml/badge.svg)](https://github.com/shoriwe/gplasma/actions/workflows/build.yml)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/shoriwe/gplasma)
 [![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/gplasma)](https://goreportcard.com/report/github.com/shoriwe/gplasma)
 
