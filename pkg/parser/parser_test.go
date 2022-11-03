@@ -1,11 +1,11 @@
 package parser
 
 import (
-	"fmt"
 	"github.com/shoriwe/gplasma/pkg/ast"
 	"github.com/shoriwe/gplasma/pkg/lexer"
 	reader2 "github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/test-samples/basic"
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"
 	"testing"
@@ -387,21 +387,12 @@ func test(t *testing.T, samples map[string]string) {
 		lex := lexer.NewLexer(reader2.NewStringReader(sample))
 		parser := NewParser(lex)
 		program, parsingError := parser.Parse()
-		if parsingError != nil {
-			t.Error(fmt.Sprintf("%s in sample %s", parsingError.Error(), sampleScript))
-			return
-		}
+		assert.Nil(t, parsingError)
 		result := walk(program)
 		if len(result) != 0 {
 			result = result[:len(result)-1]
 		}
-		if result == sample {
-			t.Logf("\nSample: %s -> SUCCESS", sampleScript)
-		} else {
-			t.Errorf("\nSample: %s -> FAIL", sampleScript)
-			fmt.Println(sample)
-			fmt.Println(result)
-		}
+		assert.Equal(t, sample, result, sampleScript)
 	}
 }
 

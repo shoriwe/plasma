@@ -6,6 +6,7 @@ import (
 	"github.com/shoriwe/gplasma/pkg/lexer"
 	"github.com/shoriwe/gplasma/pkg/parser"
 	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -37,60 +38,32 @@ func executeScript(script string) (*Check, error) {
 
 func TestValidScript(t *testing.T) {
 	checkPass, passError := executeScript(validScript)
-	if passError != nil {
-		t.Fatal(passError)
-	}
-	if checkPass.CountInvalidFunctionNodes() > 0 {
-		t.Fatal("Invalid returns found")
-	}
-	if checkPass.CountInvalidGeneratorNodes() > 0 {
-		t.Fatal("Invalid Yields found")
-	}
-	if checkPass.CountInvalidLoopNodes() > 0 {
-		t.Fatal("Invalid break/redo/continue found")
-	}
+	assert.Nil(t, passError)
+	assert.Equal(t, 0, checkPass.CountInvalidFunctionNodes(), "Invalid returns found")
+	assert.Equal(t, 0, checkPass.CountInvalidGeneratorNodes(), "Invalid Yields found")
+	assert.Equal(t, 0, checkPass.CountInvalidLoopNodes(), "Invalid break/redo/continue found")
 }
 
 func TestInvalidReturn(t *testing.T) {
 	checkPass, passError := executeScript(invalidFunctionScript)
-	if passError != nil {
-		t.Fatal(passError)
-	}
-	const invalidReturns = 4
-	if found := checkPass.CountInvalidFunctionNodes(); found != invalidReturns {
-		t.Fatalf("Invalid returns bypassed the check pass, expecting %d but found %d", invalidReturns, found)
-	}
+	assert.Nil(t, passError)
+	assert.Equal(t, 4, checkPass.CountInvalidFunctionNodes())
 }
 
 func TestInvalidYield(t *testing.T) {
 	checkPass, passError := executeScript(invalidYieldScript)
-	if passError != nil {
-		t.Fatal(passError)
-	}
-	const invalidReturns = 4
-	if found := checkPass.CountInvalidGeneratorNodes(); found != invalidReturns {
-		t.Fatalf("Invalid returns bypassed the check pass, expecting %d but found %d", invalidReturns, found)
-	}
+	assert.Nil(t, passError)
+	assert.Equal(t, 4, checkPass.CountInvalidGeneratorNodes())
 }
 
 func TestInvalidContinue(t *testing.T) {
 	checkPass, passError := executeScript(invalidContinueScript)
-	if passError != nil {
-		t.Fatal(passError)
-	}
-	const invalidCount = 5
-	if found := checkPass.CountInvalidLoopNodes(); found != invalidCount {
-		t.Fatalf("Invalid returns bypassed the check pass, expecting %d but found %d", invalidCount, found)
-	}
+	assert.Nil(t, passError)
+	assert.Equal(t, 5, checkPass.CountInvalidLoopNodes())
 }
 
 func TestInvalidBreak(t *testing.T) {
 	checkPass, passError := executeScript(invalidBreakScript)
-	if passError != nil {
-		t.Fatal(passError)
-	}
-	const invalidCount = 5
-	if found := checkPass.CountInvalidLoopNodes(); found != invalidCount {
-		t.Fatalf("Invalid returns bypassed the check pass, expecting %d but found %d", invalidCount, found)
-	}
+	assert.Nil(t, passError)
+	assert.Equal(t, 5, checkPass.CountInvalidLoopNodes())
 }
