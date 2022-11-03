@@ -1,8 +1,6 @@
 package fail
 
-import (
-	_ "embed"
-)
+import _ "embed"
 
 var (
 	//go:embed sample-1.pm
@@ -12,7 +10,6 @@ var (
 	//go:embed sample-3.pm
 	sample3 string
 )
-
 var Samples = map[string]string{
 	"sample-1.pm": sample1,
 	"sample-2.pm": sample2,

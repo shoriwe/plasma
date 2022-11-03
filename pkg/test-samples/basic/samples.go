@@ -1,28 +1,10 @@
 package basic
 
-import (
-	_ "embed"
-)
+import _ "embed"
 
 var (
 	//go:embed sample-1.pm
 	sample1 string
-	//go:embed sample-2.pm
-	sample2 string
-	//go:embed sample-3.pm
-	sample3 string
-	//go:embed sample-4.pm
-	sample4 string
-	//go:embed sample-5.pm
-	sample5 string
-	//go:embed sample-6.pm
-	sample6 string
-	//go:embed sample-7.pm
-	sample7 string
-	//go:embed sample-8.pm
-	sample8 string
-	//go:embed sample-9.pm
-	sample9 string
 	//go:embed sample-10.pm
 	sample10 string
 	//go:embed sample-11.pm
@@ -43,6 +25,8 @@ var (
 	sample18 string
 	//go:embed sample-19.pm
 	sample19 string
+	//go:embed sample-2.pm
+	sample2 string
 	//go:embed sample-20.pm
 	sample20 string
 	//go:embed sample-21.pm
@@ -63,6 +47,8 @@ var (
 	sample28 string
 	//go:embed sample-29.pm
 	sample29 string
+	//go:embed sample-3.pm
+	sample3 string
 	//go:embed sample-30.pm
 	sample30 string
 	//go:embed sample-31.pm
@@ -83,6 +69,8 @@ var (
 	sample38 string
 	//go:embed sample-39.pm
 	sample39 string
+	//go:embed sample-4.pm
+	sample4 string
 	//go:embed sample-40.pm
 	sample40 string
 	//go:embed sample-41.pm
@@ -103,6 +91,8 @@ var (
 	sample48 string
 	//go:embed sample-49.pm
 	sample49 string
+	//go:embed sample-5.pm
+	sample5 string
 	//go:embed sample-50.pm
 	sample50 string
 	//go:embed sample-51.pm
@@ -121,18 +111,17 @@ var (
 	sample57 string
 	//go:embed sample-58.pm
 	sample58 string
+	//go:embed sample-6.pm
+	sample6 string
+	//go:embed sample-7.pm
+	sample7 string
+	//go:embed sample-8.pm
+	sample8 string
+	//go:embed sample-9.pm
+	sample9 string
 )
-
 var Samples = map[string]string{
 	"sample-1.pm":  sample1,
-	"sample-2.pm":  sample2,
-	"sample-3.pm":  sample3,
-	"sample-4.pm":  sample4,
-	"sample-5.pm":  sample5,
-	"sample-6.pm":  sample6,
-	"sample-7.pm":  sample7,
-	"sample-8.pm":  sample8,
-	"sample-9.pm":  sample9,
 	"sample-10.pm": sample10,
 	"sample-11.pm": sample11,
 	"sample-12.pm": sample12,
@@ -143,6 +132,7 @@ var Samples = map[string]string{
 	"sample-17.pm": sample17,
 	"sample-18.pm": sample18,
 	"sample-19.pm": sample19,
+	"sample-2.pm":  sample2,
 	"sample-20.pm": sample20,
 	"sample-21.pm": sample21,
 	"sample-22.pm": sample22,
@@ -153,6 +143,7 @@ var Samples = map[string]string{
 	"sample-27.pm": sample27,
 	"sample-28.pm": sample28,
 	"sample-29.pm": sample29,
+	"sample-3.pm":  sample3,
 	"sample-30.pm": sample30,
 	"sample-31.pm": sample31,
 	"sample-32.pm": sample32,
@@ -163,6 +154,7 @@ var Samples = map[string]string{
 	"sample-37.pm": sample37,
 	"sample-38.pm": sample38,
 	"sample-39.pm": sample39,
+	"sample-4.pm":  sample4,
 	"sample-40.pm": sample40,
 	"sample-41.pm": sample41,
 	"sample-42.pm": sample42,
@@ -173,6 +165,7 @@ var Samples = map[string]string{
 	"sample-47.pm": sample47,
 	"sample-48.pm": sample48,
 	"sample-49.pm": sample49,
+	"sample-5.pm":  sample5,
 	"sample-50.pm": sample50,
 	"sample-51.pm": sample51,
 	"sample-52.pm": sample52,
@@ -182,4 +175,8 @@ var Samples = map[string]string{
 	"sample-56.pm": sample56,
 	"sample-57.pm": sample57,
 	"sample-58.pm": sample58,
+	"sample-6.pm":  sample6,
+	"sample-7.pm":  sample7,
+	"sample-8.pm":  sample8,
+	"sample-9.pm":  sample9,
 }
