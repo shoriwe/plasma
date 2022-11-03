@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -107,4 +108,5 @@ func main() {
 	dir("basic")
 	dir("fail")
 	compare("success")
+	exec.Command("go", "fmt", "./...").Run()
 }
