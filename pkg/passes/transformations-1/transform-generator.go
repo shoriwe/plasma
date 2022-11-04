@@ -62,11 +62,11 @@ func (gt *generatorTransform) nextLabelIdentifier() (*ast3.Label, *ast3.Selector
 }
 
 /*
-	- Transform assignments to self.IDENTIFIER
-	- Update Identifier access to self.IDENTIFIER
-	- Add update jump condition variable before yield
-	- Add label after yield
-	- Update to has_next variable before return
+- Transform assignments to self.IDENTIFIER
+- Update Identifier access to self.IDENTIFIER
+- Add update jump condition variable before yield
+- Add label after yield
+- Update to has_next variable before return
 */
 func (gt *generatorTransform) resolve(node ast3.Node, symbols map[string]struct{}) []ast3.Node {
 	symbolsCopy := common.CopyMap(symbols)
@@ -279,11 +279,11 @@ func (gt *generatorTransform) process(node ast3.Node) []ast3.Node {
 }
 
 /*
-	- Prepend has_next jump
-	- Prepend jump table
-	- Append Body
-	- Append On finish label
-	- Append Return none
+- Prepend has_next jump
+- Prepend jump table
+- Append Body
+- Append On finish label
+- Append Return none
 */
 func (gt *generatorTransform) setup(body []ast3.Node) []ast3.Node {
 	result := make([]ast3.Node, 0, 3+len(gt.labelsOrder)+len(body))

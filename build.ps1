@@ -15,6 +15,6 @@ Foreach ($os IN $target_os) {
     Foreach ($arch IN $target_archs) {
         $env:GOOS = $os;
         $env:GOARCH = $arch;
-        go build -v -o "build/plasma-repl-$os-$arch$extension" -ldflags="-s -w" -trimpath -buildvcs=false -mod vendor ./cmd/plasma;
+        go build -v -o "build/plasma-repl-$os-$arch$extension" -ldflags="-s -w" -trimpath -buildvcs=false ./cmd/plasma;
     }
 }

@@ -6,25 +6,20 @@ import (
 	"github.com/shoriwe/gplasma/pkg/passes/simplification"
 	"github.com/shoriwe/gplasma/pkg/reader"
 	"github.com/shoriwe/gplasma/pkg/test-samples/basic"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func test(t *testing.T, samples map[string]string) {
-	for script, sample := range samples {
+	for _, sample := range samples {
 		l := lexer.NewLexer(reader.NewStringReader(sample))
 		p := parser.NewParser(l)
 		program, parseError := p.Parse()
-		if parseError != nil {
-			t.Fatalf("Failed in %s with error %s", script, parseError.Error())
-		}
+		assert.Nil(t, parseError)
 		simplified, simplificationError := simplification.Simplify(program)
-		if simplificationError != nil {
-			t.Fatal(simplificationError)
-		}
+		assert.Nil(t, simplificationError)
 		_, transformError := Transform(simplified)
-		if transformError != nil {
-			t.Fatal(transformError)
-		}
+		assert.Nil(t, transformError)
 	}
 }
 
