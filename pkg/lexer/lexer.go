@@ -186,7 +186,7 @@ func (lexer *Lexer) next() (*Token, error) {
 }
 
 /*
-	This function will yield just the necessary token, this means not repeated separators
+This function will yield just the necessary token, this means not repeated separators
 */
 func (lexer *Lexer) Next() (*Token, error) {
 	token, tokenizingError := lexer.next()
