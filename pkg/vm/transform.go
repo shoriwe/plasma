@@ -276,13 +276,54 @@ func (plasma *Plasma) toValueGoFunctionCall(symbols *Symbols, function reflect.V
 	}
 }
 
+func (plasma *Plasma) convertMethod(self reflect.Value, function reflect.Method) func(...any) any {
+	return func(arguments ...any) any {
+		in := make([]reflect.Value, 0, len(arguments)+1)
+		in = append(in, self)
+		for _, argument := range arguments {
+			in = append(in, reflect.ValueOf(argument))
+		}
+		out := function.Func.Call(in)
+		result := make([]any, 0, len(out))
+		for _, o := range out {
+			result = append(result, o.Interface())
+		}
+		switch len(result) {
+		case 0:
+			return nil
+		case 1:
+			return result[0]
+		default:
+			return result
+		}
+	}
+}
+
+func (plasma *Plasma) methodsToValue(symbols *Symbols, asReflectValue reflect.Value) (map[string]*Value, error) {
+	asReflectValueType := asReflectValue.Type()
+	numMethod := asReflectValueType.NumMethod()
+	methods := make(map[string]*Value, numMethod)
+	for index := 0; index < numMethod; index++ {
+		method := asReflectValueType.Method(index)
+		plasmaMethod, convertErr := plasma.ToValue(
+			symbols,
+			plasma.convertMethod(asReflectValue, method),
+		)
+		if convertErr != nil {
+			return nil, convertErr
+		}
+		methods[method.Name] = plasmaMethod
+	}
+	return methods, nil
+}
+
 func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	if v == nil {
 		return plasma.None(), nil
 	}
 	var (
-		obj *Value
-		// methods map[string]*Value
+		obj     *Value
+		methods map[string]*Value
 	)
 	if symbols == nil {
 		symbols = plasma.Symbols()
@@ -290,11 +331,11 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	asReflectValue := reflect.ValueOf(v)
 	asReflectValueType := asReflectValue.Type()
 	if asReflectValueType.NumMethod() > 0 {
-		// var transformError error
-		// methods, transformError = plasma.methodsToValue(symbols, asReflectValue)
-		// if transformError != nil {
-		// 	return nil, transformError
-		// }
+		var transformError error
+		methods, transformError = plasma.methodsToValue(symbols, asReflectValue)
+		if transformError != nil {
+			return nil, transformError
+		}
 	}
 	switch asReflectValue.Kind() {
 	case reflect.String:
@@ -396,6 +437,12 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 
 	default:
 		return nil, fmt.Errorf("cannot convert to plasma object")
+	}
+	if methods == nil {
+		return obj, nil
+	}
+	for methodName, method := range methods {
+		obj.Set(methodName, method)
 	}
 	return obj, nil
 }

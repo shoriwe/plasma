@@ -410,6 +410,43 @@ func TestPlasma_ToValueFuncMultipleReturnValues(t *testing.T) {
 	assert.Equal(t, int64(a2), ca2)
 }
 
+type testPlasma_ToValueAliasMemberFunc_stringAlias string
+
+func (s testPlasma_ToValueAliasMemberFunc_stringAlias) Say(word string) string {
+	return string(s) + word
+}
+
+func TestPlasma_ToValueAliasMemberFunc(t *testing.T) {
+	p := NewVM(nil, nil, nil)
+	tt := testPlasma_ToValueAliasMemberFunc_stringAlias("Say ")
+	s, err := p.ToValue(p.Symbols(), tt)
+	assert.Nil(t, err)
+	p.Load("s", func(plasma *Plasma) *Value { return s })
+	rCh, errCh, _ := p.ExecuteString("s.Say('Plasma')")
+	assert.Nil(t, <-errCh)
+	assert.Equal(t, tt.Say("Plasma"), (<-rCh).String())
+}
+
+type testPlasma_ToValueAliasMemberFuncVariadic string
+
+func (s testPlasma_ToValueAliasMemberFuncVariadic) Say(word string, b ...string) string {
+	for _, ss := range b {
+		word += ss
+	}
+	return string(s) + word
+}
+
+func TestPlasma_ToValueAliasMemberFuncVariadic(t *testing.T) {
+	p := NewVM(nil, nil, nil)
+	tt := testPlasma_ToValueAliasMemberFuncVariadic("Say ")
+	s, err := p.ToValue(p.Symbols(), tt)
+	assert.Nil(t, err)
+	p.Load("s", func(plasma *Plasma) *Value { return s })
+	rCh, errCh, _ := p.ExecuteString("s.Say('Plasma', 'hello', 'Plasma')")
+	assert.Nil(t, <-errCh)
+	assert.Equal(t, tt.Say("Plasma", "hello", "Plasma"), (<-rCh).String())
+}
+
 func TestPlasma_ToValuePointer(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	a := 100
