@@ -168,86 +168,186 @@ func (plasma *Plasma) FromValue(value *Value) (any, error) {
 	}
 }
 
-func (plasma *Plasma) toValueGoFunctionCall(symbols *Symbols, function reflect.Value) func(argument ...*Value) (*Value, error) {
-	return func(argument ...*Value) (*Value, error) {
-		functionType := function.Type()
-		if len(argument) != functionType.NumIn() {
-			return nil, fmt.Errorf("expecting %d arguments", functionType.NumIn())
+func (plasma *Plasma) callGoFunc(symbols *Symbols, function reflect.Value, arguments ...reflect.Value) (*Value, error) {
+	result := function.Call(arguments)
+	if len(result) == 0 {
+		return plasma.None(), nil
+	}
+	plasmaResult := make([]*Value, 0, len(result))
+	for _, r := range result {
+		asPlasma, err := plasma.ToValue(symbols, r.Interface())
+		if err != nil {
+			return nil, err
 		}
-		callArguments := make([]reflect.Value, 0, len(argument))
-		for argIndex, arg := range argument {
-			asGoValue, err := plasma.FromValue(arg)
-			if err != nil {
-				return nil, err
+		plasmaResult = append(plasmaResult, asPlasma)
+	}
+	if len(plasmaResult) == 1 {
+		return plasmaResult[0], nil
+	}
+	return plasma.NewArray(plasmaResult), nil
+}
+
+func reflectConvert(v reflect.Value, t reflect.Type) (reflect.Value, error) {
+	var result reflect.Value
+	nested := 0
+	targetType := t
+	for ; targetType.Kind() == reflect.Pointer; targetType = targetType.Elem() {
+		nested++
+	}
+	vType := v.Type()
+	switch {
+	case v.Type() == targetType:
+		result = v
+	case v.CanConvert(targetType):
+		result = v.Convert(targetType)
+	case v.Kind() == reflect.Map && vType.Key().Kind() == reflect.String && vType.Elem().Kind() == reflect.Interface && targetType.Kind() == reflect.Struct:
+		result = reflect.New(targetType).Elem()
+		for fieldIndex := 0; fieldIndex < targetType.NumField(); fieldIndex++ {
+			field := targetType.Field(fieldIndex)
+			value := v.MapIndex(reflect.ValueOf(field.Name))
+			if value.IsZero() {
+				return reflect.Value{}, fmt.Errorf("field with name %s not found in plasma object", targetType.Field(fieldIndex).Name)
 			}
-			targetType := functionType.In(argIndex)
-			argumentAsReflectValue := reflect.ValueOf(asGoValue)
-			asMapStringAny, asMapStringAnyOk := asGoValue.(map[string]any)
-			switch {
-			case argumentAsReflectValue.Type() == targetType:
-				break
-			case argumentAsReflectValue.CanConvert(targetType):
-				argumentAsReflectValue = argumentAsReflectValue.Convert(targetType)
-			case asMapStringAnyOk:
-				nested := 0
-				for ; targetType.Kind() == reflect.Pointer; targetType = targetType.Elem() {
-					nested++
-				}
-				argumentAsReflectValue = reflect.New(targetType).Elem()
-				for fieldIndex := 0; fieldIndex < targetType.NumField(); fieldIndex++ {
-					asMapStringAnyValue, found := asMapStringAny[targetType.Field(fieldIndex).Name]
-					if !found {
-						return nil, fmt.Errorf("field with name %s not found in plasma object", targetType.Field(fieldIndex).Name)
-					}
-					argumentAsReflectValue.FieldByName(targetType.Field(fieldIndex).Name).Set(reflect.ValueOf(asMapStringAnyValue))
-				}
-				for doNested := 0; doNested < nested; doNested++ {
-					argumentAsReflectValue = argumentAsReflectValue.Addr()
-				}
-			default:
-				// TODO: Fix me this should work in any scenario
-				return nil, fmt.Errorf("cannot convert unknown type of Go Obj")
+			result.FieldByName(field.Name).Set(reflect.ValueOf(value.Interface()))
+		}
+	default:
+		// TODO: Fix me this should work in any scenario
+		return reflect.Value{}, fmt.Errorf("cannot convert %s to %s", v.Type(), targetType)
+	}
+	for doNested := 0; doNested < nested; doNested++ {
+		result = result.Addr()
+	}
+	return result, nil
+}
+
+func (plasma *Plasma) toValueGoFunctionCall(symbols *Symbols, function reflect.Value) func(argument ...*Value) (*Value, error) {
+	functionType := function.Type()
+	numIn := functionType.NumIn()
+	isVariadic := functionType.IsVariadic()
+	if numIn == 0 {
+		return func(argument ...*Value) (*Value, error) {
+			return plasma.callGoFunc(symbols, function)
+		}
+	}
+	return func(arguments ...*Value) (*Value, error) {
+		if len(arguments) != numIn && !isVariadic {
+			return nil, fmt.Errorf("expecting %d arguments but recieved %d", numIn, len(arguments))
+		}
+		callArguments := make([]reflect.Value, 0, numIn)
+		var lastIndex int
+		if isVariadic {
+			lastIndex = numIn - 1
+		} else {
+			lastIndex = numIn
+		}
+		index := 0
+		for ; index < lastIndex; index++ {
+			argument := arguments[index]
+			asGoValue, asGoValueError := plasma.FromValue(argument)
+			if asGoValueError != nil {
+				return nil, asGoValueError
 			}
+			argumentAsReflectValue, convertErr := reflectConvert(reflect.ValueOf(asGoValue), functionType.In(index))
+			if convertErr != nil {
+				return nil, convertErr
+			}
+
 			callArguments = append(callArguments, argumentAsReflectValue)
 		}
-		result := function.Call(callArguments)
-		if len(result) == 0 {
-			return plasma.None(), nil
-		}
-		plasmaResult := make([]*Value, 0, len(result))
-		for _, r := range result {
-			asPlasma, err := plasma.ToValue(symbols, r.Interface())
-			if err != nil {
-				return nil, err
+		// Insert values to variadic
+		if index < numIn {
+			variadicArguments := make([]reflect.Value, 0, numIn-index)
+			variadicArgumentType := functionType.In(index).Elem()
+			for ; index < len(arguments); index++ {
+				argument := arguments[index]
+				asGoValue, asGoValueError := plasma.FromValue(argument)
+				if asGoValueError != nil {
+					return nil, asGoValueError
+				}
+				argumentAsReflectValue, convertErr := reflectConvert(reflect.ValueOf(asGoValue), variadicArgumentType)
+				if convertErr != nil {
+					return nil, convertErr
+				}
+				variadicArguments = append(variadicArguments, argumentAsReflectValue)
 			}
-			plasmaResult = append(plasmaResult, asPlasma)
+			callArguments = append(callArguments, variadicArguments...)
 		}
-		if len(plasmaResult) == 1 {
-			return plasmaResult[0], nil
-		}
-		return plasma.NewArray(plasmaResult), nil
+		return plasma.callGoFunc(symbols, function, callArguments...)
 	}
+}
+
+func (plasma *Plasma) convertMethod(self reflect.Value, function reflect.Method) func(...any) any {
+	return func(arguments ...any) any {
+		in := make([]reflect.Value, 0, len(arguments)+1)
+		in = append(in, self)
+		for _, argument := range arguments {
+			in = append(in, reflect.ValueOf(argument))
+		}
+		out := function.Func.Call(in)
+		result := make([]any, 0, len(out))
+		for _, o := range out {
+			result = append(result, o.Interface())
+		}
+		switch len(result) {
+		case 0:
+			return nil
+		case 1:
+			return result[0]
+		default:
+			return result
+		}
+	}
+}
+
+func (plasma *Plasma) methodsToValue(symbols *Symbols, asReflectValue reflect.Value) (map[string]*Value, error) {
+	asReflectValueType := asReflectValue.Type()
+	numMethod := asReflectValueType.NumMethod()
+	methods := make(map[string]*Value, numMethod)
+	for index := 0; index < numMethod; index++ {
+		method := asReflectValueType.Method(index)
+		plasmaMethod, convertErr := plasma.ToValue(
+			symbols,
+			plasma.convertMethod(asReflectValue, method),
+		)
+		if convertErr != nil {
+			return nil, convertErr
+		}
+		methods[method.Name] = plasmaMethod
+	}
+	return methods, nil
 }
 
 func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	if v == nil {
 		return plasma.None(), nil
 	}
+	var (
+		obj     *Value
+		methods map[string]*Value
+	)
 	if symbols == nil {
 		symbols = plasma.Symbols()
 	}
 	asReflectValue := reflect.ValueOf(v)
+	asReflectValueType := asReflectValue.Type()
+	if asReflectValueType.NumMethod() > 0 {
+		var transformError error
+		methods, transformError = plasma.methodsToValue(symbols, asReflectValue)
+		if transformError != nil {
+			return nil, transformError
+		}
+	}
 	switch asReflectValue.Kind() {
 	case reflect.String:
-		return plasma.NewString([]byte(v.(string))), nil
+		obj = plasma.NewString([]byte(asReflectValue.String()))
 	case reflect.Bool:
-		return plasma.NewBool(v.(bool)), nil
+		obj = plasma.NewBool(asReflectValue.Bool())
 	case reflect.Uint, reflect.Uintptr, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return plasma.NewInt(int64(asReflectValue.Uint())), nil
+		obj = plasma.NewInt(int64(asReflectValue.Uint()))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return plasma.NewInt(asReflectValue.Int()), nil
+		obj = plasma.NewInt(asReflectValue.Int())
 	case reflect.Float32, reflect.Float64:
-		return plasma.NewFloat(asReflectValue.Float()), nil
+		obj = plasma.NewFloat(asReflectValue.Float())
 	case reflect.Complex64, reflect.Complex128:
 		panic("Complex not supported by the VM")
 	case reflect.Slice, reflect.Array:
@@ -262,7 +362,7 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 			}
 			values = append(values, value)
 		}
-		return plasma.NewArray(values), nil
+		obj = plasma.NewArray(values)
 	case reflect.Map:
 		keys := asReflectValue.MapKeys()
 		hash := plasma.NewInternalHash()
@@ -282,10 +382,10 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 				return nil, fmt.Errorf("transform error: %w", setErr)
 			}
 		}
-		return plasma.NewHash(hash), nil
+		obj = plasma.NewHash(hash)
 	case reflect.Struct:
 		nFields := asReflectValue.NumField()
-		obj := plasma.NewValue(symbols, ValueId, plasma.Value())
+		obj = plasma.NewValue(symbols, ValueId, plasma.Value())
 		for i := 0; i < nFields; i++ {
 			if !asReflectValue.Field(i).CanInterface() {
 				continue
@@ -296,13 +396,12 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 			}
 			obj.Set(asReflectValue.Type().Field(i).Name, fieldValue)
 		}
-		return obj, nil
 	case reflect.Func:
-		return plasma.NewBuiltInFunction(symbols, plasma.toValueGoFunctionCall(symbols, asReflectValue)), nil
+		obj = plasma.NewBuiltInFunction(symbols, plasma.toValueGoFunctionCall(symbols, asReflectValue))
 	case reflect.Pointer:
 		return plasma.ToValue(symbols, asReflectValue.Elem().Interface())
 	case reflect.Chan:
-		obj := plasma.NewValue(symbols, ValueId, plasma.Value())
+		obj = plasma.NewValue(symbols, ValueId, plasma.Value())
 		obj.Set("recv", plasma.NewBuiltInFunction(obj.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
 				vv, ok := asReflectValue.Recv()
@@ -339,4 +438,11 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	default:
 		return nil, fmt.Errorf("cannot convert to plasma object")
 	}
+	if methods == nil {
+		return obj, nil
+	}
+	for methodName, method := range methods {
+		obj.Set(methodName, method)
+	}
+	return obj, nil
 }
