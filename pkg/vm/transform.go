@@ -280,21 +280,33 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	if v == nil {
 		return plasma.None(), nil
 	}
+	var (
+		obj *Value
+		// methods map[string]*Value
+	)
 	if symbols == nil {
 		symbols = plasma.Symbols()
 	}
 	asReflectValue := reflect.ValueOf(v)
+	asReflectValueType := asReflectValue.Type()
+	if asReflectValueType.NumMethod() > 0 {
+		// var transformError error
+		// methods, transformError = plasma.methodsToValue(symbols, asReflectValue)
+		// if transformError != nil {
+		// 	return nil, transformError
+		// }
+	}
 	switch asReflectValue.Kind() {
 	case reflect.String:
-		return plasma.NewString([]byte(v.(string))), nil
+		obj = plasma.NewString([]byte(asReflectValue.String()))
 	case reflect.Bool:
-		return plasma.NewBool(v.(bool)), nil
+		obj = plasma.NewBool(asReflectValue.Bool())
 	case reflect.Uint, reflect.Uintptr, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return plasma.NewInt(int64(asReflectValue.Uint())), nil
+		obj = plasma.NewInt(int64(asReflectValue.Uint()))
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return plasma.NewInt(asReflectValue.Int()), nil
+		obj = plasma.NewInt(asReflectValue.Int())
 	case reflect.Float32, reflect.Float64:
-		return plasma.NewFloat(asReflectValue.Float()), nil
+		obj = plasma.NewFloat(asReflectValue.Float())
 	case reflect.Complex64, reflect.Complex128:
 		panic("Complex not supported by the VM")
 	case reflect.Slice, reflect.Array:
@@ -309,7 +321,7 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 			}
 			values = append(values, value)
 		}
-		return plasma.NewArray(values), nil
+		obj = plasma.NewArray(values)
 	case reflect.Map:
 		keys := asReflectValue.MapKeys()
 		hash := plasma.NewInternalHash()
@@ -329,10 +341,10 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 				return nil, fmt.Errorf("transform error: %w", setErr)
 			}
 		}
-		return plasma.NewHash(hash), nil
+		obj = plasma.NewHash(hash)
 	case reflect.Struct:
 		nFields := asReflectValue.NumField()
-		obj := plasma.NewValue(symbols, ValueId, plasma.Value())
+		obj = plasma.NewValue(symbols, ValueId, plasma.Value())
 		for i := 0; i < nFields; i++ {
 			if !asReflectValue.Field(i).CanInterface() {
 				continue
@@ -343,13 +355,12 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 			}
 			obj.Set(asReflectValue.Type().Field(i).Name, fieldValue)
 		}
-		return obj, nil
 	case reflect.Func:
-		return plasma.NewBuiltInFunction(symbols, plasma.toValueGoFunctionCall(symbols, asReflectValue)), nil
+		obj = plasma.NewBuiltInFunction(symbols, plasma.toValueGoFunctionCall(symbols, asReflectValue))
 	case reflect.Pointer:
 		return plasma.ToValue(symbols, asReflectValue.Elem().Interface())
 	case reflect.Chan:
-		obj := plasma.NewValue(symbols, ValueId, plasma.Value())
+		obj = plasma.NewValue(symbols, ValueId, plasma.Value())
 		obj.Set("recv", plasma.NewBuiltInFunction(obj.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
 				vv, ok := asReflectValue.Recv()
@@ -386,4 +397,5 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	default:
 		return nil, fmt.Errorf("cannot convert to plasma object")
 	}
+	return obj, nil
 }
