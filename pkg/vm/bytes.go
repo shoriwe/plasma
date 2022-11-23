@@ -129,12 +129,26 @@ func (plasma *Plasma) NewBytes(contents []byte) *Value {
 			case IntId:
 				s := result.GetBytes()
 				index := argument[0].GetInt64()
+				if index < 0 {
+					index += int64(len(s))
+				}
 				return plasma.NewInt(int64(s[index])), nil
 			case TupleId:
 				s := result.GetBytes()
 				values := argument[0].GetValues()
 				startIndex := values[0].GetInt64()
-				endIndex := values[1].GetInt64()
+				if startIndex < 0 {
+					startIndex += int64(len(s))
+				}
+				var endIndex int64
+				if len(values) == 2 {
+					endIndex = values[1].GetInt64()
+				} else {
+					endIndex = int64(len(s)) - 1
+				}
+				if endIndex < 0 {
+					endIndex += int64(len(s))
+				}
 				return plasma.NewBytes(s[startIndex:endIndex]), nil
 			}
 			return nil, NotIndexable
