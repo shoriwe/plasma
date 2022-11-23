@@ -129,15 +129,30 @@ func (plasma *Plasma) NewString(contents []byte) *Value {
 			case IntId:
 				s := result.GetBytes()
 				index := argument[0].GetInt64()
+				if index < 0 {
+					index += int64(len(s))
+				}
 				return plasma.NewInt(int64(s[index])), nil
 			case TupleId:
 				s := result.GetBytes()
-				values := argument[0].GetValues()
-				startIndex := values[0].GetInt64()
-				endIndex := values[1].GetInt64()
+				tupleIndex := argument[0].GetValues()
+				startIndex := tupleIndex[0].GetInt64()
+				if startIndex < 0 {
+					startIndex += int64(len(s))
+				}
+				var endIndex int64
+				if len(tupleIndex) == 2 {
+					endIndex = tupleIndex[1].GetInt64()
+				} else {
+					endIndex = int64(len(s))
+				}
+				if endIndex < 0 {
+					endIndex += int64(len(s))
+				}
 				return plasma.NewString(s[startIndex:endIndex]), nil
+			default:
+				return nil, NotIndexable
 			}
-			return nil, NotIndexable
 		},
 	))
 	result.Set(magic_functions.Copy, plasma.NewBuiltInFunction(

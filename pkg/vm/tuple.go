@@ -105,7 +105,29 @@ func (plasma *Plasma) NewTuple(values []*Value) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId:
-				return result.GetValues()[argument[0].GetInt64()], nil
+				s := result.Values()
+				index := argument[0].GetInt64()
+				if index < 0 {
+					index += int64(len(s))
+				}
+				return s[index], nil
+			case TupleId:
+				s := result.Values()
+				tupleIndex := argument[0].GetValues()
+				startIndex := tupleIndex[0].GetInt64()
+				if startIndex < 0 {
+					startIndex += int64(len(s))
+				}
+				var endIndex int64
+				if len(tupleIndex) == 2 {
+					endIndex = tupleIndex[1].GetInt64()
+				} else {
+					endIndex = int64(len(s))
+				}
+				if endIndex < 0 {
+					endIndex += int64(len(s))
+				}
+				return plasma.NewTuple(s[startIndex:endIndex]), nil
 			default:
 				return nil, NotIndexable
 			}

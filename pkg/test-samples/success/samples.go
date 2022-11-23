@@ -90,8 +90,14 @@ var (
 	result46 string
 	//go:embed result-47.txt
 	result47 string
+	//go:embed result-48.txt
+	result48 string
+	//go:embed result-49.txt
+	result49 string
 	//go:embed result-5.txt
 	result5 string
+	//go:embed result-50.txt
+	result50 string
 	//go:embed result-6.txt
 	result6 string
 	//go:embed result-7.txt
@@ -184,8 +190,14 @@ var (
 	sample46 string
 	//go:embed sample-47.pm
 	sample47 string
+	//go:embed sample-48.pm
+	sample48 string
+	//go:embed sample-49.pm
+	sample49 string
 	//go:embed sample-5.pm
 	sample5 string
+	//go:embed sample-50.pm
+	sample50 string
 	//go:embed sample-6.pm
 	sample6 string
 	//go:embed sample-7.pm
@@ -430,5 +442,20 @@ var Samples = map[string]test_samples.Script{
 	"sample-47.pm": {
 		Code:   sample47,
 		Result: result47,
+	},
+
+	"sample-48.pm": {
+		Code:   sample48,
+		Result: result48,
+	},
+
+	"sample-49.pm": {
+		Code:   sample49,
+		Result: result49,
+	},
+
+	"sample-50.pm": {
+		Code:   sample50,
+		Result: result50,
 	},
 }
