@@ -14,81 +14,103 @@ func createHashString(a any) string {
 	return fmt.Sprintf("%s -- %v", reflect.TypeOf(a), a)
 }
 
-type Hash struct {
-	mutex       *sync.Mutex
-	internalMap map[string]*Value
-}
+type (
+	HashKeyValue struct {
+		Key   *Value
+		Value *Value
+	}
+	Hash struct {
+		mutex       *sync.Mutex
+		internalMap map[string]HashKeyValue
+	}
+)
 
+/*
+Size Returns the internal size of the hash
+*/
 func (h *Hash) Size() int64 {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	return int64(len(h.internalMap))
 }
 
+/*
+Set sets a key value pair
+*/
 func (h *Hash) Set(key, value *Value) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
+	var keyString string
 	switch key.TypeId() {
-	case StringId:
-		h.internalMap[createHashString(string(key.GetBytes()))] = value
-	case BytesId:
-		h.internalMap[createHashString(key.GetBytes())] = value
+	case StringId, BytesId:
+		keyString = createHashString(string(key.GetBytes()))
 	case BoolId:
-		h.internalMap[createHashString(key.GetBool())] = value
+		keyString = createHashString(key.GetBool())
 	case IntId:
-		h.internalMap[createHashString(key.GetInt64())] = value
+		keyString = createHashString(key.GetInt64())
 	case FloatId:
-		h.internalMap[createHashString(key.GetFloat64())] = value
+		keyString = createHashString(key.GetFloat64())
 	default:
 		return NotHashable
 	}
+	h.internalMap[keyString] = HashKeyValue{key, value}
 	return nil
 }
 
+/*
+Get retrieves a value based on the key
+*/
 func (h *Hash) Get(key *Value) (*Value, error) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
+	var keyString string
 	switch key.TypeId() {
-	case StringId:
-		return h.internalMap[createHashString(string(key.GetBytes()))], nil
-	case BytesId:
-		return h.internalMap[createHashString(key.GetBytes())], nil
+	case StringId, BytesId:
+		keyString = createHashString(string(key.GetBytes()))
 	case BoolId:
-		return h.internalMap[createHashString(key.GetBool())], nil
+		keyString = createHashString(key.GetBool())
 	case IntId:
-		return h.internalMap[createHashString(key.GetInt64())], nil
+		keyString = createHashString(key.GetInt64())
 	case FloatId:
-		return h.internalMap[createHashString(key.GetFloat64())], nil
+		keyString = createHashString(key.GetFloat64())
+	default:
+		return nil, NotHashable
 	}
-	return nil, NotHashable
+	return h.internalMap[keyString].Value, nil
 }
 
+/*
+Del deletes a key from the hash
+*/
 func (h *Hash) Del(key *Value) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
+	var keyString string
 	switch key.TypeId() {
-	case StringId:
-		delete(h.internalMap, createHashString(string(key.GetBytes())))
-	case BytesId:
-		delete(h.internalMap, createHashString(key.GetBytes()))
+	case StringId, BytesId:
+		keyString = createHashString(string(key.GetBytes()))
 	case BoolId:
-		delete(h.internalMap, createHashString(key.GetBool()))
+		keyString = createHashString(key.GetBool())
 	case IntId:
-		delete(h.internalMap, createHashString(key.GetInt64()))
+		keyString = createHashString(key.GetInt64())
 	case FloatId:
-		delete(h.internalMap, createHashString(key.GetFloat64()))
+		keyString = createHashString(key.GetFloat64())
 	default:
 		return NotHashable
 	}
+	delete(h.internalMap, keyString)
 	return nil
 }
 
+/*
+Copy creates a copy of the hash
+*/
 func (h *Hash) Copy() *Hash {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	result := &Hash{
 		mutex:       &sync.Mutex{},
-		internalMap: make(map[string]*Value, len(h.internalMap)),
+		internalMap: make(map[string]HashKeyValue, len(h.internalMap)),
 	}
 	for key, value := range h.internalMap {
 		result.internalMap[key] = value
@@ -96,6 +118,9 @@ func (h *Hash) Copy() *Hash {
 	return result
 }
 
+/*
+In verifies the key is inside the hash
+*/
 func (h *Hash) In(key *Value) (bool, error) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -117,9 +142,12 @@ func (h *Hash) In(key *Value) (bool, error) {
 	return found, nil
 }
 
+/*
+NewInternalHash Creates a new Hash object to handle hashing operations
+*/
 func (plasma *Plasma) NewInternalHash() *Hash {
 	return &Hash{
 		mutex:       &sync.Mutex{},
-		internalMap: map[string]*Value{},
+		internalMap: map[string]HashKeyValue{},
 	}
 }

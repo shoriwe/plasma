@@ -11,16 +11,7 @@ func (plasma *Plasma) hashClass() *Value {
 }
 
 /*
-NewHash magic function:
-In                  __in__
-Length              __len__
-Bool                __bool__
-String              __string__
-Bytes               __bytes__
-Get                 __get__
-Set                 __set__
-Del				 	__del__
-Copy                __copy__
+NewHash Creates a new hash Value
 */
 func (plasma *Plasma) NewHash(hash *Hash) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, HashId, plasma.hash)

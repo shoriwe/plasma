@@ -13,20 +13,7 @@ func (plasma *Plasma) tupleClass() *Value {
 }
 
 /*
-NewTuple magic function:
-In                  __in__
-Equal              __equal__
-NotEqual            __not_equal__
-Mul                 __mul__
-Length              __len__
-Bool                __bool__
-String              __string__
-Bytes               __bytes__
-Array               __array__
-Tuple               __tuple__
-Get                 __get__
-Copy                __copy__
-Iter                __iter__
+NewTuple Creates a new tuple Value
 */
 func (plasma *Plasma) NewTuple(values []*Value) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, TupleId, plasma.tuple)
@@ -96,16 +83,12 @@ func (plasma *Plasma) NewTuple(values []*Value) *Value {
 	result.Set(magic_functions.Bytes, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
-			var rawString []byte
-			rawString = append(rawString, '[')
-			for index, value := range result.GetValues() {
-				if index != 0 {
-					rawString = append(rawString, ',', ' ')
-				}
-				rawString = append(rawString, value.String()...)
+			vs := result.GetValues()
+			bytes := make([]byte, 0, len(vs))
+			for _, v := range vs {
+				bytes = append(bytes, Int[byte](v))
 			}
-			rawString = append(rawString, ']')
-			return plasma.NewBytes(rawString), nil
+			return plasma.NewBytes(bytes), nil
 		}))
 	result.Set(magic_functions.Array, plasma.NewBuiltInFunction(
 		result.vtable,
@@ -122,7 +105,36 @@ func (plasma *Plasma) NewTuple(values []*Value) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId:
-				return result.GetValues()[argument[0].GetInt64()], nil
+				s := result.Values()
+				index := argument[0].GetInt64()
+				if index < 0 {
+					index += int64(len(s))
+				}
+				return s[index], nil
+			case TupleId:
+				s := result.Values()
+				tupleIndex := argument[0].GetValues()
+				var (
+					startIndex int64
+					endIndex   int64
+				)
+				if tupleIndex[0].TypeId() != NoneId {
+					startIndex = tupleIndex[0].GetInt64()
+					if startIndex < 0 {
+						startIndex += int64(len(s))
+					}
+				} else {
+					startIndex = 0
+				}
+				if len(tupleIndex) == 2 && tupleIndex[1].TypeId() != NoneId {
+					endIndex = tupleIndex[1].GetInt64()
+					if endIndex < 0 {
+						endIndex += int64(len(s))
+					}
+				} else {
+					endIndex = int64(len(s))
+				}
+				return plasma.NewTuple(s[startIndex:endIndex]), nil
 			default:
 				return nil, NotIndexable
 			}

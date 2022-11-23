@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/shoriwe/gplasma/pkg/lexer"
+	"golang.org/x/exp/constraints"
 	"sync"
 )
 
@@ -78,70 +79,106 @@ func (value *Value) SetAny(v any) {
 	value.v = v
 }
 
+/*
+GetHash cast the internal value to *Hash
+*/
 func (value *Value) GetHash() *Hash {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v.(*Hash)
 }
 
+/*
+GetCallback cast the internal value to Callback
+*/
 func (value *Value) GetCallback() Callback {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v.(Callback)
 }
 
+/*
+GetValues cast the internal value to []*Value
+*/
 func (value *Value) GetValues() []*Value {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v.([]*Value)
 }
 
+/*
+GetFuncInfo cast the internal value to FuncInfo
+*/
 func (value *Value) GetFuncInfo() FuncInfo {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v.(FuncInfo)
 }
 
+/*
+GetClassInfo cast the internal value to *ClassInfo
+*/
 func (value *Value) GetClassInfo() *ClassInfo {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v.(*ClassInfo)
 }
 
+/*
+GetBytes cast the internal value to []byte
+*/
 func (value *Value) GetBytes() []byte {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v.([]byte)
 }
 
+/*
+GetBool cast the internal value to bool
+*/
 func (value *Value) GetBool() bool {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v.(bool)
 }
 
+/*
+GetInt64 cast the internal value to int64
+*/
 func (value *Value) GetInt64() int64 {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v.(int64)
 }
 
+/*
+GetFloat64 cast the internal value to float64
+*/
 func (value *Value) GetFloat64() float64 {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v.(float64)
 }
 
+/*
+GetAny returns whatever the internal value contains
+*/
 func (value *Value) GetAny() any {
 	value.mutex.Lock()
 	defer value.mutex.Unlock()
 	return value.v
 }
 
+/*
+Set a plasma *Value to a symbol inside the Object
+*/
 func (value *Value) Set(symbol string, v *Value) {
 	value.vtable.Set(symbol, v)
 }
 
+/*
+Get Retrieves the value named as the symbol
+*/
 func (value *Value) Get(symbol string) (*Value, error) {
 	result, getError := value.vtable.Get(symbol)
 	if getError == nil {
@@ -158,10 +195,16 @@ func (value *Value) Get(symbol string) (*Value, error) {
 	return result, nil
 }
 
+/*
+Del deletes the reference of the value named by the symbol
+*/
 func (value *Value) Del(symbol string) error {
 	return value.vtable.Del(symbol)
 }
 
+/*
+Bool interpret the Value as a go bool
+*/
 func (value *Value) Bool() bool {
 	switch value.TypeId() {
 	case ValueId:
@@ -192,74 +235,117 @@ func (value *Value) Bool() bool {
 	return false
 }
 
-func (value *Value) String() string {
+/*
+Bytes interpret the Value as a go []byte
+*/
+func (value *Value) Bytes() []byte {
 	switch value.TypeId() {
 	case ValueId:
-		return "?Value"
-	case StringId, BytesId:
-		return string(value.GetBytes())
-	case BoolId:
-		if value.GetBool() {
-			return lexer.TrueString
-		}
-		return lexer.FalseString
-	case NoneId:
-		return lexer.NoneString
-	case IntId:
-		return fmt.Sprintf("%d", value.GetInt64())
-	case FloatId:
-		return fmt.Sprintf("%f", value.GetFloat64())
-	case ArrayId:
-		return "[...]"
-	case TupleId:
-		return "(...)"
-	case HashId:
-		return "{...}"
-	case BuiltInFunctionId:
-		return "?BuiltInFunction"
-	case FunctionId:
-		return "?Function"
-	case BuiltInClassId:
-		return "?BuiltInClass"
-	case ClassId:
-		return "?Class"
-	}
-	return ""
-}
-
-func (value *Value) Contents() []byte {
-	switch value.TypeId() {
-	case ValueId:
-		return nil
+		return []byte("?Value")
 	case StringId, BytesId:
 		return value.GetBytes()
 	case BoolId:
-		return nil
+		if value.GetBool() {
+			return []byte(lexer.TrueString)
+		}
+		return []byte(lexer.FalseString)
 	case NoneId:
-		return nil
+		return []byte(lexer.NoneString)
 	case IntId:
-		return nil
+		return []byte(fmt.Sprintf("%d", value.GetInt64()))
 	case FloatId:
-		return nil
+		return []byte(fmt.Sprintf("%f", value.GetFloat64()))
 	case ArrayId:
-		return nil
+		value.mutex.Lock()
+		defer value.mutex.Unlock()
+		builder := &bytes.Buffer{}
+		builder.WriteByte('[')
+		for index, v := range value.v.([]*Value) {
+			if index != 0 {
+				builder.Write([]byte{',', ' '})
+			}
+			if v.TypeId() == StringId {
+				builder.WriteByte('"')
+				builder.Write(v.Bytes())
+				builder.WriteByte('"')
+			} else {
+				builder.Write(v.Bytes())
+			}
+		}
+		builder.WriteByte(']')
+		return builder.Bytes()
 	case TupleId:
-		return nil
+		value.mutex.Lock()
+		defer value.mutex.Unlock()
+		builder := &bytes.Buffer{}
+		builder.WriteByte('(')
+		for index, v := range value.v.([]*Value) {
+			if index != 0 {
+				builder.Write([]byte{',', ' '})
+			}
+			if v.TypeId() == StringId {
+				builder.WriteByte('"')
+				builder.Write(v.Bytes())
+				builder.WriteByte('"')
+			} else {
+				builder.Write(v.Bytes())
+			}
+		}
+		builder.WriteByte(')')
+		return builder.Bytes()
 	case HashId:
-		return nil
+		hash := value.GetHash()
+		hash.mutex.Lock()
+		defer hash.mutex.Unlock()
+		builder := &bytes.Buffer{}
+		builder.WriteByte('{')
+		index := 0
+		for _, keyValue := range hash.internalMap {
+			if index != 0 {
+				builder.Write([]byte{',', ' '})
+			}
+			if keyValue.Key.TypeId() == StringId {
+				builder.WriteByte('"')
+				builder.Write(keyValue.Key.Bytes())
+				builder.WriteByte('"')
+			} else {
+				builder.Write(keyValue.Key.Bytes())
+			}
+			builder.Write([]byte{':', ' '})
+			if keyValue.Value.TypeId() == StringId {
+				builder.WriteByte('"')
+				builder.Write(keyValue.Value.Bytes())
+				builder.WriteByte('"')
+			} else {
+				builder.Write(keyValue.Value.Bytes())
+			}
+			index++
+		}
+		builder.WriteByte('}')
+		return builder.Bytes()
 	case BuiltInFunctionId:
-		return nil
+		return []byte("?BuiltInFunction")
 	case FunctionId:
-		return nil
+		return []byte("?Function")
 	case BuiltInClassId:
-		return nil
+		return []byte("?BuiltInClass")
 	case ClassId:
-		return nil
+		return []byte("?Class")
 	}
-	return nil
+	return []byte{}
 }
 
-func (value *Value) Int() int64 {
+/*
+String interpret the Value as a go string
+*/
+func (value *Value) String() string {
+	return string(value.Bytes())
+}
+
+/*
+Int interpret the Value as a go int64
+*/
+func Int[T constraints.Integer](value *Value) T {
 	switch value.TypeId() {
 	case ValueId:
 		return 0
@@ -275,9 +361,9 @@ func (value *Value) Int() int64 {
 	case NoneId:
 		return 0
 	case IntId:
-		return value.GetInt64()
+		return T(value.GetInt64())
 	case FloatId:
-		return int64(value.GetFloat64())
+		return T(value.GetFloat64())
 	case ArrayId:
 		return 0
 	case TupleId:
@@ -296,7 +382,7 @@ func (value *Value) Int() int64 {
 	return 0
 }
 
-func (value *Value) Float() float64 {
+func Float[T constraints.Float](value *Value) T {
 	switch value.TypeId() {
 	case ValueId:
 		return 0
@@ -312,9 +398,9 @@ func (value *Value) Float() float64 {
 	case NoneId:
 		return 0
 	case IntId:
-		return float64(value.GetInt64())
+		return T(value.GetInt64())
 	case FloatId:
-		return value.GetFloat64()
+		return T(value.GetFloat64())
 	case ArrayId:
 		return 0
 	case TupleId:
@@ -438,9 +524,9 @@ func (value *Value) NoneEqual(other *Value) bool {
 func (value *Value) IntEqual(other *Value) bool {
 	switch other.TypeId() {
 	case IntId:
-		return value.Int() == other.Int()
+		return Int[int64](value) == Int[int64](other)
 	case FloatId:
-		return value.Float() == other.Float()
+		return Float[float64](value) == Float[float64](other)
 	}
 	return false
 }
@@ -448,9 +534,9 @@ func (value *Value) IntEqual(other *Value) bool {
 func (value *Value) FloatEqual(other *Value) bool {
 	switch other.TypeId() {
 	case IntId:
-		return value.Int() == other.Int()
+		return Float[float64](value) == Float[float64](other)
 	case FloatId:
-		return value.Float() == other.Float()
+		return Float[float64](value) == Float[float64](other)
 	}
 	return false
 }
@@ -513,14 +599,7 @@ func (value *Value) ClassEqual(other *Value) bool {
 }
 
 /*
-NewValue magic functions (on demand)
-And                __and__
-Or                 __or__
-Xor                __xor__
-Is                 __is__
-Implements         __implements__
-Bool               __bool__
-Class              __class__
+NewValue Creates a new Value
 */
 func (plasma *Plasma) NewValue(parent *Symbols, typeId TypeId, class *Value) *Value {
 	return &Value{

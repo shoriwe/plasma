@@ -22,7 +22,7 @@ func TestSuccessSampleScripts(t *testing.T) {
 			assert.Nil(t, <-errCh)
 			<-rCh
 			s := out.String()
-			assert.Equal(t, out.String(), script.Result, fmt.Sprintf("Expecting:\n%s\nBut received:\n%s", script.Result, s))
+			assert.Equal(t, script.Result, out.String(), fmt.Sprintf("Expecting:\n%s\nBut received:\n%s", script.Result, s))
 		}(index)
 	}
 }

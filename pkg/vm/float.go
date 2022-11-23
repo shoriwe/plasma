@@ -9,43 +9,13 @@ import (
 func (plasma *Plasma) floatClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
 	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
-		return plasma.NewFloat(argument[0].Float()), nil
+		return plasma.NewFloat(Float[float64](argument[0])), nil
 	}))
 	return class
 }
 
 /*
-NewFloat magic function:
-Positive:           __positive__
-Negative:           __negative__
-NegateBits:         __negate_bits__
-Equal:             __equal__
-NotEqual:           __not_equal__
-GreaterThan:        __greater_than__
-GreaterOrEqualThan: __greater_or_equal_than__
-LessThan:           __less_than__
-LessOrEqualThan:    __less_or_equal_than__
-BitwiseOr:          __bitwise_or__
-BitwiseXor:         __bitwise_xor__
-BitwiseAnd:         __bitwise_and__
-BitwiseLeft:        __bitwise_left__
-BitwiseRight:       __bitwise_right__
-Add:                __add__
-Sub:                __sub__
-Mul:                __mul__
-Div:                __div__
-FloorDiv:           __floor_div__
-Modulus:            __mod__
-PowerOf:            __pow__
-Bool:               __bool__
-String             	__string__
-Int                	__int__
-Float              	__float__
-Copy:               __copy__
-BigEndian			big_endian
-LittleEndian		little_endian
-FromBig				from_big
-FromLittle			from_little
+NewFloat creates a new float Value
 */
 func (plasma *Plasma) NewFloat(f float64) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, FloatId, plasma.float)
@@ -59,13 +29,13 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 	result.Set(magic_functions.Negative, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
-			return plasma.NewFloat(-result.Float()), nil
+			return plasma.NewFloat(-Float[float64](result)), nil
 		},
 	))
 	result.Set(magic_functions.NegateBits, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
-			return plasma.NewFloat(math.Float64frombits(^math.Float64bits(result.Float()))), nil
+			return plasma.NewFloat(math.Float64frombits(^math.Float64bits(Float[float64](result)))), nil
 		},
 	))
 	result.Set(magic_functions.Equal, plasma.NewBuiltInFunction(
@@ -93,7 +63,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewBool(result.Float() > argument[0].Float()), nil
+				return plasma.NewBool(Float[float64](result) > Float[float64](argument[0])), nil
 			}
 			return nil, NotComparable
 		},
@@ -103,7 +73,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewBool(result.Float() >= argument[0].Float()), nil
+				return plasma.NewBool(Float[float64](result) >= Float[float64](argument[0])), nil
 			}
 			return nil, NotComparable
 		},
@@ -113,7 +83,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewBool(result.Float() < argument[0].Float()), nil
+				return plasma.NewBool(Float[float64](result) < Float[float64](argument[0])), nil
 			}
 			return nil, NotComparable
 		},
@@ -123,7 +93,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewBool(result.Float() <= argument[0].Float()), nil
+				return plasma.NewBool(Float[float64](result) <= Float[float64](argument[0])), nil
 			}
 			return nil, NotComparable
 		},
@@ -135,7 +105,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 			case IntId, FloatId:
 				return plasma.NewFloat(
 					math.Float64frombits(
-						math.Float64bits(result.Float()) | math.Float64bits(argument[0].Float()),
+						math.Float64bits(Float[float64](result)) | math.Float64bits(Float[float64](argument[0])),
 					),
 				), nil
 			}
@@ -149,7 +119,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 			case IntId, FloatId:
 				return plasma.NewFloat(
 					math.Float64frombits(
-						math.Float64bits(result.Float()) ^ math.Float64bits(argument[0].Float()),
+						math.Float64bits(Float[float64](result)) ^ math.Float64bits(Float[float64](argument[0])),
 					),
 				), nil
 			}
@@ -163,7 +133,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 			case IntId, FloatId:
 				return plasma.NewFloat(
 					math.Float64frombits(
-						math.Float64bits(result.Float()) & math.Float64bits(argument[0].Float()),
+						math.Float64bits(Float[float64](result)) & math.Float64bits(Float[float64](argument[0])),
 					),
 				), nil
 			}
@@ -177,7 +147,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 			case IntId, FloatId:
 				return plasma.NewFloat(
 					math.Float64frombits(
-						math.Float64bits(result.Float()) << math.Float64bits(argument[0].Float()),
+						math.Float64bits(Float[float64](result)) << math.Float64bits(Float[float64](argument[0])),
 					),
 				), nil
 			}
@@ -191,7 +161,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 			case IntId, FloatId:
 				return plasma.NewFloat(
 					math.Float64frombits(
-						math.Float64bits(result.Float()) >> math.Float64bits(argument[0].Float()),
+						math.Float64bits(Float[float64](result)) >> math.Float64bits(Float[float64](argument[0])),
 					),
 				), nil
 			}
@@ -203,7 +173,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewFloat(result.Float() + argument[0].Float()), nil
+				return plasma.NewFloat(Float[float64](result) + Float[float64](argument[0])), nil
 			}
 			return nil, NotOperable
 		},
@@ -213,7 +183,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewFloat(result.Float() - argument[0].Float()), nil
+				return plasma.NewFloat(Float[float64](result) - Float[float64](argument[0])), nil
 			}
 			return nil, NotOperable
 		},
@@ -223,7 +193,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewFloat(result.Float() * argument[0].Float()), nil
+				return plasma.NewFloat(Float[float64](result) * Float[float64](argument[0])), nil
 			}
 			return nil, NotOperable
 		},
@@ -233,7 +203,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewFloat(result.Float() / argument[0].Float()), nil
+				return plasma.NewFloat(Float[float64](result) / Float[float64](argument[0])), nil
 			}
 			return nil, NotOperable
 		},
@@ -243,7 +213,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewInt(int64(result.Float() / argument[0].Float())), nil
+				return plasma.NewInt(int64(Float[float64](result) / Float[float64](argument[0]))), nil
 			}
 			return nil, NotOperable
 		},
@@ -253,7 +223,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewFloat(math.Mod(result.Float(), argument[0].Float())), nil
+				return plasma.NewFloat(math.Mod(Float[float64](result), Float[float64](argument[0]))), nil
 			}
 			return nil, NotOperable
 		},
@@ -263,7 +233,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		func(argument ...*Value) (*Value, error) {
 			switch argument[0].TypeId() {
 			case IntId, FloatId:
-				return plasma.NewFloat(math.Pow(result.Float(), argument[0].Float())), nil
+				return plasma.NewFloat(math.Pow(Float[float64](result), Float[float64](argument[0]))), nil
 			}
 			return nil, NotOperable
 		},
@@ -283,7 +253,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 	result.Set(magic_functions.Int, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
-			return plasma.NewInt(result.Int()), nil
+			return plasma.NewInt(Int[int64](result)), nil
 		},
 	))
 	result.Set(magic_functions.Float, plasma.NewBuiltInFunction(
@@ -295,14 +265,14 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 	result.Set(magic_functions.Copy, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
-			return plasma.NewFloat(result.Float()), nil
+			return plasma.NewFloat(Float[float64](result)), nil
 		},
 	))
 	result.Set(magic_functions.BigEndian, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			b := make([]byte, 8)
-			binary.BigEndian.PutUint64(b, math.Float64bits(result.Float()))
+			binary.BigEndian.PutUint64(b, math.Float64bits(Float[float64](result)))
 			return plasma.NewBytes(b), nil
 		},
 	))
@@ -310,7 +280,7 @@ func (plasma *Plasma) NewFloat(f float64) *Value {
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			b := make([]byte, 8)
-			binary.LittleEndian.PutUint64(b, math.Float64bits(result.Float()))
+			binary.LittleEndian.PutUint64(b, math.Float64bits(Float[float64](result)))
 			return plasma.NewBytes(b), nil
 		},
 	))

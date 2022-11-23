@@ -88,8 +88,24 @@ var (
 	result45 string
 	//go:embed result-46.txt
 	result46 string
+	//go:embed result-47.txt
+	result47 string
+	//go:embed result-48.txt
+	result48 string
+	//go:embed result-49.txt
+	result49 string
 	//go:embed result-5.txt
 	result5 string
+	//go:embed result-50.txt
+	result50 string
+	//go:embed result-51.txt
+	result51 string
+	//go:embed result-52.txt
+	result52 string
+	//go:embed result-53.txt
+	result53 string
+	//go:embed result-54.txt
+	result54 string
 	//go:embed result-6.txt
 	result6 string
 	//go:embed result-7.txt
@@ -180,8 +196,24 @@ var (
 	sample45 string
 	//go:embed sample-46.pm
 	sample46 string
+	//go:embed sample-47.pm
+	sample47 string
+	//go:embed sample-48.pm
+	sample48 string
+	//go:embed sample-49.pm
+	sample49 string
 	//go:embed sample-5.pm
 	sample5 string
+	//go:embed sample-50.pm
+	sample50 string
+	//go:embed sample-51.pm
+	sample51 string
+	//go:embed sample-52.pm
+	sample52 string
+	//go:embed sample-53.pm
+	sample53 string
+	//go:embed sample-54.pm
+	sample54 string
 	//go:embed sample-6.pm
 	sample6 string
 	//go:embed sample-7.pm
@@ -421,5 +453,45 @@ var Samples = map[string]test_samples.Script{
 	"sample-46.pm": {
 		Code:   sample46,
 		Result: result46,
+	},
+
+	"sample-47.pm": {
+		Code:   sample47,
+		Result: result47,
+	},
+
+	"sample-48.pm": {
+		Code:   sample48,
+		Result: result48,
+	},
+
+	"sample-49.pm": {
+		Code:   sample49,
+		Result: result49,
+	},
+
+	"sample-50.pm": {
+		Code:   sample50,
+		Result: result50,
+	},
+
+	"sample-51.pm": {
+		Code:   sample51,
+		Result: result51,
+	},
+
+	"sample-52.pm": {
+		Code:   sample52,
+		Result: result52,
+	},
+
+	"sample-53.pm": {
+		Code:   sample53,
+		Result: result53,
+	},
+
+	"sample-54.pm": {
+		Code:   sample54,
+		Result: result54,
 	},
 }

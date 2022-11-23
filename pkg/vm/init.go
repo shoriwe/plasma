@@ -201,19 +201,19 @@ func (plasma *Plasma) init() {
 			)
 			if len(argument) == 3 {
 				step := argument[2]
-				intStep = step.Int()
-				floatStep = step.Float()
+				intStep = Int[int64](step)
+				floatStep = Float[float64](step)
 				if !useFloatStep {
 					useFloatStep = step.TypeId() == FloatId
 				}
 			}
 			iter := plasma.NewValue(plasma.rootSymbols, ValueId, plasma.value)
 			if useFloatStep {
-				iter.SetAny(start.Float())
+				iter.SetAny(Float[float64](start))
 				iter.Set(magic_functions.HasNext, plasma.NewBuiltInFunction(
 					iter.vtable,
 					func(_ ...*Value) (*Value, error) {
-						return plasma.NewBool(iter.GetFloat64() < end.Float()), nil
+						return plasma.NewBool(iter.GetFloat64() < Float[float64](end)), nil
 					},
 				))
 				iter.Set(magic_functions.Next, plasma.NewBuiltInFunction(
@@ -226,11 +226,11 @@ func (plasma *Plasma) init() {
 					},
 				))
 			} else {
-				iter.SetAny(start.Int())
+				iter.SetAny(Int[int64](start))
 				iter.Set(magic_functions.HasNext, plasma.NewBuiltInFunction(
 					iter.vtable,
 					func(_ ...*Value) (*Value, error) {
-						return plasma.NewBool(iter.GetInt64() < end.Int()), nil
+						return plasma.NewBool(iter.GetInt64() < Int[int64](end)), nil
 					},
 				))
 				iter.Set(magic_functions.Next, plasma.NewBuiltInFunction(

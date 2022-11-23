@@ -8,32 +8,13 @@ import (
 func (plasma *Plasma) bytesClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
 	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
-		return plasma.NewBytes(argument[0].Contents()), nil
+		return plasma.NewBytes(argument[0].Bytes()), nil
 	}))
 	return class
 }
 
 /*
-NewBytes magic function:
-Equal              __equal__
-NotEqual            __not_equal__
-Add                 __add__
-Mul                 __mul__
-Length              __len__
-Bool                __bool__
-String              __string__
-Bytes               __bytes__
-Array               __array__
-Tuple               __tuple__
-Get                 __get__
-Copy                __copy__
-Iter                __iter__
-Join				join
-Split				split
-Upper				upper
-Lower				lower
-Count				count
-Index				Index
+NewBytes Creates a new bytes Value
 */
 func (plasma *Plasma) NewBytes(contents []byte) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, BytesId, plasma.bytes)
@@ -148,15 +129,37 @@ func (plasma *Plasma) NewBytes(contents []byte) *Value {
 			case IntId:
 				s := result.GetBytes()
 				index := argument[0].GetInt64()
+				if index < 0 {
+					index += int64(len(s))
+				}
 				return plasma.NewInt(int64(s[index])), nil
 			case TupleId:
 				s := result.GetBytes()
-				values := argument[0].GetValues()
-				startIndex := values[0].GetInt64()
-				endIndex := values[1].GetInt64()
+				tupleIndex := argument[0].GetValues()
+				var (
+					startIndex int64
+					endIndex   int64
+				)
+				if tupleIndex[0].TypeId() != NoneId {
+					startIndex = tupleIndex[0].GetInt64()
+					if startIndex < 0 {
+						startIndex += int64(len(s))
+					}
+				} else {
+					startIndex = 0
+				}
+				if len(tupleIndex) == 2 && tupleIndex[1].TypeId() != NoneId {
+					endIndex = tupleIndex[1].GetInt64()
+					if endIndex < 0 {
+						endIndex += int64(len(s))
+					}
+				} else {
+					endIndex = int64(len(s))
+				}
 				return plasma.NewBytes(s[startIndex:endIndex]), nil
+			default:
+				return nil, NotIndexable
 			}
-			return nil, NotIndexable
 		},
 	))
 	result.Set(magic_functions.Copy, plasma.NewBuiltInFunction(

@@ -11,9 +11,7 @@ func (plasma *Plasma) noneClass() *Value {
 }
 
 /*
-NewNone magic function:
-Bool                __bool__
-String              __string__
+NewNone Creates a new none Value
 */
 func (plasma *Plasma) NewNone() *Value {
 	if plasma.none != nil {
