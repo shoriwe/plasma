@@ -29,7 +29,7 @@ type (
 	}
 )
 
-func (plasma *Plasma) Symbols() *Symbols {
+func (plasma *Plasma) RootSymbols() *Symbols {
 	return plasma.rootSymbols
 }
 
@@ -45,51 +45,51 @@ func (plasma *Plasma) None() *Value {
 	return plasma.none
 }
 
-func (plasma *Plasma) Value() *Value {
+func (plasma *Plasma) ValueClass() *Value {
 	return plasma.value
 }
 
-func (plasma *Plasma) String() *Value {
+func (plasma *Plasma) StringClass() *Value {
 	return plasma.string
 }
 
-func (plasma *Plasma) Bytes() *Value {
+func (plasma *Plasma) BytesClass() *Value {
 	return plasma.bytes
 }
 
-func (plasma *Plasma) Bool() *Value {
+func (plasma *Plasma) BoolClass() *Value {
 	return plasma.bool
 }
 
-func (plasma *Plasma) NoneType() *Value {
+func (plasma *Plasma) NoneTypeClass() *Value {
 	return plasma.noneType
 }
 
-func (plasma *Plasma) Int() *Value {
+func (plasma *Plasma) IntClass() *Value {
 	return plasma.int
 }
 
-func (plasma *Plasma) Float() *Value {
+func (plasma *Plasma) FloatClass() *Value {
 	return plasma.float
 }
 
-func (plasma *Plasma) Array() *Value {
+func (plasma *Plasma) ArrayClass() *Value {
 	return plasma.array
 }
 
-func (plasma *Plasma) Tuple() *Value {
+func (plasma *Plasma) TupleClass() *Value {
 	return plasma.tuple
 }
 
-func (plasma *Plasma) Hash() *Value {
+func (plasma *Plasma) HashClass() *Value {
 	return plasma.hash
 }
 
-func (plasma *Plasma) Function() *Value {
+func (plasma *Plasma) FunctionClass() *Value {
 	return plasma.function
 }
 
-func (plasma *Plasma) Class() *Value {
+func (plasma *Plasma) MetaClass() *Value {
 	return plasma.class
 }
 

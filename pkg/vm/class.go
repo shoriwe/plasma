@@ -12,9 +12,7 @@ func (plasma *Plasma) metaClass() *Value {
 }
 
 /*
-NewClass magic function:
-Equal              __equal__
-NotEqual            __not_equal__
+NewClass Creates a new class Value
 */
 func (plasma *Plasma) NewClass() *Value {
 	result := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)

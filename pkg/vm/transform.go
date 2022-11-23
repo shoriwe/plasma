@@ -8,15 +8,18 @@ import (
 
 type PlasmaCallback func(arg ...any) (any, error)
 
+/*
+ZeroCopyArray transform a slice Integers or Floats to a readonly array
+*/
 func (plasma *Plasma) ZeroCopyArray(vt *Symbols, v any) *Value {
-	r := plasma.NewValue(vt, ValueId, plasma.Value())
+	r := plasma.NewValue(vt, ValueId, plasma.ValueClass())
 	var get, length *Value
 	switch array := v.(type) {
 	case []int:
 		get = plasma.NewBuiltInFunction(
 			r.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
-				value := array[argument[0].Int()]
+				value := array[Int[int64](argument[0])]
 				return plasma.NewInt(int64(value)), nil
 			})
 		length = plasma.NewBuiltInFunction(
@@ -28,7 +31,7 @@ func (plasma *Plasma) ZeroCopyArray(vt *Symbols, v any) *Value {
 		get = plasma.NewBuiltInFunction(
 			r.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
-				value := array[argument[0].Int()]
+				value := array[Int[int64](argument[0])]
 				return plasma.NewInt(int64(value)), nil
 			})
 		length = plasma.NewBuiltInFunction(
@@ -40,7 +43,7 @@ func (plasma *Plasma) ZeroCopyArray(vt *Symbols, v any) *Value {
 		get = plasma.NewBuiltInFunction(
 			r.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
-				value := array[argument[0].Int()]
+				value := array[Int[int64](argument[0])]
 				return plasma.NewInt(value), nil
 			})
 		length = plasma.NewBuiltInFunction(
@@ -52,7 +55,7 @@ func (plasma *Plasma) ZeroCopyArray(vt *Symbols, v any) *Value {
 		get = plasma.NewBuiltInFunction(
 			r.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
-				value := array[argument[0].Int()]
+				value := array[Int[int64](argument[0])]
 				return plasma.NewInt(int64(value)), nil
 			})
 		length = plasma.NewBuiltInFunction(
@@ -64,7 +67,7 @@ func (plasma *Plasma) ZeroCopyArray(vt *Symbols, v any) *Value {
 		get = plasma.NewBuiltInFunction(
 			r.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
-				value := array[argument[0].Int()]
+				value := array[Int[int64](argument[0])]
 				return plasma.NewInt(int64(value)), nil
 			})
 		length = plasma.NewBuiltInFunction(
@@ -76,7 +79,7 @@ func (plasma *Plasma) ZeroCopyArray(vt *Symbols, v any) *Value {
 		get = plasma.NewBuiltInFunction(
 			r.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
-				value := array[argument[0].Int()]
+				value := array[Int[int64](argument[0])]
 				return plasma.NewInt(int64(value)), nil
 			})
 		length = plasma.NewBuiltInFunction(
@@ -88,7 +91,7 @@ func (plasma *Plasma) ZeroCopyArray(vt *Symbols, v any) *Value {
 		get = plasma.NewBuiltInFunction(
 			r.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
-				value := array[argument[0].Int()]
+				value := array[Int[int64](argument[0])]
 				return plasma.NewFloat(float64(value)), nil
 			})
 		length = plasma.NewBuiltInFunction(
@@ -100,7 +103,7 @@ func (plasma *Plasma) ZeroCopyArray(vt *Symbols, v any) *Value {
 		get = plasma.NewBuiltInFunction(
 			r.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
-				value := array[argument[0].Int()]
+				value := array[Int[int64](argument[0])]
 				return plasma.NewFloat(value), nil
 			})
 		length = plasma.NewBuiltInFunction(
@@ -116,6 +119,9 @@ func (plasma *Plasma) ZeroCopyArray(vt *Symbols, v any) *Value {
 	return r
 }
 
+/*
+FromValue maps a Go value to a plasma Value, this function easy the work for interfacing with plasma
+*/
 func (plasma *Plasma) FromValue(value *Value) (any, error) {
 	switch id := value.TypeId(); id {
 	case ValueId:
@@ -139,9 +145,9 @@ func (plasma *Plasma) FromValue(value *Value) (any, error) {
 	case NoneId:
 		return nil, nil
 	case IntId:
-		return value.Int(), nil
+		return Int[int64](value), nil
 	case FloatId:
-		return value.Float(), nil
+		return Float[float64](value), nil
 	case ArrayId, TupleId:
 		values := value.GetValues()
 		r := make([]any, 0, len(values))
@@ -332,6 +338,9 @@ func (plasma *Plasma) methodsToValue(symbols *Symbols, asReflectValue reflect.Va
 	return methods, nil
 }
 
+/*
+ToValue maps a Plasma Value to a Go value, this function easy the work for interfacing with plasma
+*/
 func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	if v == nil {
 		return plasma.None(), nil
@@ -341,7 +350,7 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 		methods map[string]*Value
 	)
 	if symbols == nil {
-		symbols = plasma.Symbols()
+		symbols = plasma.RootSymbols()
 	}
 	asReflectValue := reflect.ValueOf(v)
 	asReflectValueType := asReflectValue.Type()
@@ -400,7 +409,7 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 		obj = plasma.NewHash(hash)
 	case reflect.Struct:
 		nFields := asReflectValue.NumField()
-		obj = plasma.NewValue(symbols, ValueId, plasma.Value())
+		obj = plasma.NewValue(symbols, ValueId, plasma.ValueClass())
 		for i := 0; i < nFields; i++ {
 			if !asReflectValue.Field(i).CanInterface() {
 				continue
@@ -416,7 +425,7 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	case reflect.Pointer:
 		return plasma.ToValue(symbols, asReflectValue.Elem().Interface())
 	case reflect.Chan:
-		obj = plasma.NewValue(symbols, ValueId, plasma.Value())
+		obj = plasma.NewValue(symbols, ValueId, plasma.ValueClass())
 		obj.Set("recv", plasma.NewBuiltInFunction(obj.VirtualTable(),
 			func(argument ...*Value) (*Value, error) {
 				vv, ok := asReflectValue.Recv()

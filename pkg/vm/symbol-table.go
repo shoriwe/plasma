@@ -18,6 +18,9 @@ type (
 	}
 )
 
+/*
+NewSymbols creates a new symbol table
+*/
 func NewSymbols(parent *Symbols) *Symbols {
 	return &Symbols{
 		mutex:  &sync.Mutex{},
@@ -27,12 +30,18 @@ func NewSymbols(parent *Symbols) *Symbols {
 	}
 }
 
+/*
+Set Assigns a value to a symbol
+*/
 func (symbols *Symbols) Set(name string, value *Value) {
 	symbols.mutex.Lock()
 	defer symbols.mutex.Unlock()
 	symbols.values[name] = value
 }
 
+/*
+Get retrieves a value based on the symbol
+*/
 func (symbols *Symbols) Get(name string) (*Value, error) {
 	symbols.mutex.Lock()
 	defer symbols.mutex.Unlock()
@@ -53,6 +62,9 @@ func (symbols *Symbols) Get(name string) (*Value, error) {
 	return nil, fmt.Errorf(SymbolNotFoundError, name)
 }
 
+/*
+Del deletes a symbol
+*/
 func (symbols *Symbols) Del(name string) error {
 	symbols.mutex.Lock()
 	defer symbols.mutex.Unlock()

@@ -13,20 +13,7 @@ func (plasma *Plasma) tupleClass() *Value {
 }
 
 /*
-NewTuple magic function:
-In                  __in__
-Equal              __equal__
-NotEqual            __not_equal__
-Mul                 __mul__
-Length              __len__
-Bool                __bool__
-String              __string__
-Bytes               __bytes__
-Array               __array__
-Tuple               __tuple__
-Get                 __get__
-Copy                __copy__
-Iter                __iter__
+NewTuple Creates a new tuple Value
 */
 func (plasma *Plasma) NewTuple(values []*Value) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, TupleId, plasma.tuple)
@@ -96,16 +83,12 @@ func (plasma *Plasma) NewTuple(values []*Value) *Value {
 	result.Set(magic_functions.Bytes, plasma.NewBuiltInFunction(
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
-			var rawString []byte
-			rawString = append(rawString, '[')
-			for index, value := range result.GetValues() {
-				if index != 0 {
-					rawString = append(rawString, ',', ' ')
-				}
-				rawString = append(rawString, value.String()...)
+			vs := result.GetValues()
+			bytes := make([]byte, 0, len(vs))
+			for _, v := range vs {
+				bytes = append(bytes, Int[byte](v))
 			}
-			rawString = append(rawString, ']')
-			return plasma.NewBytes(rawString), nil
+			return plasma.NewBytes(bytes), nil
 		}))
 	result.Set(magic_functions.Array, plasma.NewBuiltInFunction(
 		result.vtable,

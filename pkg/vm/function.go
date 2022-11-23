@@ -12,6 +12,9 @@ func (plasma *Plasma) functionClass() *Value {
 	return class
 }
 
+/*
+NewBuiltInFunction Creates a new built-in function Value
+*/
 func (plasma *Plasma) NewBuiltInFunction(parent *Symbols, callback Callback) *Value {
 	function := plasma.NewValue(parent, BuiltInFunctionId, plasma.function)
 	function.SetAny(callback)

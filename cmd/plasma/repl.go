@@ -40,12 +40,12 @@ func repl() {
 	}()
 	plasma := vm.NewVM(os.Stdin, os.Stdout, os.Stderr)
 	plasma.Load("exit", func(plasma *vm.Plasma) *vm.Value {
-		return plasma.NewBuiltInFunction(plasma.Symbols(),
+		return plasma.NewBuiltInFunction(plasma.RootSymbols(),
 			func(argument ...*vm.Value) (*vm.Value, error) {
 				if len(argument) == 0 {
 					os.Exit(0)
 				} else {
-					os.Exit(int(argument[0].Int()))
+					os.Exit(vm.Int[int](argument[0]))
 				}
 				return plasma.None(), nil
 			})

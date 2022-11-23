@@ -10,43 +10,13 @@ import (
 func (plasma *Plasma) integerClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
 	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
-		return plasma.NewInt(argument[0].Int()), nil
+		return plasma.NewInt(Int[int64](argument[0])), nil
 	}))
 	return class
 }
 
 /*
-NewInt magic function:
-Positive:           __positive__
-Negative:           __negative__
-NegateBits:         __negate_its__
-Equal:             __equal__
-NotEqual:           __not_equal__
-GreaterThan:        __greater_than__
-GreaterOrEqualThan: __greater_or_equal_than__
-LessThan:           __less_than__
-LessOrEqualThan:    __less_or_equal_than__
-BitwiseOr:          __bitwise_or__
-BitwiseXor:         __bitwise_xor__
-BitwiseAnd:         __bitwise_and__
-BitwiseLeft:        __bitwise_left__
-BitwiseRight:       __bitwise_right__
-Add:                __add__
-Sub:                __sub__
-Mul:                __mul__
-Div:                __div__
-FloorDiv:           __floor_div__
-Modulus:            __mod__
-PowerOf:            __pow__
-Bool:               __bool__
-String             __string__
-Int                __int__
-Float              __float__
-Copy:               __copy__
-BigEndian			big_endian
-LittleEndian		little_endian
-FromBig				from_big
-FromLittle			from_little
+NewInt Creates a new int Value
 */
 func (plasma *Plasma) NewInt(i int64) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, IntId, plasma.int)
@@ -100,9 +70,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewBool(result.Int() > argument[0].Int()), nil
+					return plasma.NewBool(Int[int64](result) > Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewBool(result.Float() > argument[0].Float()), nil
+					return plasma.NewBool(Float[float64](result) > Float[float64](argument[0])), nil
 				}
 				return nil, NotComparable
 			},
@@ -113,9 +83,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewBool(result.Int() >= argument[0].Int()), nil
+					return plasma.NewBool(Int[int64](result) >= Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewBool(result.Float() >= argument[0].Float()), nil
+					return plasma.NewBool(Float[float64](result) >= Float[float64](argument[0])), nil
 				}
 				return nil, NotComparable
 			},
@@ -126,9 +96,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewBool(result.Int() < argument[0].Int()), nil
+					return plasma.NewBool(Int[int64](result) < Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewBool(result.Float() < argument[0].Float()), nil
+					return plasma.NewBool(Float[float64](result) < Float[float64](argument[0])), nil
 				}
 				return nil, NotComparable
 			},
@@ -139,9 +109,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewBool(result.Int() <= argument[0].Int()), nil
+					return plasma.NewBool(Int[int64](result) <= Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewBool(result.Float() <= argument[0].Float()), nil
+					return plasma.NewBool(Float[float64](result) <= Float[float64](argument[0])), nil
 				}
 				return nil, NotComparable
 			},
@@ -152,9 +122,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewInt(result.Int() | argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) | Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewInt(int64(uint64(result.Int()) | math.Float64bits(argument[0].Float()))), nil
+					return plasma.NewInt(int64(uint64(Int[int64](result)) | math.Float64bits(Float[float64](argument[0])))), nil
 				}
 				return nil, NotOperable
 			},
@@ -165,9 +135,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewInt(result.Int() ^ argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) ^ Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewInt(int64(uint64(result.Int()) ^ math.Float64bits(argument[0].Float()))), nil
+					return plasma.NewInt(int64(uint64(Int[int64](result)) ^ math.Float64bits(Float[float64](argument[0])))), nil
 				}
 				return nil, NotOperable
 			},
@@ -178,9 +148,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewInt(result.Int() & argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) & Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewInt(int64(uint64(result.Int()) & math.Float64bits(argument[0].Float()))), nil
+					return plasma.NewInt(int64(uint64(Int[int64](result)) & math.Float64bits(Float[float64](argument[0])))), nil
 				}
 				return nil, NotOperable
 			},
@@ -191,9 +161,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewInt(result.Int() << argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) << Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewInt(int64(uint64(result.Int()) << math.Float64bits(argument[0].Float()))), nil
+					return plasma.NewInt(int64(uint64(Int[int64](result)) << math.Float64bits(Float[float64](argument[0])))), nil
 				}
 				return nil, NotOperable
 			},
@@ -204,9 +174,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewInt(result.Int() >> argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) >> Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewInt(int64(uint64(result.Int()) >> math.Float64bits(argument[0].Float()))), nil
+					return plasma.NewInt(int64(uint64(Int[int64](result)) >> math.Float64bits(Float[float64](argument[0])))), nil
 				}
 				return nil, NotOperable
 			},
@@ -217,9 +187,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewInt(result.Int() + argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) + Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewFloat(result.Float() + argument[0].Float()), nil
+					return plasma.NewFloat(Float[float64](result) + Float[float64](argument[0])), nil
 				}
 				return nil, NotOperable
 			},
@@ -230,9 +200,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewInt(result.Int() - argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) - Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewFloat(result.Float() - argument[0].Float()), nil
+					return plasma.NewFloat(Float[float64](result) - Float[float64](argument[0])), nil
 				}
 				return nil, NotOperable
 			},
@@ -243,9 +213,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewInt(result.Int() * argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) * Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewFloat(result.Float() * argument[0].Float()), nil
+					return plasma.NewFloat(Float[float64](result) * Float[float64](argument[0])), nil
 				case StringId:
 					s := argument[0].GetBytes()
 					times := result.GetInt64()
@@ -274,7 +244,7 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId, FloatId:
-					return plasma.NewFloat(result.Float() / argument[0].Float()), nil
+					return plasma.NewFloat(Float[float64](result) / Float[float64](argument[0])), nil
 				}
 				return nil, NotOperable
 			},
@@ -285,7 +255,7 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId, FloatId:
-					return plasma.NewInt(result.Int() / argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) / Int[int64](argument[0])), nil
 				}
 				return nil, NotOperable
 			},
@@ -296,9 +266,9 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					return plasma.NewInt(result.Int() % argument[0].Int()), nil
+					return plasma.NewInt(Int[int64](result) % Int[int64](argument[0])), nil
 				case FloatId:
-					return plasma.NewFloat(math.Mod(result.Float(), argument[0].Float())), nil
+					return plasma.NewFloat(math.Mod(Float[float64](result), Float[float64](argument[0]))), nil
 				}
 				return nil, NotOperable
 			},
@@ -309,8 +279,8 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 			func(argument ...*Value) (*Value, error) {
 				switch argument[0].TypeId() {
 				case IntId:
-					times := argument[0].Int()
-					value := result.Int()
+					times := Int[int64](argument[0])
+					value := Int[int64](result)
 					if times >= 0 {
 						v := int64(1)
 						for t := int64(0); t < times; t++ {
@@ -324,7 +294,7 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 					}
 					return plasma.NewFloat(1 / float64(v)), nil
 				case FloatId:
-					return plasma.NewFloat(math.Pow(result.Float(), argument[0].Float())), nil
+					return plasma.NewFloat(math.Pow(Float[float64](result), Float[float64](argument[0]))), nil
 				}
 				return nil, NotOperable
 			},
@@ -354,7 +324,7 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 		plasma.NewBuiltInFunction(
 			result.vtable,
 			func(argument ...*Value) (*Value, error) {
-				return plasma.NewFloat(result.Float()), nil
+				return plasma.NewFloat(Float[float64](result)), nil
 			},
 		))
 	result.Set(magic_functions.Copy,
@@ -368,7 +338,7 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			b := make([]byte, 8)
-			binary.BigEndian.PutUint64(b, uint64(result.Int()))
+			binary.BigEndian.PutUint64(b, uint64(Int[int64](result)))
 			return plasma.NewBytes(b), nil
 		},
 	))
@@ -376,7 +346,7 @@ func (plasma *Plasma) NewInt(i int64) *Value {
 		result.vtable,
 		func(argument ...*Value) (*Value, error) {
 			b := make([]byte, 8)
-			binary.LittleEndian.PutUint64(b, uint64(result.Int()))
+			binary.LittleEndian.PutUint64(b, uint64(Int[int64](result)))
 			return plasma.NewBytes(b), nil
 		},
 	))

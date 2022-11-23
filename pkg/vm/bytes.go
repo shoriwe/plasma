@@ -8,32 +8,13 @@ import (
 func (plasma *Plasma) bytesClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)
 	class.SetAny(Callback(func(argument ...*Value) (*Value, error) {
-		return plasma.NewBytes(argument[0].Contents()), nil
+		return plasma.NewBytes(argument[0].Bytes()), nil
 	}))
 	return class
 }
 
 /*
-NewBytes magic function:
-Equal              __equal__
-NotEqual            __not_equal__
-Add                 __add__
-Mul                 __mul__
-Length              __len__
-Bool                __bool__
-String              __string__
-Bytes               __bytes__
-Array               __array__
-Tuple               __tuple__
-Get                 __get__
-Copy                __copy__
-Iter                __iter__
-Join				join
-Split				split
-Upper				upper
-Lower				lower
-Count				count
-Index				Index
+NewBytes Creates a new bytes Value
 */
 func (plasma *Plasma) NewBytes(contents []byte) *Value {
 	result := plasma.NewValue(plasma.rootSymbols, BytesId, plasma.bytes)

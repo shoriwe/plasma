@@ -11,19 +11,7 @@ func (plasma *Plasma) boolClass() *Value {
 }
 
 /*
-NewBool magic function:
-Not                 __not__
-And                 __and__
-Or                  __or__
-Xor                 __xor__
-Equal              __equal__
-NotEqual            __not_equal__
-Bool                __bool__
-String              __string__
-Int                 __int__
-Float               __float__
-Bytes               __bytes__
-Copy                __copy__
+NewBool Creates a new bool Value
 */
 func (plasma *Plasma) NewBool(b bool) *Value {
 	if b && plasma.true != nil {

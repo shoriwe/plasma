@@ -96,7 +96,7 @@ func TestPlasma_FromValueMap(t *testing.T) {
 
 func TestPlasma_ToValueString(t *testing.T) {
 	p := NewVM(nil, nil, nil)
-	s, err := p.ToValue(p.Symbols(), "Plasma")
+	s, err := p.ToValue(p.RootSymbols(), "Plasma")
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s")
@@ -106,7 +106,7 @@ func TestPlasma_ToValueString(t *testing.T) {
 
 func TestPlasma_ToValueBytes(t *testing.T) {
 	p := NewVM(nil, nil, nil)
-	s, err := p.ToValue(p.Symbols(), []byte("Plasma"))
+	s, err := p.ToValue(p.RootSymbols(), []byte("Plasma"))
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s")
@@ -116,7 +116,7 @@ func TestPlasma_ToValueBytes(t *testing.T) {
 
 func TestPlasma_ToValueBool(t *testing.T) {
 	p := NewVM(nil, nil, nil)
-	s, err := p.ToValue(p.Symbols(), true)
+	s, err := p.ToValue(p.RootSymbols(), true)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s")
@@ -127,54 +127,54 @@ func TestPlasma_ToValueBool(t *testing.T) {
 func TestPlasma_ToValueUint(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	for _, element := range []any{uint(1), uintptr(1), uint8(1), uint16(1), uint32(1), uint64(1)} {
-		s, err := p.ToValue(p.Symbols(), element)
+		s, err := p.ToValue(p.RootSymbols(), element)
 		assert.Nil(t, err)
 		p.Load("s", func(plasma *Plasma) *Value { return s })
 		rCh, errCh, _ := p.ExecuteString("s")
 		assert.Nil(t, <-errCh)
-		assert.Equal(t, int64(1), (<-rCh).Int())
+		assert.Equal(t, 1, Int[int](<-rCh))
 	}
 }
 
 func TestPlasma_ToValueInt(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	for _, element := range []any{int(1), int8(1), int16(1), int32(1), int64(1)} {
-		s, err := p.ToValue(p.Symbols(), element)
+		s, err := p.ToValue(p.RootSymbols(), element)
 		assert.Nil(t, err)
 		p.Load("s", func(plasma *Plasma) *Value { return s })
 		rCh, errCh, _ := p.ExecuteString("s")
 		assert.Nil(t, <-errCh)
-		assert.Equal(t, int64(1), (<-rCh).Int())
+		assert.Equal(t, 1, Int[int](<-rCh))
 	}
 }
 
 func TestPlasma_ToValueFloat(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	for _, element := range []any{float32(1), float64(1)} {
-		s, err := p.ToValue(p.Symbols(), element)
+		s, err := p.ToValue(p.RootSymbols(), element)
 		assert.Nil(t, err)
 		p.Load("s", func(plasma *Plasma) *Value { return s })
 		rCh, errCh, _ := p.ExecuteString("s")
 		assert.Nil(t, <-errCh)
-		assert.Equal(t, float64(1), (<-rCh).Float())
+		assert.Equal(t, float64(1), Float[float64](<-rCh))
 	}
 }
 
 func TestPlasma_ToValueSlice(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	slice := []any{1, 2, 3, "Plasma", "secret", 1.0}
-	s, err := p.ToValue(p.Symbols(), slice)
+	s, err := p.ToValue(p.RootSymbols(), slice)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s[0]")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(1), (<-rCh).Int())
+	assert.Equal(t, 1, Int[int](<-rCh))
 	rCh, errCh, _ = p.ExecuteString("s[1]")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(2), (<-rCh).Int())
+	assert.Equal(t, 2, Int[int](<-rCh))
 	rCh, errCh, _ = p.ExecuteString("s[2]")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(3), (<-rCh).Int())
+	assert.Equal(t, 3, Int[int](<-rCh))
 	rCh, errCh, _ = p.ExecuteString("s[3]")
 	assert.Nil(t, <-errCh)
 	assert.Equal(t, "Plasma", (<-rCh).String())
@@ -183,24 +183,24 @@ func TestPlasma_ToValueSlice(t *testing.T) {
 	assert.Equal(t, "secret", (<-rCh).String())
 	rCh, errCh, _ = p.ExecuteString("s[5]")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, 1.0, (<-rCh).Float())
+	assert.Equal(t, 1.0, Float[float64](<-rCh))
 }
 
 func TestPlasma_ToValueArray(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	slice := [6]any{1, 2, 3, "Plasma", "secret", 1.0}
-	s, err := p.ToValue(p.Symbols(), slice)
+	s, err := p.ToValue(p.RootSymbols(), slice)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s[0]")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(1), (<-rCh).Int())
+	assert.Equal(t, 1, Int[int](<-rCh))
 	rCh, errCh, _ = p.ExecuteString("s[1]")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(2), (<-rCh).Int())
+	assert.Equal(t, 2, Int[int](<-rCh))
 	rCh, errCh, _ = p.ExecuteString("s[2]")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(3), (<-rCh).Int())
+	assert.Equal(t, 3, Int[int](<-rCh))
 	rCh, errCh, _ = p.ExecuteString("s[3]")
 	assert.Nil(t, <-errCh)
 	assert.Equal(t, "Plasma", (<-rCh).String())
@@ -209,7 +209,7 @@ func TestPlasma_ToValueArray(t *testing.T) {
 	assert.Equal(t, "secret", (<-rCh).String())
 	rCh, errCh, _ = p.ExecuteString("s[5]")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, 1.0, (<-rCh).Float())
+	assert.Equal(t, 1.0, Float[float64](<-rCh))
 }
 
 func TestPlasma_ToValueMap(t *testing.T) {
@@ -218,12 +218,12 @@ func TestPlasma_ToValueMap(t *testing.T) {
 		"john":  1,
 		"conor": "Plasma",
 	}
-	s, err := p.ToValue(p.Symbols(), m)
+	s, err := p.ToValue(p.RootSymbols(), m)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s['john']")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(1), (<-rCh).Int())
+	assert.Equal(t, 1, Int[int](<-rCh))
 	rCh, errCh, _ = p.ExecuteString("s['conor']")
 	assert.Nil(t, <-errCh)
 	assert.Equal(t, "Plasma", (<-rCh).String())
@@ -240,7 +240,7 @@ func TestPlasma_ToValueStruct(t *testing.T) {
 		20,
 		100,
 	}
-	s, err := p.ToValue(p.Symbols(), obj)
+	s, err := p.ToValue(p.RootSymbols(), obj)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s.Name")
@@ -248,10 +248,10 @@ func TestPlasma_ToValueStruct(t *testing.T) {
 	assert.Equal(t, "sulcud", (<-rCh).String())
 	rCh, errCh, _ = p.ExecuteString("s.Age")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(20), (<-rCh).Int())
+	assert.Equal(t, 20, Int[int](<-rCh))
 	rCh, errCh, _ = p.ExecuteString("s.Health")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(100), (<-rCh).Int())
+	assert.Equal(t, 100, Int[int](<-rCh))
 }
 
 func TestPlasma_ToValueFuncNoArgs(t *testing.T) {
@@ -260,12 +260,12 @@ func TestPlasma_ToValueFuncNoArgs(t *testing.T) {
 	f := func() int {
 		return 1
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s()")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(f()), (<-rCh).Int())
+	assert.Equal(t, f(), Int[int](<-rCh))
 }
 
 func TestPlasma_ToValueFuncBasicType(t *testing.T) {
@@ -274,12 +274,12 @@ func TestPlasma_ToValueFuncBasicType(t *testing.T) {
 	f := func(a, b, c, d, e int) int {
 		return a + b*c/d - e
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s(1, 2, 3, 4, 5)")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(f(1, 2, 3, 4, 5)), (<-rCh).Int())
+	assert.Equal(t, f(1, 2, 3, 4, 5), Int[int](<-rCh))
 }
 
 func TestPlasma_ToValueFuncStructType(t *testing.T) {
@@ -290,7 +290,7 @@ func TestPlasma_ToValueFuncStructType(t *testing.T) {
 	}) string {
 		return strings.Repeat(ctx.Name, times)
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("ctx = Value()\nctx.Name = 'Plasma '\ns(3, ctx)")
@@ -306,7 +306,7 @@ func TestPlasma_ToValueStructPointer(t *testing.T) {
 	}) string {
 		return strings.Repeat(ctx.Name, times)
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("ctx = Value()\nctx.Name = 'Plasma '\ns(3, ctx)")
@@ -321,7 +321,7 @@ func TestPlasma_ToValueFuncTypeAlias(t *testing.T) {
 	f := func(times int, s stringAlias) string {
 		return strings.Repeat(string(s), times)
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s(3, 'Plasma ')")
@@ -335,7 +335,7 @@ func TestPlasma_ToValueFuncVariadicBasicType(t *testing.T) {
 	f := func(words ...string) string {
 		return strings.Join(words, " ")
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s('Plasma', 'Plasma', 'Plasma')")
@@ -354,7 +354,7 @@ func TestPlasma_ToValueFuncVariadicTypeAlias(t *testing.T) {
 		}
 		return strings.Join(a, " ")
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s('Plasma', 'Plasma', 'Plasma')")
@@ -375,7 +375,7 @@ func TestPlasma_ToValueFuncVariadicStruct(t *testing.T) {
 		}
 		return strings.Join(a, " ")
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("v = Value()\nv.Name = 'Plasma'\ns(v, v, v)")
@@ -396,7 +396,7 @@ func TestPlasma_ToValueFuncVariadicStructPtr(t *testing.T) {
 		}
 		return strings.Join(a, " ")
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("v = Value()\nv.Name = 'Plasma'\ns(v, v, v)")
@@ -410,17 +410,17 @@ func TestPlasma_ToValueFuncMultipleReturnValues(t *testing.T) {
 	f := func(a int, b int) (int, int) {
 		return a * 30, b * 3
 	}
-	s, err := p.ToValue(p.Symbols(), f)
+	s, err := p.ToValue(p.RootSymbols(), f)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s(3, 3)")
 	assert.Nil(t, <-errCh)
 	a1, a2 := f(3, 3)
 	result := <-rCh
-	ca1 := result.GetValues()[0].Int()
-	ca2 := result.GetValues()[1].Int()
-	assert.Equal(t, int64(a1), ca1)
-	assert.Equal(t, int64(a2), ca2)
+	ca1 := Int[int](result.GetValues()[0])
+	ca2 := Int[int](result.GetValues()[1])
+	assert.Equal(t, a1, ca1)
+	assert.Equal(t, a2, ca2)
 }
 
 type testPlasma_ToValueAliasMemberFunc_stringAlias string
@@ -432,7 +432,7 @@ func (s testPlasma_ToValueAliasMemberFunc_stringAlias) Say(word string) string {
 func TestPlasma_ToValueAliasMemberFunc(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	tt := testPlasma_ToValueAliasMemberFunc_stringAlias("Say ")
-	s, err := p.ToValue(p.Symbols(), tt)
+	s, err := p.ToValue(p.RootSymbols(), tt)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s.Say('Plasma')")
@@ -452,7 +452,7 @@ func (s testPlasma_ToValueAliasMemberFuncVariadic) Say(word string, b ...string)
 func TestPlasma_ToValueAliasMemberFuncVariadic(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	tt := testPlasma_ToValueAliasMemberFuncVariadic("Say ")
-	s, err := p.ToValue(p.Symbols(), tt)
+	s, err := p.ToValue(p.RootSymbols(), tt)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s.Say('Plasma', 'hello', 'Plasma')")
@@ -465,12 +465,12 @@ func TestPlasma_ToValuePointer(t *testing.T) {
 	a := 100
 	b := &a
 	c := &b
-	s, err := p.ToValue(p.Symbols(), &c)
+	s, err := p.ToValue(p.RootSymbols(), &c)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	rCh, errCh, _ := p.ExecuteString("s")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(100), (<-rCh).Int())
+	assert.Equal(t, 100, Int[int](<-rCh))
 }
 
 func TestPlasma_ToValueChan(t *testing.T) {
@@ -478,13 +478,13 @@ func TestPlasma_ToValueChan(t *testing.T) {
 	a := make(chan int, 2)
 	defer close(a)
 	a <- 10
-	s, err := p.ToValue(p.Symbols(), a)
+	s, err := p.ToValue(p.RootSymbols(), a)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
 	// Recv
 	rCh, errCh, _ := p.ExecuteString("s.recv()")
 	assert.Nil(t, <-errCh)
-	assert.Equal(t, int64(10), (<-rCh).Int())
+	assert.Equal(t, 10, Int[int](<-rCh))
 	// Send
 	rCh, errCh, _ = p.ExecuteString("s.send(100)")
 	assert.Nil(t, <-errCh)

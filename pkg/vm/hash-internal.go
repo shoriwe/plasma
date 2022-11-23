@@ -25,12 +25,18 @@ type (
 	}
 )
 
+/*
+Size Returns the internal size of the hash
+*/
 func (h *Hash) Size() int64 {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
 	return int64(len(h.internalMap))
 }
 
+/*
+Set sets a key value pair
+*/
 func (h *Hash) Set(key, value *Value) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -51,6 +57,9 @@ func (h *Hash) Set(key, value *Value) error {
 	return nil
 }
 
+/*
+Get retrieves a value based on the key
+*/
 func (h *Hash) Get(key *Value) (*Value, error) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -70,6 +79,9 @@ func (h *Hash) Get(key *Value) (*Value, error) {
 	return h.internalMap[keyString].Value, nil
 }
 
+/*
+Del deletes a key from the hash
+*/
 func (h *Hash) Del(key *Value) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -90,6 +102,9 @@ func (h *Hash) Del(key *Value) error {
 	return nil
 }
 
+/*
+Copy creates a copy of the hash
+*/
 func (h *Hash) Copy() *Hash {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -103,6 +118,9 @@ func (h *Hash) Copy() *Hash {
 	return result
 }
 
+/*
+In verifies the key is inside the hash
+*/
 func (h *Hash) In(key *Value) (bool, error) {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -124,6 +142,9 @@ func (h *Hash) In(key *Value) (bool, error) {
 	return found, nil
 }
 
+/*
+NewInternalHash Creates a new Hash object to handle hashing operations
+*/
 func (plasma *Plasma) NewInternalHash() *Hash {
 	return &Hash{
 		mutex:       &sync.Mutex{},
