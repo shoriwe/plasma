@@ -154,7 +154,22 @@ func (plasma *Plasma) FromValue(value *Value) (any, error) {
 		}
 		return r, nil
 	case HashId:
-		return nil, fmt.Errorf("built-in functions cannot cannot be converted to Go object")
+		hash := value.GetHash()
+		hash.mutex.Lock()
+		defer hash.mutex.Unlock()
+		result := make(map[any]any, len(hash.internalMap))
+		for _, keyValue := range hash.internalMap {
+			key, err := plasma.FromValue(keyValue.Key)
+			if err != nil {
+				return nil, err
+			}
+			v, err := plasma.FromValue(keyValue.Value)
+			if err != nil {
+				return nil, err
+			}
+			result[key] = v
+		}
+		return result, nil
 	case BuiltInFunctionId:
 		return nil, fmt.Errorf("built-in functions cannot cannot be converted to Go object")
 	case FunctionId:
@@ -366,7 +381,7 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	case reflect.Map:
 		keys := asReflectValue.MapKeys()
 		hash := plasma.NewInternalHash()
-		hash.internalMap = make(map[string]*Value, len(keys))
+		hash.internalMap = make(map[string]HashKeyValue, len(keys))
 		for _, key := range keys {
 			keyV, keyErr := plasma.ToValue(symbols, key.Interface())
 			if keyErr != nil {

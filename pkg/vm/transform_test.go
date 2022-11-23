@@ -81,6 +81,19 @@ func TestPlasma_FromValueArray(t *testing.T) {
 	}
 }
 
+func TestPlasma_FromValueMap(t *testing.T) {
+	p := NewVM(nil, nil, nil)
+	rCh, errCh, _ := p.ExecuteString("{'Hello': 1, 1: 10, 65.5: 0}")
+	assert.Nil(t, <-errCh)
+	s, err := p.FromValue(<-rCh)
+	assert.Nil(t, err)
+	ref := map[any]any{"Hello": int64(1), int64(1): int64(10), 65.5: int64(0)}
+	ss := s.(map[any]any)
+	for key, value := range ref {
+		assert.Equal(t, value, ss[key])
+	}
+}
+
 func TestPlasma_ToValueString(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	s, err := p.ToValue(p.Symbols(), "Plasma")
