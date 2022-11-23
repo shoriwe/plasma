@@ -114,18 +114,25 @@ func (plasma *Plasma) NewTuple(values []*Value) *Value {
 			case TupleId:
 				s := result.Values()
 				tupleIndex := argument[0].GetValues()
-				startIndex := tupleIndex[0].GetInt64()
-				if startIndex < 0 {
-					startIndex += int64(len(s))
+				var (
+					startIndex int64
+					endIndex   int64
+				)
+				if tupleIndex[0].TypeId() != NoneId {
+					startIndex = tupleIndex[0].GetInt64()
+					if startIndex < 0 {
+						startIndex += int64(len(s))
+					}
+				} else {
+					startIndex = 0
 				}
-				var endIndex int64
-				if len(tupleIndex) == 2 {
+				if len(tupleIndex) == 2 && tupleIndex[1].TypeId() != NoneId {
 					endIndex = tupleIndex[1].GetInt64()
+					if endIndex < 0 {
+						endIndex += int64(len(s))
+					}
 				} else {
 					endIndex = int64(len(s))
-				}
-				if endIndex < 0 {
-					endIndex += int64(len(s))
 				}
 				return plasma.NewTuple(s[startIndex:endIndex]), nil
 			default:
