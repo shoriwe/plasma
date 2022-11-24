@@ -383,6 +383,56 @@ func TestPlasma_ToValueFuncVariadicStruct(t *testing.T) {
 	assert.Equal(t, f(tt{"Plasma"}, tt{"Plasma"}, tt{"Plasma"}), (<-rCh).String())
 }
 
+type testStruct struct {
+	data string
+}
+
+func (ts *testStruct) Ptr() (string, string) {
+	return "called from pointer", ts.data
+}
+
+func (ts testStruct) Value() (string, string) {
+	return "called from value", ts.data
+}
+
+func TestPlasma_ToValueStructFunctions(t *testing.T) {
+	p := NewVM(nil, nil, nil)
+	// When Pointer
+	s, err := p.ToValue(p.RootSymbols(), &testStruct{"yes"})
+	assert.Nil(t, err)
+	p.Load("s", func(plasma *Plasma) *Value { return s })
+	rCh, errCh, _ := p.ExecuteString("s.Ptr()")
+	assert.Nil(t, <-errCh)
+	gV, err := p.FromValue(<-rCh)
+	assert.Nil(t, err)
+	v := gV.([]any)
+	assert.Equal(t, 2, len(v))
+	assert.Equal(t, "called from pointer", v[0])
+	assert.Equal(t, "yes", v[1])
+	rCh, errCh, _ = p.ExecuteString("s.Value()")
+	assert.Nil(t, <-errCh)
+	gV, err = p.FromValue(<-rCh)
+	assert.Nil(t, err)
+	v = gV.([]any)
+	assert.Equal(t, 2, len(v))
+	assert.Equal(t, "called from value", v[0])
+	assert.Equal(t, "yes", v[1])
+	// When Value
+	s, err = p.ToValue(p.RootSymbols(), testStruct{"yes"})
+	assert.Nil(t, err)
+	p.Load("s", func(plasma *Plasma) *Value { return s })
+	_, errCh, _ = p.ExecuteString("s.Ptr()")
+	assert.NotNil(t, <-errCh)
+	rCh, errCh, _ = p.ExecuteString("s.Value()")
+	assert.Nil(t, <-errCh)
+	gV, err = p.FromValue(<-rCh)
+	assert.Nil(t, err)
+	v = gV.([]any)
+	assert.Equal(t, 2, len(v))
+	assert.Equal(t, "called from value", v[0])
+	assert.Equal(t, "yes", v[1])
+}
+
 func TestPlasma_ToValueFuncVariadicStructPtr(t *testing.T) {
 	p := NewVM(nil, nil, nil)
 	type tt struct {
@@ -455,6 +505,7 @@ func TestPlasma_ToValueAliasMemberFuncVariadic(t *testing.T) {
 	s, err := p.ToValue(p.RootSymbols(), tt)
 	assert.Nil(t, err)
 	p.Load("s", func(plasma *Plasma) *Value { return s })
+	// Say
 	rCh, errCh, _ := p.ExecuteString("s.Say('Plasma', 'hello', 'Plasma')")
 	assert.Nil(t, <-errCh)
 	assert.Equal(t, tt.Say("Plasma", "hello", "Plasma"), (<-rCh).String())

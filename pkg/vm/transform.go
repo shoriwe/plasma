@@ -376,7 +376,8 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 		panic("Complex not supported by the VM")
 	case reflect.Slice, reflect.Array:
 		if asReflectValue.Type() == reflect.TypeOf([]byte{}) {
-			return plasma.NewBytes(v.([]byte)), nil
+			obj = plasma.NewBytes(v.([]byte))
+			break
 		}
 		values := make([]*Value, 0, asReflectValue.Len())
 		for index := 0; index < asReflectValue.Len(); index++ {
@@ -423,7 +424,11 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 	case reflect.Func:
 		obj = plasma.NewBuiltInFunction(symbols, plasma.toValueGoFunctionCall(symbols, asReflectValue))
 	case reflect.Pointer:
-		return plasma.ToValue(symbols, asReflectValue.Elem().Interface())
+		var err error
+		obj, err = plasma.ToValue(symbols, asReflectValue.Elem().Interface())
+		if err != nil {
+			return nil, err
+		}
 	case reflect.Chan:
 		obj = plasma.NewValue(symbols, ValueId, plasma.ValueClass())
 		obj.Set("recv", plasma.NewBuiltInFunction(obj.VirtualTable(),
@@ -453,9 +458,12 @@ func (plasma *Plasma) ToValue(symbols *Symbols, v any) (*Value, error) {
 				return plasma.None(), nil
 			},
 		))
-		return obj, nil
 	case reflect.UnsafePointer:
-		return plasma.ToValue(symbols, uintptr(asReflectValue.UnsafePointer()))
+		var err error
+		obj, err = plasma.ToValue(symbols, uintptr(asReflectValue.UnsafePointer()))
+		if err != nil {
+			return nil, err
+		}
 	case reflect.Interface:
 		return nil, fmt.Errorf("cannot convert to plasma object")
 
