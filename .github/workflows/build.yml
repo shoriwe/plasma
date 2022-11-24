@@ -23,6 +23,7 @@ jobs:
         run: go test -v ./...
 
   codecov:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
