@@ -1,10 +1,10 @@
 package parser
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/lexer"
-	reader2 "github.com/shoriwe/gplasma/pkg/reader"
-	"github.com/shoriwe/gplasma/pkg/test-samples/basic"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/lexer"
+	reader2 "github.com/shoriwe/plasma/pkg/reader"
+	"github.com/shoriwe/plasma/pkg/test-samples/basic"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"strings"

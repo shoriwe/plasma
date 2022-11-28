@@ -1,10 +1,10 @@
 package transformations_1
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast2"
-	"github.com/shoriwe/gplasma/pkg/ast3"
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
-	special_symbols "github.com/shoriwe/gplasma/pkg/common/special-symbols"
+	"github.com/shoriwe/plasma/pkg/ast2"
+	"github.com/shoriwe/plasma/pkg/ast3"
+	magic_functions "github.com/shoriwe/plasma/pkg/common/magic-functions"
+	special_symbols "github.com/shoriwe/plasma/pkg/common/special-symbols"
 )
 
 func (transform *transformPass) GeneratorExpr(generator *ast2.Generator) *ast3.Call {

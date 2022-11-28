@@ -2,10 +2,10 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/bytecode/opcodes"
-	"github.com/shoriwe/gplasma/pkg/common"
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
-	special_symbols "github.com/shoriwe/gplasma/pkg/common/special-symbols"
+	"github.com/shoriwe/plasma/pkg/bytecode/opcodes"
+	"github.com/shoriwe/plasma/pkg/common"
+	magic_functions "github.com/shoriwe/plasma/pkg/common/magic-functions"
+	special_symbols "github.com/shoriwe/plasma/pkg/common/special-symbols"
 )
 
 func (ctx *context) pushCode(bytecode []byte) {

@@ -1,7 +1,7 @@
 package ast
 
 import (
-	"github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/plasma/pkg/lexer"
 )
 
 type (

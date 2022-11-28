@@ -1,9 +1,9 @@
 package parser
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/common"
-	"github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/common"
+	"github.com/shoriwe/plasma/pkg/lexer"
 )
 
 type Parser struct {

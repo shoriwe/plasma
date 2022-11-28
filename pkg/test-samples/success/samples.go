@@ -2,7 +2,7 @@ package success
 
 import (
 	_ "embed"
-	test_samples "github.com/shoriwe/gplasma/pkg/test-samples"
+	test_samples "github.com/shoriwe/plasma/pkg/test-samples"
 )
 
 var (

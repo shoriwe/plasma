@@ -2,7 +2,7 @@ package assembler
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/ast3"
+	"github.com/shoriwe/plasma/pkg/ast3"
 	"reflect"
 )
 

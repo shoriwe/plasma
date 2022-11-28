@@ -1,8 +1,8 @@
 package transformations_1
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast2"
-	"github.com/shoriwe/gplasma/pkg/ast3"
+	"github.com/shoriwe/plasma/pkg/ast2"
+	"github.com/shoriwe/plasma/pkg/ast3"
 )
 
 func (transform *transformPass) Integer(integer *ast2.Integer) *ast3.Integer {

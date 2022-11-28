@@ -3,8 +3,8 @@ package vm
 import (
 	"bytes"
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/test-samples/fail"
-	"github.com/shoriwe/gplasma/pkg/test-samples/success"
+	"github.com/shoriwe/plasma/pkg/test-samples/fail"
+	"github.com/shoriwe/plasma/pkg/test-samples/success"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

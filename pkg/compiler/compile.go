@@ -2,14 +2,14 @@ package compiler
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/bytecode/assembler"
-	"github.com/shoriwe/gplasma/pkg/lexer"
-	"github.com/shoriwe/gplasma/pkg/parser"
-	"github.com/shoriwe/gplasma/pkg/passes/checks"
-	"github.com/shoriwe/gplasma/pkg/passes/simplification"
-	transformations_1 "github.com/shoriwe/gplasma/pkg/passes/transformations-1"
-	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/bytecode/assembler"
+	"github.com/shoriwe/plasma/pkg/lexer"
+	"github.com/shoriwe/plasma/pkg/parser"
+	"github.com/shoriwe/plasma/pkg/passes/checks"
+	"github.com/shoriwe/plasma/pkg/passes/simplification"
+	transformations_1 "github.com/shoriwe/plasma/pkg/passes/transformations-1"
+	"github.com/shoriwe/plasma/pkg/reader"
 )
 
 func Compile(scriptCode string) ([]byte, error) {

@@ -1,9 +1,9 @@
 package simplification
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/ast2"
-	"github.com/shoriwe/gplasma/pkg/common/magic-functions"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/ast2"
+	"github.com/shoriwe/plasma/pkg/common/magic-functions"
 )
 
 func (simplify *simplifyPass) For(for_ *ast.ForLoopStatement) *ast2.While {

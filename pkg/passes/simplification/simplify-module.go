@@ -1,8 +1,8 @@
 package simplification
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/ast2"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/ast2"
 )
 
 func (simplify *simplifyPass) Module(module *ast.ModuleStatement) *ast2.Module {

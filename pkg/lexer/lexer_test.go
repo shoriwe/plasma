@@ -1,7 +1,7 @@
 package lexer
 
 import (
-	reader2 "github.com/shoriwe/gplasma/pkg/reader"
+	reader2 "github.com/shoriwe/plasma/pkg/reader"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

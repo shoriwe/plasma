@@ -2,10 +2,10 @@ package assembler
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/ast3"
-	"github.com/shoriwe/gplasma/pkg/bytecode/opcodes"
-	"github.com/shoriwe/gplasma/pkg/common"
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+	"github.com/shoriwe/plasma/pkg/ast3"
+	"github.com/shoriwe/plasma/pkg/bytecode/opcodes"
+	"github.com/shoriwe/plasma/pkg/common"
+	magic_functions "github.com/shoriwe/plasma/pkg/common/magic-functions"
 	"reflect"
 )
 

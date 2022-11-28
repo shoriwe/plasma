@@ -1,8 +1,8 @@
 package assembler
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast3"
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+	"github.com/shoriwe/plasma/pkg/ast3"
+	magic_functions "github.com/shoriwe/plasma/pkg/common/magic-functions"
 )
 
 func (a *assembler) Index(index *ast3.Index) []byte {

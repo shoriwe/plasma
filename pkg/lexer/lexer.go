@@ -2,7 +2,7 @@ package lexer
 
 import (
 	"errors"
-	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/shoriwe/plasma/pkg/reader"
 	"regexp"
 )
 

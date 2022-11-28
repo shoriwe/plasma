@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/shoriwe/gplasma/pkg/ast"
+import "github.com/shoriwe/plasma/pkg/ast"
 
 func (parser *Parser) parseDeferStatement() (*ast.DeferStatement, error) {
 	tokenizingError := parser.next()

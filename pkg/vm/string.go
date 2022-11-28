@@ -2,7 +2,7 @@ package vm
 
 import (
 	"bytes"
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+	magic_functions "github.com/shoriwe/plasma/pkg/common/magic-functions"
 )
 
 func (plasma *Plasma) stringClass() *Value {

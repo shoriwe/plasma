@@ -3,7 +3,7 @@ package vm
 import (
 	"bytes"
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/plasma/pkg/lexer"
 	"golang.org/x/exp/constraints"
 	"sync"
 )
