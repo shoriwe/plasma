@@ -1,0 +1,51 @@
+# Magic methods
+
+Magic functions are interfaces that usually used by libraries of the language
+
+- `__init__()`
+- `__has_next__()`
+- `__next__()`
+- `__not__()`
+- `__positive__(right)`
+- `__negative__(right)`
+- `__negate_bits__(right)`
+- `__and__(right)`
+- `__or__(right)`
+- `__xor__(right)`
+- `__in__(left)`
+- `__is__(right)`
+- `__implements__(right)`
+- `__equal__(right)`
+- `__not_equal__(right)`
+- `__greater_than__(right)`
+- `__greater_or_equal_than__(right)`
+- `__less_than__(right)`
+- `__less_or_equal_than__(right)`
+- `__bitwise_or__(right)`
+- `__bitwise_xor__(right)`
+- `__bitwise_and__(right)`
+- `__bitwise_left__(right)`
+- `__bitwise_right__(right)`
+- `__add__(right)`
+- `__sub__(right)`
+- `__mul__(right)`
+- `__div__(right)`
+- `__floor_div__(right)`
+- `__mod__(right)`
+- `__pow__(right)`
+- `__len__()`
+- `__bool__()`
+- `__string__()`
+- `__int__()`
+- `__float__()`
+- `__bytes__()`
+- `__array__()`
+- `__tuple__()`
+- `__get__(index)`
+- `__set__(index, value)`
+- `__del__(value)`
+- `__call__(args...)`
+- `__class__()`
+- `__sub_classes__()`
+- `__copy__()`
+- `__iter__()`
