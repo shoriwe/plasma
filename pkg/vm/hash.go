@@ -1,6 +1,6 @@
 package vm
 
-import magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+import magic_functions "github.com/shoriwe/plasma/pkg/common/magic-functions"
 
 func (plasma *Plasma) hashClass() *Value {
 	class := plasma.NewValue(plasma.rootSymbols, BuiltInClassId, plasma.class)

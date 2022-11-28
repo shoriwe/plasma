@@ -2,7 +2,7 @@ package transformations_1
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/ast3"
+	"github.com/shoriwe/plasma/pkg/ast3"
 )
 
 func (transform *transformPass) nextAnonIdentifier() *ast3.Identifier {

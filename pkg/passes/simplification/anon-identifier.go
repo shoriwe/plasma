@@ -2,7 +2,7 @@ package simplification
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/ast2"
+	"github.com/shoriwe/plasma/pkg/ast2"
 )
 
 func (simplify *simplifyPass) nextAnonIdentifier() *ast2.Identifier {

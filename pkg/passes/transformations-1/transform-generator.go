@@ -2,11 +2,11 @@ package transformations_1
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/ast2"
-	"github.com/shoriwe/gplasma/pkg/ast3"
-	"github.com/shoriwe/gplasma/pkg/common"
-	"github.com/shoriwe/gplasma/pkg/common/magic-functions"
-	"github.com/shoriwe/gplasma/pkg/common/special-symbols"
+	"github.com/shoriwe/plasma/pkg/ast2"
+	"github.com/shoriwe/plasma/pkg/ast3"
+	"github.com/shoriwe/plasma/pkg/common"
+	"github.com/shoriwe/plasma/pkg/common/magic-functions"
+	"github.com/shoriwe/plasma/pkg/common/special-symbols"
 	"reflect"
 )
 

@@ -1,9 +1,9 @@
 package assembler
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast3"
-	"github.com/shoriwe/gplasma/pkg/bytecode/opcodes"
-	"github.com/shoriwe/gplasma/pkg/common"
+	"github.com/shoriwe/plasma/pkg/ast3"
+	"github.com/shoriwe/plasma/pkg/bytecode/opcodes"
+	"github.com/shoriwe/plasma/pkg/common"
 )
 
 func (a *assembler) Identifier(ident *ast3.Identifier) []byte {

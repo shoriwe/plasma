@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/shoriwe/gplasma/pkg/ast"
+import "github.com/shoriwe/plasma/pkg/ast"
 
 func (parser *Parser) parseDeleteStatement() (*ast.DeleteStatement, error) {
 	tokenizingError := parser.next()

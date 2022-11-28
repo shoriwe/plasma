@@ -2,8 +2,8 @@ package simplification
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/ast2"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/ast2"
 	"reflect"
 )
 

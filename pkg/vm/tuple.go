@@ -1,7 +1,7 @@
 package vm
 
 import (
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+	magic_functions "github.com/shoriwe/plasma/pkg/common/magic-functions"
 )
 
 func (plasma *Plasma) tupleClass() *Value {

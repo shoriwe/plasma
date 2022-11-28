@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/shoriwe/gplasma/pkg/compiler"
-	"github.com/shoriwe/gplasma/pkg/vm"
+	"github.com/shoriwe/plasma/pkg/compiler"
+	"github.com/shoriwe/plasma/pkg/vm"
 	"os"
 )
 

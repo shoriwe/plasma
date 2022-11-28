@@ -1,7 +1,7 @@
 package vm
 
 import (
-	"github.com/shoriwe/gplasma/pkg/common"
+	"github.com/shoriwe/plasma/pkg/common"
 )
 
 type (

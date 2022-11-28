@@ -3,7 +3,7 @@ package vm
 import (
 	"bytes"
 	"encoding/binary"
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
+	magic_functions "github.com/shoriwe/plasma/pkg/common/magic-functions"
 	"math"
 )
 

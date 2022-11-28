@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/lexer"
 )
 
 func (parser *Parser) parseUntilStatement() (*ast.UntilLoopStatement, error) {

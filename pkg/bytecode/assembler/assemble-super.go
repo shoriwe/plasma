@@ -1,8 +1,8 @@
 package assembler
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast3"
-	"github.com/shoriwe/gplasma/pkg/bytecode/opcodes"
+	"github.com/shoriwe/plasma/pkg/ast3"
+	"github.com/shoriwe/plasma/pkg/bytecode/opcodes"
 )
 
 func (a *assembler) Super(super *ast3.Super) []byte {

@@ -1,8 +1,8 @@
 package checks
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/common"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/common"
 )
 
 /*

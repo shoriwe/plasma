@@ -2,8 +2,8 @@ package vm
 
 import (
 	"bufio"
-	magic_functions "github.com/shoriwe/gplasma/pkg/common/magic-functions"
-	special_symbols "github.com/shoriwe/gplasma/pkg/common/special-symbols"
+	magic_functions "github.com/shoriwe/plasma/pkg/common/magic-functions"
+	special_symbols "github.com/shoriwe/plasma/pkg/common/special-symbols"
 )
 
 func (plasma *Plasma) init() {

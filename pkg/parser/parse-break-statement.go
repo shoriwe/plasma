@@ -1,7 +1,7 @@
 package parser
 
 import (
-	"github.com/shoriwe/gplasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/ast"
 )
 
 func (parser *Parser) parseBreakStatement() (*ast.BreakStatement, error) {

@@ -2,10 +2,10 @@ package checks
 
 import (
 	_ "embed"
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/lexer"
-	"github.com/shoriwe/gplasma/pkg/parser"
-	"github.com/shoriwe/gplasma/pkg/reader"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/lexer"
+	"github.com/shoriwe/plasma/pkg/parser"
+	"github.com/shoriwe/plasma/pkg/reader"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

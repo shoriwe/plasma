@@ -2,9 +2,9 @@ package simplification
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/ast"
-	"github.com/shoriwe/gplasma/pkg/ast2"
-	"github.com/shoriwe/gplasma/pkg/lexer"
+	"github.com/shoriwe/plasma/pkg/ast"
+	"github.com/shoriwe/plasma/pkg/ast2"
+	"github.com/shoriwe/plasma/pkg/lexer"
 )
 
 func (simplify *simplifyPass) Binary(binary *ast.BinaryExpression) *ast2.Binary {

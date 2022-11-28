@@ -2,7 +2,7 @@ package vm
 
 import (
 	"fmt"
-	"github.com/shoriwe/gplasma/pkg/compiler"
+	"github.com/shoriwe/plasma/pkg/compiler"
 	"io"
 )
 

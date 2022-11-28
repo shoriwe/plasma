@@ -1,6 +1,6 @@
 package parser
 
-import "github.com/shoriwe/gplasma/pkg/ast"
+import "github.com/shoriwe/plasma/pkg/ast"
 
 func (parser *Parser) parseSuperExpression() (*ast.SuperExpression, error) {
 	tokenizingError := parser.next()

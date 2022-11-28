@@ -1,4 +1,4 @@
-module github.com/shoriwe/gplasma
+module github.com/shoriwe/plasma
 
 go 1.18
 

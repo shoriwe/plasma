@@ -1,10 +1,10 @@
 package simplification
 
 import (
-	"github.com/shoriwe/gplasma/pkg/lexer"
-	"github.com/shoriwe/gplasma/pkg/parser"
-	"github.com/shoriwe/gplasma/pkg/reader"
-	"github.com/shoriwe/gplasma/pkg/test-samples/basic"
+	"github.com/shoriwe/plasma/pkg/lexer"
+	"github.com/shoriwe/plasma/pkg/parser"
+	"github.com/shoriwe/plasma/pkg/reader"
+	"github.com/shoriwe/plasma/pkg/test-samples/basic"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
