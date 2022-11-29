@@ -70,7 +70,7 @@ func compare(name string) {
 	fmt.Fprintln(file, `
 import (
 	_ "embed"
-	test_samples "github.com/shoriwe/gplasma/pkg/test-samples"
+	test_samples "github.com/shoriwe/plasma/pkg/test-samples"
 )
 `)
 	fmt.Fprintln(file, "var(")

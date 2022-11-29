@@ -1,4 +1,4 @@
-package gplasma
+package plasma
 
 import (
 	"github.com/shoriwe/plasma/pkg/compiler"
