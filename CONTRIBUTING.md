@@ -42,7 +42,7 @@ Avoid doing:
 ```go
 package my_package
 
-import "github.com/shoriwe/gplasma/pkg/vm"
+import "github.com/shoriwe/plasma/pkg/vm"
 
 func f(plasma *vm.VM) (*vm.Value, error) { // Avoid cryptic function names
 	x := vm.NewValue() // Avoid cryptic function variables

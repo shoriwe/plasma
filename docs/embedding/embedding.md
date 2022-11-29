@@ -6,7 +6,7 @@ Embedding the language is simple:
 package main
 
 import (
-	"github.com/shoriwe/gplasma/pkg/vm"
+	"github.com/shoriwe/plasma/pkg/vm"
 	"os"
 )
 

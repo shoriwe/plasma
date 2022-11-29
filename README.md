@@ -1,14 +1,14 @@
 # plasma
 
-[![Build](https://github.com/shoriwe/gplasma/actions/workflows/build.yml/badge.svg)](https://github.com/shoriwe/gplasma/actions/workflows/build.yml)
-[![codecov](https://codecov.io/github/shoriwe/gplasma/branch/main/graph/badge.svg?token=6XUX3TJC2N)](https://codecov.io/github/shoriwe/gplasma)
-![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/shoriwe/gplasma)
-[![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/gplasma)](https://goreportcard.com/report/github.com/shoriwe/gplasma)
+[![Build](https://github.com/shoriwe/plasma/actions/workflows/build.yml/badge.svg)](https://github.com/shoriwe/plasma/actions/workflows/build.yml)
+[![codecov](https://codecov.io/github/shoriwe/plasma/branch/main/graph/badge.svg?token=6XUX3TJC2N)](https://codecov.io/github/shoriwe/plasma)
+![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/shoriwe/plasma)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shoriwe/plasma)](https://goreportcard.com/report/github.com/shoriwe/plasma)
 
 Plasma is an embeddable scripting ruby like language.
 
 <p align="center">
-	<img src="https://github.com/shoriwe/gplasma/raw/main/logos/plasma-logos.jpeg" alt="logo" style="zoom:50%;" />
+	<img src="https://github.com/shoriwe/plasma/raw/main/logos/plasma-logos.jpeg" alt="logo" style="zoom:50%;" />
 </p>
 
 ## Features
@@ -26,17 +26,17 @@ Plasma is an embeddable scripting ruby like language.
 You can find documentation in:
 
 - [Official documentation](https://shoriwe.github.io/plasma/index.html)
-- [pkg.go.dev](https://pkg.go.dev/github.com/shoriwe/gplasma)
+- [pkg.go.dev](https://pkg.go.dev/github.com/shoriwe/plasma)
 
 ## Install interpreter
 
 ```shell
-go install github.com/shoriwe/gplasma/cmd/plasma@latest
+go install github.com/shoriwe/plasma/cmd/plasma@latest
 ```
 
 ## Preview
 
-## REPL
+### REPL
 
 You can start a REPL with:
 
@@ -45,20 +45,19 @@ plasma
 ```
 
 <p align="center">
-	<img src="https://github.com/shoriwe/gplasma/raw/main/demos/repl-demo.gif" alt="logo" style="zoom:50%;" />
+	<img src="https://github.com/shoriwe/plasma/raw/main/demos/repl-demo.gif" alt="logo" style="zoom:50%;" />
 </p>
-
-## Embedding and creating Go bindings
+### Embedding and creating Go bindings
 
 ```shell
-go get -u github.com/shoriwe/gplasma@v1
+go get -u github.com/shoriwe/plasma@v1
 ```
 
 ```go
 package main
 
 import (
-	"github.com/shoriwe/gplasma/pkg/vm"
+	"github.com/shoriwe/plasma/pkg/vm"
 	"os"
 )
 
