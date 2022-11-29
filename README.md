@@ -47,6 +47,7 @@ plasma
 <p align="center">
 	<img src="https://github.com/shoriwe/plasma/raw/main/demos/repl-demo.gif" alt="logo" style="zoom:50%;" />
 </p>
+
 ### Embedding and creating Go bindings
 
 ```shell
