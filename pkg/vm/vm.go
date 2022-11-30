@@ -118,6 +118,15 @@ func (plasma *Plasma) Load(symbol string, loader Loader) {
 	plasma.rootSymbols.Set(symbol, loader(plasma))
 }
 
+func (plasma *Plasma) LoadGo(symbol string, v any) error {
+	pv, err := plasma.ToValue(plasma.RootSymbols(), v)
+	if err != nil {
+		return err
+	}
+	plasma.rootSymbols.Set(symbol, pv)
+	return nil
+}
+
 func (plasma *Plasma) Execute(bytecode []byte) (result chan *Value, err chan error, stop chan struct{}) {
 	// Create new context
 	ctx := plasma.newContext(bytecode)
