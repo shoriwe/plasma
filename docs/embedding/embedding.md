@@ -20,7 +20,7 @@ There are two ways to call **Go** from **plasma**, by creating the functions man
 
 ### Automatic
 
-Use the [LoadGo](https://pkg.go.dev/github.com/shoriwe/plasma/pkg/vm#Plasma.LoadGo) function to transform any Go value to the **plasma** values, this has clear limitations that will be mentioned in [Passing values from Go to `plasma`](#passing-values-from-go-to-plasma)
+Use the [LoadGo](https://pkg.go.dev/github.com/shoriwe/plasma/pkg/vm#Plasma.LoadGo) function to transform any **Go** value to **plasma** values, this has clear limitations that will be mentioned in [Passing values from Go to `plasma`](#passing-values-from-go-to-plasma)
 
 In this example will pass a Go function directly to plasma
 
@@ -30,14 +30,11 @@ func Add(a, b int) int {
 }
 
 vm := plasma.NewVM(os.Stdin, os.Stdout, os.Stderr)
-plasmaAdd, transformErr := vm.ToValue(Add)
-if transformErr != nil {
-    panic(transformErr)
+loadErr := vm.LoadGo("go_add", Add)
+if loadErr != nil {
+    panic(loadErr)
 }
-vm.LoadGo("")
 ```
-
-
 
 ### Manual
 
